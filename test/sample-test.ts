@@ -1,25 +1,26 @@
-import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import chai from "chai";
-import { Greeter } from "../typechain/Greeter";
+import { ethers } from "hardhat"
+import { solidity } from "ethereum-waffle"
+import chai from "chai"
+import { Token } from "../typechain/Token"
 
-chai.use(solidity);
-const { expect } = chai;
+chai.use(solidity)
+const { expect } = chai
 
-describe("Greeter", async () => {
-  let greeter: Greeter;
+describe("Token", async () => {
+  let token: Token
   beforeEach(async () => {
-    const greeterFactory = await ethers.getContractFactory("Greeter");
-    greeter = (await greeterFactory.deploy("Hello, world!")) as Greeter;
-    await greeter.deployed();
-  });
+    const tokenFactory = await ethers.getContractFactory("Token")
+    token = (await tokenFactory.deploy()) as Token
+    await token.deployed()
+  })
 
-  it("should return the greeting", async () => {
-    expect(await greeter.greet()).to.equal("Hello, world!");
-  });
+  it("should return the total supply", async () => {
+    expect(await token.totalSupply()).to.equal(969163000 * 10 ** 18)
+  })
 
-  it("should return the new greeting once changed", async () => {
-    await greeter.setGreeting("Hola, mundo!");
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
-  });
-});
+  it("should transfer tokens", async () => {
+    // TODO
+    // await token.setGreeting("Hola, mundo!");
+    // expect(await token.greet()).to.equal("Hola, mundo!");
+  })
+})
