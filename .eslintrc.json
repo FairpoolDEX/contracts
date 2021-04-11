@@ -1,0 +1,22 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "extends": [
+    "airbnb-typescript",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "prettier/@typescript-eslint"
+  ],
+  "rules": {
+    "semi": [2, "never"],
+    "prefer-const": 2,
+    "no-unused-expressions": 0,
+    "comma-dangle": ["error", "always-multiline"]
+  }
+}
