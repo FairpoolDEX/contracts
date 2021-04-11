@@ -1,0 +1,13 @@
+{
+  "verbose": false,
+  "ignoreRoot": [
+    ".git",
+    ".log",
+    "cache",
+    "coverage",
+    "artifacts",
+    "typechain"
+  ],
+  "ignore": [],
+  "ext": "js,json,ts,sol"
+}

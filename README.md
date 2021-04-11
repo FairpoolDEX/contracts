@@ -16,14 +16,14 @@ Run tests
 
     npm test
 
-Lint solidity and typescript code
+Watch tests
+
+    npm run test:watch
+
+Lint code
 
     npm run lint
 
-Check file formatting
-
-    npm run lint
-
-Generate code coverage
+Generate coverage
 
     npm run coverage
