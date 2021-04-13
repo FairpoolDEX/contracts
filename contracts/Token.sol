@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract Token is ERC20Upgradeable, OwnableUpgradeable {
-    function initialize() initializer public {
+    function initialize() public initializer {
         __ERC20_init("Shield Finance Token", "SHLD");
         __Ownable_init();
         _mint(msg.sender, 969_163_000 * 10 ** decimals());
