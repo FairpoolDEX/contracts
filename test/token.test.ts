@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle"
 import { utils, BigNumber } from "ethers"
 import { formatUnits } from "ethers/lib/utils"
 import chai from "chai"
-import { Token } from "../typechain/Token"
+import { ShieldToken } from "../typechain/ShieldToken"
 
 chai.use(solidity)
 const { expect } = chai
@@ -15,13 +15,13 @@ export const toTokenAmount = (value: string | number): BigNumber => parseUnits(t
 export const formatTokenAmount = (value: BigNumber): string => formatUnits(value, "18")
 export const randomHexBytes = (n = 32): string => hexlify(randomBytes(n))
 
-describe("Token", async () => {
-  let token: Token
+describe("ShieldToken", async () => {
+  let token: ShieldToken
   beforeEach(async () => {
-    const tokenFactory = await ethers.getContractFactory("Token")
-    token = (await upgrades.deployProxy(tokenFactory, [])) as unknown as Token
+    const tokenFactory = await ethers.getContractFactory("ShieldToken")
+    token = (await upgrades.deployProxy(tokenFactory, [])) as unknown as ShieldToken
 
-    // token = (await tokenFactory.deploy()) as unknown as Token
+    // token = (await tokenFactory.deploy()) as unknown as ShieldToken
     await token.deployed()
   })
 
