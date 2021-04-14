@@ -32,7 +32,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
-	    // Mint All TotalSuply in the Account OwnerShip
+	    // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
         vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
