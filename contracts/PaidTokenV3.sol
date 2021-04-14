@@ -25,16 +25,16 @@ struct VestingType {
     bool vesting;
 }
 
-contract PaidTokenV3 is Initializable, OwnableUpgradeable, ERC20PausableUpgradeable {
+contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradeable {
     mapping (address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
 
     function initialize() initializer public {
         __Ownable_init();
-        __ERC20_init('PAID Network', 'PAID');
+        __ERC20_init('Shield Finance Token', 'SHLD');
         __ERC20Pausable_init();
 
-	// Mint All TotalSuply in the Account OwnerShip
+	    // Mint All TotalSuply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
         vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
@@ -48,15 +48,12 @@ contract PaidTokenV3 is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
     }
 
     function getReleaseTime() public pure returns (uint256) {
+        // FIXME
         return 1611588600; // "Mon, 25 Jan 2021 15:30:00 GMT"
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
-        return 594717455710000000000000000;
-    }
-
-    function mulDiv(uint x, uint y, uint z) public pure returns (uint) {
-        return x.mul(y).div(z);
+        return 969_163_000 * 10 ** decimals();
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
@@ -69,8 +66,8 @@ contract PaidTokenV3 is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
         for(uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = mulDiv(totalAmounts[i], vestingType.monthlyRate, 100000000000000000000);
-            uint256 initialAmount = mulDiv(totalAmounts[i], vestingType.initialRate, 100000000000000000000);
+            uint256 monthlyAmount = totalAmounts[i].mul(vestingType.monthlyRate).div(100000000000000000000);
+            uint256 initialAmount = totalAmounts[i].mul(vestingType.initialRate).div(100000000000000000000);
             uint256 afterDay = vestingType.afterDays;
             uint256 monthDelay = vestingType.monthDelay;
 
@@ -151,17 +148,15 @@ contract PaidTokenV3 is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
     }
 
 
-    function transferMany(address[] calldata recipients, uint256[] calldata amounts)
-    external
-	onlyOwner {
-        require(recipients.length == amounts.length, "PAID Token: Wrong array length");
+    function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
+        require(recipients.length == amounts.length, "Shield Token: Wrong array length");
 
         uint256 total = 0;
         for (uint256 i = 0; i < amounts.length; i++) {
             total = total.add(amounts[i]);
         }
 
-	_balances[msg.sender] = _balances[msg.sender].sub(total, "ERC20: transfer amount exceeds balance");
+	    _balances[msg.sender] = _balances[msg.sender].sub(total, "ERC20: transfer amount exceeds balance");
 
         for (uint256 i = 0; i < recipients.length; i++) {
             address recipient = recipients[i];
