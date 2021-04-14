@@ -35,14 +35,32 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 	    // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
-        vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
-        vestingTypes.push(VestingType(1660000000000000000, 0, 180 days, 0, true)); // 180 Days 1.66 Percent
-        vestingTypes.push(VestingType(4160000000000000000, 0, 360 days, 0, true)); // 360 Days 4.16 Percent
-        vestingTypes.push(VestingType(4160000000000000000, 0, 30 days, 0, true)); // 30 Days 4.16 Percent
+        // Seed
+        vestingTypes.push(VestingType(12000000000000000000, 5000000000000000000, 30*9 days, 30 days, true)); // Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
+        //Private
+        vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 30*6 days, 0, true)); // 10% at listing, then equal parts of 18% over total of 6 months
+        // Public
         vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true)); // 0 Days 100 Percent
-        vestingTypes.push(VestingType(11110000000000000000, 0, 30 days, 0, true)); // 30 Days 11.11 Percent
-        vestingTypes.push(VestingType(15000000000000000000, 10000000000000000000, 0, 1, true)); // 0 Days 10 initial 15 monthly Percent
-        vestingTypes.push(VestingType(25000000000000000000, 25000000000000000000, 0, 1, true)); // 0 Days 25 initial 25 monthly Percent
+
+        //TODO
+        //Advisors, Partners
+        //Team
+        //Rewards
+        //Development
+        //Marketing
+        //Liquidity provisioning
+        //Liquidity mining
+        //General Reserve
+
+        //legacy:
+//        vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
+//        vestingTypes.push(VestingType(1660000000000000000, 0, 180 days, 0, true)); // 180 Days 1.66 Percent
+//        vestingTypes.push(VestingType(4160000000000000000, 0, 360 days, 0, true)); // 360 Days 4.16 Percent
+//        vestingTypes.push(VestingType(4160000000000000000, 0, 30 days, 0, true)); // 30 Days 4.16 Percent
+//        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true)); // 0 Days 100 Percent
+//        vestingTypes.push(VestingType(11110000000000000000, 0, 30 days, 0, true)); // 30 Days 11.11 Percent
+//        vestingTypes.push(VestingType(15000000000000000000, 10000000000000000000, 0, 1, true)); // 0 Days 10 initial 15 monthly Percent
+//        vestingTypes.push(VestingType(25000000000000000000, 25000000000000000000, 0, 1, true)); // 0 Days 25 initial 25 monthly Percent
     }
 
     function getReleaseTime() public pure returns (uint256) {
