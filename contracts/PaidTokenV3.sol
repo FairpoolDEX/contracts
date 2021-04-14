@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
 
-import "../lib/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol";
-import "../lib/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "../lib/@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 struct FrozenWallet {
     address wallet;
@@ -25,13 +23,13 @@ struct VestingType {
     bool vesting;
 }
 
-contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradeable {
+contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     mapping (address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
 
     function initialize() initializer public {
         __Ownable_init();
-        __ERC20_init('Shield Finance Token', 'SHLD');
+        __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
 	    // Mint All TotalSuply in the Account OwnerShip
@@ -53,7 +51,7 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
-        return 969_163_000 * 10 ** decimals();
+        return 969_163_000 * 10 ** 18;
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
@@ -66,8 +64,8 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
         for(uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = totalAmounts[i].mul(vestingType.monthlyRate).div(100000000000000000000);
-            uint256 initialAmount = totalAmounts[i].mul(vestingType.initialRate).div(100000000000000000000);
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
+            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate / 100000000000000000000;
             uint256 afterDay = vestingType.afterDays;
             uint256 monthDelay = vestingType.monthDelay;
 
@@ -79,7 +77,7 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
 
     function _mint(address account, uint256 amount) internal override {
         uint totalSupply = super.totalSupply();
-        require(getMaxTotalSupply() >= totalSupply.add(amount), "Max total supply over");
+        require(getMaxTotalSupply() >= (totalSupply + amount), "Max total supply over");
 
         super._mint(account, amount);
     }
@@ -97,7 +95,7 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
             totalAmount,
             monthlyAmount,
             initialAmount,
-            releaseTime.add(afterDays),
+            releaseTime + afterDays,
             afterDays,
             true,
             monthDelay
@@ -113,14 +111,14 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
 
     function getMonths(uint afterDays, uint monthDelay) public view returns (uint) {
         uint256 releaseTime = getReleaseTime();
-        uint time = releaseTime.add(afterDays);
+        uint time = releaseTime + afterDays;
 
         if (block.timestamp < time) {
             return 0;
         }
 
-        uint diff = block.timestamp.sub(time);
-        uint months = diff.div(30 days).add(1).sub(monthDelay);
+        uint diff = block.timestamp - time;
+        uint months = diff / 30 days + 1 - monthDelay;
 
         return months;
     }
@@ -137,8 +135,8 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
 
     function getTransferableAmount(address sender) public view returns (uint256) {
         uint months = getMonths(frozenWallets[sender].afterDays, frozenWallets[sender].monthDelay);
-        uint256 monthlyTransferableAmount = frozenWallets[sender].monthlyAmount.mul(months);
-        uint256 transferableAmount = monthlyTransferableAmount.add(frozenWallets[sender].initialAmount);
+        uint256 monthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
+        uint256 transferableAmount = monthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
         if (transferableAmount > frozenWallets[sender].totalAmount) {
             return frozenWallets[sender].totalAmount;
@@ -149,31 +147,28 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
 
 
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
-        require(recipients.length == amounts.length, "Shield Token: Wrong array length");
+        require(recipients.length == amounts.length, "Wrong array length");
 
         uint256 total = 0;
         for (uint256 i = 0; i < amounts.length; i++) {
-            total = total.add(amounts[i]);
+            total = total + amounts[i];
         }
 
-	    _balances[msg.sender] = _balances[msg.sender].sub(total, "ERC20: transfer amount exceeds balance");
+        require(balanceOf(msg.sender) >= total, "ERC20: transfer amount exceeds balance");
 
         for (uint256 i = 0; i < recipients.length; i++) {
             address recipient = recipients[i];
             uint256 amount = amounts[i];
             require(recipient != address(0), "ERC20: transfer to the zero address");
 
-            _balances[recipient] = _balances[recipient].add(amount);
-            emit Transfer(msg.sender, recipient, amount);
+            super._transfer(msg.sender, recipient, amount);
         }
     }
 
 
     function getRestAmount(address sender) public view returns (uint256) {
         uint256 transferableAmount = getTransferableAmount(sender);
-        uint256 restAmount = frozenWallets[sender].totalAmount.sub(transferableAmount);
-
-        return restAmount;
+        return frozenWallets[sender].totalAmount - transferableAmount;
     }
 
     // Transfer control
@@ -184,13 +179,12 @@ contract ShieldToken is Initializable, OwnableUpgradeable, ERC20PausableUpgradea
         }
 
         uint256 balance = balanceOf(sender);
-        uint256 restAmount = getRestAmount(sender);
-
-        if (balance > frozenWallets[sender].totalAmount && balance.sub(frozenWallets[sender].totalAmount) >= amount) {
+        if (balance > frozenWallets[sender].totalAmount && (balance - frozenWallets[sender].totalAmount) >= amount) {
             return true;
         }
 
-        if (!isStarted(frozenWallets[sender].startDay) || balance.sub(amount) < restAmount) {
+        uint256 restAmount = getRestAmount(sender);
+        if (!isStarted(frozenWallets[sender].startDay) || (balance - amount) < restAmount) {
             return false;
         }
 
