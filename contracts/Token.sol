@@ -9,7 +9,6 @@ struct FrozenWallet {
     uint totalAmount;
     uint monthlyAmount;
     uint initialAmount;
-    uint startDay;
     uint afterDays;
     bool scheduled;
     uint monthDelay;
@@ -111,7 +110,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             totalAmount,
             monthlyAmount,
             initialAmount,
-            releaseTime + afterDays,
             afterDays,
             true,
             monthDelay
@@ -138,11 +136,10 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return months;
     }
 
-    function isStarted(uint startDay) public view returns (bool) {
-        if (block.timestamp < releaseTime || block.timestamp < startDay) {
+    function isStarted() public view returns (bool) {
+        if (block.timestamp < releaseTime) {
             return false;
         }
-
         return true;
     }
 
@@ -200,10 +197,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
 
         uint256 restAmount = getRestAmount(sender);
-        if (!isStarted(frozenWallets[sender].startDay) || (balance - amount) < restAmount) {
+        if (!isStarted() || (balance - amount) < restAmount) {
             return false;
         }
-
         return true;
     }
 
