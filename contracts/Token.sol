@@ -29,7 +29,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function initialize() initializer public {
         __Ownable_init();
-        __ERC20_init("Shield Finance Token", "SHIELD");
+        __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
 	    // Mint All TotalSupply in the Account OwnerShip
