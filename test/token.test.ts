@@ -65,6 +65,7 @@ describe("ShieldToken", async () => {
     })
 
     it("should have scheduled frozen wallets and can't transfer money", async () => {
+      const [owner] = await ethers.getSigners()
       Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
         Object.entries(allocation).forEach(async ([address, amount]) => {
           // check frozen wallet
@@ -77,10 +78,20 @@ describe("ShieldToken", async () => {
           expect(canTransfer).to.equal(false)
 
           expect(async () => {
-            await token.transfer(address, amount)
+            await token.transferFrom(address, owner.address, amount)
           }).to.throw()
         })
       })
+    })
+
+    it('not frozen wallets should can transfer', async () => {
+      const [owner, receiver] = await ethers.getSigners()
+      const amount = toTokenAmount("10")
+      await token.transfer(receiver.address, amount)
+      const canTransfer = await token.canTransfer(receiver.address, amount)
+      expect(canTransfer).to.equal(true)
+
+      await token.transferFrom(receiver.address, owner.address, amount)
     })
 
     it("should be able to transfer money after release time", async () => {
