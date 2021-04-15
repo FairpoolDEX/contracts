@@ -1,5 +1,7 @@
+export const RELEASE_TIME: number = Math.floor(new Date("2021.04.21 15:00:00 GMT").getTime() / 1000)
+
 // it's a test only allocations with a random addresses!
-const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
+export const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
   '0': {
     '0xC30C915dE5FC456F00BaFea00b8fF2a24b3b384d': 100,
     '0x77BD3E7f5b353834EB93CF8076e2500BD2ADBff1': 20,
@@ -10,4 +12,3 @@ const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
     '0xAbAE711bC28b21D91bC473191A379F548Cb183ba': 20,
   },
 }
-export default ALLOCATIONS
