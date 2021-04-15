@@ -1,10 +1,22 @@
-import { ethers } from "hardhat"
+import { ethers, upgrades } from "hardhat"
+
+import { ALLOCATIONS, RELEASE_TIME } from './parameters'
+
 
 async function main() {
-  const Greeter = await ethers.getContractFactory("Greeter")
-  const greeter = await Greeter.deploy("hai")
-  await greeter.deployed()
-  console.log("Greeter address:", greeter.address) // eslint-disable-line no-console
+  const Token = await ethers.getContractFactory("ShieldToken")
+  const token = await upgrades.deployProxy(Token, [RELEASE_TIME])
+  await token.deployed()
+  console.log("Token address:", token.address) // eslint-disable-line no-console
+
+  // add allocations
+  Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+    const addresses = Object.keys(allocation)
+    const amounts = Object.values(allocation)
+    await token.addAllocations(addresses, amounts, vestingTypeIndex)
+
+    console.log(`Added allocation of type ${vestingTypeIndex} for ${addresses.length} addresses`) // eslint-disable-line no-console
+  })
 }
 
 main()
