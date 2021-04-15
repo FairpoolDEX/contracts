@@ -40,12 +40,12 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 	    // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
-        // Seed
-        vestingTypes.push(VestingType(12000000000000000000, 5000000000000000000, 30*9 days, 30 days, true)); // Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        //Private
-        vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 30*6 days, 0, true)); // 10% at listing, then equal parts of 18% over total of 6 months
-        // Public
-        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true)); // 0 Days 100 Percent
+        // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
+        vestingTypes.push(VestingType(12000000000000000000, 5000000000000000000, 9 * 30 days, 30 days, true));
+        // Private - 10% at listing, then equal parts of 18% over total of 6 months
+        vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 6 * 30 days, 0, true));
+        // Public - 0 Days 100 Percent
+        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true));
 
         //TODO
         //Advisors, Partners
@@ -77,9 +77,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(vestingTypes[vestingTypeIndex].vesting, "Vesting type isn't found");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-        uint addressesLength = addresses.length;
-
-        for(uint i = 0; i < addressesLength; i++) {
+        for(uint i = 0; i < addresses.length; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
@@ -121,9 +119,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    function getTimestamp() external view returns (uint256) {
-        return block.timestamp;
-    }
+    // function getTimestamp() external view returns (uint256) {
+    //     return block.timestamp;
+    // }
 
     function getMonths(uint afterDays, uint monthDelay) public view returns (uint) {
         uint time = releaseTime + afterDays;
