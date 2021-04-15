@@ -5,6 +5,8 @@ import { formatUnits } from "ethers/lib/utils"
 import chai from "chai"
 import { ShieldToken } from "../typechain/ShieldToken"
 
+import { ALLOCATIONS, RELEASE_TIME } from '../scripts/parameters'
+
 chai.use(solidity)
 const { expect } = chai
 
@@ -19,21 +21,75 @@ describe("ShieldToken", async () => {
   let token: ShieldToken
   beforeEach(async () => {
     const tokenFactory = await ethers.getContractFactory("ShieldToken")
-    token = (await upgrades.deployProxy(tokenFactory, [])) as unknown as ShieldToken
-
-    // token = (await tokenFactory.deploy()) as unknown as ShieldToken
+    expect(RELEASE_TIME > (new Date()).getTime() / 1000).to.equal(true)
+    token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME])) as unknown as ShieldToken
     await token.deployed()
   })
 
-  it("should return the total supply", async () => {
-    const totalSupply = await token.totalSupply()
-    expect(totalSupply).to.equal(toTokenAmount("969163000"))
+  it('should have correct release time', async () => {
+    const releaseTime = await token.releaseTime()
+    expect(releaseTime).to.equal(RELEASE_TIME)
+  })
+
+  it("should assign the total supply of tokens to the owner", async () => {
+    const [owner] = await ethers.getSigners()
+    const balance = await token.balanceOf(owner.address)
+    expect(balance).to.equal(await token.totalSupply())
   })
 
   it("should transfer tokens", async () => {
-    await token.transfer("0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D", toTokenAmount("10"))
-    const balance = await token.balanceOf("0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D")
+    const [owner, receiver] = await ethers.getSigners()
+    await token.transfer(receiver.address, toTokenAmount("10"))
+    const balance = await token.balanceOf(receiver.address)
     expect(balance).to.equal(toTokenAmount("10"))
+  })
+
+  describe("Vesting", async () => {
+    beforeEach(async () => {
+      Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+        const addresses = Object.keys(allocation)
+        const amounts = Object.values(allocation)
+
+        await token.addAllocations(addresses, amounts, vestingTypeIndex)
+      })
+    })
+
+    it("should have correct balances after adding allocations", async () => {
+      Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+        Object.entries(allocation).forEach(async ([address, amount]) => {
+          // check balance
+          const balance = await token.balanceOf(address)
+          expect(balance).to.equal(amount)
+        })
+      })
+    })
+
+    it("should have scheduled frozen wallets and can't transfer money", async () => {
+      Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+        Object.entries(allocation).forEach(async ([address, amount]) => {
+          // check frozen wallet
+          const frozenWallet = await token.frozenWallets(address)
+          // frozen wallet should be scheduled!
+          expect(frozenWallet[6]).to.equal(true)
+
+          // addres should can't transfer
+          const canTransfer = await token.canTransfer(address, amount)
+          expect(canTransfer).to.equal(false)
+
+          expect(async () => {
+            await token.transfer(address, amount)
+          }).to.throw()
+        })
+      })
+    })
+
+    it("should be able to transfer money after release time", async () => {
+      // skip some time...move to 1 hour after release
+      const newTime = RELEASE_TIME + 3600
+      await ethers.provider.send("evm_setNextBlockTimestamp", [newTime])
+      // TODO
+    })
+
   })
 
   // no tests needed besides the basic ones - the token simply extends well-tested ERC20 contract from OpenZeppelin library

@@ -1,23 +1,22 @@
 import { ethers, upgrades } from "hardhat"
 
-import ALLOCATIONS from './allocations'
+import { ALLOCATIONS, RELEASE_TIME } from './parameters'
 
 
 async function main() {
-  const ShieldToken = await ethers.getContractFactory("ShieldToken")
-  const token = await upgrades.deployProxy(ShieldToken)
+  const Token = await ethers.getContractFactory("ShieldToken")
+  const token = await upgrades.deployProxy(Token, [RELEASE_TIME])
   await token.deployed()
-
   console.log("Token address:", token.address) // eslint-disable-line no-console
 
-  for (const vestingTypeIndex of Object.keys(ALLOCATIONS)) {
-    const addresses = Object.keys(ALLOCATIONS[vestingTypeIndex])
-    const amounts = Object.values(ALLOCATIONS[vestingTypeIndex])
+  // add allocations
+  Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+    const addresses = Object.keys(allocation)
+    const amounts = Object.values(allocation)
     await token.addAllocations(addresses, amounts, vestingTypeIndex)
 
     console.log(`Added allocation of type ${vestingTypeIndex} for ${addresses.length} addresses`) // eslint-disable-line no-console
-  }
-
+  })
 }
 
 main()

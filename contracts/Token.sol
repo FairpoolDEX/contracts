@@ -26,11 +26,16 @@ struct VestingType {
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     mapping (address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
+    uint256 public releaseTime;
 
-    function initialize() initializer public {
+    function initialize(uint256 _releaseTime) public initializer {
+        require(_releaseTime > block.timestamp, "Release time should be in future");
+
         __Ownable_init();
         __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
+
+        releaseTime = _releaseTime;
 
 	    // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
@@ -61,11 +66,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 //        vestingTypes.push(VestingType(11110000000000000000, 0, 30 days, 0, true)); // 30 Days 11.11 Percent
 //        vestingTypes.push(VestingType(15000000000000000000, 10000000000000000000, 0, 1, true)); // 0 Days 10 initial 15 monthly Percent
 //        vestingTypes.push(VestingType(25000000000000000000, 25000000000000000000, 0, 1, true)); // 0 Days 25 initial 25 monthly Percent
-    }
-
-    function getReleaseTime() public pure returns (uint256) {
-        // FIXME
-        return 1611588600; // "Mon, 25 Jan 2021 15:30:00 GMT"
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
@@ -101,8 +101,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint afterDays, uint monthDelay) internal {
-        uint256 releaseTime = getReleaseTime();
-
         if (!frozenWallets[wallet].scheduled) {
             super._transfer(msg.sender, wallet, totalAmount);
         }
@@ -128,7 +126,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function getMonths(uint afterDays, uint monthDelay) public view returns (uint) {
-        uint256 releaseTime = getReleaseTime();
         uint time = releaseTime + afterDays;
 
         if (block.timestamp < time) {
@@ -142,8 +139,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function isStarted(uint startDay) public view returns (bool) {
-        uint256 releaseTime = getReleaseTime();
-
         if (block.timestamp < releaseTime || block.timestamp < startDay) {
             return false;
         }
