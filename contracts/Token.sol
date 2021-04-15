@@ -77,7 +77,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(vestingTypes[vestingTypeIndex].vesting, "Vesting type isn't found");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-        for(uint i = 0; i < addresses.length; i++) {
+        uint addressesLength = addresses.length;
+
+        for(uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
@@ -158,16 +160,19 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
 
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
-        require(recipients.length == amounts.length, "Wrong array length");
+        uint amountsLength = amounts.length;
+        uint recipientsLength = recipients.length;
+
+        require(recipientsLength == amountsLength, "Wrong array length");
 
         uint256 total = 0;
-        for (uint256 i = 0; i < amounts.length; i++) {
+        for (uint256 i = 0; i < amountsLength; i++) {
             total = total + amounts[i];
         }
 
         require(balanceOf(msg.sender) >= total, "ERC20: transfer amount exceeds balance");
 
-        for (uint256 i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipientsLength; i++) {
             address recipient = recipients[i];
             uint256 amount = amounts[i];
             require(recipient != address(0), "ERC20: transfer to the zero address");
