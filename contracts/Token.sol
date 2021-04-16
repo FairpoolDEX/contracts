@@ -77,8 +77,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
-            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate / 100000000000000000000;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 10 ** 20;
+            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate / 10 ** 20;
             uint256 afterDay = vestingType.lockPeriod;
 
             addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
@@ -128,13 +128,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         uint months = diff / 30 days + 1;
 
         return months;
-    }
-
-    function isStarted() public view returns (bool) {
-        if (block.timestamp < releaseTime) {
-            return false;
-        }
-        return true;
     }
 
     function getTransferableAmount(address sender) public view returns (uint256) {
@@ -191,7 +184,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
 
         uint256 restAmount = getRestAmount(sender);
-        if (!isStarted() || (balance - amount) < restAmount) {
+
+        if ( block.timestamp < releaseTime || (balance - amount) < restAmount) {
             return false;
         }
         return true;
