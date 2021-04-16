@@ -101,12 +101,12 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         // Create frozen wallets
         FrozenWallet memory frozenWallet = FrozenWallet(
-        wallet,
-        totalAmount,
-        monthlyAmount,
-        initialAmount,
-        lockPeriod,
-        true,
+            wallet,
+            totalAmount,
+            monthlyAmount,
+            initialAmount,
+            lockPeriod,
+            true
         );
 
         // Add wallet to frozen wallets
