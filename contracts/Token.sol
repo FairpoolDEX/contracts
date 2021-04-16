@@ -123,7 +123,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function getTransferableAmount(address sender) public view returns (uint256) {
-        uint months = getMonths(frozenWallets[sender].lockDaysPeriod);
+        uint256 months = getMonths(frozenWallets[sender].lockDaysPeriod);
         uint256 totalMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
         uint256 transferableAmount = totalMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
