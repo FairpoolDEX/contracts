@@ -19,9 +19,14 @@ export const randomHexBytes = (n = 32): string => hexlify(randomBytes(n))
 
 
 async function timeTravel(callback: Function, newBlockTimestamp: number) {
+    // save snapshot to rollback after calling callback
     const snapshot = await ethers.provider.send('evm_snapshot', [])
+    // set new block timestamp
     await ethers.provider.send("evm_setNextBlockTimestamp", [newBlockTimestamp])
+    // mine new block to really shift time
+    await ethers.provider.send("evm_mine", [])
     await callback()
+    // revert snapshot and come back in time to start point
     await ethers.provider.send('evm_revert', [snapshot])
 }
 
