@@ -88,6 +88,50 @@ describe("ShieldToken", async () => {
         })
     })
 
+    describe("getMonths function", async () => {
+        it("should return 0 before release", async () => {
+            const months = await token.getMonths(0)
+            expect(months).to.equal(0)
+        })
+
+        it("should return 1 day after release", async () => {
+            const dayAfterRelease = RELEASE_TIME + 3600 * 24 * 2
+            timeTravel(async () => {
+                const months = await token.getMonths(0)
+                expect(months).to.equal(1)
+            }, dayAfterRelease)
+        })
+
+        it("should return 2 month after release", async () => {
+            const monthAfterRelease = RELEASE_TIME + 3600 * 24 * 30
+            timeTravel(async () => {
+                const months = await token.getMonths(0)
+                expect(months).to.equal(2)
+            }, monthAfterRelease)
+        })
+
+        it("should return 0 after release if lock period", async () => {
+            // 30 days lock period
+            const lockPeriod = 3600 * 24 * 30
+            const dayAfterRelease = RELEASE_TIME + 3600 * 24
+            timeTravel(async () => {
+                const months = await token.getMonths(lockPeriod)
+                expect(months).to.equal(0)
+            }, dayAfterRelease)
+        })
+
+        it("should return 1 month after release if lock period", async () => {
+            // 30 days lock period
+            const lockPeriod = 3600 * 24 * 30
+            const dayAfterRelease = RELEASE_TIME + 3600 * 24
+            timeTravel(async () => {
+                const months = await token.getMonths(lockPeriod)
+                expect(months).to.equal(0)
+            }, dayAfterRelease)
+        })
+    })
+
+
     describe("Vesting", async () => {
         beforeEach(async () => {
             Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
