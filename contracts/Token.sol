@@ -9,14 +9,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
         uint totalAmount;
         uint monthlyAmount;
         uint initialAmount;
-        uint lockPeriod;
+        uint lockDaysPeriod;
         bool scheduled;
     }
 
     struct VestingType {
         uint monthlyRate;
         uint initialRate;
-        uint lockPeriod;
+        uint lockDaysPeriod;
     }
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
@@ -34,22 +34,28 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
-        // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12, 5, 30 days));
-        // Private - 10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18, 10, 0));
-        // Public - 0 Days 100 Percent
-        vestingTypes.push(VestingType(100, 100, 0));
+        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
+        vestingTypes.push(VestingType(12, 5, 1 * 30 days));
+        // Private:	10% at listing, then equal parts of 18% over total of 6 months
+        vestingTypes.push(VestingType(18, 10, 0 * 30 days));
+        // Public:	100% at listing
+        vestingTypes.push(VestingType(100, 100, 0 * 30 days));
+        // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
+        vestingTypes.push(VestingType(4, 4, 1 * 30 days));
+        // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
+        vestingTypes.push(VestingType(8, 8, 12 * 30 days));
+        // Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
+        vestingTypes.push(VestingType(3, 3, 6 * 30 days));
+        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
+        vestingTypes.push(VestingType(2, 2, 3 * 30 days));
+        // Liquidity provisioning:	100% at listing
+        vestingTypes.push(VestingType(100, 100, 0 * 30 days));
+        // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
+        vestingTypes.push(VestingType(8, 8, 1 * 30 days));
+        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
+        vestingTypes.push(VestingType(2, 2, 1 * 30 days));
 
-        //TODO
-        //Advisors, Partners
-        //Team
-        //Rewards
-        //Development
-        //Marketing
-        //Liquidity provisioning
-        //Liquidity mining
-        //General Reserve
+        //TODO: Rewards ask @Denis
 
     }
 
@@ -67,9 +73,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / (100 * 10 ** 18);
-            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / (100 * 10 ** 18);
-            uint256 afterDay = vestingType.lockPeriod;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100 * 10 ** 18;
+            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100 * 10 ** 18;
+            uint256 afterDay = vestingType.lockDaysPeriod;
 
             addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
         }
@@ -84,7 +90,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         super._mint(account, amount);
     }
 
-    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockPeriod) internal {
+    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
         if (!frozenWallets[wallet].scheduled) {
             super._transfer(msg.sender, wallet, totalAmount);
         }
@@ -95,7 +101,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             totalAmount,
             monthlyAmount,
             initialAmount,
-            lockPeriod,
+            lockDaysPeriod,
             true
         );
 
@@ -103,12 +109,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    // function getTimestamp() external view returns (uint256) {
-    //     return block.timestamp;
-    // }
-
-    function getMonths(uint lockPeriod) public view returns (uint) {
-        uint unlockTime = releaseTime + lockPeriod;
+    function getMonths(uint lockDaysPeriod) public view returns (uint) {
+        uint unlockTime = releaseTime + lockDaysPeriod;
 
         if (block.timestamp < unlockTime) {
             return 0;
@@ -121,9 +123,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function getTransferableAmount(address sender) public view returns (uint256) {
-        uint months = getMonths(frozenWallets[sender].lockPeriod);
-        uint256 monthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
-        uint256 transferableAmount = monthlyTransferableAmount + frozenWallets[sender].initialAmount;
+        uint months = getMonths(frozenWallets[sender].lockDaysPeriod);
+        uint256 totalMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
+        uint256 transferableAmount = totalMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
         if (transferableAmount > frozenWallets[sender].totalAmount) {
             return frozenWallets[sender].totalAmount;
@@ -155,7 +157,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
-
     function getRestAmount(address sender) public view returns (uint256) {
         uint256 transferableAmount = getTransferableAmount(sender);
         return frozenWallets[sender].totalAmount - transferableAmount;
@@ -163,7 +164,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     // Transfer control
     function canTransfer(address sender, uint256 amount) public view returns (bool) {
-        // Control is scheduled wallet
+        // Control only scheduled wallet
         if (!frozenWallets[sender].scheduled) {
             return true;
         }
