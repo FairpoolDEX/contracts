@@ -35,11 +35,11 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         _mint(owner(), getMaxTotalSupply());
 
         // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12 * 10 ** 18, 5 * 10 ** 18, 30 days));
+        vestingTypes.push(VestingType(12, 5, 30 days));
         // Private - 10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18 * 10 ** 18, 10 * 10 ** 18, 0));
+        vestingTypes.push(VestingType(18, 10, 0));
         // Public - 0 Days 100 Percent
-        vestingTypes.push(VestingType(100 * 10 ** 18, 100 * 10 ** 18, 0));
+        vestingTypes.push(VestingType(100, 100, 0));
 
         //TODO
         //Advisors, Partners
@@ -67,8 +67,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100 * 10 ** 18;
-            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate / 100 * 10 ** 18;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100 * 10 ** 18;
+            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100 * 10 ** 18;
             uint256 afterDay = vestingType.lockPeriod;
 
             addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
