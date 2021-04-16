@@ -28,6 +28,8 @@ async function timeTravel(callback: Function, newBlockTimestamp: number) {
     await callback()
     // revert snapshot and come back in time to start point
     await ethers.provider.send('evm_revert', [snapshot])
+    // mine new block to really shift time
+    await ethers.provider.send("evm_mine", [])
 }
 
 
@@ -35,7 +37,7 @@ describe("ShieldToken", async () => {
     let token: ShieldToken
     beforeEach(async () => {
         const tokenFactory = await ethers.getContractFactory("ShieldToken")
-        expect(RELEASE_TIME > (new Date()).getTime() / 1000).to.equal(true)
+        // expect(RELEASE_TIME > (new Date()).getTime() / 1000).to.equal(true, 'invalid release time')
         token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME])) as unknown as ShieldToken
         await token.deployed()
     })
@@ -46,14 +48,22 @@ describe("ShieldToken", async () => {
         expect(balance).to.equal(await token.totalSupply())
     })
 
+    it("should fall if invalid vestingType passed to addAllocations method", async () => {
+        const [owner, addr1] = await ethers.getSigners()
+        const invalidVestingTypeIndex = 999
+        await expect(
+            token.addAllocations([addr1.address], [toTokenAmount("10")], invalidVestingTypeIndex)
+        ).to.be.revertedWith("Invalid vestingTypeIndex")
+    })
+
     describe("Release time", async () => {
 
-        it('should have correct release time after deploy', async () => {
+        it("should have correct release time after deploy", async () => {
             const releaseTime = await token.releaseTime()
             expect(releaseTime).to.equal(RELEASE_TIME)
         })
 
-        it('should be able to change release time', async () => {
+        it("should be able to change release time", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
             await token.setReleaseTime(newReleaseTime)
 
@@ -61,7 +71,7 @@ describe("ShieldToken", async () => {
             expect(releaseTime).to.equal(newReleaseTime)
         })
 
-        it('shouldn\'t be able to change release time by non owner', async () => {
+        it("shouldn't be able to change release time by non owner", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
             const [owner, nonOwner] = await ethers.getSigners()
             await expect(
@@ -69,14 +79,14 @@ describe("ShieldToken", async () => {
             ).to.be.revertedWith("caller is not the owner")
         })
 
-        it('shouldn\'t be able to change release time from past', async () => {
+        it("shouldn't be able to change release time from past", async () => {
             const badReleaseTime = Math.floor(new Date().getTime() / 1000) - 3600
             await expect(
                 token.setReleaseTime(badReleaseTime)
             ).to.be.revertedWith("Release time should be in future")
         })
 
-        it('shouldn\'t be able to change release time after release', async () => {
+        it("shouldn't be able to change release time after release", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
             const newBlockTimestamp = RELEASE_TIME + 3600
             timeTravel(async () => {
@@ -95,7 +105,7 @@ describe("ShieldToken", async () => {
         })
 
         it("should return 1 day after release", async () => {
-            const dayAfterRelease = RELEASE_TIME + 3600 * 24 * 2
+            const dayAfterRelease = RELEASE_TIME + 3600 * 24
             timeTravel(async () => {
                 const months = await token.getMonths(0)
                 expect(months).to.equal(1)
@@ -162,7 +172,7 @@ describe("ShieldToken", async () => {
             })
         })
 
-        it("frozen wallets should can't transfer money", async () => {
+        it("shouldn't transfer from frozen wallets", async () => {
             const [owner] = await ethers.getSigners()
             Object.values(ALLOCATIONS).forEach(async allocation => {
                 Object.entries(allocation).forEach(async ([address, amount]) => {
@@ -176,21 +186,20 @@ describe("ShieldToken", async () => {
             })
         })
 
-        // it('not frozen wallets should can transfer', async () => {
-        //   const [owner, receiver] = await ethers.getSigners()
-        //   const amount = toTokenAmount("10")
+        it("should transfer tokens from not frozen wallets", async () => {
+          const [owner, receiver] = await ethers.getSigners()
+          const amount = toTokenAmount("10")
 
-        //   await token.transfer(receiver.address, amount)
+          await token.transfer(receiver.address, amount)
 
-        //   const canTransfer = await token.canTransfer(receiver.address, amount)
-        //   expect(canTransfer).to.equal(true)
+          const canTransfer = await token.canTransfer(receiver.address, amount)
+          expect(canTransfer).to.equal(true)
 
-        //   const receiverToken = await token.connect(receiver)
-        //   await token.approve(receiver.address, amount)
-        //   // await token.transferFrom(receiver.address, owner.address, amount)
-        // })
+          const receiverToken = await token.connect(receiver)
+          await receiverToken.transfer(owner.address, amount)
+        })
 
-        it("should be able to transfer money after lock period time", async () => {
+        it("should transfer tokens from frozenWallet after westing period ends", async () => {
             const [owner] = await ethers.getSigners()
             const FiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
             timeTravel(async () => {
@@ -206,5 +215,18 @@ describe("ShieldToken", async () => {
             }, FiveYearsAfterRelease)
         })
 
+        // it("should transfer all tokens after release if initial amount is 100", async () => {
+        //     const publicAllocation = ALLOCATIONS["2"]
+        //     const minuteAfterRelease = RELEASE_TIME + 60
+        //     timeTravel(async () => {
+        //         Object.entries(publicAllocation).forEach(async ([address, amount]) => {
+        //             const transferableAmount = await token.getTransferableAmount(address)
+        //             console.log(transferableAmount + ', ' + amount)
+        //             // expect(1).to.equal(1)
+        //             const canTransfer = await token.canTransfer(address, amount)
+        //             expect(canTransfer).to.equal(true)
+        //         })
+        //     }, minuteAfterRelease)
+        // })
     })
 })
