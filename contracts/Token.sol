@@ -37,9 +37,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
         vestingTypes.push(VestingType(12, 5, 1 * 30 days));
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18, 10, 0 * 30 days));
+        vestingTypes.push(VestingType(18, 10, 0));
         // Public:	100% at listing
-        vestingTypes.push(VestingType(100, 100, 0 * 30 days));
+        vestingTypes.push(VestingType(100, 100, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
         vestingTypes.push(VestingType(4, 4, 1 * 30 days));
         // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
@@ -49,7 +49,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
         vestingTypes.push(VestingType(2, 2, 3 * 30 days));
         // Liquidity provisioning:	100% at listing
-        vestingTypes.push(VestingType(100, 100, 0 * 30 days));
+        vestingTypes.push(VestingType(100, 100, 0));
         // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
         vestingTypes.push(VestingType(8, 8, 1 * 30 days));
         // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
