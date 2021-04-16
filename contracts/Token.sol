@@ -103,10 +103,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    // function getTimestamp() external view returns (uint256) {
-    //     return block.timestamp;
-    // }
-
     function getMonths(uint lockPeriod) public view returns (uint) {
         uint unlockTime = releaseTime + lockPeriod;
 
