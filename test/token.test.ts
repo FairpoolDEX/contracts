@@ -222,12 +222,17 @@ describe("ShieldToken", async () => {
         })
 
         it("should no transfer before lockup period is over", async () => {
+            const [owner] = await ethers.getSigners()
             const privateAllocation = ALLOCATIONS["0"]
             const minuteAfterRelease = RELEASE_TIME + 60
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(privateAllocation)) {
                     const transferableAmount = await token.getTransferableAmount(address)
                     expect(transferableAmount).to.equal(0)
+
+                    await expect(
+                        token.transferFrom(address, owner.address, toTokenAmount(amount))
+                    ).to.be.revertedWith("Wait for vesting day!")
                 }
             }, minuteAfterRelease)
         })
