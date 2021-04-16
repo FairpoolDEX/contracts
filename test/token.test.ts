@@ -199,23 +199,23 @@ describe("ShieldToken", async () => {
           await receiverToken.transfer(owner.address, amount)
         })
 
-        it("should transfer tokens from frozenWallet after westing period ends", async () => {
-            const [owner] = await ethers.getSigners()
-            const FiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
-            timeTravel(async () => {
-                Object.values(ALLOCATIONS).forEach(async allocation => {
-                    Object.entries(allocation).forEach(async ([address, amount]) => {
+        // it("should transfer tokens from frozenWallet after westing period ends", async () => {
+        //     const [owner] = await ethers.getSigners()
+        //     const FiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
+        //     timeTravel(async () => {
+        //         Object.values(ALLOCATIONS).forEach(async allocation => {
+        //             Object.entries(allocation).forEach(async ([address, amount]) => {
 
-                        const canTransfer = await token.canTransfer(address, amount)
-                        expect(canTransfer).to.equal(true)
+        //                 const canTransfer = await token.canTransfer(address, amount)
+        //                 expect(canTransfer).to.equal(true)
 
-                        await token.transferFrom(address, owner.address, amount)
-                    })
-                })
-            }, FiveYearsAfterRelease)
-        })
+        //                 await token.transferFrom(address, owner.address, amount)
+        //             })
+        //         })
+        //     }, FiveYearsAfterRelease)
+        // })
 
-        // it("should transfer all tokens after release if initial amount is 100", async () => {
+        // it("should transfer all tokens after release if initial amount is 100%", async () => {
         //     const publicAllocation = ALLOCATIONS["2"]
         //     const minuteAfterRelease = RELEASE_TIME + 60
         //     timeTravel(async () => {
@@ -228,5 +228,17 @@ describe("ShieldToken", async () => {
         //         })
         //     }, minuteAfterRelease)
         // })
+
+        it("should XXX", async () => {
+            const privateAllocation = ALLOCATIONS["1"]
+            const minuteAfterRelease = RELEASE_TIME + 60
+            timeTravel(async () => {
+                Object.entries(privateAllocation).forEach(async ([address, amount]) => {
+                    // const initialAmount = amount * 20 / 100
+                    const canTransfer = await token.canTransfer(address, amount)
+                    expect(canTransfer).to.equal(true)
+                })
+            }, minuteAfterRelease)
+        })
     })
 })
