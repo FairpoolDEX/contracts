@@ -4,24 +4,24 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-struct FrozenWallet {
-    address wallet;
-    uint totalAmount;
-    uint monthlyAmount;
-    uint initialAmount;
-    uint lockPeriod;
-    bool scheduled;
-}
+    struct FrozenWallet {
+        address wallet;
+        uint totalAmount;
+        uint monthlyAmount;
+        uint initialAmount;
+        uint lockPeriod;
+        bool scheduled;
+    }
 
-struct VestingType {
-    uint monthlyRate;
-    uint initialRate;
-    uint lockPeriod;
-    bool vesting;
-}
+    struct VestingType {
+        uint monthlyRate;
+        uint initialRate;
+        uint lockPeriod;
+        bool vesting;
+    }
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
-    mapping (address => FrozenWallet) public frozenWallets;
+    mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
@@ -32,7 +32,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         setReleaseTime(_releaseTime);
 
-	    // Mint All TotalSupply in the Account OwnerShip
+        // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
 
         // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
@@ -53,14 +53,14 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         //General Reserve
 
         //legacy:
-//        vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
-//        vestingTypes.push(VestingType(1660000000000000000, 0, 180 days, 0, true)); // 180 Days 1.66 Percent
-//        vestingTypes.push(VestingType(4160000000000000000, 0, 360 days, 0, true)); // 360 Days 4.16 Percent
-//        vestingTypes.push(VestingType(4160000000000000000, 0, 30 days, 0, true)); // 30 Days 4.16 Percent
-//        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true)); // 0 Days 100 Percent
-//        vestingTypes.push(VestingType(11110000000000000000, 0, 30 days, 0, true)); // 30 Days 11.11 Percent
-//        vestingTypes.push(VestingType(15000000000000000000, 10000000000000000000, 0, 1, true)); // 0 Days 10 initial 15 monthly Percent
-//        vestingTypes.push(VestingType(25000000000000000000, 25000000000000000000, 0, 1, true)); // 0 Days 25 initial 25 monthly Percent
+        //        vestingTypes.push(VestingType(1660000000000000000, 0, 30 days, 0, true)); // 30 Days 1.66 Percent
+        //        vestingTypes.push(VestingType(1660000000000000000, 0, 180 days, 0, true)); // 180 Days 1.66 Percent
+        //        vestingTypes.push(VestingType(4160000000000000000, 0, 360 days, 0, true)); // 360 Days 4.16 Percent
+        //        vestingTypes.push(VestingType(4160000000000000000, 0, 30 days, 0, true)); // 30 Days 4.16 Percent
+        //        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 0, 1, true)); // 0 Days 100 Percent
+        //        vestingTypes.push(VestingType(11110000000000000000, 0, 30 days, 0, true)); // 30 Days 11.11 Percent
+        //        vestingTypes.push(VestingType(15000000000000000000, 10000000000000000000, 0, 1, true)); // 0 Days 10 initial 15 monthly Percent
+        //        vestingTypes.push(VestingType(25000000000000000000, 25000000000000000000, 0, 1, true)); // 0 Days 25 initial 25 monthly Percent
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
@@ -74,7 +74,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
         uint addressesLength = addresses.length;
 
-        for(uint i = 0; i < addressesLength; i++) {
+        for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
@@ -101,12 +101,12 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         // Create frozen wallets
         FrozenWallet memory frozenWallet = FrozenWallet(
-            wallet,
-            totalAmount,
-            monthlyAmount,
-            initialAmount,
-            lockPeriod,
-            true,
+        wallet,
+        totalAmount,
+        monthlyAmount,
+        initialAmount,
+        lockPeriod,
+        true,
         );
 
         // Add wallet to frozen wallets
@@ -207,7 +207,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = _msgSender().call{ value: amount }("");
+        (bool success,) = _msgSender().call{value : amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
