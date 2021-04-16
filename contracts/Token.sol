@@ -109,6 +109,10 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
+    // this function returns upper rounded amount of monts.
+    // 0 -  locked
+    // 1 - unlock initial amount (vesting not available yet)
+    // x... - months since lockup period is over. (vesting months == x - 1)
     function getMonths(uint256 lockDaysPeriod) public view returns (uint) {
         uint unlockTime = releaseTime + lockDaysPeriod;
 
@@ -124,7 +128,13 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function getTransferableAmount(address sender) public view returns (uint256) {
         uint256 months = getMonths(frozenWallets[sender].lockDaysPeriod);
-        uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
+
+        // lockup period
+        if (months == 0) {
+            return 0;
+        }
+
+        uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (months - 1);
         uint256 totalTransferableAmount = sumMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
         if (totalTransferableAmount > frozenWallets[sender].totalAmount) {
