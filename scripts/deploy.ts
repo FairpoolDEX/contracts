@@ -10,7 +10,7 @@ async function main() {
   console.log("Token address:", token.address) // eslint-disable-line no-console
 
   // add allocations
-  Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+  for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
     const addresses = Object.keys(allocation)
     const amounts = Object.values(allocation)
     await token.addAllocations(addresses, amounts, vestingTypeIndex)

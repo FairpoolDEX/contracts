@@ -29,7 +29,6 @@ async function timeTravel(callback: Function, newBlockTimestamp: number) {
     // revert snapshot and come back in time to start point
     await ethers.provider.send('evm_revert', [snapshot])
     // mine new block to really shift time
-    await ethers.provider.send("evm_mine", [])
 }
 
 
@@ -89,7 +88,7 @@ describe("ShieldToken", async () => {
         it("shouldn't be able to change release time after release", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
             const newBlockTimestamp = RELEASE_TIME + 3600
-            timeTravel(async () => {
+            await timeTravel(async () => {
                 await expect(
                     token.setReleaseTime(newReleaseTime)
                 ).to.be.revertedWith("Can't change release time after release")
@@ -106,7 +105,7 @@ describe("ShieldToken", async () => {
 
         it("should return 1 day after release", async () => {
             const dayAfterRelease = RELEASE_TIME + 3600 * 24
-            timeTravel(async () => {
+            await timeTravel(async () => {
                 const months = await token.getMonths(0)
                 expect(months).to.equal(1)
             }, dayAfterRelease)
@@ -114,7 +113,7 @@ describe("ShieldToken", async () => {
 
         it("should return 2 month after release", async () => {
             const monthAfterRelease = RELEASE_TIME + 3600 * 24 * 30
-            timeTravel(async () => {
+            await timeTravel(async () => {
                 const months = await token.getMonths(0)
                 expect(months).to.equal(2)
             }, monthAfterRelease)
@@ -124,7 +123,7 @@ describe("ShieldToken", async () => {
             // 30 days lock period
             const lockPeriod = 3600 * 24 * 30
             const dayAfterRelease = RELEASE_TIME + 3600 * 24
-            timeTravel(async () => {
+            await timeTravel(async () => {
                 const months = await token.getMonths(lockPeriod)
                 expect(months).to.equal(0)
             }, dayAfterRelease)
@@ -134,7 +133,7 @@ describe("ShieldToken", async () => {
             // 30 days lock period
             const lockPeriod = 3600 * 24 * 30
             const dayAfterRelease = RELEASE_TIME + 3600 * 24
-            timeTravel(async () => {
+            await timeTravel(async () => {
                 const months = await token.getMonths(lockPeriod)
                 expect(months).to.equal(0)
             }, dayAfterRelease)
@@ -144,46 +143,46 @@ describe("ShieldToken", async () => {
 
     describe("Vesting", async () => {
         beforeEach(async () => {
-            Object.entries(ALLOCATIONS).forEach(async ([vestingTypeIndex, allocation]) => {
+            for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
                 const addresses = Object.keys(allocation)
                 const amounts = Object.values(allocation)
 
                 await token.addAllocations(addresses, amounts, vestingTypeIndex)
-            })
+            }
         })
 
         it("should have scheduled frozen wallets", async () => {
-            Object.values(ALLOCATIONS).forEach(async allocation => {
-                Object.entries(allocation).forEach(async ([address, amount]) => {
+            for (const allocation of Object.values(ALLOCATIONS)) {
+                for (const [address, amount] of Object.entries(allocation)) {
                     // check frozen wallet existance
                     const frozenWallet = await token.frozenWallets(address)
                     expect(frozenWallet[5]).to.equal(true)
-                })
-            })
+                }
+            }
         })
 
         it("frozen wallets should have correct balances after adding allocations", async () => {
-            Object.values(ALLOCATIONS).forEach(async allocation => {
-                Object.entries(allocation).forEach(async ([address, amount]) => {
+            for (const allocation of Object.values(ALLOCATIONS)) {
+                for (const [address, amount] of Object.entries(allocation)) {
                     // check balance
                     const balance = await token.balanceOf(address)
                     expect(balance).to.equal(amount)
-                })
-            })
+                }
+            }
         })
 
         it("shouldn't transfer from frozen wallets", async () => {
             const [owner] = await ethers.getSigners()
-            Object.values(ALLOCATIONS).forEach(async allocation => {
-                Object.entries(allocation).forEach(async ([address, amount]) => {
+            for (const allocation of Object.values(ALLOCATIONS)) {
+                for (const [address, amount] of Object.entries(allocation)) {
                     const canTransfer = await token.canTransfer(address, amount)
                     expect(canTransfer).to.equal(false)
 
                     await expect(
                         token.transferFrom(address, owner.address, amount)
                     ).to.be.revertedWith("Wait for vesting day!")
-                })
-            })
+                }
+            }
         })
 
         it("should transfer tokens from not frozen wallets", async () => {
@@ -199,34 +198,49 @@ describe("ShieldToken", async () => {
           await receiverToken.transfer(owner.address, amount)
         })
 
-        it("should transfer tokens from frozenWallet after westing period ends", async () => {
+        it("should transfer tokens from frozenWallet after vesting period ends", async () => {
             const [owner] = await ethers.getSigners()
-            const FiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
-            timeTravel(async () => {
-                Object.values(ALLOCATIONS).forEach(async allocation => {
-                    Object.entries(allocation).forEach(async ([address, amount]) => {
-
+            const fiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
+            await timeTravel(async () => {
+                for (const allocation of Object.values(ALLOCATIONS)) {
+                    for (const [address, amount] of Object.entries(allocation)) {
                         const canTransfer = await token.canTransfer(address, amount)
                         expect(canTransfer).to.equal(true)
-
-                        await token.transferFrom(address, owner.address, amount)
-                    })
-                })
-            }, FiveYearsAfterRelease)
+                    }
+                }
+            }, fiveYearsAfterRelease)
         })
 
-        // it("should transfer all tokens after release if initial amount is 100", async () => {
-        //     const publicAllocation = ALLOCATIONS["2"]
-        //     const minuteAfterRelease = RELEASE_TIME + 60
-        //     timeTravel(async () => {
-        //         Object.entries(publicAllocation).forEach(async ([address, amount]) => {
-        //             const transferableAmount = await token.getTransferableAmount(address)
-        //             console.log(transferableAmount + ', ' + amount)
-        //             // expect(1).to.equal(1)
-        //             const canTransfer = await token.canTransfer(address, amount)
-        //             expect(canTransfer).to.equal(true)
-        //         })
-        //     }, minuteAfterRelease)
-        // })
+        it("should transfer all tokens after release if initial amount is 100%", async () => {
+            const publicAllocation = ALLOCATIONS["2"]
+            const minuteAfterRelease = RELEASE_TIME + 60
+            await timeTravel(async () => {
+                for (const [address, amount] of Object.entries(publicAllocation)) {
+                    const canTransfer = await token.canTransfer(address, amount)
+                    expect(canTransfer).to.equal(true)
+                }
+            }, minuteAfterRelease)
+        })
+
+        it("should transfer only initial amount after release", async () => {
+            const privateAllocation = ALLOCATIONS["1"]
+            const minuteAfterRelease = RELEASE_TIME + 60
+            await timeTravel(async () => {
+                for (const [address, amount] of Object.entries(privateAllocation)) {
+                    const initialAmount = amount * 20 / 100
+
+                    const transferableAmount = await token.getTransferableAmount(address)
+                    const restAmount = await token.getRestAmount(address)
+                    console.log(`${address}: transferableAmount ${transferableAmount} /  ${amount}`)
+                    console.log(`${address}: restAmount ${restAmount} /  ${amount}`)
+
+                    let canTransfer = await token.canTransfer(address, initialAmount)
+                    expect(canTransfer).to.equal(true)
+
+                    canTransfer = await token.canTransfer(address, initialAmount + 1)
+                    expect(canTransfer).to.equal(false)
+                }
+            }, minuteAfterRelease)
+        })
     })
 })
