@@ -37,7 +37,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
         vestingTypes.push(VestingType(12, 5, 1 * 30 days));
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18, 10, 0));
+        vestingTypes.push(VestingType(18, 10, 1 * 30 days));
         // Public:	100% at listing
         vestingTypes.push(VestingType(100, 100, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
