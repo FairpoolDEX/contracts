@@ -28,13 +28,11 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     uint256 public releaseTime;
 
     function initialize(uint256 _releaseTime) public initializer {
-        require(_releaseTime > block.timestamp, "Release time should be in future");
-
         __Ownable_init();
         __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
-        releaseTime = _releaseTime;
+        setReleaseTime(_releaseTime);
 
 	    // Mint All TotalSupply in the Account OwnerShip
         _mint(owner(), getMaxTotalSupply());
@@ -223,5 +221,13 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         } else {
             _unpause();
         }
+    }
+
+    function setReleaseTime(uint256 _releaseTime) public onlyOwner {
+        if (releaseTime > 0) {
+            require(releaseTime > block.timestamp, "Can't change release time after release");
+        }
+        require(_releaseTime > block.timestamp, "Release time should be in future");
+        releaseTime = _releaseTime;
     }
 }
