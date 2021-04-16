@@ -73,8 +73,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
             uint256 totalAmount = totalAmounts[i];
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100 * 10 ** 18;
-            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100 * 10 ** 18;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
+            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 afterDay = vestingType.lockDaysPeriod;
 
             addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
