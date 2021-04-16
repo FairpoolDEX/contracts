@@ -6,17 +6,17 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
     struct FrozenWallet {
         address wallet;
-        uint totalAmount;
-        uint monthlyAmount;
-        uint initialAmount;
-        uint lockDaysPeriod;
+        uint256 totalAmount;
+        uint256 monthlyAmount;
+        uint256 initialAmount;
+        uint256 lockDaysPeriod;
         bool scheduled;
     }
 
     struct VestingType {
-        uint monthlyRate;
-        uint initialRate;
-        uint lockDaysPeriod;
+        uint256 monthlyRate;
+        uint256 initialRate;
+        uint256 lockDaysPeriod;
     }
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
@@ -109,7 +109,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    function getMonths(uint lockDaysPeriod) public view returns (uint) {
+    function getMonths(uint256 lockDaysPeriod) public view returns (uint) {
         uint unlockTime = releaseTime + lockDaysPeriod;
 
         if (block.timestamp < unlockTime) {
