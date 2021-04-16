@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-etherscan"
 import "hardhat-watcher"
 import "hardhat-typechain"
 import "hardhat-deploy"
+import 'hardhat-deploy-ethers'
 import "solidity-coverage"
 import "@openzeppelin/hardhat-upgrades"
 import { config as dotEnvConfig } from "dotenv"
@@ -45,6 +46,9 @@ const config: HardhatUserConfig = {
         { command: "test", params: { noCompile: true, testFiles: ["testfile.ts"] } },
       ],
     },
+  },
+  namedAccounts: {
+    deployer: 0,
   },
 }
 
