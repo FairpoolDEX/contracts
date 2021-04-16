@@ -9,16 +9,14 @@ struct FrozenWallet {
     uint totalAmount;
     uint monthlyAmount;
     uint initialAmount;
-    uint afterDays;
+    uint lockPeriod;
     bool scheduled;
-    uint monthDelay;
 }
 
 struct VestingType {
     uint monthlyRate;
     uint initialRate;
-    uint afterDays;
-    uint monthDelay;
+    uint lockPeriod;
     bool vesting;
 }
 
@@ -38,7 +36,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         _mint(owner(), getMaxTotalSupply());
 
         // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12000000000000000000, 5000000000000000000, 9 * 30 days, 30 days, true));
+        vestingTypes.push(VestingType(12 * 10 ** 18, 5 * 10 ** 18, 9 * 30 days, 30 days, true));
         // Private - 10% at listing, then equal parts of 18% over total of 6 months
         vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 6 * 30 days, 0, true));
         // Public - 0 Days 100 Percent
@@ -81,10 +79,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             uint256 totalAmount = totalAmounts[i];
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 100000000000000000000;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate / 100000000000000000000;
-            uint256 afterDay = vestingType.afterDays;
-            uint256 monthDelay = vestingType.monthDelay;
+            uint256 afterDay = vestingType.lockPeriod;
 
-            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay, monthDelay);
+            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
         }
 
         return true;
@@ -97,7 +94,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         super._mint(account, amount);
     }
 
-    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint afterDays, uint monthDelay) internal {
+    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockPeriod) internal {
         if (!frozenWallets[wallet].scheduled) {
             super._transfer(msg.sender, wallet, totalAmount);
         }
@@ -108,9 +105,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             totalAmount,
             monthlyAmount,
             initialAmount,
-            afterDays,
+            lockPeriod,
             true,
-            monthDelay
         );
 
         // Add wallet to frozen wallets
@@ -121,15 +117,15 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     //     return block.timestamp;
     // }
 
-    function getMonths(uint afterDays, uint monthDelay) public view returns (uint) {
-        uint time = releaseTime + afterDays;
+    function getMonths(uint lockPeriod) public view returns (uint) {
+        uint unlockTime = releaseTime + lockPeriod;
 
-        if (block.timestamp < time) {
+        if (block.timestamp < unlockTime) {
             return 0;
         }
 
-        uint diff = block.timestamp - time;
-        uint months = diff / 30 days + 1 - monthDelay;
+        uint diff = block.timestamp - unlockTime;
+        uint months = diff / 30 days + 1;
 
         return months;
     }
@@ -142,7 +138,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function getTransferableAmount(address sender) public view returns (uint256) {
-        uint months = getMonths(frozenWallets[sender].afterDays, frozenWallets[sender].monthDelay);
+        uint months = getMonths(frozenWallets[sender].lockPeriod);
         uint256 monthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
         uint256 transferableAmount = monthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
