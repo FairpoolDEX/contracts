@@ -118,8 +118,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function getTransferableAmount(address sender) public view returns (uint256) {
         uint months = getMonths(frozenWallets[sender].lockPeriod);
-        uint256 monthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
-        uint256 transferableAmount = monthlyTransferableAmount + frozenWallets[sender].initialAmount;
+        uint256 totalMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * months;
+        uint256 transferableAmount = totalMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
         if (transferableAmount > frozenWallets[sender].totalAmount) {
             return frozenWallets[sender].totalAmount;
@@ -151,7 +151,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
-
     function getRestAmount(address sender) public view returns (uint256) {
         uint256 transferableAmount = getTransferableAmount(sender);
         return frozenWallets[sender].totalAmount - transferableAmount;
@@ -159,7 +158,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     // Transfer control
     function canTransfer(address sender, uint256 amount) public view returns (bool) {
-        // Control is scheduled wallet
+        // Control only scheduled wallet
         if (!frozenWallets[sender].scheduled) {
             return true;
         }
