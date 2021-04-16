@@ -35,11 +35,11 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         _mint(owner(), getMaxTotalSupply());
 
         // Seed - Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12 * 10 ** 18, 5 * 10 ** 18, 30 days, true));
+        vestingTypes.push(VestingType(12 * 10 ** 18, 5 * 10 ** 18, 30 days));
         // Private - 10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 0, true));
+        vestingTypes.push(VestingType(18000000000000000000, 10000000000000000000, 0));
         // Public - 0 Days 100 Percent
-        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 1, true));
+        vestingTypes.push(VestingType(100000000000000000000, 100000000000000000000, 1));
 
         //TODO
         //Advisors, Partners
@@ -59,7 +59,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         require(addresses.length == totalAmounts.length, "Address and totalAmounts length must be same");
-        require(vestingTypeIndexvesting < vestingTypes.length, "Invalid vestingTypeIndex");
+        require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
         uint addressesLength = addresses.length;
@@ -175,7 +175,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         uint256 restAmount = getRestAmount(sender);
 
-        if ( block.timestamp < releaseTime || (balance - amount) < restAmount) {
+        if (block.timestamp < releaseTime || (balance - amount) < restAmount) {
             return false;
         }
         return true;
