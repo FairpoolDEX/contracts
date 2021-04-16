@@ -16,8 +16,8 @@ export const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
   },
 // Public:	100% at listing
   '2': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
+    '0x379e7d7f64784f80888dcda6909fb1ef057412c6': 100,
+    '0xbbe9c7eeb523187bf6a53396b21ce985caa3f796': 20,
   },
 // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
   '3': {
