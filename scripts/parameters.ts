@@ -19,39 +19,39 @@ export const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
     '0x379e7d7f64784f80888dcda6909fb1ef057412c6': 100,
     '0xbbe9c7eeb523187bf6a53396b21ce985caa3f796': 20,
   },
-// Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
-  '3': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
-  '4': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
-  '5': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
-  '6': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// Liquidity provisioning:	100% at listing
-  '7': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
-  '8': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
-// General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
-  '9': {
-    '0xdeadbeef': 77,
-    '0x1337': 42,
-  },
+// // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
+//   '3': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
+//   '4': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
+//   '5': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
+//   '6': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // Liquidity provisioning:	100% at listing
+//   '7': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
+//   '8': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
+// // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
+//   '9': {
+//     '0xdeadbeef': 77,
+//     '0x1337': 42,
+//   },
 }
