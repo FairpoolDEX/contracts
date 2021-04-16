@@ -17,7 +17,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
         uint monthlyRate;
         uint initialRate;
         uint lockPeriod;
-        bool vesting;
     }
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
@@ -60,7 +59,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         require(addresses.length == totalAmounts.length, "Address and totalAmounts length must be same");
-        require(vestingTypes[vestingTypeIndex].vesting, "Vesting type isn't found");
+        require(vestingTypeIndexvesting < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
         uint addressesLength = addresses.length;
