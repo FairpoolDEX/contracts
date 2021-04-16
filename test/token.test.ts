@@ -98,7 +98,7 @@ describe("ShieldToken", async () => {
         Object.entries(allocation).forEach(async ([address, amount]) => {
           // check frozen wallet existance
           const frozenWallet = await token.frozenWallets(address)
-          expect(frozenWallet[6]).to.equal(true)
+          expect(frozenWallet[5]).to.equal(true)
         })
       })
     })
