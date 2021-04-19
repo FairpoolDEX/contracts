@@ -34,7 +34,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         setReleaseTime(_releaseTime);
 
-        // Mint All TotalSupply in the Account OwnerShip
+        // Mint totalSupply to the owner
         _mint(owner(), getMaxTotalSupply());
 
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
