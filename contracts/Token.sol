@@ -56,9 +56,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(8, 8, 0));
         // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
         vestingTypes.push(VestingType(2, 2, 6 * 30 days));
-
-        //TODO: Rewards ask @Denis
-
+        // Rewards:	100% at listing
+        vestingTypes.push(VestingType(100, 100, 0));
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
