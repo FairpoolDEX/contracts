@@ -137,7 +137,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return months;
     }
 
-    function getTransferableAmount(address sender) public view returns (uint256) {
+    function getUnlockedAmount(address sender) public view returns (uint256) {
         uint256 months = getMonths(frozenWallets[sender].lockDaysPeriod);
 
         // lockup period
@@ -177,9 +177,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
-    function getRestAmount(address sender) public view returns (uint256) {
-        uint256 transferableAmount = getTransferableAmount(sender);
-        return frozenWallets[sender].totalAmount - transferableAmount;
+    function getLockedAmount(address sender) public view returns (uint256) {
+        uint256 unlockedAmount = getUnlockedAmount(sender);
+        return frozenWallets[sender].totalAmount - unlockedAmount;
     }
 
     // Transfer control
@@ -194,9 +194,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             return true;
         }
 
-        uint256 restAmount = getRestAmount(sender);
+        uint256 lockedAmount = getLockedAmount(sender);
 
-        if (block.timestamp < releaseTime || (balance - amount) < restAmount) {
+        if (block.timestamp < releaseTime || (balance - amount) < lockedAmount) {
             return false;
         }
         return true;
