@@ -47,7 +47,7 @@ describe("ShieldToken", async () => {
         expect(balance).to.equal(await token.totalSupply())
     })
 
-    it("should fall if invalid vestingType passed to addAllocations method", async () => {
+    it("should fail if invalid vestingType is passed to addAllocations method", async () => {
         const [owner, addr1] = await ethers.getSigners()
         const invalidVestingTypeIndex = 999
         await expect(
@@ -193,7 +193,7 @@ describe("ShieldToken", async () => {
             }
         })
 
-        it("should transfer tokens from not frozen wallets", async () => {
+        it("should transfer tokens from non-frozen wallets", async () => {
           const [owner, receiver] = await ethers.getSigners()
           const amount = toTokenAmount("10")
 
@@ -230,12 +230,12 @@ describe("ShieldToken", async () => {
             }, minuteAfterRelease)
         })
 
-        it("should no transfer before lockup period is over", async () => {
+        it("should not transfer before lockup period is over", async () => {
             const [owner] = await ethers.getSigners()
-            const privateAllocation = ALLOCATIONS["0"]
+            const seedAllocation = ALLOCATIONS["0"]
             const minuteAfterRelease = RELEASE_TIME + 60
             await timeTravel(async () => {
-                for (const [address, amount] of Object.entries(privateAllocation)) {
+                for (const [address, amount] of Object.entries(seedAllocation)) {
                     const transferableAmount = await token.getTransferableAmount(address)
                     expect(transferableAmount).to.equal(0)
 
@@ -247,10 +247,10 @@ describe("ShieldToken", async () => {
         })
 
         it("should transfer only initial amount after lockup period", async () => {
-            const privateAllocation = ALLOCATIONS["0"]
+            const seedAllocation = ALLOCATIONS["0"]
             const afterLockupPeriod = RELEASE_TIME + 3600 * 24 * 30
             await timeTravel(async () => {
-                for (const [address, amount] of Object.entries(privateAllocation)) {
+                for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
                     const transferableAmount = await token.getTransferableAmount(address)
                     expect(transferableAmount).to.equal(initialAmount)
@@ -259,11 +259,11 @@ describe("ShieldToken", async () => {
         })
 
         it("should transfer initial + monthly amounts month after lockup period", async () => {
-            const privateAllocation = ALLOCATIONS["0"]
+            const seedAllocation = ALLOCATIONS["0"]
             const afterLockupPeriod = RELEASE_TIME + 3600 * 24 * 30
             const monthAfterLockupPeriod = afterLockupPeriod + 3600 * 24 * 30
             await timeTravel(async () => {
-                for (const [address, amount] of Object.entries(privateAllocation)) {
+                for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
                     const monthlyAmount = toTokenAmount(amount * 12 / 100)
                     const transferableAmount = await token.getTransferableAmount(address)
@@ -271,6 +271,8 @@ describe("ShieldToken", async () => {
                 }
             }, monthAfterLockupPeriod)
         })
+
+        // TODO: test that transferableAmount decreases after the user actually executes the transfer
 
         // TODO: test transferMany function
     })

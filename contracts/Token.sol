@@ -4,12 +4,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+// FIXME: Solidity warning
+// FIXME: Indentation
     struct FrozenWallet {
         address wallet;
         uint256 totalAmount;
         uint256 monthlyAmount;
         uint256 initialAmount;
         uint256 lockDaysPeriod;
+        // TODO: why do we need this variable?
         bool scheduled;
     }
 
@@ -23,6 +26,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // one wallet can belongs only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
+    // TODO: Do we need releaseTime? Looks like it must be 0 for us, since we need to send the tokens to Ignition wallet right after deploying the contract
     uint256 public releaseTime;
 
     function initialize(uint256 _releaseTime) public initializer {
@@ -32,7 +36,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         setReleaseTime(_releaseTime);
 
-        // Mint All TotalSupply in the Account OwnerShip
+        // Mint totalSupply to the owner
         _mint(owner(), getMaxTotalSupply());
 
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
@@ -55,9 +59,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(8, 8, 0));
         // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
         vestingTypes.push(VestingType(2, 2, 6 * 30 days));
-
-        //TODO: Rewards ask @Denis
-
+        // Rewards:	100% at listing
+        vestingTypes.push(VestingType(100, 100, 0));
     }
 
     function getMaxTotalSupply() public pure returns (uint256) {
@@ -72,22 +75,27 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
 
-        for (uint i = 0; i < addressesLength; i++) {
+        for (uint256 i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
+            /** TODO
+             * If vestingType.monthlyRate = 3, then monthlyAmount will have its float part truncated.
+             * That would result in a small fraction of the tokens being unlocked after the vesting is nominally finished
+             * Should we fix it, or should we leave it as wontfix?
+             */
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
-            uint256 afterDay = vestingType.lockDaysPeriod;
+            uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
 
-            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, afterDay);
+            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, lockDaysPeriod);
         }
 
         return true;
     }
 
     function _mint(address account, uint256 amount) internal override {
-        uint totalSupply = super.totalSupply();
+        uint256 totalSupply = super.totalSupply();
         require(getMaxTotalSupply() >= (totalSupply + amount), "Max total supply over");
 
         super._mint(account, amount);
@@ -112,19 +120,19 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    // this function returns upper rounded amount of monts.
-    // 0 -  locked
+    // this function returns upper rounded amount of months.
+    // 0 - locked
     // 1 - unlock initial amount (vesting not available yet)
-    // x... - months since lockup period is over. (vesting months == x - 1)
-    function getMonths(uint256 lockDaysPeriod) public view returns (uint) {
-        uint unlockTime = releaseTime + lockDaysPeriod;
+    // x... - months since lockup period is over (vesting months == x - 1)
+    function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
+        uint256 unlockTime = releaseTime + lockDaysPeriod;
 
         if (block.timestamp < unlockTime) {
             return 0;
         }
 
-        uint diff = block.timestamp - unlockTime;
-        uint months = diff / 30 days + 1;
+        uint256 diff = block.timestamp - unlockTime;
+        uint256 months = diff / 30 days + 1;
 
         return months;
     }
@@ -137,6 +145,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             return 0;
         }
 
+        // TODO: overflow if months becomes too high (wontfix because it would take too long?)
         uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (months - 1);
         uint256 totalTransferableAmount = sumMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
@@ -147,10 +156,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return totalTransferableAmount;
     }
 
-
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
-        uint amountsLength = amounts.length;
-        uint recipientsLength = recipients.length;
+        uint256 amountsLength = amounts.length;
+        uint256 recipientsLength = recipients.length;
 
         require(recipientsLength == amountsLength, "Wrong array length");
 
@@ -177,6 +185,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     // Transfer control
     function canTransfer(address sender, uint256 amount) public view returns (bool) {
+        // TODO: what if `sender` is not in `frozenWallets` (some other person who bought the tokens on Uniswap)? It looks like he won't be able to transfer because of a runtime error
         // Control only scheduled wallet
         if (!frozenWallets[sender].scheduled) {
             return true;
@@ -201,7 +210,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
-    function withdraw(uint amount) public onlyOwner {
+    // TODO: Is this to allow the owner to un-stuck the tokens that were sent into the contract by mistake?
+    function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
