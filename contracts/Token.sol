@@ -20,6 +20,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
     }
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
+    // one wallet can belongs only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
@@ -73,6 +74,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
+
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
@@ -92,9 +94,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
-        if (!frozenWallets[wallet].scheduled) {
-            super._transfer(msg.sender, wallet, totalAmount);
-        }
+        require(!frozenWallets[wallet].scheduled, "Wallet already frozen");
+
+        super._transfer(msg.sender, wallet, totalAmount);
 
         // Create frozen wallets
         FrozenWallet memory frozenWallet = FrozenWallet(

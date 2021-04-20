@@ -150,6 +150,15 @@ describe("ShieldToken", async () => {
             }
         })
 
+        it("should fail if freezing same address at second time ", async () => {
+            const [vestingIndex, allocation] = Object.entries(ALLOCATIONS)[0]
+            const address = Object.keys(allocation)[0]
+            await expect(
+                token.addAllocations([address], [toTokenAmount("100")], vestingIndex)
+            ).to.be.revertedWith("Wallet already frozen")
+
+        })
+
         it("should have scheduled frozen wallets", async () => {
             for (const allocation of Object.values(ALLOCATIONS)) {
                 for (const [address, amount] of Object.entries(allocation)) {
