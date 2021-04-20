@@ -67,15 +67,14 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return 969_163_000 * 10 ** 18;
     }
 
-    function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
-        uint addressesLength = addresses.length;
-
-        require(addressesLength == totalAmounts.length, "Address and totalAmounts length must be same");
+    function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint256 vestingTypeIndex) external payable onlyOwner returns (bool) {
+        require(addresses.length == totalAmounts.length, "Address and totalAmounts length must be same");
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
+        uint256 addressesLength = addresses.length;
 
-        for (uint i = 0; i < addressesLength; i++) {
+        for (uint256 i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
@@ -84,7 +83,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
              * That would result in a small fraction of the tokens being unlocked after the vesting is nominally finished
              * Should we fix it, or should we leave it as wontfix?
              */
-            // TODO: type mismatch: http://joxi.ru/Vrwo9GDs4LOYMr
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
@@ -96,13 +94,13 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function _mint(address account, uint256 amount) internal override {
-        uint totalSupply = super.totalSupply();
+        uint256 totalSupply = super.totalSupply();
         require(getMaxTotalSupply() >= (totalSupply + amount), "Max total supply over");
 
         super._mint(account, amount);
     }
 
-    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
+    function addFrozenWallet(address wallet, uint256 totalAmount, uint256 monthlyAmount, uint256 initialAmount, uint256 lockDaysPeriod) internal {
         // TODO: what if `wallet` key is not in `frozenWallets`?
         if (!frozenWallets[wallet].scheduled) {
             super._transfer(msg.sender, wallet, totalAmount);
@@ -126,15 +124,15 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // 0 - locked
     // 1 - unlock initial amount (vesting not available yet)
     // x... - months since lockup period is over (vesting months == x - 1)
-    function getMonths(uint256 lockDaysPeriod) public view returns (uint) {
-        uint unlockTime = releaseTime + lockDaysPeriod;
+    function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
+        uint256 unlockTime = releaseTime + lockDaysPeriod;
 
         if (block.timestamp < unlockTime) {
             return 0;
         }
 
-        uint diff = block.timestamp - unlockTime;
-        uint months = diff / 30 days + 1;
+        uint256 diff = block.timestamp - unlockTime;
+        uint256 months = diff / 30 days + 1;
 
         return months;
     }
@@ -159,8 +157,8 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
-        uint amountsLength = amounts.length;
-        uint recipientsLength = recipients.length;
+        uint256 amountsLength = amounts.length;
+        uint256 recipientsLength = recipients.length;
 
         require(recipientsLength == amountsLength, "Wrong array length");
 
@@ -213,7 +211,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     // TODO: Is this to allow the owner to un-stuck the tokens that were sent into the contract by mistake?
-    function withdraw(uint amount) public onlyOwner {
+    function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
