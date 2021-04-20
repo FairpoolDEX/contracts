@@ -12,7 +12,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
         uint256 monthlyAmount;
         uint256 initialAmount;
         uint256 lockDaysPeriod;
-        // TODO: why do we need this variable?
         bool scheduled;
     }
 
@@ -26,7 +25,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // one wallet can belongs only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
-    // TODO: Do we need releaseTime? Looks like it must be 0 for us, since we need to send the tokens to Ignition wallet right after deploying the contract
     uint256 public releaseTime;
 
     function initialize(uint256 _releaseTime) public initializer {
@@ -38,6 +36,10 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         // Mint totalSupply to the owner
         _mint(owner(), getMaxTotalSupply());
+
+        // TODO: remove 100 instant vesting
+        // + add tests: after deploy, send tokens from public vesting.
+
 
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
         vestingTypes.push(VestingType(12, 5, 30 days));
@@ -80,10 +82,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
-            /** TODO
-             * If vestingType.monthlyRate = 3, then monthlyAmount will have its float part truncated.
-             * That would result in a small fraction of the tokens being unlocked after the vesting is nominally finished
-             * Should we fix it, or should we leave it as wontfix?
+            /** TODO - fix amounts
              */
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
@@ -146,7 +145,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             return 0;
         }
 
-        // TODO: overflow if months becomes too high (wontfix because it would take too long?)
         uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (months - 1);
         uint256 totalTransferableAmount = sumMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
 
@@ -186,7 +184,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     // Transfer control
     function canTransfer(address sender, uint256 amount) public view returns (bool) {
-        // TODO: what if `sender` is not in `frozenWallets` (some other person who bought the tokens on Uniswap)? It looks like he won't be able to transfer because of a runtime error
         // Control only scheduled wallet
         if (!frozenWallets[sender].scheduled) {
             return true;
@@ -211,7 +208,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
-    // TODO: Is this to allow the owner to un-stuck the tokens that were sent into the contract by mistake?
+    // TODO: extend to any tokens
     function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
