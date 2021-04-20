@@ -64,11 +64,12 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
-        require(addresses.length == totalAmounts.length, "Address and totalAmounts length must be same");
+        uint addressesLength = addresses.length;
+
+        require(addressesLength == totalAmounts.length, "Address and totalAmounts length must be same");
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-        uint addressesLength = addresses.length;
 
         for (uint i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
