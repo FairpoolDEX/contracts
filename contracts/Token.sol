@@ -44,6 +44,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
         vestingTypes.push(VestingType(18, 10, 0));
         // Public:	100% at listing
+        // TODO: 14563107 SHLD to 0x47677e21BCe4d8bd1aF04e1c651b6B29b8eCf1a3 (Ignition wallet address) - move it to distribution script
         vestingTypes.push(VestingType(100, 100, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
         vestingTypes.push(VestingType(4, 4, 30 days));
