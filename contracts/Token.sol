@@ -4,7 +4,7 @@ pragma solidity ^0.8.3;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// FIXME: Solidity warning
+/* mythx-disable SWC-116 */
 struct FrozenWallet {
     address wallet;
     uint256 totalAmount;
