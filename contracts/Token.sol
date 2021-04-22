@@ -3,6 +3,8 @@ pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+
 
 /* mythx-disable SWC-116 */
 struct FrozenWallet {
@@ -27,12 +29,24 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
-    function initialize(uint256 _releaseTime) public initializer {
+    // anti-sniping bot defense
+    uint256 public burnBeforeBlockNumber;
+    bool public burnBeforeBlockNumberDisabled;
+    // Ignition wallet address
+    address ignition;
+    event TransferBurned(address indexed wallet, uint256 amount);
+
+    function initialize(uint256 _releaseTime, address _ignition) public initializer {
         __Ownable_init();
         __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
         setReleaseTime(_releaseTime);
+
+        ignition = _ignition;
+
+        // explicitly set burnBeforeBlockNumberDisabled to false
+        burnBeforeBlockNumberDisabled = false;
 
         // Mint totalSupply to the owner
         _mint(owner(), getMaxTotalSupply());
@@ -41,7 +55,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(12, 5, 30 days));
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
         vestingTypes.push(VestingType(18, 10, 0));
-        // TODO: 14563107 SHLD to 0x47677e21BCe4d8bd1aF04e1c651b6B29b8eCf1a3 (Ignition wallet address) - move it to distribution script
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
         vestingTypes.push(VestingType(4, 4, 30 days));
         // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
@@ -191,19 +204,39 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return true;
     }
 
-    // @override
-    function _beforeTokenTransfer(address sender, address recipient, uint256 amount) internal virtual override {
+    function _beforeTokenTransfer(address sender, address recipient, uint256 amount) internal override {
         require(canTransfer(sender, amount), "Wait for vesting day!");
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
-    // TODO: extend to any tokens
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
+        if (isTransferDisabled()) {
+            // anti-sniping bot defense is on
+            if (_msgSender() == ignition) {
+                // don't burn tokens if sender is Ignition
+                // just disable any token transfers
+                emit TransferBurned(sender, 0);
+            } else {
+                // burn tokens instead of transfering them >:]
+                super._burn(sender, amount);
+                emit TransferBurned(sender, amount);
+            }
+        } else {
+            super._transfer(sender, recipient, amount);
+        }
+    }
+
     function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
         (bool success,) = _msgSender().call{value : amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
+    }
+
+    function withdrawToken(IERC20Upgradeable token, uint256 amount) public onlyOwner {
+        token.approve(msg.sender, amount);
+        token.transfer(msg.sender, amount);
     }
 
     function pause(bool status) public onlyOwner {
@@ -220,5 +253,26 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
         require(_releaseTime > block.timestamp, "Release time should be in future");
         releaseTime = _releaseTime;
+    }
+
+    // anti-sniping bot defense
+
+    function isTransferDisabled() public view returns (bool) {
+        if (_msgSender() == owner()) {
+            // owner always can transfer
+            return false;
+        }
+        return (!burnBeforeBlockNumberDisabled && (block.number < burnBeforeBlockNumber));
+    }
+
+    function disableTransfers(uint256 blocksDuration)  public onlyOwner {
+        require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
+        // require(releaseTime > block.timestamp, "Can't disable transfers after release");
+        burnBeforeBlockNumber = block.number + blocksDuration;
+    }
+
+    function disableBurnBeforeBlockNumber() public onlyOwner {
+        burnBeforeBlockNumber = 0;
+        burnBeforeBlockNumberDisabled = true;
     }
 }
