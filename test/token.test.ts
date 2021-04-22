@@ -207,7 +207,6 @@ describe("ShieldToken", async () => {
         })
 
         it("should transfer tokens from frozenWallet after vesting period ends", async () => {
-            const [owner] = await ethers.getSigners()
             const fiveYearsAfterRelease = RELEASE_TIME + 3600 * 24 * 365 * 5
             await timeTravel(async () => {
                 for (const allocation of Object.values(ALLOCATIONS)) {
@@ -219,16 +218,16 @@ describe("ShieldToken", async () => {
             }, fiveYearsAfterRelease)
         })
 
-        it("should transfer all tokens after release if initial amount is 100%", async () => {
-            const publicAllocation = ALLOCATIONS["2"]
-            const minuteAfterRelease = RELEASE_TIME + 60
-            await timeTravel(async () => {
-                for (const [address, amount] of Object.entries(publicAllocation)) {
-                    const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
-                    expect(canTransfer).to.equal(true)
-                }
-            }, minuteAfterRelease)
-        })
+        // it("should transfer all tokens after release if initial amount is 100%", async () => {
+        //     const publicAllocation = ALLOCATIONS["2"]
+        //     const minuteAfterRelease = RELEASE_TIME + 60
+        //     await timeTravel(async () => {
+        //         for (const [address, amount] of Object.entries(publicAllocation)) {
+        //             const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
+        //             expect(canTransfer).to.equal(true)
+        //         }
+        //     }, minuteAfterRelease)
+        // })
 
         it("should not transfer before lockup period is over", async () => {
             const [owner] = await ethers.getSigners()
@@ -236,7 +235,7 @@ describe("ShieldToken", async () => {
             const minuteAfterRelease = RELEASE_TIME + 60
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
-                    const transferableAmount = await token.getTransferableAmount(address)
+                    const transferableAmount = await token.getUnlockedAmount(address)
                     expect(transferableAmount).to.equal(0)
 
                     await expect(
@@ -252,7 +251,7 @@ describe("ShieldToken", async () => {
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
-                    const transferableAmount = await token.getTransferableAmount(address)
+                    const transferableAmount = await token.getUnlockedAmount(address)
                     expect(transferableAmount).to.equal(initialAmount)
                 }
             }, afterLockupPeriod)
@@ -266,7 +265,7 @@ describe("ShieldToken", async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
                     const monthlyAmount = toTokenAmount(amount * 12 / 100)
-                    const transferableAmount = await token.getTransferableAmount(address)
+                    const transferableAmount = await token.getUnlockedAmount(address)
                     expect(transferableAmount).to.equal(initialAmount.add(monthlyAmount))
                 }
             }, monthAfterLockupPeriod)
@@ -275,5 +274,7 @@ describe("ShieldToken", async () => {
         // TODO: test that transferableAmount decreases after the user actually executes the transfer
 
         // TODO: test transferMany function
+
+        // TODO: after deploy should send tokens from public vesting.
     })
 })

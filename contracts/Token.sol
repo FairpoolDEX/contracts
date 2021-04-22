@@ -37,8 +37,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // Mint totalSupply to the owner
         _mint(owner(), getMaxTotalSupply());
 
-        // TODO: add tests: after deploy, send tokens from public vesting.
-
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
         vestingTypes.push(VestingType(12, 5, 30 days));
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
