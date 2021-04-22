@@ -73,8 +73,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
-            /** TODO - fix amounts
-             */
+            // TODO: fix amounts
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
