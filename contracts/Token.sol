@@ -5,21 +5,21 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Pausable
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // FIXME: Solidity warning
-// FIXME: Indentation
-    struct FrozenWallet {
-        address wallet;
-        uint256 totalAmount;
-        uint256 monthlyAmount;
-        uint256 initialAmount;
-        uint256 lockDaysPeriod;
-        bool scheduled;
-    }
+struct FrozenWallet {
+    address wallet;
+    uint256 totalAmount;
+    uint256 monthlyAmount;
+    uint256 initialAmount;
+    uint256 lockDaysPeriod;
+    bool scheduled;
+}
 
-    struct VestingType {
-        uint256 monthlyRate;
-        uint256 initialRate;
-        uint256 lockDaysPeriod;
-    }
+struct VestingType {
+    uint256 monthlyRate;
+    uint256 initialRate;
+    uint256 lockDaysPeriod;
+}
+
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // one wallet can belongs only to a single vesting type
