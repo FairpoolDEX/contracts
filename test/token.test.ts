@@ -6,6 +6,7 @@ import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
 import {ALLOCATIONS, RELEASE_TIME} from '../scripts/parameters'
+import { TokenClass } from "typescript"
 
 chai.use(solidity)
 const {expect} = chai
@@ -31,29 +32,77 @@ async function timeTravel(callback: Function, newBlockTimestamp: number) {
     // mine new block to really shift time
 }
 
+async function skipBlocks(amount: number) {
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < amount; i += 1) {
+        await ethers.provider.send("evm_mine", [])
+    }
+    /* eslint-enable no-await-in-loop */
+}
 
 describe("ShieldToken", async () => {
+
+    let owner: any
+    let nonOwner: any
+    let ignition: any
+
     let token: ShieldToken
+    let nonOwnerToken: ShieldToken
+
+
     beforeEach(async () => {
+        [owner, nonOwner, ignition] = await ethers.getSigners()
+
         const tokenFactory = await ethers.getContractFactory("ShieldToken")
-        // expect(RELEASE_TIME > (new Date()).getTime() / 1000).to.equal(true, 'invalid release time')
-        token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME])) as unknown as ShieldToken
+        token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME, ignition.address])) as unknown as ShieldToken
         await token.deployed()
+
+        nonOwnerToken = await token.connect(nonOwner)
     })
 
     it("should assign the total supply of tokens to the owner", async () => {
-        const [owner] = await ethers.getSigners()
         const balance = await token.balanceOf(owner.address)
         expect(balance).to.equal(await token.totalSupply())
     })
 
     it("should fail if invalid vestingType is passed to addAllocations method", async () => {
-        const [owner, addr1] = await ethers.getSigners()
         const invalidVestingTypeIndex = 999
         await expect(
-            token.addAllocations([addr1.address], [toTokenAmount("10")], invalidVestingTypeIndex)
+            token.addAllocations([nonOwner.address], [toTokenAmount("10")], invalidVestingTypeIndex)
         ).to.be.revertedWith("Invalid vestingTypeIndex")
     })
+
+    // describe("Withdraw", async () => {
+
+    //     const ethAmount = ethers.utils.parseEther("0.1")
+    //     // const tokenAmount = toTokenAmount(10)
+
+    //     beforeEach(async () => {
+    //         const [owner] = await ethers.getSigners()
+    //         // send some ETH to token's address
+    //         // await owner.sendTransaction({
+    //         //     to: token.address,
+    //         //     value: ethAmount,
+    //         // })
+    //     })
+
+    //     it("should withdraw ETH", async () => {
+    //         const [owner] = await ethers.getSigners()
+    //         const balance = await ethers.provider.getBalance(owner.address)
+    //         await token.withdraw(ethAmount)
+    //         const newBalance = await ethers.provider.getBalance(owner.address)
+    //         expect(newBalance).to.be.equal(balance.add(ethAmount))
+    //     })
+
+    //     it("should withdraw ERC20 token", async () => {
+    //         // TODO
+    //     })
+
+    //     it("only owner can withdraw", async () => {
+    //         // TODO
+    //     })
+
+    // })
 
     describe("Release time", async () => {
 
@@ -72,7 +121,6 @@ describe("ShieldToken", async () => {
 
         it("shouldn't be able to change release time by non owner", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
-            const [owner, nonOwner] = await ethers.getSigners()
             await expect(
                 token.connect(nonOwner).setReleaseTime(newReleaseTime)
             ).to.be.revertedWith("caller is not the owner")
@@ -180,7 +228,6 @@ describe("ShieldToken", async () => {
         })
 
         it("shouldn't transfer from frozen wallets", async () => {
-            const [owner] = await ethers.getSigners()
             for (const allocation of Object.values(ALLOCATIONS)) {
                 for (const [address, amount] of Object.entries(allocation)) {
                     const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
@@ -194,16 +241,14 @@ describe("ShieldToken", async () => {
         })
 
         it("should transfer tokens from non-frozen wallets", async () => {
-          const [owner, receiver] = await ethers.getSigners()
           const amount = toTokenAmount("10")
 
-          await token.transfer(receiver.address, amount)
+          await token.transfer(nonOwner.address, amount)
 
-          const canTransfer = await token.canTransfer(receiver.address, amount)
+          const canTransfer = await token.canTransfer(nonOwner.address, amount)
           expect(canTransfer).to.equal(true)
 
-          const receiverToken = await token.connect(receiver)
-          await receiverToken.transfer(owner.address, amount)
+          await nonOwnerToken.transfer(owner.address, amount)
         })
 
         it("should transfer tokens from frozenWallet after vesting period ends", async () => {
@@ -230,7 +275,6 @@ describe("ShieldToken", async () => {
         // })
 
         it("should not transfer before lockup period is over", async () => {
-            const [owner] = await ethers.getSigners()
             const seedAllocation = ALLOCATIONS["0"]
             const minuteAfterRelease = RELEASE_TIME + 60
             await timeTravel(async () => {
@@ -270,11 +314,101 @@ describe("ShieldToken", async () => {
                 }
             }, monthAfterLockupPeriod)
         })
-
-        // TODO: test that transferableAmount decreases after the user actually executes the transfer
-
-        // TODO: test transferMany function
-
-        // TODO: after deploy should send tokens from public vesting.
     })
+
+    describe("Anti bot", async () => {
+
+        let defenseBlockDuration: number
+        let tokenAmount: BigNumber
+
+        beforeEach(async () => {
+            // initialize
+            defenseBlockDuration = 10
+
+            // give some tokens to nonOwner for tests
+            tokenAmount = toTokenAmount("10")
+            token.transfer(nonOwner.address, tokenAmount)
+        })
+
+        it("anti-bot defense should be off after deploy", async () => {
+            const isTransferDisabled = await nonOwnerToken.isTransferDisabled()
+            expect(isTransferDisabled).to.be.equal(false)
+        })
+
+        it("should burn if defense is on", async () => {
+            const supply: BigNumber = await token.totalSupply()
+
+            await token.disableTransfers(defenseBlockDuration)
+
+            // transfers should be disabled
+            expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
+            // owner should transfer
+            expect(await token.isTransferDisabled()).to.be.equal(false)
+
+            const senderBalance: BigNumber = await token.balanceOf(nonOwner.address)
+            const receiverBalance: BigNumber = await token.balanceOf(owner.address)
+
+            // try to send tokens
+            await expect(
+                nonOwnerToken.transfer(owner.address, tokenAmount)
+            ).to.emit(nonOwnerToken, "TransferBurned").withArgs(nonOwner.address, tokenAmount)
+
+            // balance of sender should decreased
+            const newSenderBalance: BigNumber = await token.balanceOf(nonOwner.address)
+            expect(newSenderBalance).to.equal(senderBalance.sub(tokenAmount))
+
+            // balance of receiver should be unchanged
+            const newReceiverBalance: BigNumber = await token.balanceOf(owner.address)
+            expect(newReceiverBalance).to.equal(receiverBalance)
+
+            // total supply should decreased after burn
+            const newSupply: BigNumber = await token.totalSupply()
+            expect(newSupply).to.equal(supply.sub(tokenAmount))
+        })
+
+        it("shouldn't burn if defense is on for ignition wallet", async () => {
+            await token.disableTransfers(defenseBlockDuration)
+
+            const supply: BigNumber = await token.totalSupply()
+
+            // send tokens to ignition wallet
+            token.transfer(ignition.address, tokenAmount)
+
+            const ignitionBalance: BigNumber = await token.balanceOf(ignition.address)
+            const ignitionToken = await token.connect(ignition.address)
+
+            expect(await ignitionToken.isTransferDisabled()).to.be.equal(true)
+
+            // await expect(
+            //     ignitionToken.transfer(owner.address, tokenAmount)
+            // ).to.emit(ignitionToken, "TransferBurned").withArgs(ignition.address, tokenAmount)
+
+            // // balance of ignition shoudn't decreased
+            // const newIgnitionBalance: BigNumber = await token.balanceOf(ignition.address)
+            // expect(newIgnitionBalance).to.equal(ignitionBalance)
+
+            // // total supply should be the same
+            // const newSupply: BigNumber = await token.totalSupply()
+            // expect(newSupply).to.equal(supply)
+        })
+
+        it("should transfer after defense is off", async () => {
+            await token.disableTransfers(defenseBlockDuration)
+
+            expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
+
+            // wait until defense is off
+            await skipBlocks(defenseBlockDuration)
+
+            expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(false)
+
+            await expect(
+                nonOwnerToken.transfer(owner.address, tokenAmount)
+            ).to.not.emit(nonOwnerToken, "TransferBurned")
+        })
+    })
+
+    // TODO: test transferMany function
+
+    // TODO: after deploy should send tokens from public vesting.
 })
