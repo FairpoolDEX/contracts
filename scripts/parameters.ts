@@ -4,7 +4,6 @@ export const RELEASE_TIME: number = Math.floor(new Date("2021.05.05 15:00:00 GMT
 
 // @note: All values is set without decimals
 
-// TODO: Just curious - why index: string, not index: number?
 export const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
 
 // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
