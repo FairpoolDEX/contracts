@@ -12,7 +12,7 @@
     "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
     "test": "hardhat test",
     "test:watch": "nodemon -x 'hardhat test'",
-    "coverage": "npm run build && hardhat coverage --temp artifacts --network coverage"
+    "coverage": "npm run build && hardhat coverage --temp artifacts"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
