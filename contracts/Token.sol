@@ -33,7 +33,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     uint256 public burnBeforeBlockNumber;
     bool public burnBeforeBlockNumberDisabled;
     // Ignition wallet address
-    address ignition;
+    address public ignition;
     event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime, address _ignition) public initializer {
@@ -76,7 +76,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         uint addressesLength = addresses.length;
 
-        require(addressesLength == totalAmounts.length, "Address and totalAmounts length must be same");
+        require(addressesLength == totalAmounts.length, "Array lenghts must be same");
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
@@ -231,7 +231,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
         (bool success,) = _msgSender().call{value : amount}("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+        require(success, "Unable to send value");
     }
 
     function withdrawToken(IERC20Upgradeable token, uint256 amount) public onlyOwner {
@@ -249,7 +249,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function setReleaseTime(uint256 _releaseTime) public onlyOwner {
         if (releaseTime > 0) {
-            require(releaseTime > block.timestamp, "Can't change release time after release");
+            require(releaseTime > block.timestamp, "Can't change after release");
         }
         require(_releaseTime > block.timestamp, "Release time should be in future");
         releaseTime = _releaseTime;

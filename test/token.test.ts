@@ -6,7 +6,6 @@ import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
 import {ALLOCATIONS, RELEASE_TIME} from '../scripts/parameters'
-import { TokenClass } from "typescript"
 
 chai.use(solidity)
 const {expect} = chai
@@ -19,7 +18,9 @@ export const formatTokenAmount = (value: BigNumber): string => formatUnits(value
 export const randomHexBytes = (n = 32): string => hexlify(randomBytes(n))
 
 
-async function timeTravel(callback: Function, newBlockTimestamp: number) {
+type timeTravelCallback = () => Promise<void>;
+
+async function timeTravel(callback: timeTravelCallback, newBlockTimestamp: number) {
     // save snapshot to rollback after calling callback
     const snapshot = await ethers.provider.send('evm_snapshot', [])
     // set new block timestamp
@@ -139,7 +140,7 @@ describe("ShieldToken", async () => {
             await timeTravel(async () => {
                 await expect(
                     token.setReleaseTime(newReleaseTime)
-                ).to.be.revertedWith("Can't change release time after release")
+                ).to.be.revertedWith("Can't change after release")
 
             }, newBlockTimestamp)
         })
@@ -209,7 +210,7 @@ describe("ShieldToken", async () => {
 
         it("should have scheduled frozen wallets", async () => {
             for (const allocation of Object.values(ALLOCATIONS)) {
-                for (const [address, amount] of Object.entries(allocation)) {
+                for (const address of Object.keys(allocation)) {
                     // check frozen wallet existance
                     const frozenWallet = await token.frozenWallets(address)
                     expect(frozenWallet[5]).to.equal(true)
