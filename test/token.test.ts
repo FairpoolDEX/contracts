@@ -369,29 +369,29 @@ describe("ShieldToken", async () => {
         })
 
         it("shouldn't burn if defense is on for ignition wallet", async () => {
-            await token.disableTransfers(defenseBlockDuration)
-
+            const ignitionToken = await token.connect(ignition)
             const supply: BigNumber = await token.totalSupply()
+
+            await token.disableTransfers(defenseBlockDuration)
 
             // send tokens to ignition wallet
             token.transfer(ignition.address, tokenAmount)
 
             const ignitionBalance: BigNumber = await token.balanceOf(ignition.address)
-            const ignitionToken = await token.connect(ignition.address)
 
             expect(await ignitionToken.isTransferDisabled()).to.be.equal(true)
 
-            // await expect(
-            //     ignitionToken.transfer(owner.address, tokenAmount)
-            // ).to.emit(ignitionToken, "TransferBurned").withArgs(ignition.address, tokenAmount)
+            await expect(
+                ignitionToken.transfer(owner.address, tokenAmount)
+            ).to.emit(ignitionToken, "TransferBurned").withArgs(ignition.address, 0)
 
-            // // balance of ignition shoudn't decreased
-            // const newIgnitionBalance: BigNumber = await token.balanceOf(ignition.address)
-            // expect(newIgnitionBalance).to.equal(ignitionBalance)
+            // balance of ignition shoudn't decreased
+            const newIgnitionBalance: BigNumber = await token.balanceOf(ignition.address)
+            expect(newIgnitionBalance).to.equal(ignitionBalance)
 
-            // // total supply should be the same
-            // const newSupply: BigNumber = await token.totalSupply()
-            // expect(newSupply).to.equal(supply)
+            // total supply should be the same
+            const newSupply: BigNumber = await token.totalSupply()
+            expect(newSupply).to.equal(supply)
         })
 
         it("should transfer after defense is off", async () => {
