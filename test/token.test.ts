@@ -59,7 +59,7 @@ describe("ShieldToken", async () => {
         token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME, ignition.address])) as unknown as ShieldToken
         await token.deployed()
 
-        nonOwnerToken = await token.connect(nonOwner)
+        nonOwnerToken = token.connect(nonOwner)
     })
 
     it("should assign the total supply of tokens to the owner", async () => {
@@ -369,7 +369,7 @@ describe("ShieldToken", async () => {
         })
 
         it("shouldn't burn if defense is on for ignition wallet", async () => {
-            const ignitionToken = await token.connect(ignition)
+            const ignitionToken = token.connect(ignition)
             const supply: BigNumber = await token.totalSupply()
 
             await token.disableTransfers(defenseBlockDuration)
