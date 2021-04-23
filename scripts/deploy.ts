@@ -16,7 +16,7 @@ async function main() {
     await token.addAllocations(addresses, amounts, vestingTypeIndex)
 
     console.log(`Added allocation of type ${vestingTypeIndex} for ${addresses.length} addresses`) // eslint-disable-line no-console
-  })
+  }
 }
 
 main()
