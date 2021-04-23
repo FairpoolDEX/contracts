@@ -6,6 +6,7 @@ import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
 import {ALLOCATIONS, RELEASE_TIME} from '../scripts/parameters'
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 chai.use(solidity)
 const {expect} = chai
@@ -43,9 +44,9 @@ async function skipBlocks(amount: number) {
 
 describe("ShieldToken", async () => {
 
-    let owner: any
-    let nonOwner: any
-    let ignition: any
+    let owner: SignerWithAddress
+    let nonOwner: SignerWithAddress
+    let ignition: SignerWithAddress
 
     let token: ShieldToken
     let nonOwnerToken: ShieldToken
