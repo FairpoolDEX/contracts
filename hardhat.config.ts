@@ -3,8 +3,8 @@ import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
 import "hardhat-watcher"
 import "hardhat-typechain"
-import "hardhat-deploy"
-import 'hardhat-deploy-ethers'
+// import "hardhat-deploy"
+// import 'hardhat-deploy-ethers'
 import "solidity-coverage"
 import "@openzeppelin/hardhat-upgrades"
 import { config as dotEnvConfig } from "dotenv"
@@ -47,9 +47,9 @@ const config: HardhatUserConfig = {
       ],
     },
   },
-  namedAccounts: {
-    deployer: 0,
-  },
+  // namedAccounts: {
+  //   deployer: 0,
+  // },
 }
 
 export default config
