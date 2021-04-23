@@ -31,9 +31,9 @@ const config: HardhatUserConfig = {
       url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ROPSTEN_PRIVATE_KEY],
     },
-    coverage: {
-      url: "http://127.0.0.1:8555",
-    },
+    // coverage: {
+    //   url: "http://127.0.0.1:8555",
+    // },
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
