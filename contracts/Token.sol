@@ -32,18 +32,14 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // anti-sniping bot defense
     uint256 public burnBeforeBlockNumber;
     bool public burnBeforeBlockNumberDisabled;
-    // Ignition wallet address
-    address public ignition;
     event TransferBurned(address indexed wallet, uint256 amount);
 
-    function initialize(uint256 _releaseTime, address _ignition) public initializer {
+    function initialize(uint256 _releaseTime) public initializer {
         __Ownable_init();
         __ERC20_init("Shield Finance Token", "SHLD");
         __ERC20Pausable_init();
 
         setReleaseTime(_releaseTime);
-
-        ignition = _ignition;
 
         // explicitly set burnBeforeBlockNumberDisabled to false
         burnBeforeBlockNumberDisabled = false;
@@ -212,15 +208,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         if (isTransferDisabled()) {
             // anti-sniping bot defense is on
-            if (_msgSender() == ignition) {
-                // don't burn tokens if sender is Ignition
-                // just disable any token transfers
-                emit TransferBurned(sender, 0);
-            } else {
-                // burn tokens instead of transfering them >:]
-                super._burn(sender, amount);
-                emit TransferBurned(sender, amount);
-            }
+            // burn tokens instead of transfering them >:]
+            super._burn(sender, amount);
+            emit TransferBurned(sender, amount);
         } else {
             super._transfer(sender, recipient, amount);
         }

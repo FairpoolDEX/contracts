@@ -1,7 +1,5 @@
 export const RELEASE_TIME: number = Math.floor(new Date("2021.05.05 15:00:00 GMT").getTime() / 1000)
 
-export const IGNITION = '0x47677e21BCe4d8bd1aF04e1c651b6B29b8eCf1a3'
-
 // it's a test only allocations with a random addresses!
 
 // @note: All values is set without decimals
