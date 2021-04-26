@@ -59,17 +59,30 @@ describe("ShieldToken", async () => {
         await token.deployed()
 
         nonOwnerToken = token.connect(nonOwner)
+
+        // add allocations
+        for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
+            const addresses = Object.keys(allocation)
+            const amounts = Object.values(allocation)
+
+            await token.addAllocations(addresses, amounts, vestingTypeIndex)
+        }
     })
 
-    it("should assign the total supply of tokens to the owner", async () => {
+    it("should assign the total supply of tokens to the owner and transfer to frozen wallets", async () => {
+        const totalSupply = await token.totalSupply()
         const balance = await token.balanceOf(owner.address)
-        expect(balance).to.equal(await token.totalSupply())
+        const frozenSupply = Object.values(ALLOCATIONS)
+            .map(allocation => Object.values(allocation)
+                .reduce((a, b) => a + b, 0))
+            .reduce((a: number, b: number) => a + b, 0)
+        expect(balance.add(toTokenAmount(frozenSupply))).to.equal(totalSupply)
     })
 
     it("should fail if invalid vestingType is passed to addAllocations method", async () => {
         const invalidVestingTypeIndex = 999
         await expect(
-            token.addAllocations([nonOwner.address], [toTokenAmount("10")], invalidVestingTypeIndex)
+            token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex)
         ).to.be.revertedWith("Invalid vestingTypeIndex")
     })
 
@@ -190,20 +203,12 @@ describe("ShieldToken", async () => {
     })
 
     describe("Vesting", async () => {
-        beforeEach(async () => {
-            for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
-                const addresses = Object.keys(allocation)
-                const amounts = Object.values(allocation)
-
-                await token.addAllocations(addresses, amounts, vestingTypeIndex)
-            }
-        })
 
         it("should fail if freezing same address at second time ", async () => {
             const [vestingIndex, allocation] = Object.entries(ALLOCATIONS)[0]
             const address = Object.keys(allocation)[0]
             await expect(
-                token.addAllocations([address], [toTokenAmount("100")], vestingIndex)
+                token.addAllocations([address], [100], vestingIndex)
             ).to.be.revertedWith("Wallet already frozen")
 
         })
@@ -336,7 +341,7 @@ describe("ShieldToken", async () => {
             expect(isTransferDisabled).to.be.equal(false)
         })
 
-        it("should burn if defense is on", async () => {
+        it("should burn when transfer for regular wallets if defense is on", async () => {
             const supply: BigNumber = await token.totalSupply()
 
             await token.disableTransfers(defenseBlockDuration)
@@ -367,6 +372,39 @@ describe("ShieldToken", async () => {
             expect(newSupply).to.equal(supply.sub(tokenAmount))
         })
 
+        it("should revert when transfer for frozen wallets if defense is on", async () => {
+            const frozenAMount = 100
+            await token.addAllocations([nonOwner.address], [frozenAMount], "0")
+
+            const canTransfer = await token.canTransfer(nonOwner.address, toTokenAmount(frozenAMount))
+            expect(canTransfer).to.be.equal(false)
+
+            const supply: BigNumber = await token.totalSupply()
+
+            await token.disableTransfers(defenseBlockDuration)
+
+            // transfers should be disabled
+            expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
+
+            const senderBalance: BigNumber = await token.balanceOf(nonOwner.address)
+            const receiverBalance: BigNumber = await token.balanceOf(owner.address)
+
+            // try to send tokens
+            await expect(
+                nonOwnerToken.transfer(owner.address, senderBalance)
+            ).to.be.revertedWith("Wait for vesting day!")
+
+            // balance of sender shouldn't change
+            const newSenderBalance: BigNumber = await token.balanceOf(nonOwner.address)
+            expect(newSenderBalance).to.equal(senderBalance)
+
+            // balance of receiver should be unchanged
+            const newReceiverBalance: BigNumber = await token.balanceOf(owner.address)
+            expect(newReceiverBalance).to.equal(receiverBalance)
+
+            // total supply shouldn't change
+            const newSupply: BigNumber = await token.totalSupply()
+            expect(newSupply).to.equal(supply)
         })
 
         it("should transfer after defense is off", async () => {
