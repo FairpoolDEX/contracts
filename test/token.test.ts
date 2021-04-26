@@ -46,17 +46,16 @@ describe("ShieldToken", async () => {
 
     let owner: SignerWithAddress
     let nonOwner: SignerWithAddress
-    let ignition: SignerWithAddress
 
     let token: ShieldToken
     let nonOwnerToken: ShieldToken
 
 
     beforeEach(async () => {
-        [owner, nonOwner, ignition] = await ethers.getSigners()
+        [owner, nonOwner] = await ethers.getSigners()
 
         const tokenFactory = await ethers.getContractFactory("ShieldToken")
-        token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME, ignition.address])) as unknown as ShieldToken
+        token = (await upgrades.deployProxy(tokenFactory, [RELEASE_TIME])) as unknown as ShieldToken
         await token.deployed()
 
         nonOwnerToken = token.connect(nonOwner)
@@ -368,30 +367,6 @@ describe("ShieldToken", async () => {
             expect(newSupply).to.equal(supply.sub(tokenAmount))
         })
 
-        it("shouldn't burn if defense is on for ignition wallet", async () => {
-            const ignitionToken = token.connect(ignition)
-            const supply: BigNumber = await token.totalSupply()
-
-            await token.disableTransfers(defenseBlockDuration)
-
-            // send tokens to ignition wallet
-            token.transfer(ignition.address, tokenAmount)
-
-            const ignitionBalance: BigNumber = await token.balanceOf(ignition.address)
-
-            expect(await ignitionToken.isTransferDisabled()).to.be.equal(true)
-
-            await expect(
-                ignitionToken.transfer(owner.address, tokenAmount)
-            ).to.emit(ignitionToken, "TransferBurned").withArgs(ignition.address, 0)
-
-            // balance of ignition shoudn't decreased
-            const newIgnitionBalance: BigNumber = await token.balanceOf(ignition.address)
-            expect(newIgnitionBalance).to.equal(ignitionBalance)
-
-            // total supply should be the same
-            const newSupply: BigNumber = await token.totalSupply()
-            expect(newSupply).to.equal(supply)
         })
 
         it("should transfer after defense is off", async () => {
