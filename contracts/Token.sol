@@ -24,7 +24,7 @@ struct VestingType {
 
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
-    // one wallet can belongs only to a single vesting type
+    // a single wallet can belong only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
     uint256 public releaseTime;

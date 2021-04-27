@@ -285,8 +285,8 @@ describe("ShieldToken", async () => {
             const minuteAfterRelease = RELEASE_TIME + 60
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
-                    const transferableAmount = await token.getUnlockedAmount(address)
-                    expect(transferableAmount).to.equal(0)
+                    const unlockedAmount = await token.getUnlockedAmount(address)
+                    expect(unlockedAmount).to.equal(0)
 
                     await expect(
                         token.transferFrom(address, owner.address, toTokenAmount(amount))
@@ -301,8 +301,8 @@ describe("ShieldToken", async () => {
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
-                    const transferableAmount = await token.getUnlockedAmount(address)
-                    expect(transferableAmount).to.equal(initialAmount)
+                    const unlockedAmount = await token.getUnlockedAmount(address)
+                    expect(unlockedAmount).to.equal(initialAmount)
                 }
             }, afterLockupPeriod)
         })
@@ -315,8 +315,8 @@ describe("ShieldToken", async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
                     const monthlyAmount = toTokenAmount(amount * 12 / 100)
-                    const transferableAmount = await token.getUnlockedAmount(address)
-                    expect(transferableAmount).to.equal(initialAmount.add(monthlyAmount))
+                    const unlockedAmount = await token.getUnlockedAmount(address)
+                    expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
                 }
             }, monthAfterLockupPeriod)
         })
@@ -422,6 +422,8 @@ describe("ShieldToken", async () => {
             ).to.not.emit(nonOwnerToken, "TransferBurned")
         })
     })
+
+    // TODO: should disable defense
 
     // TODO: test transferMany function
 
