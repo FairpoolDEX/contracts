@@ -226,9 +226,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(success, "Unable to send value");
     }
 
-    function withdrawToken(IERC20Upgradeable token, uint256 amount) public onlyOwner {
-        token.approve(msg.sender, amount);
-        token.transfer(msg.sender, amount);
+    function withdrawToken(address token, uint256 amount) public onlyOwner {
+        // token.approve(msg.sender, amount);
+        IERC20Upgradeable(token).transfer(msg.sender, amount);
     }
 
     function pause(bool status) public onlyOwner {
