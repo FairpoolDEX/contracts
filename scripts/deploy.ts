@@ -1,11 +1,11 @@
 import { ethers, upgrades } from "hardhat"
 
-import { ALLOCATIONS, IGNITION, RELEASE_TIME } from './parameters'
+import { ALLOCATIONS, RELEASE_TIME } from './parameters'
 
 
 async function main() {
   const Token = await ethers.getContractFactory("ShieldToken")
-  const token = await upgrades.deployProxy(Token, [RELEASE_TIME, IGNITION])
+  const token = await upgrades.deployProxy(Token, [RELEASE_TIME])
   await token.deployed()
   console.log("Token address:", token.address) // eslint-disable-line no-console
 
