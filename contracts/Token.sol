@@ -70,7 +70,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         uint addressesLength = addresses.length;
 
-        require(addressesLength == totalAmounts.length, "Array lenghts must be same");
+        require(addressesLength == totalAmounts.length, "Array lengths must be same");
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
@@ -200,7 +200,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         if (isTransferDisabled()) {
             // anti-sniping bot defense is on
-            // burn tokens instead of transfering them >:]
+            // burn tokens instead of transferring them >:]
             super._burn(sender, amount);
             emit TransferBurned(sender, amount);
         } else {
