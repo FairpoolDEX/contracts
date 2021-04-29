@@ -50,21 +50,21 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // no addition minting is available after initialization
         _mint(owner(), 969_163_000 * 10 ** 18);
 
-        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
+        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
         vestingTypes.push(VestingType(105556, 5, 30 days));
-        // Private:	10% at listing, then equal parts of 18% over total of 6 months
+        // Private:	10% at listing, then equal parts of 15% over total of 6 months
         vestingTypes.push(VestingType(150000, 10, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
         vestingTypes.push(VestingType(40000, 4, 30 days));
-        // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
+        // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
         vestingTypes.push(VestingType(76667, 8, 12 * 30 days));
-        // Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
+        // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
         vestingTypes.push(VestingType(26945, 3, 6 * 30 days));
-        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
+        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
         vestingTypes.push(VestingType(20417, 2, 3 * 30 days));
-        // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
+        // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
         vestingTypes.push(VestingType(76667, 8, 0));
-        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
+        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
         vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
     }
 
@@ -81,7 +81,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
             // TODO: fix amounts
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate / 10000 * 10 ** 18 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
 
