@@ -295,11 +295,20 @@ describe("ShieldToken", async () => {
             ).to.be.revertedWith("Array lenghts must be same")
         })
 
-        it("should throw if total amount of allocations exceeds the current supply", async () => {
+        it("should throw if some amount of allocations exceeds the current supply", async () => {
             const supply = await token.totalSupply()
             const amount = supply.div(18).add(1)
             await expect(
                 token.addAllocations([nonOwner.address], [amount], "0")
+            ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
+        })
+
+        it("should throw if total amount of allocations exceeds the current supply", async () => {
+            const supply = await token.totalSupply()
+            const addresses = (await ethers.getSigners()).slice(2).map(i => i.address)
+            const amounts = addresses.map(i => supply.div(addresses.length - 1))
+            await expect(
+                token.addAllocations(addresses, amounts, "0")
             ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
         })
 
