@@ -18,6 +18,7 @@ struct FrozenWallet {
 
 struct VestingType {
     uint256 monthlyRate;
+    //Should be set in percents with 4 trailing digits. i.e. 12.7337% value should be 127337
     uint256 initialRate;
     uint256 lockDaysPeriod;
 }
@@ -45,25 +46,25 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         burnBeforeBlockNumberDisabled = false;
 
         // Mint all supply to the owner
-        // no addition minting is avaliable after initialization
+        // no addition minting is available after initialization
         _mint(owner(), 969_163_000 * 10 ** 18);
 
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12, 5, 30 days));
+        vestingTypes.push(VestingType(105556, 5, 30 days));
         // Private:	10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18, 10, 0));
+        vestingTypes.push(VestingType(150000, 10, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
-        vestingTypes.push(VestingType(4, 4, 30 days));
+        vestingTypes.push(VestingType(40000, 4, 30 days));
         // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
-        vestingTypes.push(VestingType(8, 8, 12 * 30 days));
+        vestingTypes.push(VestingType(76667, 8, 12 * 30 days));
         // Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
-        vestingTypes.push(VestingType(3, 3, 6 * 30 days));
+        vestingTypes.push(VestingType(26945, 3, 6 * 30 days));
         // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
-        vestingTypes.push(VestingType(2, 2, 3 * 30 days));
+        vestingTypes.push(VestingType(20417, 2, 3 * 30 days));
         // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
-        vestingTypes.push(VestingType(8, 8, 0));
+        vestingTypes.push(VestingType(76667, 8, 0));
         // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
-        vestingTypes.push(VestingType(2, 2, 6 * 30 days));
+        vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
