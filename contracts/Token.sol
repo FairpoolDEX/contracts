@@ -215,7 +215,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function withdrawToken(address token, uint256 amount) public onlyOwner {
-        // token.approve(msg.sender, amount);
         IERC20Upgradeable(token).transfer(msg.sender, amount);
     }
 
@@ -247,7 +246,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function disableTransfers(uint256 blocksDuration)  public onlyOwner {
         require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
-        // require(releaseTime > block.timestamp, "Can't disable transfers after release");
         burnBeforeBlockNumber = block.number + blocksDuration;
     }
 
