@@ -79,13 +79,6 @@ describe("ShieldToken", async () => {
         expect(balance.add(toTokenAmount(frozenSupply))).to.equal(totalSupply)
     })
 
-    it("should throw if invalid vestingType is passed to addAllocations method", async () => {
-        const invalidVestingTypeIndex = 999
-        await expect(
-            token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex)
-        ).to.be.revertedWith("Invalid vestingTypeIndex")
-    })
-
     describe("transferMany", async () => {
 
         it("shoud transfer to many recipients", async () => {
@@ -277,7 +270,38 @@ describe("ShieldToken", async () => {
         })
     })
 
-    describe("Vesting", async () => {
+    describe("Adding allocations", async () => {
+
+        it("should run only by owner", async () => {
+            await expect(
+                nonOwnerToken.addAllocations([nonOwner.address], [10], "0")
+            ).to.be.revertedWith("caller is not the owner")
+        })
+
+        it("should throw if invalid vestingType is passed", async () => {
+            const invalidVestingTypeIndex = 999
+            await expect(
+                token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex)
+            ).to.be.revertedWith("Invalid vestingTypeIndex")
+        })
+
+        it("should throw if different array lengths are passed", async () => {
+            await expect(
+                token.addAllocations([nonOwner.address], [10, 20], "0")
+            ).to.be.revertedWith("Array lenghts must be same")
+
+            await expect(
+                token.addAllocations([nonOwner.address, owner.address], [10], "0")
+            ).to.be.revertedWith("Array lenghts must be same")
+        })
+
+        it("should throw if total amount of allocations exceeds the current supply", async () => {
+            const supply = await token.totalSupply()
+            const amount = supply.div(18).add(1)
+            await expect(
+                token.addAllocations([nonOwner.address], [amount], "0")
+            ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
+        })
 
         it("should throw if freezing same address at second time ", async () => {
             const [vestingIndex, allocation] = Object.entries(ALLOCATIONS)[0]
@@ -285,8 +309,10 @@ describe("ShieldToken", async () => {
             await expect(
                 token.addAllocations([address], [100], vestingIndex)
             ).to.be.revertedWith("Wallet already frozen")
-
         })
+    })
+
+    describe("Vesting", async () => {
 
         it("should have scheduled frozen wallets", async () => {
             for (const allocation of Object.values(ALLOCATIONS)) {
