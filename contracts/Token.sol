@@ -44,8 +44,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         // explicitly set burnBeforeBlockNumberDisabled to false
         burnBeforeBlockNumberDisabled = false;
 
-        // Mint totalSupply to the owner
-        _mint(owner(), getMaxTotalSupply());
+        // Mint all supply to the owner
+        // no addition minting is avaliable after initialization
+        _mint(owner(), 969_163_000 * 10 ** 18);
 
         // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
         vestingTypes.push(VestingType(12, 5, 30 days));
@@ -63,10 +64,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(8, 8, 0));
         // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
         vestingTypes.push(VestingType(2, 2, 6 * 30 days));
-    }
-
-    function getMaxTotalSupply() public pure returns (uint256) {
-        return 969_163_000 * 10 ** 18;
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
@@ -90,13 +87,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
 
         return true;
-    }
-
-    function _mint(address account, uint256 amount) internal override {
-        uint256 totalSupply = super.totalSupply();
-        require(getMaxTotalSupply() >= (totalSupply + amount), "Max total supply over");
-
-        super._mint(account, amount);
     }
 
     function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
