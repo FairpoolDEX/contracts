@@ -424,7 +424,7 @@ describe("ShieldToken", async () => {
             await timeTravel(async () => {
                 for (const [address, amount] of Object.entries(seedAllocation)) {
                     const initialAmount = toTokenAmount(amount * 5 / 100)
-                    const monthlyAmount = toTokenAmount(amount * 105556 / 100 / 10000)
+                    const monthlyAmount = toTokenAmount(amount * (105556 / 10000) / 100)
                     const unlockedAmount = await token.getUnlockedAmount(address)
                     expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
                 }
