@@ -81,7 +81,7 @@ describe("ShieldToken", async () => {
 
     describe("transferMany", async () => {
 
-        it("shoud transfer to many recipients", async () => {
+        it("should transfer to many recipients", async () => {
             const wallets = (await ethers.getSigners()).slice(2)
             const amounts = wallets.map((wallet, i) => toTokenAmount(i + 1))
 
@@ -109,7 +109,7 @@ describe("ShieldToken", async () => {
             ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
         })
 
-        it("shoud run only by owner", async () => {
+        it("should run only by owner", async () => {
             const amount = toTokenAmount(100)
             await token.transfer(nonOwner.address, amount)
 
@@ -140,7 +140,7 @@ describe("ShieldToken", async () => {
             }).to.changeTokenBalances(token, [owner, token], [amount, -amount])
         })
 
-        it("shoud run only by owner", async () => {
+        it("should run only by owner", async () => {
             await expect(
                 nonOwnerToken.withdraw(1)
             ).to.be.revertedWith("caller is not the owner")
@@ -288,11 +288,11 @@ describe("ShieldToken", async () => {
         it("should throw if different array lengths are passed", async () => {
             await expect(
                 token.addAllocations([nonOwner.address], [10, 20], "0")
-            ).to.be.revertedWith("Array lenghts must be same")
+            ).to.be.revertedWith("Array lengths must be same")
 
             await expect(
                 token.addAllocations([nonOwner.address, owner.address], [10], "0")
-            ).to.be.revertedWith("Array lenghts must be same")
+            ).to.be.revertedWith("Array lengths must be same")
         })
 
         it("should throw if some amount of allocations exceeds the current supply", async () => {
@@ -446,7 +446,7 @@ describe("ShieldToken", async () => {
             token.transfer(nonOwner.address, tokenAmount)
         })
 
-        it("shoud run disableTransfers only by owner", async () => {
+        it("should run disableTransfers only by owner", async () => {
             await expect(
                 nonOwnerToken.disableTransfers(defenseBlockDuration)
             ).to.be.revertedWith("caller is not the owner")
