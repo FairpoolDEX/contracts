@@ -33,6 +33,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     // anti-sniping bot defense
     uint256 public burnBeforeBlockNumber;
     bool public burnBeforeBlockNumberDisabled;
+
     event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime) public initializer {
@@ -246,7 +247,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return (!burnBeforeBlockNumberDisabled && (block.number < burnBeforeBlockNumber));
     }
 
-    function disableTransfers(uint256 blocksDuration)  public onlyOwner {
+    function disableTransfers(uint256 blocksDuration) public onlyOwner {
         require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
         burnBeforeBlockNumber = block.number + blocksDuration;
     }

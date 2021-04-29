@@ -6,7 +6,7 @@ import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
 import {ALLOCATIONS, RELEASE_TIME} from '../scripts/parameters'
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers"
 
 chai.use(solidity)
 const {expect} = chai
@@ -94,7 +94,7 @@ describe("ShieldToken", async () => {
             const recipients = [owner.address, nonOwner.address]
             const amounts = [toTokenAmount(10)]
             await expect(
-                token.transferMany(recipients, amounts)
+                token.transferMany(recipients, amounts),
             ).to.be.revertedWith("Wrong array length")
         })
 
@@ -105,7 +105,7 @@ describe("ShieldToken", async () => {
             const amounts = recipients.map((address, i) => ownerBalance)
 
             await expect(
-                token.transferMany(recipients, amounts)
+                token.transferMany(recipients, amounts),
             ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
         })
 
@@ -114,7 +114,7 @@ describe("ShieldToken", async () => {
             await token.transfer(nonOwner.address, amount)
 
             await expect(
-                nonOwnerToken.transferMany([owner.address], [amount])
+                nonOwnerToken.transferMany([owner.address], [amount]),
             ).to.be.revertedWith("caller is not the owner")
         })
     })
@@ -127,7 +127,7 @@ describe("ShieldToken", async () => {
             await token.addAllocations([], [], "0", {value: amount, gasPrice: 0})
 
             await expect(
-                await token.withdraw(amount)
+                await token.withdraw(amount),
             ).to.changeEtherBalances([owner, token], [amount, -amount])
         })
 
@@ -142,11 +142,11 @@ describe("ShieldToken", async () => {
 
         it("should run only by owner", async () => {
             await expect(
-                nonOwnerToken.withdraw(1)
+                nonOwnerToken.withdraw(1),
             ).to.be.revertedWith("caller is not the owner")
 
             await expect(
-                nonOwnerToken.withdrawToken(token.address, 1)
+                nonOwnerToken.withdrawToken(token.address, 1),
             ).to.be.revertedWith("caller is not the owner")
         })
     })
@@ -166,7 +166,7 @@ describe("ShieldToken", async () => {
             expect(paused).to.be.equal(true)
 
             await expect(
-                nonOwnerToken.transfer(owner.address, amount)
+                nonOwnerToken.transfer(owner.address, amount),
             ).to.be.revertedWith("ERC20Pausable: token transfer while paused")
 
             await token.pause(false)
@@ -181,7 +181,7 @@ describe("ShieldToken", async () => {
 
         it("should pause / unpause only by owner", async () => {
             await expect(
-                nonOwnerToken.pause(true)
+                nonOwnerToken.pause(true),
             ).to.be.revertedWith("caller is not the owner")
         })
     })
@@ -204,14 +204,14 @@ describe("ShieldToken", async () => {
         it("shouldn't be able to change release time by non owner", async () => {
             const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
             await expect(
-                token.connect(nonOwner).setReleaseTime(newReleaseTime)
+                token.connect(nonOwner).setReleaseTime(newReleaseTime),
             ).to.be.revertedWith("caller is not the owner")
         })
 
         it("shouldn't be able to change release time from past", async () => {
             const badReleaseTime = Math.floor(new Date().getTime() / 1000) - 3600
             await expect(
-                token.setReleaseTime(badReleaseTime)
+                token.setReleaseTime(badReleaseTime),
             ).to.be.revertedWith("Release time should be in future")
         })
 
@@ -220,7 +220,7 @@ describe("ShieldToken", async () => {
             const newBlockTimestamp = RELEASE_TIME + 3600
             await timeTravel(async () => {
                 await expect(
-                    token.setReleaseTime(newReleaseTime)
+                    token.setReleaseTime(newReleaseTime),
                 ).to.be.revertedWith("Can't change after release")
 
             }, newBlockTimestamp)
@@ -274,24 +274,24 @@ describe("ShieldToken", async () => {
 
         it("should run only by owner", async () => {
             await expect(
-                nonOwnerToken.addAllocations([nonOwner.address], [10], "0")
+                nonOwnerToken.addAllocations([nonOwner.address], [10], "0"),
             ).to.be.revertedWith("caller is not the owner")
         })
 
         it("should throw if invalid vestingType is passed", async () => {
             const invalidVestingTypeIndex = 999
             await expect(
-                token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex)
+                token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex),
             ).to.be.revertedWith("Invalid vestingTypeIndex")
         })
 
         it("should throw if different array lengths are passed", async () => {
             await expect(
-                token.addAllocations([nonOwner.address], [10, 20], "0")
+                token.addAllocations([nonOwner.address], [10, 20], "0"),
             ).to.be.revertedWith("Array lengths must be same")
 
             await expect(
-                token.addAllocations([nonOwner.address, owner.address], [10], "0")
+                token.addAllocations([nonOwner.address, owner.address], [10], "0"),
             ).to.be.revertedWith("Array lengths must be same")
         })
 
@@ -299,7 +299,7 @@ describe("ShieldToken", async () => {
             const supply = await token.totalSupply()
             const amount = supply.div(18).add(1)
             await expect(
-                token.addAllocations([nonOwner.address], [amount], "0")
+                token.addAllocations([nonOwner.address], [amount], "0"),
             ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
         })
 
@@ -308,7 +308,7 @@ describe("ShieldToken", async () => {
             const addresses = (await ethers.getSigners()).slice(2).map(i => i.address)
             const amounts = addresses.map(i => supply.div(addresses.length - 1))
             await expect(
-                token.addAllocations(addresses, amounts, "0")
+                token.addAllocations(addresses, amounts, "0"),
             ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
         })
 
@@ -316,7 +316,7 @@ describe("ShieldToken", async () => {
             const [vestingIndex, allocation] = Object.entries(ALLOCATIONS)[0]
             const address = Object.keys(allocation)[0]
             await expect(
-                token.addAllocations([address], [100], vestingIndex)
+                token.addAllocations([address], [100], vestingIndex),
             ).to.be.revertedWith("Wallet already frozen")
         })
     })
@@ -350,21 +350,21 @@ describe("ShieldToken", async () => {
                     expect(canTransfer).to.equal(false)
 
                     await expect(
-                        token.transferFrom(address, owner.address, toTokenAmount(amount))
+                        token.transferFrom(address, owner.address, toTokenAmount(amount)),
                     ).to.be.revertedWith("Wait for vesting day!")
                 }
             }
         })
 
         it("should transfer tokens from non-frozen wallets", async () => {
-          const amount = toTokenAmount("10")
+            const amount = toTokenAmount("10")
 
-          await token.transfer(nonOwner.address, amount)
+            await token.transfer(nonOwner.address, amount)
 
-          const canTransfer = await token.canTransfer(nonOwner.address, amount)
-          expect(canTransfer).to.equal(true)
+            const canTransfer = await token.canTransfer(nonOwner.address, amount)
+            expect(canTransfer).to.equal(true)
 
-          await nonOwnerToken.transfer(owner.address, amount)
+            await nonOwnerToken.transfer(owner.address, amount)
         })
 
         it("should transfer tokens from frozenWallet after vesting period ends", async () => {
@@ -399,7 +399,7 @@ describe("ShieldToken", async () => {
                     expect(unlockedAmount).to.equal(0)
 
                     await expect(
-                        token.transferFrom(address, owner.address, toTokenAmount(amount))
+                        token.transferFrom(address, owner.address, toTokenAmount(amount)),
                     ).to.be.revertedWith("Wait for vesting day!")
                 }
             }, minuteAfterRelease)
@@ -448,7 +448,7 @@ describe("ShieldToken", async () => {
 
         it("should run disableTransfers only by owner", async () => {
             await expect(
-                nonOwnerToken.disableTransfers(defenseBlockDuration)
+                nonOwnerToken.disableTransfers(defenseBlockDuration),
             ).to.be.revertedWith("caller is not the owner")
         })
 
@@ -472,7 +472,7 @@ describe("ShieldToken", async () => {
 
             // try to send tokens
             await expect(
-                nonOwnerToken.transfer(owner.address, tokenAmount)
+                nonOwnerToken.transfer(owner.address, tokenAmount),
             ).to.emit(nonOwnerToken, "TransferBurned").withArgs(nonOwner.address, tokenAmount)
 
             // balance of sender should decreased
@@ -507,7 +507,7 @@ describe("ShieldToken", async () => {
 
             // try to send tokens
             await expect(
-                nonOwnerToken.transfer(owner.address, senderBalance)
+                nonOwnerToken.transfer(owner.address, senderBalance),
             ).to.be.revertedWith("Wait for vesting day!")
 
             // balance of sender shouldn't change
@@ -534,7 +534,7 @@ describe("ShieldToken", async () => {
             expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(false)
 
             await expect(
-                nonOwnerToken.transfer(owner.address, tokenAmount)
+                nonOwnerToken.transfer(owner.address, tokenAmount),
             ).to.not.emit(nonOwnerToken, "TransferBurned")
         })
 
@@ -548,13 +548,13 @@ describe("ShieldToken", async () => {
             expect(burnBeforeBlockNumberDisabled).to.be.equal(true)
 
             await expect(
-                token.disableTransfers(defenseBlockDuration)
+                token.disableTransfers(defenseBlockDuration),
             ).to.be.revertedWith("Bot defense is disabled")
         })
 
         it("should run disableBurnBeforeBlockNumber only by owner", async () => {
             await expect(
-                nonOwnerToken.disableBurnBeforeBlockNumber()
+                nonOwnerToken.disableBurnBeforeBlockNumber(),
             ).to.be.revertedWith("caller is not the owner")
         })
     })
