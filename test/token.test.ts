@@ -257,11 +257,11 @@ describe("ShieldToken", async () => {
         it("should return 1 month after release if lock period", async () => {
             // 30 days lock period
             const lockPeriod = 3600 * 24 * 30
-            const dayAfterRelease = RELEASE_TIME + 3600 * 24
+            const monthAfterRelease = RELEASE_TIME + lockPeriod
             await timeTravel(async () => {
                 const months = await token.getMonths(lockPeriod)
-                expect(months).to.equal(0)
-            }, dayAfterRelease)
+                expect(months).to.equal(1)
+            }, monthAfterRelease)
         })
     })
 
