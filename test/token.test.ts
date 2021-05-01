@@ -265,6 +265,68 @@ describe("ShieldToken", async () => {
         })
     })
 
+    describe("addVestingType", async () => {
+
+        it("should run only by owner", async () => {
+            await expect(
+                nonOwnerToken.addVestingType(40000, 4, 10 * 24 * 3600),
+            ).to.be.revertedWith("caller is not the owner")
+        })
+
+        it("should throw if lock period is over already", async () => {
+            const monthAfterRelease = RELEASE_TIME + 3600 * 24 * 30
+            await timeTravel(async () => {
+                const dayAfterRelease = 24 * 3600
+                await expect(
+                    token.addVestingType(40000, 4, dayAfterRelease),
+                ).to.be.revertedWith("This lock period is over already")
+            }, monthAfterRelease)
+        })
+
+        it("should add new allocation after release", async () => {
+            const monthAfterRelease = RELEASE_TIME + 3600 * 24 * 30
+            await timeTravel(async () => {
+                const newVestingIndex = 8
+                const frozenAmount = 100
+
+                // sanity check
+                await expect(
+                    token.addAllocations([nonOwner.address], [frozenAmount], newVestingIndex)
+                ).to.be.revertedWith("Invalid vestingTypeIndex")
+
+                // New vesting: Locked for 2 month, 10% on first release, then equal parts of 7.5% over total of 12 months
+                // it should return new vesting type index
+                const lockPeriod = 24 * 3600 * 30 * 2
+                const vestingInitialAmount = 10
+                const vestingMonthlyAmount = 75000
+                await token.addVestingType(vestingMonthlyAmount, vestingInitialAmount, lockPeriod)
+
+                // now we should able to add allocations
+                await token.addAllocations([nonOwner.address], [frozenAmount], newVestingIndex)
+
+                await expect(
+                    nonOwnerToken.transfer(owner.address, toTokenAmount(frozenAmount)),
+                ).to.be.revertedWith("Wait for vesting day!")
+
+                // check initial amount unfreeze
+                await timeTravel(async () => {
+                    const initialAmount = toTokenAmount(frozenAmount * vestingInitialAmount / 100)
+                    const unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+                    expect(unlockedAmount).to.equal(initialAmount)
+                }, RELEASE_TIME + lockPeriod + 1)
+
+                // check monthly amount unfreeze
+                await timeTravel(async () => {
+                    const initialAmount = toTokenAmount(frozenAmount * vestingInitialAmount / 100)
+                    const monthlyAmount = toTokenAmount(frozenAmount * (vestingMonthlyAmount / 10000) / 100)
+                    const unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+                    expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
+                }, RELEASE_TIME + lockPeriod + 24 * 3600 * 30 + 1)
+
+            }, monthAfterRelease)
+        })
+    })
+
     describe("Adding allocations", async () => {
 
         it("should run only by owner", async () => {

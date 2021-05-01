@@ -68,6 +68,13 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
     }
 
+    function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
+        require(releaseTime + lockDaysPeriod > block.timestamp, "This lock period is over already");
+
+        vestingTypes.push(VestingType(monthlyRate, initialRate, lockDaysPeriod));
+        return vestingTypes.length - 1;
+    }
+
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         uint addressesLength = addresses.length;
 
