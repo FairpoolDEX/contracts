@@ -11,12 +11,7 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers"
 chai.use(solidity)
 const {expect} = chai
 
-const {hexlify, parseUnits, randomBytes} = utils
-
-export const toBN = (value: string | number): BigNumber => BigNumber.from(value)
-export const toTokenAmount = (value: string | number): BigNumber => parseUnits(typeof value === "number" ? value.toString() : value, "18")
-export const formatTokenAmount = (value: BigNumber): string => formatUnits(value, "18")
-export const randomHexBytes = (n = 32): string => hexlify(randomBytes(n))
+export const toTokenAmount = (value: string | number): BigNumber => utils.parseUnits(typeof value === "number" ? value.toString() : value, "18")
 
 
 type timeTravelCallback = () => Promise<void>;
