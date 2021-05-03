@@ -10,9 +10,8 @@ jobs:
           node-version: 12.22.1
       - run: npm install
       - run: npm run build
-      - run: npm test
       - run: npm run lint
-      - run: npm run coverage
+      - run: npm run coverage # runs tests as well
 
 #      - name: Upload coverage to Codecov
 #        uses: codecov/codecov-action@v1

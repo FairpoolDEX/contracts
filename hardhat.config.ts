@@ -3,8 +3,8 @@ import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
 import "hardhat-watcher"
 import "hardhat-typechain"
-import "hardhat-deploy"
-import 'hardhat-deploy-ethers'
+// import "hardhat-deploy"
+// import 'hardhat-deploy-ethers'
 import "solidity-coverage"
 import "@openzeppelin/hardhat-upgrades"
 import { config as dotEnvConfig } from "dotenv"
@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.3",
+        version: "0.8.4",
       },
     ],
   },
@@ -31,9 +31,9 @@ const config: HardhatUserConfig = {
       url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ROPSTEN_PRIVATE_KEY],
     },
-    coverage: {
-      url: "http://127.0.0.1:8555",
-    },
+    // coverage: {
+    //   url: "http://127.0.0.1:8555",
+    // },
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
@@ -47,9 +47,9 @@ const config: HardhatUserConfig = {
       ],
     },
   },
-  namedAccounts: {
-    deployer: 0,
-  },
+  // namedAccounts: {
+  //   deployer: 0,
+  // },
 }
 
 export default config

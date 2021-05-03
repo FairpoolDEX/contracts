@@ -1,31 +1,40 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-// FIXME: Solidity warning
-// FIXME: Indentation
-    struct FrozenWallet {
-        address wallet;
-        uint256 totalAmount;
-        uint256 monthlyAmount;
-        uint256 initialAmount;
-        uint256 lockDaysPeriod;
-        bool scheduled;
-    }
 
-    struct VestingType {
-        uint256 monthlyRate;
-        uint256 initialRate;
-        uint256 lockDaysPeriod;
-    }
+/* mythx-disable SWC-116 */
+struct FrozenWallet {
+    address wallet;
+    uint256 totalAmount;
+    uint256 monthlyAmount;
+    uint256 initialAmount;
+    uint256 lockDaysPeriod;
+    bool scheduled;
+}
+
+struct VestingType {
+    uint256 monthlyRate;
+    //Should be set in percents with 4 trailing digits. i.e. 12.7337% value should be 127337
+    uint256 initialRate;
+    uint256 lockDaysPeriod;
+}
+
 
 contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
-    // one wallet can belongs only to a single vesting type
+    // a single wallet can belong only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
+
+    // anti-sniping bot defense
+    uint256 public burnBeforeBlockNumber;
+    bool public burnBeforeBlockNumberDisabled;
+
+    event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime) public initializer {
         __Ownable_init();
@@ -34,46 +43,42 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         setReleaseTime(_releaseTime);
 
-        // Mint totalSupply to the owner
-        _mint(owner(), getMaxTotalSupply());
+        // explicitly set burnBeforeBlockNumberDisabled to false
+        burnBeforeBlockNumberDisabled = false;
 
-        // TODO: remove 100 instant vesting
-        // + add tests: after deploy, send tokens from public vesting.
+        // Mint all supply to the owner
+        // no addition minting is available after initialization
+        _mint(owner(), 969_163_000 * 10 ** 18);
 
-
-        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
-        vestingTypes.push(VestingType(12, 5, 30 days));
-        // Private:	10% at listing, then equal parts of 18% over total of 6 months
-        vestingTypes.push(VestingType(18, 10, 0));
-        // Public:	100% at listing
-        // TODO: 14563107 SHLD to 0x47677e21BCe4d8bd1aF04e1c651b6B29b8eCf1a3 (Ignition wallet address) - move it to distribution script
-        vestingTypes.push(VestingType(100, 100, 0));
+        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
+        vestingTypes.push(VestingType(105556, 5, 30 days));
+        // Private:	10% at listing, then equal parts of 15% over total of 6 months
+        vestingTypes.push(VestingType(150000, 10, 0));
         // Advisors, Partners:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
-        vestingTypes.push(VestingType(4, 4, 30 days));
-        // Team:	Locked for 12 months, 8% on first release, then equal parts of 8% over total of 12 months
-        vestingTypes.push(VestingType(8, 8, 12 * 30 days));
-        // Development:	Locked for 6 months, 3% on first release, then equal parts of 3% over total of 36 months
-        vestingTypes.push(VestingType(3, 3, 6 * 30 days));
-        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2% over total of 48 months
-        vestingTypes.push(VestingType(2, 2, 3 * 30 days));
-        // Liquidity provisioning:	100% at listing
-        vestingTypes.push(VestingType(100, 100, 0));
-        // Liquidity mining:	8% at listing, then equal parts of 8% over total of 12 months
-        vestingTypes.push(VestingType(8, 8, 0));
-        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 2% over total of 60 months
-        vestingTypes.push(VestingType(2, 2, 6 * 30 days));
-        // Rewards:	100% at listing
-        vestingTypes.push(VestingType(100, 100, 0));
+        vestingTypes.push(VestingType(40000, 4, 30 days));
+        // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
+        vestingTypes.push(VestingType(76667, 8, 12 * 30 days));
+        // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
+        vestingTypes.push(VestingType(26945, 3, 6 * 30 days));
+        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
+        vestingTypes.push(VestingType(20417, 2, 3 * 30 days));
+        // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
+        vestingTypes.push(VestingType(76667, 8, 0));
+        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
+        vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
     }
 
-    function getMaxTotalSupply() public pure returns (uint256) {
-        return 969_163_000 * 10 ** 18;
+    function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
+        require(releaseTime + lockDaysPeriod > block.timestamp, "This lock period is over already");
+
+        vestingTypes.push(VestingType(monthlyRate, initialRate, lockDaysPeriod));
+        return vestingTypes.length - 1;
     }
 
     function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
         uint addressesLength = addresses.length;
 
-        require(addressesLength == totalAmounts.length, "Address and totalAmounts length must be same");
+        require(addressesLength == totalAmounts.length, "Array lengths must be same");
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
@@ -82,9 +87,7 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
-            /** TODO - fix amounts
-             */
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 18 / 100;
+            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 14 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
 
@@ -92,13 +95,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
 
         return true;
-    }
-
-    function _mint(address account, uint256 amount) internal override {
-        uint256 totalSupply = super.totalSupply();
-        require(getMaxTotalSupply() >= (totalSupply + amount), "Max total supply over");
-
-        super._mint(account, amount);
     }
 
     function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
@@ -202,19 +198,32 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return true;
     }
 
-    // @override
-    function _beforeTokenTransfer(address sender, address recipient, uint256 amount) internal virtual override {
+    function _beforeTokenTransfer(address sender, address recipient, uint256 amount) internal override {
         require(canTransfer(sender, amount), "Wait for vesting day!");
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
-    // TODO: extend to any tokens
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
+        if (isTransferDisabled()) {
+            // anti-sniping bot defense is on
+            // burn tokens instead of transferring them >:]
+            super._burn(sender, amount);
+            emit TransferBurned(sender, amount);
+        } else {
+            super._transfer(sender, recipient, amount);
+        }
+    }
+
     function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
         (bool success,) = _msgSender().call{value : amount}("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+        require(success, "Unable to send value");
+    }
+
+    function withdrawToken(address token, uint256 amount) public onlyOwner {
+        IERC20Upgradeable(token).transfer(msg.sender, amount);
     }
 
     function pause(bool status) public onlyOwner {
@@ -227,9 +236,29 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function setReleaseTime(uint256 _releaseTime) public onlyOwner {
         if (releaseTime > 0) {
-            require(releaseTime > block.timestamp, "Can't change release time after release");
+            require(releaseTime > block.timestamp, "Can't change after release");
         }
         require(_releaseTime > block.timestamp, "Release time should be in future");
         releaseTime = _releaseTime;
+    }
+
+    // anti-sniping bot defense
+
+    function isTransferDisabled() public view returns (bool) {
+        if (_msgSender() == owner()) {
+            // owner always can transfer
+            return false;
+        }
+        return (!burnBeforeBlockNumberDisabled && (block.number < burnBeforeBlockNumber));
+    }
+
+    function disableTransfers(uint256 blocksDuration) public onlyOwner {
+        require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
+        burnBeforeBlockNumber = block.number + blocksDuration;
+    }
+
+    function disableBurnBeforeBlockNumber() public onlyOwner {
+        burnBeforeBlockNumber = 0;
+        burnBeforeBlockNumberDisabled = true;
     }
 }

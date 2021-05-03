@@ -5,10 +5,15 @@
     "@typescript-eslint"
   ],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "env": {
+    "commonjs": true
   },
   "extends": [
-    "airbnb-typescript",
+    "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier",
     "prettier/@typescript-eslint"
@@ -17,6 +22,12 @@
     "semi": [2, "never"],
     "prefer-const": 2,
     "no-unused-expressions": 0,
-    "comma-dangle": ["error", "always-multiline"]
+    "comma-dangle": ["error", {
+        "arrays": "always-multiline",
+        "objects": "always-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline",
+        "functions": "only-multiline"
+    }]
   }
 }
