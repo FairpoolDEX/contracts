@@ -10,14 +10,21 @@ Market Crash Insurance is a new DeFi product that protects your profits from sha
 
 ### Overview
 
-1. Developer deploys a Market Crash Insurance contract.
-  1. Developer sets a token pair (used to determine the price).
-  1. Developer sets a guaranteed price (if it goes below, traders will be compensated).
-  1. Developer sets an expiration date (used to lock liquidity).
 1. Liquidity providers deposit funds into the contract.
 1. Liquidity providers receive "insurance tokens".
 1. Liquidity providers sell "insurance tokens" to traders.
 1. If the token pair price goes below the guaranteed price: traders can sell by sending the original tokens to the contract (the "insurance tokens" will be burned; traders need to hold "insurance tokens" on the same address as the original tokens).
+
+### Developer perspective
+
+The contract needs to be deployed by the developer before it can be used.
+
+1. Developer deploys a Market Crash Insurance contract.
+1. Developer initializes the Market Crash Insurance  contract:
+    1. Developer sets a token pair (used to determine the price).
+    1. Developer sets a guaranteed price (if it goes below, traders will be compensated).
+    1. Developer sets an expiration date (used to lock liquidity).
+
 
 ### Trader perspective
 
