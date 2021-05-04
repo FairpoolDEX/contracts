@@ -31,12 +31,14 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
+      timeout: 100000,
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
+      timeout: 100000,
     },
     // coverage: {
     //   url: "http://127.0.0.1:8555",
@@ -54,9 +56,6 @@ const config: HardhatUserConfig = {
       ],
     },
   },
-  // namedAccounts: {
-  //   deployer: 0,
-  // },
 }
 
 export default config
