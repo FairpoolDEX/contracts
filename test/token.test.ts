@@ -1,7 +1,6 @@
 import {ethers, upgrades} from "hardhat"
 import {solidity} from "ethereum-waffle"
 import {utils, BigNumber} from "ethers"
-import {formatUnits} from "ethers/lib/utils"
 import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
