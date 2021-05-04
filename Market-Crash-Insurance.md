@@ -4,7 +4,7 @@ Market Crash Insurance is a new DeFi product that protects your profits from sha
 
 **For traders:** Market Crash Insurance guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Insurance contract. In this case, you will receive a compensation equal to `guaranteed_price * token_amount`. 
 
-**For whales:** Market Crash Insurance provides a way to silently accumulate a token at a certain price without moving the market. You can deposit liquidity into the contract and sell insurance to traders. When the market crashes, traders will sell the token into your liquidity at the guaranteed price. The best part of it? You will receive premiums while waiting for the crash (while insurance is active).
+**For liquidity providers (whales, projects):** Market Crash Insurance provides a way to silently accumulate a token at a certain price without moving the market. You can deposit liquidity into the contract and sell insurance to traders. When the market crashes, traders will sell the token into your liquidity at the guaranteed price. The best part of it? You will receive premiums while waiting for the crash (while insurance is active).
 
 ## How it works
 
