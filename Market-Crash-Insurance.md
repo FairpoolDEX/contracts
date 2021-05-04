@@ -39,6 +39,6 @@ Note: the compensation is larger than the trader would receive if he simply sold
 
 1. Liquidity provider deposits funds into our contract.
 1. Liquidity provider sells insurance.
-1. Token price stays above the guaranteed price (trader don't sell).
+1. Token price stays above the guaranteed price (trader doesn't sell).
 1. Expiration date passes (liquidity provider can withdraw).
 1. Liquidity provider withdraws funds + keeps the premium from selling insurance.
