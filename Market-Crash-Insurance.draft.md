@@ -1,12 +1,14 @@
+# Drafts
+
 ## Stories
 
 ### Trader receives a compensation
 
 1. [Developer] deploys a Shield Stop Loss contract with the following parameters:
-  1. [Liquidity pool address](#liquidity-pool-address)
-  1. [Strike price]
+    1. [Liquidity pool address](#liquidity-pool-address)
+    1. [Strike price]
 1. Contract executes initialization code:
-  1. Contract sets `base` variable to the base currency of the 
+    1. Contract sets `base` variable to the base currency of the
 1. [Protector] deposits 10 ETH
 1. [Trader]
   
@@ -16,7 +18,6 @@
 1. Must allow protectors to sell the insurance at any price.
 1. Must allow protectors to withdraw unused liquidity.
 1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
-
 
 ## Technical documentation
 
@@ -45,7 +46,7 @@ Parameters:
 * [Withdraw deadline block number](#withdraw-deadline-block-number)
 * [Unlock deadline block number](#unlock-deadline-block-number)
 
-`initialize` method activates the Shield contract by providing required parameters. 
+`initialize` method activates the Shield contract by providing required parameters.
 
 #### Deposit method
 
@@ -103,6 +104,7 @@ Example for Protectors:
 In this case, only 4 ETH from Protectors become eligible for payouts. The remaining 6 ETH are not used, and can be refunded back to Protectors anytime after [deposit deadline](#deposit-deadline-block-number).
 
 **Note:** Refunds are normal, because neither side knows how much the other side will deposit before [deposit deadline](#deposit-deadline-block-number):
+
 * Traders don't know how much Protectors will deposit.
 * Protectors don't know how much Traders will deposit.
 
@@ -119,10 +121,12 @@ Examples:
 Payout coefficient is used to calculate payouts for Traders & Protectors.
 
 If rug pull happens:
+
 * Each trader receives `his_deposit + payout_coefficient * his_deposit`
 * Each protector receives nothing.
 
 If rug pull doesn't happen:
+
 * Each trader receives nothing.
 * Each protector receives `his_deposit + (1 / payout_coefficient) * his_deposit`.
 
@@ -173,6 +177,7 @@ Examples:
 * 12064854 (Ethereum block #12064854)
 
 Unlock deadline allows to withdraw stuck deposits. For example:
+
 * Trader deposits 1 ETH.
 * Protector deposits 2 ETH.
 * Rug pull doesn't happen.
