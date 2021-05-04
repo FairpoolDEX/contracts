@@ -1,4 +1,5 @@
 import { ethers, upgrades } from "hardhat"
+import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 
 import { ALLOCATIONS, RELEASE_TIME } from './parameters'
 
@@ -10,7 +11,10 @@ async function main() {
   const Token = await ethers.getContractFactory("ShieldToken")
   const token = await upgrades.deployProxy(Token, [RELEASE_TIME])
   await token.deployed()
-  console.log("Token address:", token.address) // eslint-disable-line no-console
+  console.log("Proxy address:", token.address) // eslint-disable-line no-console
+
+  const implementationAddress = await getImplementationAddress(ethers.provider, token.address);
+  console.log("Implementation address:", implementationAddress) // eslint-disable-line no-console
 
   // add allocations
   for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
