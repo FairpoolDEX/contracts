@@ -37,9 +37,12 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime) public initializer {
-        __Ownable_init();
-        __ERC20_init("Shield Finance Token", "SHLD");
-        __ERC20Pausable_init();
+        // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        __ERC20_init_unchained("Shield Finance Token", "SHLD");
+        __Pausable_init_unchained();
+        __ERC20Pausable_init_unchained();
 
         setReleaseTime(_releaseTime);
 
