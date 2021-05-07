@@ -1,30 +1,8 @@
 # Drafts
 
-## Stories
 
-### Trader receives a compensation
-
-1. [Developer] deploys a Shield Stop Loss contract with the following parameters:
-    1. [Liquidity pool address](#liquidity-pool-address)
-    1. [Strike price]
-1. Contract executes initialization code:
-    1. Contract sets `base` variable to the base currency of the
-1. [Protector] deposits 10 ETH
-1. [Trader]
-  
-## System tests
-
-1. Must allow traders to sell the token at the guaranteed price.
-1. Must allow protectors to sell the insurance at any price.
-1. Must allow protectors to withdraw unused liquidity.
-1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
 
 ## Technical documentation
-
-### Deployment
-
-* Anybody can deploy a new Shield contract.
-* Anybody can call public methods of a new Shield contract.
 
 ### Usage
 
@@ -134,58 +112,7 @@ You can also think of payout coefficient as ideal "fund ratio" = `protector_fund
 
 Note: formulas above are applied after [refunds](#refunding)
 
-#### Liquidity pool address
 
-Examples:
-
-* 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 ([CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929))
-* 0xd3d2e2692501a5c9ca623199d38826e513033a17 ([UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17))
-* 0x795065dcc9f64b5614c407a6efdc400da6221fb0 ([SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0))
-
-A single Shield contract protects a single liquidity pool.
-
-It is possible to deploy multiple Shield contracts that protect the same liquidity pool, because they can have different deadlines ([deposit deadline block number](#deposit-deadline-block-number) and [withdraw deadline block number](#withdraw-deadline-block-number))
-
-#### Deposit deadline block number
-
-Examples:
-
-* 11781922 (Ethereum block #11781922)
-* 11800000 (Ethereum block #11800000)
-* 11829393 (Ethereum block #11829393)
-
-Deposit deadline motivates the Traders & Protectors to fund the contract. They should only send funds to the contract before the Deposit deadline. If anybody sends the funds to the contract after the Deposit deadline, the transaction will be reverted.
-
-Deposit deadline must be at least ~1 day in future (5760 blocks in future) from when the contract is deployed.
-
-#### Withdraw deadline block number
-
-Examples:
-
-* 11800000 (Ethereum block #11800000)
-* 11829393 (Ethereum block #11829393)
-* 11948384 (Ethereum block #11948384)
-
-Withdraw deadline prevents the Protectors from withdrawing their money too early. It provides time for Traders to withdraw their compensation if the rug pull actually happens. Note that Traders can withdraw only if the rug pull happens on the liquidity pool that is protected by that specific Shield contract (because a single Shield contract protects a single liquidity pool).
-
-#### Unlock deadline block number
-
-Examples:
-
-* 11900000 (Ethereum block #11900000)
-* 11983438 (Ethereum block #11983438)
-* 12064854 (Ethereum block #12064854)
-
-Unlock deadline allows to withdraw stuck deposits. For example:
-
-* Trader deposits 1 ETH.
-* Protector deposits 2 ETH.
-* Rug pull doesn't happen.
-* Protector receives the right to withdraw both his & traders' deposit, but can't it (because he lost his private key).
-* Trader can't withdraw either (because rug pull didn't happen)
-* Trader realizes that his deposit is stuck.
-* Trader waits until "Unlock deadline block number".
-* Trader withdraws his deposit ("un-stucks" it).
 
 ### FAQ
 
