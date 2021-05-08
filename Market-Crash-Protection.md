@@ -58,6 +58,28 @@ Note: the compensation is larger than the trader would receive if he simply sold
 * Anybody can deploy a new MCP contract.
 * Anybody can call public methods of a new MCP contract.
 
+## Guides
+
+### How to sell my token
+
+Suppose you bought 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT). After that LINK crashed to 10 USDT (4x drop). If you don't have any [protection tokens](#protection-token), you have to bear the loss. But let's say you bought 1000 LINK protection tokens that allow you to sell 1000 LINK at 30 USDT each. In this case, you can sell your LINK tokens at a guaranteed price (30 USDT) instead of market price (10 USDT). So, you can recover 30000 USDT instead of 10000 USDT. That means you can save 20000 USDT.
+
+Here is a full scenario:
+
+* You buy 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT).
+* You buy 1000 LINK-USDT-31-AUG-2021-30.0000 at 2 USDT each (total spend: 2000 USDT)
+  * "1000 LINK-USDT-31-AUG-2021-30.0000" means "You can sell 1000 LINK tokens before 31 Aug 2021 for 30.0000 USDT each"
+* LINK-USDT price crashes to 10 USDT before 31 Aug 2021.
+* You sell 1000 LINK tokens to [MCP contract](#market-crash-protection-contract) for 30 USDT each (total gain: 30000 USDT)
+
+Protection tokens allow you to recover capital. Using the example above:
+* With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
+* Without protection: you would have 10000 USDT (10000 USDT recovered capital) (LINK crashed to 10 USDT, and you sold at market price).
+
+### How to deposit or withdraw
+
+? Describe how much the user will receive
+
 ## Definitions
 
 ### Market Crash Protection contract
@@ -65,16 +87,14 @@ Note: the compensation is larger than the trader would receive if he simply sold
 Market Crash Protection contract (MCP contract) is a smart contract with the following features:
  
 * Allows traders to receive compensation if the market price goes below the [guaranteed price](#guaranteed-price).
-* Allows liquidity providers to receive premiums by selling [protection tokens] to traders.
+* Allows liquidity providers to receive premiums by selling [protection tokens](#protection-token) to traders.
 
 Market Crash Protection contract has the following methods:
 
 * [Initialize](#initialize-method)
 * [Deposit](#deposit-method)
-* [Withdraw]
-* [Sell]
-
-Market Crash Protection contract has the following parameters:
+* [Withdraw](#withdraw-method)
+* [Sell](#sell-method)
 
 ### Initialize method
 
@@ -82,80 +102,36 @@ Initialize method allows the [developer](#developer) to set the contract paramet
 
 Parameters:
 
-* [Base token address]
-* [Quote token address]
+* [Base token address](#base-token-address)
+* [Quote token address](#quote-token-address)
 * [Guaranteed price](#guaranteed-price)
 
 ### Deposit method
 
-Deposit method allows the [liquidity providers](#liquidity-provider) to put [quote token](#quote-token) in the smart contract.
+Deposit method allows the [liquidity providers](#liquidity-provider) to put the [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
 
 Parameters:
 
-* [Quote token amount]
+* [Quote token amount](#quote-token-amount)
 
 Effects:
 
-* Mints [protection token]:
+* Deposits [quote token](#quote-token)
+* Mints [protection token](#protection-token):
     * Address: method caller address
-    * Amount: [Quote token amount] / [Guaranteed price](#guaranteed-price)
+    * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
 
-### Guaranteed price
+### Withdraw method
 
-Guaranteed price is 
+Withdraw method allows the [liquidity providers](#liquidity-provider) to take the [base tokens](#base-token) and the [quote tokens](#quote-token) out of the [MCP contract](#market-crash-protection-contract).
 
-### Liquidity pool address
+The amount of base & quote tokens is calculated separately for each liquidity provider, depending on the amount of quote tokens that he / she initially deposited. See [How to deposit or withdraw](#how-to-deposit-or-withdraw).
 
-Examples:
+Notes:
 
-* 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 ([CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929))
-* 0xd3d2e2692501a5c9ca623199d38826e513033a17 ([UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17))
-* 0x795065dcc9f64b5614c407a6efdc400da6221fb0 ([SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0))
+* Withdraw method can only be called after the [expiration date](#expiration-date)
 
-A single Shield contract protects a single liquidity pool.
-
-It is possible to deploy multiple Shield contracts that protect the same liquidity pool, because they can have different deadlines ([deposit deadline block number](#deposit-deadline-block-number) and [withdraw deadline block number](#withdraw-deadline-block-number))
-
-### Deposit deadline block number
-
-Examples:
-
-* 11781922 (Ethereum block #11781922)
-* 11800000 (Ethereum block #11800000)
-* 11829393 (Ethereum block #11829393)
-
-Deposit deadline motivates the Traders & Protectors to fund the contract. They should only send funds to the contract before the Deposit deadline. If anybody sends the funds to the contract after the Deposit deadline, the transaction will be reverted.
-
-Deposit deadline must be at least ~1 day in future (5760 blocks in future) from when the contract is deployed.
-
-### Withdraw deadline block number
-
-Examples:
-
-* 11800000 (Ethereum block #11800000)
-* 11829393 (Ethereum block #11829393)
-* 11948384 (Ethereum block #11948384)
-
-Withdraw deadline prevents the Protectors from withdrawing their money too early. It provides time for Traders to withdraw their compensation if the rug pull actually happens. Note that Traders can withdraw only if the rug pull happens on the liquidity pool that is protected by that specific Shield contract (because a single Shield contract protects a single liquidity pool).
-
-### Unlock deadline block number
-
-Examples:
-
-* 11900000 (Ethereum block #11900000)
-* 11983438 (Ethereum block #11983438)
-* 12064854 (Ethereum block #12064854)
-
-Unlock deadline allows to withdraw stuck deposits. For example:
-
-* Trader deposits 1 ETH.
-* Protector deposits 2 ETH.
-* Rug pull doesn't happen.
-* Protector receives the right to withdraw both his & traders' deposit, but can't it (because he lost his private key).
-* Trader can't withdraw either (because rug pull didn't happen)
-* Trader realizes that his deposit is stuck.
-* Trader waits until "Unlock deadline block number".
-* Trader withdraws his deposit ("un-stucks" it).
+### Sell method
 
 ### Developer
 
@@ -167,8 +143,101 @@ In case of [MCP contracts](#market-crash-protection-contract), developer can be 
 
 ### Trader
 
+### Guaranteed price
+
+Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token). See "[How to sell my token](#how-to-sell-my-token)".
+
+Example:
+* 20.0
+* 40.45
+* 10000.0
+
+### Expiration date
+
 ### Base token
+
+Base token is a token that is traded against [quote token](#quote-token). In a LINK-USDT pair, LINK is the base token. Base token is normally more volatile than quote token.
+
+Examples:
+
+* LINK
+* AAVE
+* COMP
+
+Notes:
+
+* The distinction between base & quote tokens is by convention. Normally, a less stable token is "base" & more stable token is "quote". 
 
 ### Quote token
 
+Quote token is a token that is traded for [base token](#base-token). In a LINK-USDT pair, USDT is the quote token. Quote token is normally less volatile than base token.
+
+Examples:
+
+* WETH
+* WBTC
+* USDT
+
 ### Protection token
+
+Protection token is a token that gives the right to sell [base token](#base-token) at the [guaranteed price](#guaranteed-price) via specific [Market Crash Protection contract](#market-crash-protection-contract) and receive [quote token](#quote-token).
+
+Examples:
+
+* WBTC-USDT-30-JUN-2021-50000 - gives the right to sell 1 WBTC for 50000 USDT on or before June 30, 2021.
+* LINK-USDT-31-AUG-2021-10.0000 - gives the right to sell 1 LINK for 10 USDT on or before July 31, 2021.
+* AAVE-WETH-30-SEP-2021-0.05000 - gives the right to sell 1 AAVE for 0.05 WETH on or before September 30, 2021.
+
+Notes:
+
+* 1 protection token gives the right to sell 1 base token.
+* You need to hold protection tokens on the same address as base tokens to exercise the right to sell.
+* After you sell the base tokens into the [MCP contract](#market-crash-protection-contract), your protection tokens will be burnt at 1:1 rate (e.g. if you sell 100 LINK, the contract will burn 100 LINK protection tokens).
+
+### Base token address
+
+Base token address is a string that is the [base token](#base-token) smart contract address.
+
+Examples:
+
+* 0x514910771af9ca656af840dff83e8264ecf986ca ([ChainLink Token (LINK)](https://etherscan.io/address/0x514910771af9ca656af840dff83e8264ecf986ca))
+* 0x2f109021afe75b949429fe30523ee7c0d5b27207 ([AAVE Token (AAVE)](https://etherscan.io/address/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9))
+* 0xc00e94cb662c3520282e6f5717214004a7f26888 ([Compound Token (COMP)](https://etherscan.io/address/0xc00e94cb662c3520282e6f5717214004a7f26888))
+
+### Quote token address
+
+Quote token address is a string that is the [quote token](#quote-token) smart contract address.
+
+Examples:
+
+* 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 ([Wrapped Ether (WETH)](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2))
+* 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 ([Wrapped Bitcoin (WBTC)](https://etherscan.io/address/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599))
+* 0xdac17f958d2ee523a2206206994597c13d831ec7 ([Tether (USDT)](https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7))
+
+### Liquidity pool address
+
+Examples:
+
+* 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 ([CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929))
+* 0xd3d2e2692501a5c9ca623199d38826e513033a17 ([UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17))
+* 0x795065dcc9f64b5614c407a6efdc400da6221fb0 ([SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0))
+
+### Base token amount
+
+Base token amount is a decimal number that represents the amount of [base token](#base-token).
+
+Examples:
+
+* 100.0
+* 4000.0
+* 7500.145
+
+### Quote token amount
+
+Quote token amount is a decimal number that represents the amount of [quote token](#quote-token).
+
+Examples:
+
+* 100.0
+* 4000.0
+* 7500.145
