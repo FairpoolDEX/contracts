@@ -2,8 +2,8 @@
 
 ## 0. Pre-Requirements:
 
-- Setup `INFURA_API_KEY`, `ETHERSCAN_API_KEY`, and `MNEMONIC` in `.env` file. (see `.env.example` for details).
-- In`parameters.ts` set `ALLOCATIONS` and `RELEASE_TIME`
+- In `.env` file set `INFURA_API_KEY`, `ETHERSCAN_API_KEY`, and `MNEMONIC` (see `.env.example` for details)
+- In `parameters.ts` set `ALLOCATIONS` and `RELEASE_TIME`
   
 ## 1. Deploy
 
@@ -44,7 +44,7 @@ const token = await Token.attach('<Proxy address>')
 ### Enable defense
 
 ```
-// disable transers for 100 blocks from now
+// disable transfers for 100 blocks from now
 await token.disableTransfers(100)
 ```
 
