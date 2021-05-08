@@ -50,7 +50,7 @@ Note: the compensation is larger than the trader would receive if he simply sold
 1. Must allow traders to withdraw compensation as soon as they want.
 1. Must allow protectors to sell the protection at any price.
 1. Must allow protectors to withdraw liquidity after expiration date.
-1. Must allow protectors to sub-yield the liquidity into other projects.
+1. Must allow protectors to super-yield the liquidity into other projects.
 1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
 
 ### Deployment
@@ -58,9 +58,11 @@ Note: the compensation is larger than the trader would receive if he simply sold
 * Anybody can deploy a new MCP contract.
 * Anybody can call public methods of a new MCP contract.
 
-## Guides
+## Guides for traders
 
-### How to sell my token
+### How to save money
+
+You can save money with Market Crash Protection contracts. They give you the right to sell your tokens at a guaranteed price even if the market price has crashed.
 
 Suppose you bought 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT). After that LINK crashed to 10 USDT (4x drop). If you don't have any [protection tokens](#protection-token), you have to bear the loss. But let's say you bought 1000 LINK protection tokens that allow you to sell 1000 LINK at 30 USDT each. In this case, you can sell your LINK tokens at a guaranteed price (30 USDT) instead of market price (10 USDT). So, you can recover 30000 USDT instead of 10000 USDT. That means you can save 20000 USDT.
 
@@ -76,9 +78,28 @@ Protection tokens allow you to recover capital. Using the example above:
 * With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
 * Without protection: you would have 10000 USDT (10000 USDT recovered capital) (LINK crashed to 10 USDT, and you sold at market price).
 
-### How to deposit or withdraw
+## Guides for liquidity providers
 
-? Describe how much the user will receive
+### How to make money
+
+You can make money with Market Crash Protection contracts. They give you the right to sell [protection tokens](#protection-token) to traders and also earn [super-yield](#super-yield).
+
+Suppose you believe that WBTC price will never crash below 10000 USDT. 
+
+TODO
+
+### How to deposit
+
+You can make money by depositing [quote tokens](#quote-token) into [MCP contracts](#market-crash-protection-contract). You can withdraw them after the expiration date (see [How to withdraw](#how-to-withdraw)). When you deposit quote tokens, you receive two types of tokens:
+
+* Liquidity tokens give you the right to [withdraw](#how-to-withdraw) liquidity later.
+* Protection tokens give you the right to 
+
+TODO
+
+### How to withdraw
+
+TODO
 
 ## Definitions
 
@@ -125,13 +146,15 @@ Effects:
 
 Withdraw method allows the [liquidity providers](#liquidity-provider) to take the [base tokens](#base-token) and the [quote tokens](#quote-token) out of the [MCP contract](#market-crash-protection-contract).
 
-The amount of base & quote tokens is calculated separately for each liquidity provider, depending on the amount of quote tokens that he / she initially deposited. See [How to deposit or withdraw](#how-to-deposit-or-withdraw).
+The amount of base & quote tokens is calculated separately for each liquidity provider, depending on the amount of quote tokens that he / she initially deposited. See [How to deposit](#how-to-deposit), [How to withdraw](#how-to-withdraw).
 
 Notes:
 
 * Withdraw method can only be called after the [expiration date](#expiration-date)
 
 ### Sell method
+
+TODO
 
 ### Developer
 
@@ -141,11 +164,15 @@ In case of [MCP contracts](#market-crash-protection-contract), developer can be 
 
 ### Liquidity provider
 
+TODO
+
 ### Trader
+
+TODO
 
 ### Guaranteed price
 
-Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token). See "[How to sell my token](#how-to-sell-my-token)".
+Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token). See "[How to save money](#how-to-save-money)".
 
 Example:
 * 20.0
@@ -153,6 +180,12 @@ Example:
 * 10000.0
 
 ### Expiration date
+
+TODO
+
+### Super-Yield
+
+TODO
 
 ### Base token
 
