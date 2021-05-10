@@ -16,9 +16,9 @@ Are you a liquidity provider? **[Learn about Super-Yield](#how-to-earn-super-yie
 
 ## Overview
 
-**For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more about the risks & benefits in our [guides for traders](#guides-for-traders)
+**For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more in our [guides for traders](#guides-for-traders)
 
-**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by selling "[protection tokens](#protection-token)" to traders 2) by earning [super-yield](#super-yield). Learn more about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers)
+**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by selling "[protection tokens](#protection-token)" to traders 2) by earning [super-yield](#super-yield). Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers)
 
 ## How it works
 
