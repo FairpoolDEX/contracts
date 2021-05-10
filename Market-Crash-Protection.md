@@ -2,7 +2,7 @@
 
 Market Crash Protection **[keeps your profits](#how-to-save-money)** safe from dumps.
 
-Market Crash Protection is a much-needed "Stop-Loss for DeFi". It is truly decentralized - you fully control your funds all the time. Instead of being triggered automatically, it gives you the right to sell a specific token at a guaranteed price before the expiration date. You make the final decision (sell / hold), and you have full control over your capital all the time.
+Market Crash Protection is a much-needed "Stop-Loss for DeFi". It is a smart contract that gives you the right to sell a specific token at a guaranteed price before the expiration date. You make the final decision (sell / hold), and you fully control your funds all the time.
 
 > **Market Crash Protection...**
 >
