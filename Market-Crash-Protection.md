@@ -22,7 +22,7 @@ Are you a liquidity provider? **[Learn about Super-Yield](#how-to-earn-super-yie
 
 ## How it works
 
-### Overview
+### General
 
 1. Liquidity providers deposit funds into the contract.
 1. Liquidity providers receive "protection tokens".
