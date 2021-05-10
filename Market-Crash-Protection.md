@@ -4,13 +4,13 @@ Market Crash Protection is a new DeFi product that **[protects your profits](#ho
 
 Market Crash Protection is unique: it works like a stop-loss, but in a fully decentralized manner. Instead of being triggered automatically, it gives you the right to sell a specific token at a guaranteed price before the expiration date. You make the final decision (sell / hold), and you have full control over your capital all the time.
 
-> Market Crash Protection...
+> **Market Crash Protection...**
 >
-> ... allows you to sell a specific token
+> **... allows you to sell a specific token**
 >
-> ... at a guaranteed price
+> **... at a guaranteed price**
 >
-> ... before the expiration date.
+> **... before the expiration date.**
 
 Are you a liquidity provider? **[Learn about Super-Yield](#how-to-earn-super-yield)**.
 
