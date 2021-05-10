@@ -1,10 +1,24 @@
 # Market Crash Protection
 
-Market Crash Protection is a new DeFi product that protects your profits from sharp price drops.
+Market Crash Protection is a new DeFi product that **[protects your profits](#how-to-save-money)** from sharp price drops.
 
-**For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract. In this case, you will receive compensation equal to `guaranteed_price * token_amount`.
+Market Crash Protection is unique: it works like a stop-loss, but in a fully decentralized manner. Instead of being triggered automatically, it gives you the right to sell a specific token at a guaranteed price before the expiration date. You make the final decision (sell / hold), and you have full control over your capital all the time.
 
-**For liquidity providers (whales, projects):** Market Crash Protection provides a way to silently accumulate a token at a certain price without moving the market. You can deposit liquidity into the contract and sell protection to traders. When the market crashes, traders will sell the token into your liquidity at the guaranteed price. The best part of it? You will receive premiums while waiting for the crash (while protection is active).
+> Market Crash Protection...
+>
+> ... allows you to sell a specific token
+>
+> ... at a guaranteed price
+>
+> ... before the expiration date.
+
+Are you a liquidity provider? **[Learn about Super-Yield](#how-to-earn-super-yield)**.
+
+## Overview
+
+**For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more about the risks & benefits in our [guides for traders](#guides-for-traders)
+
+**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by selling "[protection tokens](#protection-token)" to traders 2) by earning [super-yield](#super-yield). Learn more about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers)
 
 ## How it works
 
