@@ -12,7 +12,11 @@ Market Crash Protection is a much-needed "Stop-Loss for DeFi". It is a smart con
 >
 > **... before the expiration date.**
 
-Are you a liquidity provider? **[Learn about Super-Yield](#how-to-earn-super-yield)**.
+Are you a trader? Learn more in our [guides for traders](#guides-for-traders).
+
+Are you a liquidity provider? Check out [guides for liquidity providers](#guides-for-liquidity-providers).
+
+Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feature.
 
 ## Overview
 
