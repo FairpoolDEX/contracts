@@ -102,6 +102,12 @@ Suppose you believe that WBTC price will never crash below 10000 USDT.
 
 TODO
 
+### How to earn Super-Yield
+
+Read about [Super-Yield](#super-yield).
+
+TODO
+
 ### How to deposit
 
 You can make money by depositing [quote tokens](#quote-token) into [MCP contracts](#market-crash-protection-contract). You can withdraw them after the expiration date (see [How to withdraw](#how-to-withdraw)). When you deposit quote tokens, you receive two types of tokens:
