@@ -96,6 +96,29 @@ Protection tokens allow you to recover capital. Using the example above:
 * With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
 * Without protection: you would have 10000 USDT (10000 USDT recovered capital) (LINK crashed to 10 USDT, and you sold at market price).
 
+### How to buy protection
+
+*Note: this product is still under development. The guide below is how it's supposed to work.*
+
+1. You open the Shield Finance web application.
+1. You click "Search".
+1. You type the [base token](#base-token) ticker (it can be a token that you've already bought, or a token that you want to buy).
+1. App shows you a list of available [Market Crash Protection contracts](#market-crash-protection-contract) for your [base token](#base-token).
+    1. There will be multiple protection contracts for a single token.
+    1. The contracts will have different parameters: guaranteed price & expiration date.
+1. You choose the protection contract that suits your needs:
+    1. If you want to buy protection for long term, choose a contract with an expiration date that is far in future.
+    1. If you want to buy protection for short term, choose a contract with an expiration date that is closer to present moment.
+1. You click "Buy" button on the contract that you've chosen.
+1. App asks you how many [protection tokens](#protection-token) you want to buy.
+    1. Normally, you should buy the amount of [protection tokens](#protection-token) equal to amount of [base tokens](#base-token) that you own.
+1. You input the amount of protection tokens.
+1. App calculates the total cost of buying this amount of protection tokens.
+1. You click "Buy".
+1. Metamask asks you to sign & send the transaction for buying protection tokens.
+1. You click "Send".
+1. Once the transaction is confirmed, you will own the protection tokens & you can use them to receive compensation if the price of the [base token](#base-token) crashes. 
+
 ## Guides for liquidity providers
 
 ### How to make money
@@ -272,15 +295,25 @@ Notes:
 * You need to hold protection tokens on the same address as base tokens to exercise the right to sell.
 * After you sell the base tokens into the [MCP contract](#market-crash-protection-contract), your protection tokens will be burnt at 1:1 rate (e.g. if you sell 100 LINK, the contract will burn 100 LINK protection tokens).
 
+### Pair
+
+Pair is two tokens that can be traded for each other.
+
+Examples:
+
+* LINK-USDT
+* LINK-ETH
+* ETH-USDT
+
 ### Base token address
 
 Base token address is a string that is the [base token](#base-token) smart contract address.
 
 Examples:
 
-* 0x514910771af9ca656af840dff83e8264ecf986ca ([ChainLink Token (LINK)](https://etherscan.io/address/0x514910771af9ca656af840dff83e8264ecf986ca))
-* 0x2f109021afe75b949429fe30523ee7c0d5b27207 ([AAVE Token (AAVE)](https://etherscan.io/address/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9))
-* 0xc00e94cb662c3520282e6f5717214004a7f26888 ([Compound Token (COMP)](https://etherscan.io/address/0xc00e94cb662c3520282e6f5717214004a7f26888))
+* 0x514910771af9ca656af840dff83e8264ecf986ca - [ChainLink Token (LINK)](https://etherscan.io/address/0x514910771af9ca656af840dff83e8264ecf986ca)
+* 0x2f109021afe75b949429fe30523ee7c0d5b27207 - [AAVE Token (AAVE)](https://etherscan.io/address/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9)
+* 0xc00e94cb662c3520282e6f5717214004a7f26888 - [Compound Token (COMP)](https://etherscan.io/address/0xc00e94cb662c3520282e6f5717214004a7f26888)
 
 ### Quote token address
 
@@ -288,17 +321,17 @@ Quote token address is a string that is the [quote token](#quote-token) smart co
 
 Examples:
 
-* 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 ([Wrapped Ether (WETH)](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2))
-* 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 ([Wrapped Bitcoin (WBTC)](https://etherscan.io/address/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599))
-* 0xdac17f958d2ee523a2206206994597c13d831ec7 ([Tether (USDT)](https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7))
+* 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 - [Wrapped Ether (WETH)](https://etherscan.io/address/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2)
+* 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 - [Wrapped Bitcoin (WBTC)](https://etherscan.io/address/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599)
+* 0xdac17f958d2ee523a2206206994597c13d831ec7 - [Tether (USDT)](https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7)
 
 ### Liquidity pool address
 
 Examples:
 
-* 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 ([CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929))
-* 0xd3d2e2692501a5c9ca623199d38826e513033a17 ([UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17))
-* 0x795065dcc9f64b5614c407a6efdc400da6221fb0 ([SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0))
+* 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 - [CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929)
+* 0xd3d2e2692501a5c9ca623199d38826e513033a17 - [UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17)
+* 0x795065dcc9f64b5614c407a6efdc400da6221fb0 - [SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0)
 
 ### Base token amount
 
