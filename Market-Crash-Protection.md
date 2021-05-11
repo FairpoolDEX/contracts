@@ -2,7 +2,7 @@
 
 Market Crash Protection **[keeps your profits](#how-to-save-money)** safe from dumps.
 
-Market Crash Protection is a much-needed "Stop-Loss for DeFi". It is a smart contract that gives you the right to sell a specific token at a guaranteed price before the expiration date. You make the final decision (sell / hold), and you fully control your funds all the time.
+Market Crash Protection is a much-needed "Stop-Loss for DeFi". It is a smart contract that gives you the right to sell a [specific token](#base-token) at a [guaranteed price](#guaranteed-price) before the [expiration date](#expiration-date). You make the final decision (sell / hold), and you fully control your funds all the time.
 
 > **Market Crash Protection...**
 >
@@ -263,7 +263,7 @@ Protection token is a token that gives the right to sell [base token](#base-toke
 Examples:
 
 * WBTC-USDT-30-JUN-2021-50000 - gives the right to sell 1 WBTC for 50000 USDT on or before June 30, 2021.
-* LINK-USDT-31-AUG-2021-10.0000 - gives the right to sell 1 LINK for 10 USDT on or before July 31, 2021.
+* LINK-USDT-31-AUG-2021-10.0000 - gives the right to sell 1 LINK for 10 USDT on or before August 31, 2021.
 * AAVE-WETH-30-SEP-2021-0.05000 - gives the right to sell 1 AAVE for 0.05 WETH on or before September 30, 2021.
 
 Notes:
