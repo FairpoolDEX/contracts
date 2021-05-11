@@ -117,7 +117,21 @@ Protection tokens allow you to recover capital. Using the example above:
 1. You click "Buy".
 1. Metamask asks you to sign & send the transaction for buying protection tokens.
 1. You click "Send".
-1. Once the transaction is confirmed, you will own the protection tokens & you can use them to receive compensation if the price of the [base token](#base-token) crashes. 
+1. Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes. 
+
+### How to receive compensation
+
+1. You open the Shield Finance web application.
+1. You click "Get compensation".
+1. App shows you the list of [base tokens](#base-token) that you can get compensation for.
+    1. App shows you only those tokens that are stored on the currently selected address. If you used a different address when you bought the protection tokens, please change the currently selected address in your wallet.
+    1. App shows whether the [market price](#market-price) is below the [guaranteed price](#guaranteed-price). Technically, you can sell into [MCP contract](#market-crash-protection-contract) at any point in time (even if the market price is above the guaranteed price), but it makes economic sense to sell into [MCP contract](#market-crash-protection-contract) only if the market price is below the guaranteed price.
+1. You choose the token that you want to sell.
+1. You choose the amount of tokens that you want to sell.
+1. You click "Sell".
+1. Metamask asks you to sign & send the transaction for selling base tokens.
+1. You click "Send".
+1. Once the transaction is confirmed, you will see a notification that you will receive the compensation after the [expiration date](#expiration-date) of the contract. This restriction is necessary to implement [Super-Yield](#super-yield).
 
 ## Guides for liquidity providers
 
@@ -219,16 +233,37 @@ TODO
 
 ### Guaranteed price
 
-Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token). See "[How to save money](#how-to-save-money)".
+Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token) if the [market price](#market-price) crashes below the guaranteed price. See "[How to save money](#how-to-save-money)".
 
-Example:
+Examples:
+
 * 20.0
 * 40.45
 * 10000.0
 
+Notes:
+
+* Guaranteed price is a parameter of [Market Crash Protection contract](#market-crash-protection-contract).
+* A single [MCP contract](#market-crash-protection-contract) can specify a single guaranteed price.
+* It is possible to deploy multiple [MCP contracts](#market-crash-protection-contract) for different guaranteed prices.
+
 ### Expiration date
 
 TODO
+
+### Market price
+
+Market price is a decimal number that represents the highest bid price at which you can sell the [base token](#base-token) for [quote token](#quote-token) on the open market. For example: "The market price of ETH is 3000 USDT".
+
+Examples:
+
+* 20.0
+* 40.45
+* 10000.0
+
+Notes:
+
+* Different markets may have different prices. For example, Binance ETHUSDT market may have a market price of 3000, while Uniswap ETHUSDT market may have a market price of 3010.
 
 ### Premium
 
