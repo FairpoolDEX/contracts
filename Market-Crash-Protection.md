@@ -86,11 +86,11 @@ Suppose you bought 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT). A
 
 Here is a full scenario:
 
-* You buy 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT).
-* You buy 1000 LINK-USDT-31-AUG-2021-30.0000 at 2 USDT each (total spend: 2000 USDT)
-  * "1000 LINK-USDT-31-AUG-2021-30.0000" means "You can sell 1000 LINK tokens before 31 Aug 2021 for 30.0000 USDT each"
-* LINK-USDT price crashes to 10 USDT before 31 Aug 2021.
-* You sell 1000 LINK tokens to [MCP contract](#market-crash-protection-contract) for 30 USDT each (total gain: 30000 USDT)
+1. You buy 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT).
+1. You buy 1000 LINK-USDT-31-AUG-2021-30.0000 at 2 USDT each (total spend: 2000 USDT)
+    1. "1000 LINK-USDT-31-AUG-2021-30.0000" means "You can sell 1000 LINK tokens before 31 Aug 2021 for 30.0000 USDT each"
+1. LINK-USDT price crashes to 10 USDT before 31 Aug 2021.
+1. You sell 1000 LINK tokens to [MCP contract](#market-crash-protection-contract) for 30 USDT each (total gain: 30000 USDT)
 
 Protection tokens allow you to recover capital. Using the example above:
 * With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
@@ -137,11 +137,23 @@ Protection tokens allow you to recover capital. Using the example above:
 
 ### How to make money
 
-You can make money with Market Crash Protection contracts. They give you the right to sell [protection tokens](#protection-token) to traders and also earn [super-yield](#super-yield).
+You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [super-yield](#super-yield).
 
-Suppose you believe that WBTC price will never crash below 10000 USDT. 
+Suppose you believe that WBTC price will not crash below 10000 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for WBTC-USDT pair with a guaranteed price of 10000 and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell WBTC into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10000 USDT on or before 31 Aug 2021.
 
-TODO
+In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
+
+Here is a full scenario:
+
+1. You put 20000 USDT into WBTC-USDT-31-AUG-2021-10000 contract.
+    1. "WBTC-USDT-31-AUG-2021-10000" means "WBTC-USDT contract that expires on 31 Aug 2021 and provides a guaranteed price of 10000 USDT per WBTC on or before that the expiration date".
+    1. 20000 USDT are locked until 31 Aug 2021 (but you can use [Super-Yield](#super-yield) to continue earning)
+1. You receive 2 protection tokens.
+    1. Each protection token gives the right to sell 1 WBTC for 10000 USDT on or before 31 Aug 2021.
+    1. Protection tokens are divisible (for example, you can use only 0.5 protection tokens).
+1. You sell 2 protection tokens for 2000 USDT (= 1000 USDT per token = 10% premium per quarter = 40% premium per year, equivalent to 40% APY)
+1. You enable [Super-Yield](#super-yield) and forward 20000 USDT to a [Yearn yVault](#yearn-yvault) that provides 30% APY in addition to premium.
+1. TODO
 
 ### How to earn Super-Yield
 
@@ -233,7 +245,7 @@ TODO
 
 ### Guaranteed price
 
-Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token) if the [market price](#market-price) crashes below the guaranteed price. See "[How to save money](#how-to-save-money)".
+Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token) into the [MCP contract](#market-crash-protection-contract). See "[How to save money](#how-to-save-money)".
 
 Examples:
 
@@ -244,6 +256,8 @@ Examples:
 Notes:
 
 * Guaranteed price is a parameter of [Market Crash Protection contract](#market-crash-protection-contract).
+* Guaranteed price is set at the time of deployment of [Market Crash Protection contract](#market-crash-protection-contract).
+* Guaranteed price does not change after deployment.
 * A single [MCP contract](#market-crash-protection-contract) can specify a single guaranteed price.
 * It is possible to deploy multiple [MCP contracts](#market-crash-protection-contract) for different guaranteed prices.
 
@@ -282,7 +296,7 @@ Notes:
 
 Super-Yield is extra money earned by liquidity providers in addition to [premium](#premium).
 
-Liquidity providers can earn Super-Yield by re-depositing the funds from [MCP contract](#market-crash-protection-contract) to [Yearn yVaults](https://yearn.finance/vaults). They can withdraw the funds anytime. Alternatively, a withdrawal will happen automatically at the [expiration date](#expiration-date) of the MCP contract (when a portion of the funds is used to pay the traders).
+Liquidity providers can earn Super-Yield by forwarding the funds from [MCP contract](#market-crash-protection-contract) to [Yearn yVaults](#yearn-yvault). They can withdraw the funds back to MCP contract anytime. Alternatively, a withdrawal will happen automatically at the [expiration date](#expiration-date) of the MCP contract (when a portion of the funds is used to pay the traders).
 
 Notes:
 
@@ -302,7 +316,7 @@ Examples:
 
 Notes:
 
-* The distinction between base & quote tokens is by convention. Normally, a less stable token is "base" & more stable token is "quote". 
+* The distinction between base & quote tokens is by convention. Normally, a less stable token is "base" & more stable token is "quote".
 
 ### Quote token
 
@@ -339,6 +353,14 @@ Examples:
 * LINK-USDT
 * LINK-ETH
 * ETH-USDT
+
+### Yearn yVault
+
+Yearn yVault is a smart contract that allows the liquidity providers to earn yield via automated strategy. Yearn yVault saves time for liquidity providers by managing their funds automatically, but it also takes a performance fee for this service.
+
+Liquidity providers can forward the liquidity from [MCP contracts](#market-crash-protection-contract) to Yearn yVaults to earn [Super-Yield](#super-yield).
+
+More information: https://yearn.finance/vaults
 
 ### Base token address
 
