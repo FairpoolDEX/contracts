@@ -42,10 +42,12 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 
 ### General
 
-1. [Liquidity providers](#liquidity-provider) deposit funds into the contract.
+1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the contract.
 1. [Liquidity providers](#liquidity-provider) receive [protection tokens](#protection-token).
 1. [Liquidity providers](#liquidity-provider) sell [protection tokens](#protection-token) to [traders](#trader).
-1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price): traders can sell by sending the [base tokens](#base-token) to the contract (the [protection tokens](#protection-token) will be burned; traders need to hold protection tokens on the same address as the base tokens).
+1. [Liquidity providers](#liquidity-provider) wait until the [expiration date](#expiration-date):
+    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price): liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
+    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price): liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield) (traders sell [base tokens](#base-token) for [quote tokens](#quote-token), and [protection tokens](#protection-token) are burned).
 
 ### Developer perspective
 
