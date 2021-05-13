@@ -18,6 +18,20 @@ Are you a liquidity provider? Check out [guides for liquidity providers](#guides
 
 Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feature.
 
+## Contents
+
+1. [Overview](#overview)
+1. [How it works](#how-it-works)
+1. [Guides for traders](#guides-for-traders)
+    1. [How to save money](#how-to-save-money)
+    1. [How to buy protection](#how-to-buy-protection)
+    1. [How to receive compensation](#how-to-receive-compensation)
+1. [Guides for liquidity providers](#guides-for-liquidity-providers)
+    1. [How to make money](#how-to-make-money)
+    1. [How to earn Super-Yield](#how-to-earn-super-yield)
+    1. [How to deposit](#how-to-deposit)
+    1. [How to withdraw](#how-to-withdraw)
+
 ## Overview
 
 **For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more in our [guides for traders](#guides-for-traders).
