@@ -28,20 +28,21 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 
 ### General
 
-1. Liquidity providers deposit funds into the contract.
-1. Liquidity providers receive "protection tokens".
-1. Liquidity providers sell "protection tokens" to traders.
-1. If the token pair price goes below the guaranteed price: traders can sell by sending the original tokens to the contract (the "protection tokens" will be burned; traders need to hold "protection tokens" on the same address as the original tokens).
+1. [Liquidity providers](#liquidity-provider) deposit funds into the contract.
+1. [Liquidity providers](#liquidity-provider) receive [protection tokens](#protection-token).
+1. [Liquidity providers](#liquidity-provider) sell [protection tokens](#protection-token) to [traders](#trader).
+1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price): traders can sell by sending the [base tokens](#base-token) to the contract (the [protection tokens](#protection-token) will be burned; traders need to hold protection tokens on the same address as the base tokens).
 
 ### Developer perspective
 
 The contract needs to be deployed by the developer before it can be used.
 
-1. Developer deploys a Market Crash Protection contract.
-1. Developer initializes the Market Crash Protection  contract:
+1. Developer deploys a [Market Crash Protection contract](#market-crash-protection-contract).
+1. Developer initializes the Market Crash Protection contract:
     1. Developer sets a token pair (used to determine the price).
     1. Developer sets a guaranteed price (if it goes below, traders will be compensated).
     1. Developer sets an expiration date (used to lock liquidity).
+    1. Developer sets a [Yearn yVault](#yearn-yvault) address (used to provide [Super-Yield](#super-yield))
 
 ### Trader perspective
 
@@ -202,7 +203,7 @@ Parameters:
 
 ### Deposit method
 
-Deposit method allows the [liquidity providers](#liquidity-provider) to put the [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
+Deposit method allows the [liquidity provider](#liquidity-provider) to put the [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
 
 Parameters:
 
@@ -214,20 +215,28 @@ Effects:
 * Mints [protection token](#protection-token):
     * Address: method caller address
     * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
+    
+Notes:
+
+* Anybody can call the deposit method (no permission needed to become a liquidity provider).
 
 ### Withdraw method
 
-Withdraw method allows the [liquidity providers](#liquidity-provider) to take the [base tokens](#base-token) and the [quote tokens](#quote-token) out of the [MCP contract](#market-crash-protection-contract).
+Withdraw method allows the [liquidity provider](#liquidity-provider) to take the [base tokens](#base-token) and the remaining [quote tokens](#quote-token) out of the [MCP contract](#market-crash-protection-contract).
 
 The amount of base & quote tokens is calculated separately for each liquidity provider, depending on the amount of quote tokens that he / she initially deposited. See [How to deposit](#how-to-deposit), [How to withdraw](#how-to-withdraw).
 
 Notes:
 
-* Withdraw method can only be called after the [expiration date](#expiration-date)
+* Withdraw method can only be called after the [expiration date](#expiration-date).
 
 ### Sell method
 
-TODO
+Sell method allows the [trader](#trader) to exchange [base tokens](#base-token) for [quote tokens](#quote-token) at a [guaranteed price](#guaranteed-price).
+
+Notes:
+
+* Sell method can only be called before the [expiration date](#expiration-date).
 
 ### Developer
 
