@@ -98,7 +98,7 @@ Protection tokens allow you to recover capital. Using the example above:
 
 ### How to buy protection
 
-*Note: this product is still under development. The guide below is how it's supposed to work.*
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
 
 1. Open the Shield Finance web application.
 1. Click "Buy protection".
@@ -175,7 +175,7 @@ That's it! You will start earning yield from the [Yearn yVault](#yearn-yvault) a
 
 ### How to deposit
 
-*Note: this product is still under development. The guide below is how it's supposed to work.*
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
 
 1. Open the Shield Finance web application.
 1. Find the [Market Crash Protection contract](#market-crash-protection-contract) that you want to deposit into.
@@ -189,7 +189,7 @@ That's it! After the transaction is confirmed, you will receive [protection toke
 
 ### How to withdraw
 
-*Note: this product is still under development. The guide below is how it's supposed to work.*
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
 
 Note: you can only withdraw after the [expiration date](#expiration-date).
 
