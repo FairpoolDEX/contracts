@@ -372,7 +372,7 @@ Notes:
 
 ### Base token
 
-Base token is a token that is traded against [quote token](#quote-token). In a LINK-USDT pair, LINK is the base token. Base token is normally more volatile than quote token.
+Base token is the first token in a pair. In a LINK-USDT pair, LINK is the base token. Base token is normally more volatile than quote token.
 
 Examples:
 
@@ -386,7 +386,7 @@ Notes:
 
 ### Quote token
 
-Quote token is a token that is traded for [base token](#base-token). In a LINK-USDT pair, USDT is the quote token. Quote token is normally less volatile than base token.
+Quote token is the second token in a pair. In a LINK-USDT pair, USDT is the quote token. Quote token is normally less volatile than base token.
 
 Examples:
 
