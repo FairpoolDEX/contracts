@@ -53,7 +53,7 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
         1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract) + [protection tokens](#protection-token) are burnt.
         1. Liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield).
 
-### Developer perspective
+### Developer example
 
 The contract needs to be deployed by the developer before it can be used.
 
@@ -64,22 +64,23 @@ The contract needs to be deployed by the developer before it can be used.
     1. Developer sets an expiration date (used to lock liquidity).
     1. Developer sets a [Yearn yVault](#yearn-yvault) address (used to provide [Super-Yield](#super-yield)).
 
-### Trader perspective
+### Trader example
 
-1. Trader buys protection.
-1. Token price drops below the guaranteed price.
-1. Trader sends tokens to our contract.
-1. Trader receives a compensation equal to `guaranteed_price * token_amount`
+1. Trader buys [base tokens](#base-token).
+1. Trader buys [protection tokens](#protection-token) that cover these base tokens.
+1. Base tokens' [market price](#market-price) drops below the [guaranteed price](#guaranteed-price).
+1. Trader sends tokens to [MCP contract](#market-crash-protection-contract).
+1. Trader receives [quote tokens](#quote-token) in amount equal to `guaranteed_price * base_token_amount`
 
-Note: the compensation is larger than the trader would receive if he simply sold the tokens at market, because the guaranteed price is higher than market price after the crash.
+Note: the quote tokens compensation is larger than the trader would receive if he simply sold the base tokens at market, because the guaranteed price is higher than market price after the crash.
 
-### Liquidity provider receives a premium
+### Liquidity provider example
 
-1. Liquidity provider deposits funds into our contract.
-1. Liquidity provider sells protection.
-1. Token price stays above the guaranteed price (trader doesn't sell).
-1. Expiration date passes (liquidity provider can withdraw).
-1. Liquidity provider withdraws funds + keeps the premium from selling protection.
+1. Liquidity provider deposits [quote tokens](#quote-token) into [MCP contract](#market-crash-protection-contract).
+1. Liquidity provider receives [protection tokens](#protection-token).
+1. [Base token](#base-token) [market price](#market-price) stays above the [guaranteed price](#guaranteed-price) (trader doesn't sell).
+1. [Expiration date](#expiration-date) passes (liquidity provider can withdraw).
+1. Liquidity provider withdraws [quote tokens](#quote-token) + keeps the [premium](#premium) from selling [protection tokens](#protection-token) + receives [Super-Yield](#super-yield).
 
 ## Guides for traders
 
