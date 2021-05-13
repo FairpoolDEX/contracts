@@ -42,12 +42,16 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 
 ### General
 
-1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the contract.
+1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
 1. [Liquidity providers](#liquidity-provider) receive [protection tokens](#protection-token).
 1. [Liquidity providers](#liquidity-provider) sell [protection tokens](#protection-token) to [traders](#trader).
 1. [Liquidity providers](#liquidity-provider) wait until the [expiration date](#expiration-date):
-    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price): liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
-    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price): liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield) (traders sell [base tokens](#base-token) for [quote tokens](#quote-token), and [protection tokens](#protection-token) are burned).
+    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price):
+        1. Traders keep their [base tokens](#base-token) + unused [protection tokens](#protection-token).
+        1. Liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
+    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price):
+        1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract) + [protection tokens](#protection-token) are burnt.
+        1. Liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield).
 
 ### Developer perspective
 
