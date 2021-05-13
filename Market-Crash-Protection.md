@@ -147,15 +147,23 @@ In addition, you can make more money by enabling [Super-Yield](#super-yield). It
 
 Here is a full scenario:
 
-1. You put 20000 USDT into WBTC-USDT-31-AUG-2021-10000 contract.
-    1. "WBTC-USDT-31-AUG-2021-10000" means "WBTC-USDT contract that expires on 31 Aug 2021 and provides a guaranteed price of 10000 USDT per WBTC on or before that the expiration date".
-    1. 20000 USDT are locked until 31 Aug 2021 (but you can use [Super-Yield](#super-yield) to continue earning)
-1. You receive 2 protection tokens.
-    1. Each protection token gives the right to sell 1 WBTC for 10000 USDT on or before 31 Aug 2021.
-    1. Protection tokens are divisible (for example, you can use only 0.5 protection tokens).
-1. You sell 2 protection tokens for 2000 USDT (= 1000 USDT per token = 10% premium per quarter = 40% premium per year, equivalent to 40% APY)
-1. You enable [Super-Yield](#super-yield) and forward 20000 USDT to a [Yearn yVault](#yearn-yvault) that provides 30% APY in addition to premium.
-1. TODO
+1. You put 20000 USDT into LINK-USDT-31-AUG-2021-10.0000 contract.
+    1. "LINK-USDT-31-AUG-2021-10.0000" means "LINK-USDT contract that expires on 31 Aug 2021 and provides a [guaranteed price](#guaranteed-price) of 10.0000 USDT per LINK on or before that the expiration date".
+    1. 20000 USDT are locked until 31 Aug 2021 (but you can use [Super-Yield](#super-yield) to continue earning).
+1. You receive 2000 [protection tokens](#protection-token) (20000 USDT deposit / 10.0000 [guaranteed price](#guaranteed-price)).
+    1. Each protection token gives the right to sell 1 LINK for 10 USDT on or before 31 Aug 2021.
+    1. Protection tokens are divisible (for example, you can use 0.5 protection tokens).
+1. You sell 2000 protection tokens for 2000 USDT total (10% premium on 20000 USDT deposit until 31 Aug 2021 = 40% premium per year, equivalent to 40% APY).
+    1. We will open a Uniswap market for protection tokens.
+1. You enable [Super-Yield](#super-yield) and forward 20000 USDT to a [Yearn yVault](#yearn-yvault) that provides 30% APY in addition to premium (70% APY total).
+1. You wait until 31 Aug 2021.
+1. You withdraw from [MCP contract](#market-crash-protection-contract).
+1. You gain:
+    1. 1500 USDT yield from Yearn.
+    1. 2000 USDT premium from traders for selling the protection tokens.
+    1. 20000 USDT or 2000 LINK liquidity:
+        1. If LINK-USDT [market price](#market-price) stays above 10.0000 [guaranteed price](#guaranteed-price), the traders will not sell LINK for USDT. You will receive 20000 USDT.
+        1. If LINK-USDT [market price](#market-price) falls below 10.0000 [guaranteed price](#guaranteed-price), the traders will sell LINK for USDT. You will receive 2000 LINK.
 
 ### How to earn Super-Yield
 
