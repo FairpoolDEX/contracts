@@ -139,9 +139,9 @@ Protection tokens allow you to recover capital. Using the example above:
 
 ### How to make money
 
-You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [super-yield](#super-yield).
+You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [Super-Yield](#super-yield).
 
-Suppose you believe that WBTC price will not crash below 10000 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for WBTC-USDT pair with a guaranteed price of 10000 and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell WBTC into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10000 USDT on or before 31 Aug 2021.
+Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
 
 In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
 
