@@ -231,17 +231,36 @@ TODO
 
 ### Developer
 
-Developer is the person that writes & deploys smart contracts.
+Developer is a person that writes & deploys smart contracts.
 
 In case of [MCP contracts](#market-crash-protection-contract), developer can be any technical employee of Shield Finance. 
 
 ### Liquidity provider
 
-TODO
+Liquidity provider is a person who puts [quote tokens](#quote-token) into the [Market Crash Protection contracts](#market-crash-protection-contract) to earn [premium](#premium) and [Super-Yield](#super-yield).
+
+Liquidity provider wants to minimize the risk of losing money (by comparison, a [trader](#trader) wants to maximize the chance of making money).
+
+Notes:
+
+* Liquidity provider can [earn premium](#how-to-make-money).
+* Liquidity provider can [earn Super-Yield](#how-to-earn-super-yield).
+* Liquidity provider will make more money if the [market price](#market-price) stays above [guaranteed price](#guaranteed-price) before the [expiration date](#expiration-date).
+* Liquidity provider should use the following methods of the [MCP contract](#market-crash-protection-contract):
+    * [Deposit method](#deposit-method)
+    * [Withdraw method](#withdraw-method)
 
 ### Trader
 
-TODO
+Trader is a person who buys [protection tokens](#protection-token) and, optionally, sells the [base tokens](#base-token) into the [Market Crash Protection contract](#market-crash-protection-contract).
+
+Trader wants to maximize the chance of making money (by comparison, a [liquidity provider](#liquidity-provider) wants to minimize the risk of losing money).
+
+Notes:
+
+1. Trader needs [protection tokens](#protection-token) in order to sell the [base tokens](#base-token) into [MCP contract](#market-crash-protection-contract).
+1. Trader should use the following methods of the [MCP contract](#market-crash-protection-contract):
+    * [Sell method](#sell-method)
 
 ### Guaranteed price
 
@@ -263,7 +282,10 @@ Notes:
 
 ### Expiration date
 
-TODO
+Expiration date is a UNIX timestamp that is used to limit the usage of a specific [Market Crash Protection contract](#market-crash-protection-contract).
+
+* [Trader](#trader) can [sell base token](#sell-method) into [MCP contract](#market-crash-protection-contract) only before the expiration date.
+* [Liquidity provider](#liquidity-provider) can [withdraw liquidity](#withdraw-method) from [MCP contract](#market-crash-protection-contract) only after the expiration date.
 
 ### Market price
 
