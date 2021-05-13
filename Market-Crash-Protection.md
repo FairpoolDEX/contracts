@@ -102,38 +102,38 @@ Protection tokens allow you to recover capital. Using the example above:
 
 *Note: this product is still under development. The guide below is how it's supposed to work.*
 
-1. You open the Shield Finance web application.
-1. You click "Search".
-1. You type the [base token](#base-token) ticker (it can be a token that you've already bought, or a token that you want to buy).
-1. App shows you a list of available [Market Crash Protection contracts](#market-crash-protection-contract) for your [base token](#base-token).
+1. Open the Shield Finance web application.
+1. Click "Buy protection".
+1. Choose the [base token](#base-token) (for example: a token that you've already bought, or a token that you want to buy).
+1. Browse through the list of available [Market Crash Protection contracts](#market-crash-protection-contract) for your [base token](#base-token).
     1. There will be multiple protection contracts for a single token.
     1. The contracts will have different parameters: guaranteed price & expiration date.
-1. You choose the protection contract that suits your needs:
+1. Choose the protection contract that suits your needs:
     1. If you want to buy protection for long term, choose a contract with an expiration date that is far in future.
     1. If you want to buy protection for short term, choose a contract with an expiration date that is closer to present moment.
-1. You click "Buy" button on the contract that you've chosen.
-1. App asks you how many [protection tokens](#protection-token) you want to buy.
+1. Click "Buy" button on the contract that you've chosen.
+1. Type how many [protection tokens](#protection-token) you want to buy.
     1. Normally, you should buy the amount of [protection tokens](#protection-token) equal to amount of [base tokens](#base-token) that you own.
-1. You input the amount of protection tokens.
-1. App calculates the total cost of buying this amount of protection tokens.
-1. You click "Buy".
-1. Metamask asks you to sign & send the transaction for buying protection tokens.
-1. You click "Send".
-1. Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
+1. Confirm the total cost of buying this amount of protection tokens.
+1. Click "Buy".
+    1. The app will generate a Uniswap transaction.
+1. Sign the transaction.
+
+That's it! Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
 
 ### How to receive compensation
 
-1. You open the Shield Finance web application.
-1. You click "Get compensation".
-1. App shows you the list of [base tokens](#base-token) that you can get compensation for.
+1. Open the Shield Finance web application.
+1. Click "Get compensation".
+1. Browse through the list of [base tokens](#base-token) that you can get compensation for.
     1. App shows you only those tokens that are stored on the currently selected address. If you used a different address when you bought the protection tokens, please change the currently selected address in your wallet.
     1. App shows whether the [market price](#market-price) is below the [guaranteed price](#guaranteed-price). Technically, you can sell into [MCP contract](#market-crash-protection-contract) at any point in time (even if the market price is above the guaranteed price), but it makes economic sense to sell into [MCP contract](#market-crash-protection-contract) only if the market price is below the guaranteed price.
-1. You choose the token that you want to sell.
-1. You choose the amount of tokens that you want to sell.
-1. You click "Sell".
-1. Metamask asks you to sign & send the transaction for selling base tokens.
-1. You click "Send".
-1. Once the transaction is confirmed, you will see a notification that you will receive the compensation after the [expiration date](#expiration-date) of the contract. This restriction is necessary to implement [Super-Yield](#super-yield).
+1. Choose the token that you want to sell.
+1. Choose the amount of tokens that you want to sell.
+1. Click "Sell".
+1. Sign the transaction.
+
+That's it! Once the transaction is confirmed, you will see a notification that you will receive the compensation after the [expiration date](#expiration-date) of the contract. This restriction is necessary to implement [Super-Yield](#super-yield).
 
 ## Guides for liquidity providers
 
@@ -169,21 +169,39 @@ Here is a full scenario:
 
 Read about [Super-Yield](#super-yield).
 
-1. Put [quote tokens](#quote-token) into a [Market Crash Protection contract](#market-crash-protection-contract).
+1. Deposit [quote tokens](#quote-token) into a [Market Crash Protection contract](#market-crash-protection-contract) (guide: [How to make money](#how-to-make-money)).
 1. Click "Enable Super-Yield" in the [Market Crash Protection contract](#market-crash-protection-contract).
+1. Sign the transaction.
+
+That's it! You will start earning yield from the [Yearn yVault](#yearn-yvault) as soon as the transaction is confirmed.
 
 ### How to deposit
 
-You can make money by depositing [quote tokens](#quote-token) into [MCP contracts](#market-crash-protection-contract). You can withdraw them after the expiration date (see [How to withdraw](#how-to-withdraw)). When you deposit quote tokens, you receive two types of tokens:
+*Note: this product is still under development. The guide below is how it's supposed to work.*
 
-* Liquidity tokens give you the right to [withdraw](#how-to-withdraw) liquidity later.
-* Protection tokens give you the right to
+1. Open the Shield Finance web application.
+1. Find the [Market Crash Protection contract](#market-crash-protection-contract) that you want to deposit into.
+    1. You can filter by [base token](#base-token), [quote token](#quote-token), [guaranteed price](#guaranteed-price), [expiration date](#expiration-date).
+1. Click "Deposit".
+1. Choose how many [quote tokens](#quote-token) you want to deposit.
+1. Click "Confirm".
+1. Sign the transaction.
 
-TODO
+That's it! After the transaction is confirmed, you will receive [protection tokens](#protection-token), which you can sell to traders via Uniswap (there will be a market for each protection token). Also, don't forget to [enable Super-Yield](#how-to-earn-super-yield)!
 
 ### How to withdraw
 
-TODO
+*Note: this product is still under development. The guide below is how it's supposed to work.*
+
+Note: you can only withdraw after the [expiration date](#expiration-date).
+
+1. Open the Shield Finance web application.
+1. Click "My deposits"
+1. Find the [Market Crash Protection contract](#market-crash-protection-contract) that you want to withdraw from.
+1. Click "Withdraw".
+1. Sign the transaction.
+
+That's it! After the transaction is confirmed, you will receive a mix of [base tokens](#base-token) and [quote tokens](#quote-token) (read [How to make money](#how-to-make-money) to figure out how much of each token you will receive). Also, if you [enabled Super-Yield](#how-to-earn-super-yield), you will receive yield.
 
 ## Definitions
 
@@ -210,6 +228,7 @@ Parameters:
 * [Base token address](#base-token-address)
 * [Quote token address](#quote-token-address)
 * [Guaranteed price](#guaranteed-price)
+* [Yearn yVault address](#yearn-yvault-address)
 
 ### Deposit method
 
@@ -429,6 +448,14 @@ Examples:
 * 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 - [CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929)
 * 0xd3d2e2692501a5c9ca623199d38826e513033a17 - [UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17)
 * 0x795065dcc9f64b5614c407a6efdc400da6221fb0 - [SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0)
+
+### Yearn yVault address
+
+Examples:
+
+* 0xc695f73c1862e050059367B2E64489E66c525983 - [yvBOOST - ETH Yearn yVault](https://etherscan.io/address/0xc695f73c1862e050059367B2E64489E66c525983)
+* 0x27b7b1ad7288079A66d12350c828D3C00A6F07d7 - [crvIB Yearn yVault](https://etherscan.io/address/0x27b7b1ad7288079A66d12350c828D3C00A6F07d7)
+* 0x625b7DF2fa8aBe21B0A976736CDa4775523aeD1E - [crvHBTC Yearn yVault](https://etherscan.io/address/0x625b7DF2fa8aBe21B0A976736CDa4775523aeD1E)
 
 ### Base token amount
 
