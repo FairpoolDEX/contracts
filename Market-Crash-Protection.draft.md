@@ -1,7 +1,5 @@
 # Drafts
 
-
-
 ## Technical documentation
 
 ### Usage
@@ -111,8 +109,6 @@ If rug pull doesn't happen:
 You can also think of payout coefficient as ideal "fund ratio" = `protector_fund_size / trader_fund_size`.
 
 Note: formulas above are applied after [refunds](#refunding)
-
-
 
 ### FAQ
 

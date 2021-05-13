@@ -94,6 +94,7 @@ Here is a full scenario:
 1. You sell 1000 LINK tokens to [MCP contract](#market-crash-protection-contract) for 30 USDT each (total gain: 30000 USDT)
 
 Protection tokens allow you to recover capital. Using the example above:
+
 * With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
 * Without protection: you would have 10000 USDT (10000 USDT recovered capital) (LINK crashed to 10 USDT, and you sold at market price).
 
@@ -118,7 +119,7 @@ Protection tokens allow you to recover capital. Using the example above:
 1. You click "Buy".
 1. Metamask asks you to sign & send the transaction for buying protection tokens.
 1. You click "Send".
-1. Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes. 
+1. Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
 
 ### How to receive compensation
 
@@ -167,7 +168,7 @@ TODO
 You can make money by depositing [quote tokens](#quote-token) into [MCP contracts](#market-crash-protection-contract). You can withdraw them after the expiration date (see [How to withdraw](#how-to-withdraw)). When you deposit quote tokens, you receive two types of tokens:
 
 * Liquidity tokens give you the right to [withdraw](#how-to-withdraw) liquidity later.
-* Protection tokens give you the right to 
+* Protection tokens give you the right to
 
 TODO
 
@@ -180,7 +181,7 @@ TODO
 ### Market Crash Protection contract
 
 Market Crash Protection contract (MCP contract) is a smart contract with the following features:
- 
+
 * Allows traders to receive compensation if the market price goes below the [guaranteed price](#guaranteed-price).
 * Allows liquidity providers to receive premiums by selling [protection tokens](#protection-token) to traders.
 
@@ -213,9 +214,9 @@ Effects:
 
 * Deposits [quote token](#quote-token)
 * Mints [protection token](#protection-token):
-    * Address: method caller address
-    * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
-    
+  * Address: method caller address
+  * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
+
 Notes:
 
 * Anybody can call the deposit method (no permission needed to become a liquidity provider).
@@ -242,7 +243,7 @@ Notes:
 
 Developer is a person that writes & deploys smart contracts.
 
-In case of [MCP contracts](#market-crash-protection-contract), developer can be any technical employee of Shield Finance. 
+In case of [MCP contracts](#market-crash-protection-contract), developer can be any technical employee of Shield Finance.
 
 ### Liquidity provider
 
@@ -256,8 +257,8 @@ Notes:
 * Liquidity provider can [earn Super-Yield](#how-to-earn-super-yield).
 * Liquidity provider will make more money if the [market price](#market-price) stays above [guaranteed price](#guaranteed-price) before the [expiration date](#expiration-date).
 * Liquidity provider should use the following methods of the [MCP contract](#market-crash-protection-contract):
-    * [Deposit method](#deposit-method)
-    * [Withdraw method](#withdraw-method)
+  * [Deposit method](#deposit-method)
+  * [Withdraw method](#withdraw-method)
 
 ### Trader
 
@@ -391,7 +392,7 @@ Yearn yVault is a smart contract that allows the liquidity providers to earn yie
 
 Liquidity providers can forward the liquidity from [MCP contracts](#market-crash-protection-contract) to Yearn yVaults to earn [Super-Yield](#super-yield).
 
-More information: https://yearn.finance/vaults
+More information: [Yearn Vaults list](https://yearn.finance/vaults)
 
 ### Base token address
 
