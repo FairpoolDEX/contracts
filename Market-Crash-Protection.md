@@ -61,22 +61,6 @@ Note: the compensation is larger than the trader would receive if he simply sold
 1. Expiration date passes (liquidity provider can withdraw).
 1. Liquidity provider withdraws funds + keeps the premium from selling protection.
 
-## Technical specification
-
-### System tests
-
-1. Must allow traders to sell the token at the guaranteed price.
-1. Must allow traders to withdraw compensation as soon as they want.
-1. Must allow protectors to sell the protection at any price.
-1. Must allow protectors to withdraw liquidity after expiration date.
-1. Must allow protectors to super-yield the liquidity into other projects.
-1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
-
-### Deployment
-
-* Anybody can deploy a new MCP contract.
-* Anybody can call public methods of a new MCP contract.
-
 ## Guides for traders
 
 ### How to save money
@@ -133,7 +117,7 @@ That's it! Once the transaction is confirmed, you will own the protection tokens
 1. Click "Sell".
 1. Sign the transaction.
 
-That's it! Once the transaction is confirmed, you will see a notification that you will receive the compensation after the [expiration date](#expiration-date) of the contract. This restriction is necessary to implement [Super-Yield](#super-yield).
+That's it! Once the transaction is confirmed, you will receive the compensation in [quote tokens](#quote-token).
 
 ## Guides for liquidity providers
 
@@ -202,6 +186,15 @@ Note: you can only withdraw after the [expiration date](#expiration-date).
 1. Sign the transaction.
 
 That's it! After the transaction is confirmed, you will receive a mix of [base tokens](#base-token) and [quote tokens](#quote-token) (read [How to make money](#how-to-make-money) to figure out how much of each token you will receive). Also, if you [enabled Super-Yield](#how-to-earn-super-yield), you will receive yield.
+
+## System tests
+
+1. Must allow traders to sell the token at the guaranteed price.
+1. Must allow traders to withdraw compensation as soon as they want.
+1. Must allow protectors to sell the protection at any price.
+1. Must allow protectors to withdraw liquidity after expiration date.
+1. Must allow protectors to super-yield the liquidity into other projects.
+1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
 
 ## Definitions
 
