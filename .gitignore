@@ -16,3 +16,4 @@ yarn-error.log
 .openzeppelin/unknown-*.json
 .openzeppelin/.session
 bin
+.openzeppelin
