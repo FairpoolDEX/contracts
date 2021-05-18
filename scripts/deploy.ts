@@ -1,7 +1,7 @@
 import { ethers, upgrades } from "hardhat"
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 
-import { ALLOCATIONS, RELEASE_TIME } from './parameters'
+import { ALLOCATIONS, RELEASE_TIME } from './parameters.test'
 
 
 async function main() {

@@ -38,7 +38,7 @@ Vesting "2": added for 2 addresses
 npx hardhat console --network ropsten
 
 const Token = await ethers.getContractFactory("ShieldToken")
-const token = await Token.attach('<Proxy address>')
+const token = await Token.attach('<proxy-address>')
 ```
 
 ### Enable defense
