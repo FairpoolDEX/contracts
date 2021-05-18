@@ -21,6 +21,7 @@ const config: HardhatUserConfig = {
   networks: {
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      gasPrice: 100 * 1000000000,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
@@ -28,6 +29,7 @@ const config: HardhatUserConfig = {
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      gasPrice: 100 * 1000000000,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
