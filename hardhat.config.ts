@@ -56,10 +56,12 @@ const config: HardhatUserConfig = {
 task("deploy", "Deploy token contract")
   .setAction(async (args, hre) => {
       const paramsFile = (hre.network.name === 'mainnet') ? './scripts/parameters.prod' : './scripts/parameters.test'
-      const { RELEASE_TIME } = await import(paramsFile)
+      console.log(`Deploying with parameters: ${paramsFile}`)
 
       const [deployer] = await hre.ethers.getSigners()
       console.log(`Deploying with the account: ${deployer.address}`)
+
+      const { RELEASE_TIME } = await import(paramsFile)
 
       const Token = await hre.ethers.getContractFactory("ShieldToken")
       const token = await hre.upgrades.deployProxy(Token, [RELEASE_TIME])
@@ -89,9 +91,9 @@ task("transferMany", "Call transferMany for allocations without lockup period")
     const token = await Token.attach(address)
 
     const recipients = Object.keys(allocation)
-    const amounts = Object.values(allocation)
+    const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(String(i), "18"))
 
-    console.log(`Calling transferMany for ${recipients.length} recipients...`) // eslint-disable-line no-console
+    console.log(`Calling transferMany for ${recipients.length} recipients...`)
     const tx = await token.transferMany(recipients, amounts)
     console.log(`TX Hash: ${tx.hash}`)
   })
@@ -109,7 +111,7 @@ task("addAllocations", "Call addAllocations for allocations with lockup period")
     const Token = await hre.ethers.getContractFactory("ShieldToken")
     const token = await Token.attach(address)
 
-    // // add allocations
+    // add allocations
     // for (const [vestingTypeIndex, allocation] of Object.entries(allocations)) {
     //   if (!vestingTypeIndex) {
     //     continue
