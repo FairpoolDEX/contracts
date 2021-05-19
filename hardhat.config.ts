@@ -53,6 +53,15 @@ const config: HardhatUserConfig = {
 }
 
 
+interface Allocation {
+  [address: string]: string;
+}
+
+interface Allocations {
+  [id: string]: Allocation;
+}
+
+
 task("deploy", "Deploy token contract")
   .setAction(async (args, hre) => {
       const paramsFile = (hre.network.name === 'mainnet') ? './scripts/parameters.prod' : './scripts/parameters.test'
@@ -77,7 +86,7 @@ task("transferMany", "Call transferMany for allocations without lockup period")
   .addParam("token", "Token contract's address")
   .addParam("allocations", "JSON with allocations")
   .setAction(async (args, hre) => {
-    const allocations = (await import(args.allocations)).default
+    const allocations: Allocations = (await import(args.allocations)).default
     const address = args.token
 
     const allocation = allocations['']
@@ -91,9 +100,11 @@ task("transferMany", "Call transferMany for allocations without lockup period")
     const token = await Token.attach(address)
 
     const recipients = Object.keys(allocation)
-    const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(String(i), "18"))
+    const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(i, "18"))
 
-    console.log(`Calling transferMany for ${recipients.length} recipients...`)
+    console.log(`Calling transferMany with ${recipients.length} recipients...`)
+    console.log(allocation)
+
     const tx = await token.transferMany(recipients, amounts)
     console.log(`TX Hash: ${tx.hash}`)
   })
@@ -103,7 +114,7 @@ task("addAllocations", "Call addAllocations for allocations with lockup period")
   .addParam("token", "Token contract's address")
   .addParam("allocations", "JSON with allocations")
   .setAction(async (args, hre) => {
-    const allocations = (await import(args.allocations)).default
+    const allocations: Allocations = (await import(args.allocations)).default
     const address = args.token
 
     console.log(`Attaching to contract ${address}...`)
@@ -111,17 +122,18 @@ task("addAllocations", "Call addAllocations for allocations with lockup period")
     const Token = await hre.ethers.getContractFactory("ShieldToken")
     const token = await Token.attach(address)
 
-    // add allocations
-    // for (const [vestingTypeIndex, allocation] of Object.entries(allocations)) {
-    //   if (!vestingTypeIndex) {
-    //     continue
-    //   }
-    //   const addresses = Object.keys(allocation)
-    //   const amounts = Object.values(allocation)
-    //   await token.addAllocations(addresses, amounts, vestingTypeIndex)
+    for (const [vestingTypeIndex, allocation] of Object.entries(allocations)) {
+      if (!vestingTypeIndex) {
+        continue
+      }
 
-    //   console.log(`Vesting "${vestingTypeIndex}": added for ${addresses.length} addresses`) // eslint-disable-line no-console
-    // }
+      const addresses = Object.keys(allocation)
+      const amounts = Object.values(allocation)
+      console.log(`Calling addAllocations with "${vestingTypeIndex}" vesting type for ${addresses.length} addresses...`) // eslint-disable-line no-console
+      console.log(allocation)
+      const tx = await token.addAllocations(addresses, amounts, vestingTypeIndex)
+      console.log(`TX Hash: ${tx.hash}\n\n`)
+    }
   })
 
 export default config
