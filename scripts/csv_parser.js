@@ -32,6 +32,7 @@ function parse_csv(file) {
         .pipe(csv({
             separator: ',',
             mapValues: ({ header, index, value }) => {
+                value = value.trim()
                 if (header === 'Vesting') {
                     if (!(value in VESTING_TYPES)) {
                         throw new Error(`Invalid vesting type: ${value} (row ${index})`)
@@ -42,7 +43,7 @@ function parse_csv(file) {
             }
         }))
         .on('data', (data) => rows.push({
-            address: data.Address,
+            address: data.Address.trim(),
             vesting: data.Vesting,
             tokens: data.Total,
         }))
