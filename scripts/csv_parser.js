@@ -13,7 +13,19 @@ const VESTING_TYPES = {
 }
 
 
-function parse(file) {
+function process_csv(rows) {
+    vestings = [...new Set(rows.map(i => i.vesting))].sort()
+    const data = {}
+    vestings.map(vesting => {
+        data[vesting] = rows
+            .filter(i => i.vesting === vesting)
+            .reduce((obj, i) => ({...obj, [i.address]: i.tokens}), {})
+    })
+    console.log(data)
+}
+
+
+function parse_csv(file) {
     const rows = [];
     fs.createReadStream(file)
         .pipe(csv({
@@ -28,18 +40,13 @@ function parse(file) {
                 return value
             }
         }))
-        .on('error', (err) => {
-            console.error(rows);
-        })
         .on('data', (data) => rows.push({
             address: data.Address,
             vesting: data.Vesting,
             tokens: data.Total,
         }))
-        .on('end', () => {
-            console.log(rows);
-        });
+        .on('end', () => process_csv(rows));
 }
 
 const file = process.argv[2]
-parse(file)
+parse_csv(file)
