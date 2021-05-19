@@ -17,13 +17,13 @@ async function main() {
   console.log("Implementation address:", implementationAddress) // eslint-disable-line no-console
 
   // add allocations
-  for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
-    const addresses = Object.keys(allocation)
-    const amounts = Object.values(allocation)
-    await token.addAllocations(addresses, amounts, vestingTypeIndex)
+  // for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
+  //   const addresses = Object.keys(allocation)
+  //   const amounts = Object.values(allocation)
+  //   await token.addAllocations(addresses, amounts, vestingTypeIndex)
 
-    console.log(`Vesting "${vestingTypeIndex}": added for ${addresses.length} addresses`) // eslint-disable-line no-console
-  }
+  //   console.log(`Vesting "${vestingTypeIndex}": added for ${addresses.length} addresses`) // eslint-disable-line no-console
+  // }
 }
 
 main()
