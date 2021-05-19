@@ -22,7 +22,7 @@ function process_csv(rows) {
             .sort((i, j) => i.address - j.address)
             .reduce((obj, i) => ({...obj, [i.address]: i.tokens}), {})
     })
-    console.log(data)
+    console.log(JSON.stringify(data, null, 2))
 }
 
 
