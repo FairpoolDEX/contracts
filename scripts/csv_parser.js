@@ -14,11 +14,12 @@ const VESTING_TYPES = {
 
 
 function process_csv(rows) {
-    vestings = [...new Set(rows.map(i => i.vesting))].sort()
+    const vestings = [...new Set(rows.map(i => i.vesting))].sort()
     const data = {}
     vestings.map(vesting => {
         data[vesting] = rows
             .filter(i => i.vesting === vesting)
+            .sort((i, j) => i.address - j.address)
             .reduce((obj, i) => ({...obj, [i.address]: i.tokens}), {})
     })
     console.log(data)
