@@ -1,5 +1,5 @@
 import { HardhatUserConfig } from "hardhat/types"
-import { task } from "hardhat/config"
+import { task, types } from "hardhat/config"
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
 import "hardhat-watcher"
@@ -89,6 +89,7 @@ task("deploy", "Deploy token contract")
 task("transferMany", "Call transferMany for allocations without lockup period")
   .addParam("token", "Token contract's address")
   .addParam("allocations", "JSON with allocations")
+  .addParam("chunk", "Number of recipients in one chunk. Default value is 100.", 100, types.int)
   .setAction(async (args, hre) => {
     const allocations: Allocations = (await import(args.allocations)).default
     const address = args.token
@@ -98,19 +99,35 @@ task("transferMany", "Call transferMany for allocations without lockup period")
       throw new Error("No allocations found for transferMany")
     }
 
+    function chunk(arr: any[], size: number) {
+      const result = []
+      for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size))
+      }
+      return result
+    }
+
+    const recipients = Object.keys(allocation)
+    const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(i, "18"))
+
+    console.log(`Calling transferMany with ${recipients.length} recipients and chunk size ${args.chunk}:`)
+
+    const chunkedRecipients = chunk(recipients, args.chunk)
+    const chunkedAmounts = chunk(amounts, args.chunk)
+
     console.log(`Attaching to contract ${address}...`)
 
     const Token = await hre.ethers.getContractFactory("ShieldToken")
     const token = await Token.attach(address)
 
-    const recipients = Object.keys(allocation)
-    const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(i, "18"))
+    for (let i = 0; i < chunkedRecipients.length; i++) {
+      console.log(`Chunk ${i + 1} / ${chunkedRecipients.length}:`)
+      const allocationChunk = chunkedRecipients[i].reduce((obj, address, index) => ({...obj, [address]: chunkedAmounts[i][index].toString()}), {})
+      console.log(allocationChunk)
 
-    console.log(`Calling transferMany with ${recipients.length} recipients...`)
-    console.log(allocation)
-
-    const tx = await token.transferMany(recipients, amounts)
-    console.log(`TX Hash: ${tx.hash}`)
+      const tx = await token.transferMany(chunkedRecipients[i], chunkedAmounts[i])
+      console.log(`TX Hash: ${tx.hash}`)
+    }
   })
 
 task("addAllocations", "Call addAllocations for allocations with lockup period")
