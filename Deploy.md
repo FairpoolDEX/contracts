@@ -1,16 +1,16 @@
 # How to Deploy:
 
-## 0. Pre-Requirements:
+## Setup environment
 
 - In `.env` file set `INFURA_API_KEY`, `ETHERSCAN_API_KEY`, and `MNEMONIC` (see `.env.example` for details)
 - In `parameters.ts` set `ALLOCATIONS` and `RELEASE_TIME`
   
-## 1. Deploy
+## Deploy
 
 ### Localhost:
 `npm run deploy`
 
-### Mainnet/ropsten:
+### Mainnet | Ropsten
 `npm run deploy -- --network {mainnet|ropsten}`
 
 Example output:
@@ -27,11 +27,25 @@ Vesting "1": added for 2 addresses
 Vesting "2": added for 2 addresses
 ```
 
-## 2. Etherscan verification
+## Download frozen wallets
+
+* `rm /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv`
+* Google Sheets -> Download as .csv
+* `node scripts/csv_parser.js /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv > /tmp/allocations.json`
+
+## Add allocations
+
+`npx hardhat addAllocations --token <proxy-address> --allocations /tmp/allocations.json --network ropsten`
+
+## Transfer public tokens
+
+`npx hardhat transferMany --token <proxy-address> --allocations /tmp/allocations.json --network ropsten`
+
+## Verify on Etherscan 
 
 `npx hardhat verify --network ropsten <implementation-address>`
 
-## 3. Attach to token in the console:
+## Attach to token in the console:
 
 ```
 // Start console
