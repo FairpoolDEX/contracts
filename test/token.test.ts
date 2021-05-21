@@ -4,7 +4,7 @@ import {utils, BigNumber} from "ethers"
 import chai from "chai"
 import {ShieldToken} from "../typechain/ShieldToken"
 
-import {ALLOCATIONS, RELEASE_TIME} from '../scripts/parameters.test'
+import {ALLOCATIONS, RELEASE_TIME} from "../scripts/parameters.test"
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers"
 
 chai.use(solidity)
