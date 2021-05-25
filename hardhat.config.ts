@@ -11,7 +11,7 @@ import { config as dotEnvConfig } from "dotenv"
 
 dotEnvConfig()
 
-const gasPrice = 150 * 1000000000
+const gasPrice = 42 * 1000000000
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -23,11 +23,11 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
-    localhost: {
-      accounts: {
-        mnemonic: process.env.MNEMONIC || "",
-      },
-    },
+    // localhost: {
+    //   accounts: {
+    //     mnemonic: process.env.MNEMONIC || "",
+    //   },
+    // },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
@@ -122,10 +122,10 @@ task("transferMany", "Call transferMany for allocations without lockup period")
 
     for (let i = 0; i < chunkedRecipients.length; i++) {
       console.log(`Chunk ${i + 1} / ${chunkedRecipients.length}:`)
-      const allocationChunk = chunkedRecipients[i].reduce((obj, address, index) => ({...obj, [address]: chunkedAmounts[i][index].toString()}), {})
+      const allocationChunk = chunkedRecipients[i].reduce((obj, address, index) => ({ ...obj, [address]: chunkedAmounts[i][index].toString() }), {})
       console.log(allocationChunk)
 
-      const tx = await token.transferMany(chunkedRecipients[i], chunkedAmounts[i])
+      const tx = await token.transferMany(chunkedRecipients[i], chunkedAmounts[i], { gasLimit: 2500000 })
       console.log(`TX Hash: ${tx.hash}`)
     }
   })
@@ -151,7 +151,7 @@ task("addAllocations", "Call addAllocations for allocations with lockup period")
       const amounts = Object.values(allocation)
       console.log(`Calling addAllocations with "${vestingTypeIndex}" vesting type for ${addresses.length} addresses...`) // eslint-disable-line no-console
       console.log(allocation)
-      const tx = await token.addAllocations(addresses, amounts, vestingTypeIndex)
+      const tx = await token.addAllocations(addresses, amounts, vestingTypeIndex, { gasLimit: 8000000 })
       console.log(`TX Hash: ${tx.hash}\n\n`)
     }
   })

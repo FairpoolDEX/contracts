@@ -33,17 +33,17 @@ Vesting "2": added for 2 addresses
 * Google Sheets -> Download as .csv
 * `node scripts/csv_parser.js /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv > /tmp/allocations.json`
 
-## Add allocations
-
-`npx hardhat addAllocations --token <proxy-address> --allocations /tmp/allocations.json --network ropsten`
-
 ## Transfer public tokens
 
-`npx hardhat transferMany --token <proxy-address> --allocations /tmp/allocations.json --network ropsten`
+`npx hardhat transferMany --token $PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
+
+## Add allocations
+
+`npx hardhat addAllocations --token $PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
 
 ## Verify on Etherscan 
 
-`npx hardhat verify --network ropsten <implementation-address>`
+`npx hardhat verify --network ropsten $IMPLEMENTATION_ADDRESS`
 
 ## Attach to token in the console:
 
@@ -52,7 +52,7 @@ Vesting "2": added for 2 addresses
 npx hardhat console --network ropsten
 
 const Token = await ethers.getContractFactory("ShieldToken")
-const token = await Token.attach('<proxy-address>')
+const token = await Token.attach(process.env['PROXY_ADDRESS'])
 ```
 
 ### Enable defense
