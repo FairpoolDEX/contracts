@@ -1,20 +1,23 @@
-# How to Deploy:
+# Deploy
 
 ## Setup environment
 
 - In `.env` file set `INFURA_API_KEY`, `ETHERSCAN_API_KEY`, and `MNEMONIC` (see `.env.example` for details)
 - In `parameters.ts` set `ALLOCATIONS` and `RELEASE_TIME`
   
-## Deploy
+## Deploy contract
 
-### Localhost:
+### Localhost
+
 `npm run deploy`
 
 ### Mainnet | Ropsten
+
 `npm run deploy -- --network {mainnet|ropsten}`
 
 Example output:
-```
+
+```shell script
 Compiling 1 file with 0.8.4
 Compilation finished successfully
 Creating Typechain artifacts in directory typechain for target ethers-v5
@@ -29,9 +32,9 @@ Vesting "2": added for 2 addresses
 
 ## Download frozen wallets
 
-* `rm /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv`
-* Google Sheets -> Download as .csv
-* `node scripts/csv_parser.js /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv > /tmp/allocations.json`
+- `rm /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv`
+- Google Sheets -> Download as .csv
+- `node scripts/csv_parser.js /tmp/Shield\ Frozen\ Wallets\ -\ Wallets.csv > /tmp/allocations.json`
 
 ## Transfer public tokens
 
@@ -41,28 +44,28 @@ Vesting "2": added for 2 addresses
 
 `npx hardhat addAllocations --token $PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
 
-## Verify on Etherscan 
+## Verify on Etherscan
 
 `npx hardhat verify --network ropsten $IMPLEMENTATION_ADDRESS`
 
-## Attach to token in the console:
+## Attach to token in the console
 
-```
-// Start console
-npx hardhat console --network ropsten
+`npx hardhat console --network ropsten`
 
+```javascript
 const Token = await ethers.getContractFactory("ShieldToken")
 const token = await Token.attach(process.env['PROXY_ADDRESS'])
 ```
 
 ### Enable defense
 
-```
+```javascript
 // disable transfers for 100 blocks from now
 await token.disableTransfers(100)
 ```
 
 ### Disable defense forever
-```
+
+```javascript
 await token.disableBurnBeforeBlockNumber()
 ```
