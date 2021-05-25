@@ -1,4 +1,4 @@
-export const RELEASE_TIME: number = Math.floor(new Date("2021.05.19 13:00:00 GMT").getTime() / 1000)
+export const RELEASE_TIME: number = Math.floor(new Date("2022.01.01 13:00:00 GMT").getTime() / 1000)
 
 // it's a test only allocations with a random addresses!
 
