@@ -6,15 +6,15 @@ import { ALLOCATIONS, RELEASE_TIME } from './parameters.test'
 
 async function main() {
   const [deployer] = await ethers.getSigners()
-  console.log(`DEPLOYER=${deployer.address}`)
+  console.log(`export DEPLOYER=${deployer.address}`)
 
   const Token = await ethers.getContractFactory("ShieldToken")
   const token = await upgrades.deployProxy(Token, [RELEASE_TIME])
   await token.deployed()
-  console.log(`PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console
+  console.log(`export PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console
 
   const implementationAddress = await getImplementationAddress(ethers.provider, token.address)
-  console.log(`IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
+  console.log(`export IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
 
   // add allocations
   // for (const [vestingTypeIndex, allocation] of Object.entries(ALLOCATIONS)) {
