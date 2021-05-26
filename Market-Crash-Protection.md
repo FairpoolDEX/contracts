@@ -18,22 +18,42 @@ Are you a liquidity provider? Check out [guides for liquidity providers](#guides
 
 Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feature.
 
+## Contents
+
+1. [Overview](#overview)
+1. [How it works](#how-it-works)
+1. [Guides for traders](#guides-for-traders)
+    1. [How to save money](#how-to-save-money)
+    1. [How to buy protection](#how-to-buy-protection)
+    1. [How to receive compensation](#how-to-receive-compensation)
+1. [Guides for liquidity providers](#guides-for-liquidity-providers)
+    1. [How to make money](#how-to-make-money)
+    1. [How to earn Super-Yield](#how-to-earn-super-yield)
+    1. [How to deposit](#how-to-deposit)
+    1. [How to withdraw](#how-to-withdraw)
+
 ## Overview
 
 **For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more in our [guides for traders](#guides-for-traders).
 
-**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by selling "[protection tokens](#protection-token)" to traders 2) by earning [super-yield](#super-yield). Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
+**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by earning [premium](#premium) for selling [protection tokens](#protection-token) to [traders](#trader) 2) by earning [super-yield](#super-yield). Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
 
 ## How it works
 
 ### General
 
-1. [Liquidity providers](#liquidity-provider) deposit funds into the contract.
+1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
 1. [Liquidity providers](#liquidity-provider) receive [protection tokens](#protection-token).
 1. [Liquidity providers](#liquidity-provider) sell [protection tokens](#protection-token) to [traders](#trader).
-1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price): traders can sell by sending the [base tokens](#base-token) to the contract (the [protection tokens](#protection-token) will be burned; traders need to hold protection tokens on the same address as the base tokens).
+1. [Liquidity providers](#liquidity-provider) wait until the [expiration date](#expiration-date):
+    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price):
+        1. Traders keep their [base tokens](#base-token) + unused [protection tokens](#protection-token).
+        1. Liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
+    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price):
+        1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract) + [protection tokens](#protection-token) are burnt.
+        1. Liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield).
 
-### Developer perspective
+### Developer example
 
 The contract needs to be deployed by the developer before it can be used.
 
@@ -42,40 +62,25 @@ The contract needs to be deployed by the developer before it can be used.
     1. Developer sets a token pair (used to determine the price).
     1. Developer sets a guaranteed price (if it goes below, traders will be compensated).
     1. Developer sets an expiration date (used to lock liquidity).
-    1. Developer sets a [Yearn yVault](#yearn-yvault) address (used to provide [Super-Yield](#super-yield))
+    1. Developer sets a [Yearn yVault](#yearn-yvault) address (used to provide [Super-Yield](#super-yield)).
 
-### Trader perspective
+### Trader example
 
-1. Trader buys protection.
-1. Token price drops below the guaranteed price.
-1. Trader sends tokens to our contract.
-1. Trader receives a compensation equal to `guaranteed_price * token_amount`
+1. Trader buys [base tokens](#base-token).
+1. Trader buys [protection tokens](#protection-token) that cover these base tokens.
+1. Base tokens' [market price](#market-price) drops below the [guaranteed price](#guaranteed-price).
+1. Trader sends tokens to [MCP contract](#market-crash-protection-contract).
+1. Trader receives [quote tokens](#quote-token) in amount equal to `guaranteed_price * base_token_amount`
 
-Note: the compensation is larger than the trader would receive if he simply sold the tokens at market, because the guaranteed price is higher than market price after the crash.
+Note: the quote tokens compensation is larger than the trader would receive if he simply sold the base tokens at market, because the guaranteed price is higher than market price after the crash.
 
-### Liquidity provider receives a premium
+### Liquidity provider example
 
-1. Liquidity provider deposits funds into our contract.
-1. Liquidity provider sells protection.
-1. Token price stays above the guaranteed price (trader doesn't sell).
-1. Expiration date passes (liquidity provider can withdraw).
-1. Liquidity provider withdraws funds + keeps the premium from selling protection.
-
-## Technical specification
-
-### System tests
-
-1. Must allow traders to sell the token at the guaranteed price.
-1. Must allow traders to withdraw compensation as soon as they want.
-1. Must allow protectors to sell the protection at any price.
-1. Must allow protectors to withdraw liquidity after expiration date.
-1. Must allow protectors to super-yield the liquidity into other projects.
-1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
-
-### Deployment
-
-* Anybody can deploy a new MCP contract.
-* Anybody can call public methods of a new MCP contract.
+1. Liquidity provider deposits [quote tokens](#quote-token) into [MCP contract](#market-crash-protection-contract).
+1. Liquidity provider receives [protection tokens](#protection-token).
+1. [Base token](#base-token) [market price](#market-price) stays above the [guaranteed price](#guaranteed-price) (trader doesn't sell).
+1. [Expiration date](#expiration-date) passes (liquidity provider can withdraw).
+1. Liquidity provider withdraws [quote tokens](#quote-token) + keeps the [premium](#premium) from selling [protection tokens](#protection-token) + receives [Super-Yield](#super-yield).
 
 ## Guides for traders
 
@@ -100,48 +105,48 @@ Protection tokens allow you to recover capital. Using the example above:
 
 ### How to buy protection
 
-*Note: this product is still under development. The guide below is how it's supposed to work.*
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
 
-1. You open the Shield Finance web application.
-1. You click "Search".
-1. You type the [base token](#base-token) ticker (it can be a token that you've already bought, or a token that you want to buy).
-1. App shows you a list of available [Market Crash Protection contracts](#market-crash-protection-contract) for your [base token](#base-token).
+1. Open the Shield Finance web application.
+1. Click "Buy protection".
+1. Choose the [base token](#base-token) (for example: a token that you've already bought, or a token that you want to buy).
+1. Browse through the list of available [Market Crash Protection contracts](#market-crash-protection-contract) for your [base token](#base-token).
     1. There will be multiple protection contracts for a single token.
     1. The contracts will have different parameters: guaranteed price & expiration date.
-1. You choose the protection contract that suits your needs:
+1. Choose the protection contract that suits your needs:
     1. If you want to buy protection for long term, choose a contract with an expiration date that is far in future.
     1. If you want to buy protection for short term, choose a contract with an expiration date that is closer to present moment.
-1. You click "Buy" button on the contract that you've chosen.
-1. App asks you how many [protection tokens](#protection-token) you want to buy.
+1. Click "Buy" button on the contract that you've chosen.
+1. Type how many [protection tokens](#protection-token) you want to buy.
     1. Normally, you should buy the amount of [protection tokens](#protection-token) equal to amount of [base tokens](#base-token) that you own.
-1. You input the amount of protection tokens.
-1. App calculates the total cost of buying this amount of protection tokens.
-1. You click "Buy".
-1. Metamask asks you to sign & send the transaction for buying protection tokens.
-1. You click "Send".
-1. Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
+1. Confirm the total cost of buying this amount of protection tokens.
+1. Click "Buy".
+    1. The app will generate a Uniswap transaction.
+1. Sign the transaction.
+
+That's it! Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
 
 ### How to receive compensation
 
-1. You open the Shield Finance web application.
-1. You click "Get compensation".
-1. App shows you the list of [base tokens](#base-token) that you can get compensation for.
+1. Open the Shield Finance web application.
+1. Click "Get compensation".
+1. Browse through the list of [base tokens](#base-token) that you can get compensation for.
     1. App shows you only those tokens that are stored on the currently selected address. If you used a different address when you bought the protection tokens, please change the currently selected address in your wallet.
     1. App shows whether the [market price](#market-price) is below the [guaranteed price](#guaranteed-price). Technically, you can sell into [MCP contract](#market-crash-protection-contract) at any point in time (even if the market price is above the guaranteed price), but it makes economic sense to sell into [MCP contract](#market-crash-protection-contract) only if the market price is below the guaranteed price.
-1. You choose the token that you want to sell.
-1. You choose the amount of tokens that you want to sell.
-1. You click "Sell".
-1. Metamask asks you to sign & send the transaction for selling base tokens.
-1. You click "Send".
-1. Once the transaction is confirmed, you will see a notification that you will receive the compensation after the [expiration date](#expiration-date) of the contract. This restriction is necessary to implement [Super-Yield](#super-yield).
+1. Choose the token that you want to sell.
+1. Choose the amount of tokens that you want to sell.
+1. Click "Sell".
+1. Sign the transaction.
+
+That's it! Once the transaction is confirmed, you will receive the compensation in [quote tokens](#quote-token).
 
 ## Guides for liquidity providers
 
 ### How to make money
 
-You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [super-yield](#super-yield).
+You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [Super-Yield](#super-yield).
 
-Suppose you believe that WBTC price will not crash below 10000 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for WBTC-USDT pair with a guaranteed price of 10000 and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell WBTC into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10000 USDT on or before 31 Aug 2021.
+Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
 
 In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
 
@@ -169,20 +174,48 @@ Here is a full scenario:
 
 Read about [Super-Yield](#super-yield).
 
-TODO
+1. Deposit [quote tokens](#quote-token) into a [Market Crash Protection contract](#market-crash-protection-contract) (guide: [How to make money](#how-to-make-money)).
+1. Click "Enable Super-Yield" in the [Market Crash Protection contract](#market-crash-protection-contract).
+1. Sign the transaction.
+
+That's it! You will start earning yield from the [Yearn yVault](#yearn-yvault) as soon as the transaction is confirmed.
 
 ### How to deposit
 
-You can make money by depositing [quote tokens](#quote-token) into [MCP contracts](#market-crash-protection-contract). You can withdraw them after the expiration date (see [How to withdraw](#how-to-withdraw)). When you deposit quote tokens, you receive two types of tokens:
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
 
-* Liquidity tokens give you the right to [withdraw](#how-to-withdraw) liquidity later.
-* Protection tokens give you the right to
+1. Open the Shield Finance web application.
+1. Find the [Market Crash Protection contract](#market-crash-protection-contract) that you want to deposit into.
+    1. You can filter by [base token](#base-token), [quote token](#quote-token), [guaranteed price](#guaranteed-price), [expiration date](#expiration-date).
+1. Click "Deposit".
+1. Choose how many [quote tokens](#quote-token) you want to deposit.
+1. Click "Confirm".
+1. Sign the transaction.
 
-TODO
+That's it! After the transaction is confirmed, you will receive [protection tokens](#protection-token), which you can sell to traders via Uniswap (there will be a market for each protection token). Also, don't forget to [enable Super-Yield](#how-to-earn-super-yield)!
 
 ### How to withdraw
 
-TODO
+*Note: Market Crash Protection is still under development. The guide below is how it's supposed to work.*
+
+Note: you can only withdraw after the [expiration date](#expiration-date).
+
+1. Open the Shield Finance web application.
+1. Click "My deposits"
+1. Find the [Market Crash Protection contract](#market-crash-protection-contract) that you want to withdraw from.
+1. Click "Withdraw".
+1. Sign the transaction.
+
+That's it! After the transaction is confirmed, you will receive a mix of [base tokens](#base-token) and [quote tokens](#quote-token) (read [How to make money](#how-to-make-money) to figure out how much of each token you will receive). Also, if you [enabled Super-Yield](#how-to-earn-super-yield), you will receive yield.
+
+## System tests
+
+1. Must allow traders to sell the token at the guaranteed price.
+1. Must allow traders to withdraw compensation as soon as they want.
+1. Must allow protectors to sell the protection at any price.
+1. Must allow protectors to withdraw liquidity after expiration date.
+1. Must allow protectors to super-yield the liquidity into other projects.
+1. Must not allow protectors to back out of their promise to buy at the guaranteed price.
 
 ## Definitions
 
@@ -209,6 +242,7 @@ Parameters:
 * [Base token address](#base-token-address)
 * [Quote token address](#quote-token-address)
 * [Guaranteed price](#guaranteed-price)
+* [Yearn yVault address](#yearn-yvault-address)
 
 ### Deposit method
 
@@ -336,17 +370,16 @@ Notes:
 
 Super-Yield is extra money earned by liquidity providers in addition to [premium](#premium).
 
-Liquidity providers can earn Super-Yield by forwarding the funds from [MCP contract](#market-crash-protection-contract) to [Yearn yVaults](#yearn-yvault). They can withdraw the funds back to MCP contract anytime. Alternatively, a withdrawal will happen automatically at the [expiration date](#expiration-date) of the MCP contract (when a portion of the funds is used to pay the traders).
+Liquidity providers can earn Super-Yield by forwarding the funds from [MCP contract](#market-crash-protection-contract) to [Yearn yVault](#yearn-yvault). They can withdraw the funds back to MCP contract anytime. Alternatively, the MCP contract will withdraw from Yearn automatically when the [traders](#trader) decide to sell the [base token](#base-token), and the contract needs the [quote token](#quote-token) to pay the traders.
 
 Notes:
 
-* Liquidity providers can split the funds between multiple vaults.
-* Liquidity providers can withdraw the funds from the vault if it performs poorly.
-* Liquidity providers keep 100% of the yield generated by the vaults.
+* Developer sets the yVault address at the contract deploy time.
+* Liquidity providers keep 100% of the yield.
 
 ### Base token
 
-Base token is a token that is traded against [quote token](#quote-token). In a LINK-USDT pair, LINK is the base token. Base token is normally more volatile than quote token.
+Base token is the first token in a pair. In a LINK-USDT pair, LINK is the base token. Base token is normally more volatile than quote token.
 
 Examples:
 
@@ -360,7 +393,7 @@ Notes:
 
 ### Quote token
 
-Quote token is a token that is traded for [base token](#base-token). In a LINK-USDT pair, USDT is the quote token. Quote token is normally less volatile than base token.
+Quote token is the second token in a pair. In a LINK-USDT pair, USDT is the quote token. Quote token is normally less volatile than base token.
 
 Examples:
 
@@ -429,6 +462,14 @@ Examples:
 * 0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929 - [CHT-ETH pool on Uniswap](https://info.uniswap.org/token/0xa7e6b2ce535b83e82ab598e9e432705f8d7ce929)
 * 0xd3d2e2692501a5c9ca623199d38826e513033a17 - [UNI-ETH pool on Uniswap](https://info.uniswap.org/pair/0xd3d2e2692501a5c9ca623199d38826e513033a17)
 * 0x795065dcc9f64b5614c407a6efdc400da6221fb0 - [SUSHI-ETH pool on Sushiswap](https://www.sushiswap.fi/pair/0x795065dcc9f64b5614c407a6efdc400da6221fb0)
+
+### Yearn yVault address
+
+Examples:
+
+* 0xc695f73c1862e050059367B2E64489E66c525983 - [yvBOOST - ETH Yearn yVault](https://etherscan.io/address/0xc695f73c1862e050059367B2E64489E66c525983)
+* 0x27b7b1ad7288079A66d12350c828D3C00A6F07d7 - [crvIB Yearn yVault](https://etherscan.io/address/0x27b7b1ad7288079A66d12350c828D3C00A6F07d7)
+* 0x625b7DF2fa8aBe21B0A976736CDa4775523aeD1E - [crvHBTC Yearn yVault](https://etherscan.io/address/0x625b7DF2fa8aBe21B0A976736CDa4775523aeD1E)
 
 ### Base token amount
 
