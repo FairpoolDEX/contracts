@@ -1,7 +1,8 @@
 import {ethers, upgrades} from "hardhat"
 import {solidity} from "ethereum-waffle"
-import {utils, BigNumber} from "ethers"
+import {BigNumber} from "ethers"
 import chai from "chai"
+import {toTokenAmount, timeTravel, skipBlocks} from "./support/helpers"
 import {ShieldToken} from "../typechain/ShieldToken"
 
 import {ALLOCATIONS, RELEASE_TIME} from "../scripts/parameters.test"
@@ -9,32 +10,6 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers"
 
 chai.use(solidity)
 const {expect} = chai
-
-export const toTokenAmount = (value: string | number): BigNumber => utils.parseUnits(typeof value === "number" ? value.toString() : value, "18")
-
-
-type timeTravelCallback = () => Promise<void>;
-
-async function timeTravel(callback: timeTravelCallback, newBlockTimestamp: number) {
-    // save snapshot to rollback after calling callback
-    const snapshot = await ethers.provider.send('evm_snapshot', [])
-    // set new block timestamp
-    await ethers.provider.send("evm_setNextBlockTimestamp", [newBlockTimestamp])
-    // mine new block to really shift time
-    await ethers.provider.send("evm_mine", [])
-    await callback()
-    // revert snapshot and come back in time to start point
-    await ethers.provider.send('evm_revert', [snapshot])
-    // mine new block to really shift time
-}
-
-async function skipBlocks(amount: number) {
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < amount; i += 1) {
-        await ethers.provider.send("evm_mine", [])
-    }
-    /* eslint-enable no-await-in-loop */
-}
 
 describe("ShieldToken", async () => {
 
