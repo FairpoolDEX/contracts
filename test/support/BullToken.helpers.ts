@@ -1,4 +1,4 @@
-import { days, fromTokenAmount } from "./helpers"
+import { days, fromTokenAmount } from "./all.helpers"
 import { BullToken } from "../../typechain/BullToken"
 
 export const airdropStartTimestamp: number = Math.floor(new Date("2021-06-04 13:00:00 UTC").getTime() / 1000)
@@ -7,7 +7,9 @@ export const airdropClaimDuration: number = 2 * days
 
 export const airdropStageDuration: number = 30 * days
 
-export const burnRate = 0.999;
+export const burnRateNumerator = 999
+
+export const burnRateDenominator = 1000
 
 type Claims = { [index: string]: number }
 

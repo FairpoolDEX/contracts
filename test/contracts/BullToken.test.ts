@@ -1,14 +1,14 @@
 import chai from "chai"
 import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
-import { BigNumber } from "ethers"
-import { toTokenAmount, fromTokenAmount, timeTravel, skipBlocks } from "./support/helpers"
-import { ShieldToken } from "../typechain/ShieldToken"
-import { BullToken } from "../typechain/BullToken"
-
-import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "./support/ShieldToken.helpers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRate, claims, getClaims } from "./support/BullToken.helpers"
+import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
+import { timeTravel } from "../support/test.helpers"
+import { ShieldToken } from "../../typechain/ShieldToken"
+import { BullToken } from "../../typechain/BullToken"
+
+import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "../support/ShieldToken.helpers"
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateNumerator, burnRateDenominator, claims, getClaims } from "../support/BullToken.helpers"
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
@@ -51,7 +51,7 @@ describe("BullToken", async () => {
     shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)
 
     const bullTokenFactory = await ethers.getContractFactory("BullToken")
-    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration])) as unknown as BullToken
+    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
@@ -154,7 +154,7 @@ describe("BullToken", async () => {
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       await bullTokenWithStranger.transfer(ownerAddress, toTokenAmount(transferAmount))
-      expect(fromTokenAmount(await bullTokenWithOwner.balanceOf(ownerAddress))).to.equal(transferAmount * burnRate)
+      expect(fromTokenAmount(await bullTokenWithOwner.balanceOf(ownerAddress))).to.equal(transferAmount * burnRateNumerator / burnRateDenominator)
     }, airdropStartTimestamp)
   })
 

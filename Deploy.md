@@ -38,11 +38,11 @@ Vesting "2": added for 2 addresses
 
 ## Transfer public tokens
 
-`npx hardhat transferMany --token $PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
+`npx hardhat transferMany --token $SHLD_PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
 
 ## Add allocations
 
-`npx hardhat addAllocations --token $PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
+`npx hardhat addAllocations --token $SHLD_PROXY_ADDRESS --allocations /tmp/allocations.json --network ropsten`
 
 ## Verify on Etherscan
 
