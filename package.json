@@ -14,7 +14,7 @@
     "test": "hardhat test",
     "test:watch": "nodemon -x 'hardhat test'",
     "coverage": "npm run build && hardhat coverage --temp artifacts",
-    "deploy": "hardhat run scripts/deploy.ts"
+    "deploy": "hardhat run scripts/deployShieldToken.ts"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

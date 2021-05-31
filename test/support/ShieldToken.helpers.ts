@@ -1,10 +1,10 @@
-export const RELEASE_TIME: number = Math.floor(new Date("2022.01.01 13:00:00 GMT").getTime() / 1000)
+export const SHIELD_RELEASE_TIME: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
 
 // it's a test only allocations with a random addresses!
 
 // @note: All values is set without decimals
 
-export const ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
+export const SHIELD_ALLOCATIONS: {[index: string]: {[index: string]: number}} = {
 
 // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
   '0': {
