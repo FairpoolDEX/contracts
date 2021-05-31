@@ -4,154 +4,66 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-
-
-struct FrozenWallet {
-    address wallet;
-    uint256 totalAmount;
-    uint256 monthlyAmount;
-    uint256 initialAmount;
-    uint256 lockDaysPeriod;
-    bool scheduled;
-}
-
-struct VestingType {
-    uint256 monthlyRate;
-    //Should be set in percents with 4 trailing digits. i.e. 12.7337% value should be 127337
-    uint256 initialRate;
-    uint256 lockDaysPeriod;
-}
-
+import "hardhat/console.sol";
 
 contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
-    // a single wallet can belong only to a single vesting type
-    mapping(address => FrozenWallet) public frozenWallets;
-    VestingType[] public vestingTypes;
-    uint256 public releaseTime;
+    mapping(address => uint256) public claims;
+    address[] public claimers;
+    uint256 public maxSupply;
     uint256 public airdropStartTimestamp;
+    uint256 public airdropClaimDuration;
+    uint256 public airdropStageDuration;
 
-    // anti-sniping bot defense
-    uint256 public burnBeforeBlockNumber;
-    bool public burnBeforeBlockNumberDisabled;
-
-    event TransferBurned(address indexed wallet, uint256 amount);
-
-    function initialize(uint256 _airdropStartTimestamp) public initializer {
+    function initialize(uint256 _airdropStartTimestamp, uint256 _airdropClaimDuration, uint256 _airdropStageDuration) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ERC20_init_unchained("Shield Finance Token", "SHLD");
+        __ERC20_init_unchained("Bull Token", "BULL");
         __Pausable_init_unchained();
         __ERC20Pausable_init_unchained();
 
         airdropStartTimestamp = _airdropStartTimestamp;
+        airdropClaimDuration = _airdropClaimDuration;
+        airdropStageDuration = _airdropStageDuration;
 
-        // explicitly set burnBeforeBlockNumberDisabled to false
-        burnBeforeBlockNumberDisabled = false;
-
-        // Mint all supply to the owner
-        // no addition minting is available after initialization
-        _mint(owner(), 969_163_000 * 10 ** 18);
-
-        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
-        vestingTypes.push(VestingType(105556, 5, 30 days));
-        // Private:	10% at listing, then equal parts of 15% over total of 6 months
-        vestingTypes.push(VestingType(150000, 10, 0));
-        // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
-        vestingTypes.push(VestingType(40000, 4, 30 days));
-        // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
-        vestingTypes.push(VestingType(76667, 8, 12 * 30 days));
-        // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
-        vestingTypes.push(VestingType(26945, 3, 6 * 30 days));
-        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
-        vestingTypes.push(VestingType(20417, 2, 3 * 30 days));
-        // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
-        vestingTypes.push(VestingType(76667, 8, 0));
-        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
-        vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
+        maxSupply = 10000 * 969_163_000 * 10 ** 18;
     }
 
-    function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
-        require(releaseTime + lockDaysPeriod > block.timestamp, "This lock period is over already");
+    function addClaims(address[] calldata _claimers, uint256[] calldata _amounts) public onlyOwner {
+        require(_claimers.length == _amounts.length, "_claimers.length must be equal to _amounts.length");
 
-        vestingTypes.push(VestingType(monthlyRate, initialRate, lockDaysPeriod));
-        return vestingTypes.length - 1;
-    }
-
-    function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
-        uint addressesLength = addresses.length;
-
-        require(addressesLength == totalAmounts.length, "Array lengths must be same");
-        require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
-
-        VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-
-        for (uint256 i = 0; i < addressesLength; i++) {
-            address _address = addresses[i];
-
-            uint256 totalAmount = totalAmounts[i] * 10 ** 18;
-            uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 14 / 100;
-            uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
-            uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
-
-            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, lockDaysPeriod);
+        for (uint256 i = 0; i < _claimers.length; i++) {
+            claims[_claimers[i]] = _amounts[i] * 10 ** 18;
+            claimers.push(_claimers[i]);
         }
-
-        return true;
     }
 
-    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
-        require(!frozenWallets[wallet].scheduled, "Wallet already frozen");
-
-        super._transfer(msg.sender, wallet, totalAmount);
-
-        // Create frozen wallets
-        FrozenWallet memory frozenWallet = FrozenWallet(
-            wallet,
-            totalAmount,
-            monthlyAmount,
-            initialAmount,
-            lockDaysPeriod,
-            true
-        );
-
-        // Add wallet to frozen wallets
-        frozenWallets[wallet] = frozenWallet;
+    function clearClaims() public onlyOwner {
+        for (uint256 i = 0; i < claimers.length; i++) {
+            delete claims[claimers[i]];
+        }
+        delete claimers;
     }
 
-    // this function returns upper rounded amount of months.
-    // 0 - locked
-    // 1 - unlock initial amount (vesting not available yet)
-    // x... - months since lockup period is over (vesting months == x - 1)
-    function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
-        uint256 unlockTime = releaseTime + lockDaysPeriod;
-
-        if (block.timestamp < unlockTime) {
-            return 0;
-        }
-
-        uint256 diff = block.timestamp - unlockTime;
-        uint256 months = diff / 30 days + 1;
-
-        return months;
+    function setClaims(address[] calldata _claimers, uint256[] calldata _amounts) external onlyOwner {
+        clearClaims();
+        addClaims(_claimers, _amounts);
     }
 
-    function getUnlockedAmount(address sender) public view returns (uint256) {
-        uint256 months = getMonths(frozenWallets[sender].lockDaysPeriod);
+    function getClaimers() external view returns (address[] memory) {
+        return claimers;
+    }
 
-        // lockup period
-        if (months == 0) {
-            return 0;
-        }
-
-        uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (months - 1);
-        uint256 totalTransferableAmount = sumMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
-
-        if (totalTransferableAmount > frozenWallets[sender].totalAmount) {
-            return frozenWallets[sender].totalAmount;
-        }
-
-        return totalTransferableAmount;
+    function claim() external {
+        require(block.timestamp >= airdropStartTimestamp, "Can't claim before the airdrop is started");
+//        uint256 a = block.timestamp - airdropStartTimestamp;
+//        uint256 b = (block.timestamp - airdropStartTimestamp) % airdropStageDuration;
+        require((block.timestamp - airdropStartTimestamp) % airdropStageDuration < airdropClaimDuration, "Can't claim when not in distribution period");
+        require(claims[msg.sender] > 0, "Can't claim because this address has already claimed or didn't hold $SHLD at the snapshot time");
+        uint256 amount = claims[msg.sender];
+        claims[msg.sender] = 0;
+        // delete claimers not necessary?
+        _mint(msg.sender, amount);
     }
 
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
@@ -176,45 +88,13 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
-    function getLockedAmount(address sender) public view returns (uint256) {
-        uint256 unlockedAmount = getUnlockedAmount(sender);
-        return frozenWallets[sender].totalAmount - unlockedAmount;
-    }
-
-    // Transfer control
-    function canTransfer(address sender, uint256 amount) public view returns (bool) {
-        // Control only scheduled wallet
-        if (!frozenWallets[sender].scheduled) {
-            return true;
-        }
-
-        uint256 balance = balanceOf(sender);
-        if (balance >= frozenWallets[sender].totalAmount && (balance - frozenWallets[sender].totalAmount) >= amount) {
-            return true;
-        }
-
-        uint256 lockedAmount = getLockedAmount(sender);
-
-        if (block.timestamp < releaseTime || (balance - amount) < lockedAmount) {
-            return false;
-        }
-        return true;
-    }
-
-    function _beforeTokenTransfer(address sender, address recipient, uint256 amount) internal override {
-        require(canTransfer(sender, amount), "Wait for vesting day!");
-        super._beforeTokenTransfer(sender, recipient, amount);
+    function _mint(address account, uint256 amount) internal virtual override {
+        super._mint(account, amount);
+        require(totalSupply() <= maxSupply, "Can't mint more than maxSupply");
     }
 
     function _transfer(address sender, address recipient, uint256 amount) internal override {
-        if (isTransferDisabled()) {
-            // anti-sniping bot defense is on
-            // burn tokens instead of transferring them >:]
-            super._burn(sender, amount);
-            emit TransferBurned(sender, amount);
-        } else {
-            super._transfer(sender, recipient, amount);
-        }
+        super._transfer(sender, recipient, amount * 999 / 1000);
     }
 
     function withdraw(uint256 amount) public onlyOwner {
@@ -235,25 +115,5 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         } else {
             _unpause();
         }
-    }
-
-    // anti-sniping bot defense
-
-    function isTransferDisabled() public view returns (bool) {
-        if (_msgSender() == owner()) {
-            // owner always can transfer
-            return false;
-        }
-        return (!burnBeforeBlockNumberDisabled && (block.number < burnBeforeBlockNumber));
-    }
-
-    function disableTransfers(uint256 blocksDuration) public onlyOwner {
-        require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
-        burnBeforeBlockNumber = block.number + blocksDuration;
-    }
-
-    function disableBurnBeforeBlockNumber() public onlyOwner {
-        burnBeforeBlockNumber = 0;
-        burnBeforeBlockNumberDisabled = true;
     }
 }

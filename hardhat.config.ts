@@ -11,7 +11,7 @@ import { config as dotEnvConfig } from "dotenv"
 
 dotEnvConfig()
 
-const gasPrice = 35 * 1000000000
+const gasPrice: number = 35 * 1000000000
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
