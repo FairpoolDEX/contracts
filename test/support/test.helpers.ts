@@ -1,11 +1,7 @@
 import { ethers } from "hardhat"
-import { utils, BigNumber } from "ethers"
+import execa from "execa"
 
 type timeTravelCallback = () => Promise<void>;
-
-export const toTokenAmount = (value: string | number): BigNumber => utils.parseUnits(typeof value === "number" ? value.toString() : value, "18")
-
-export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.formatUnits(value, "18"))
 
 export async function timeTravel(callback: timeTravelCallback, newBlockTimestamp: number): Promise<void> {
   // save snapshot to rollback after calling callback
@@ -28,4 +24,6 @@ export async function skipBlocks(amount: number): Promise<void> {
   /* eslint-enable no-await-in-loop */
 }
 
-export const days: number = 24 * 60 * 60
+export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
+  return execa(`${__dirname}/../../node_modules/.bin/hardhat`, args, options)
+}
