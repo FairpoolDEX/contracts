@@ -163,7 +163,7 @@ describe("ShieldToken", async () => {
     })
 
     it("should be able to change release time", async () => {
-      const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
+      const newReleaseTime = Math.floor(new Date("2022.01.01 15:00:00 GMT").getTime() / 1000)
       await token.setReleaseTime(newReleaseTime)
 
       const releaseTime = await token.releaseTime()
@@ -171,7 +171,7 @@ describe("ShieldToken", async () => {
     })
 
     it("shouldn't be able to change release time by non owner", async () => {
-      const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
+      const newReleaseTime = Math.floor(new Date("2022.01.01 15:00:00 GMT").getTime() / 1000)
       await expect(
         token.connect(nonOwner).setReleaseTime(newReleaseTime),
       ).to.be.revertedWith("caller is not the owner")
@@ -185,7 +185,7 @@ describe("ShieldToken", async () => {
     })
 
     it("shouldn't be able to change release time after release", async () => {
-      const newReleaseTime = Math.floor(new Date("2022.01.01 12:00:00 GMT").getTime() / 1000)
+      const newReleaseTime = Math.floor(new Date("2022.01.01 15:00:00 GMT").getTime() / 1000)
       const newBlockTimestamp = SHIELD_RELEASE_TIME + 3600
       await timeTravel(async () => {
         await expect(
@@ -457,7 +457,10 @@ describe("ShieldToken", async () => {
           const initialAmount = toTokenAmount(amount * 5 / 100)
           const monthlyAmount = toTokenAmount(amount * (105556 / 10000) / 100)
           const unlockedAmount = await token.getUnlockedAmount(address)
-          expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
+          // using diff approach to account for extraneous value from JavaScript FP arithmetic in monthlyAmount
+          const diff = initialAmount.add(monthlyAmount).sub(unlockedAmount)
+          const diffIsSmall = diff.lt(500)
+          expect(diffIsSmall).to.be.true
         }
       }, monthAfterLockupPeriod)
     })

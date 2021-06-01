@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { Allocations } from "../types"
+import { chunk } from "../test/support/all.helpers"
 
 export async function transferManyShieldToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const allocations: Allocations = (await import(args.allocations)).default
@@ -8,14 +9,6 @@ export async function transferManyShieldToken(args: TaskArguments, hre: HardhatR
   const allocation = allocations[""]
   if (!allocation || Object.keys(allocation).length === 0) {
     throw new Error("No allocations found for transferMany")
-  }
-
-  function chunk(arr: any[], size: number) {
-    const result = []
-    for (let i = 0; i < arr.length; i += size) {
-      result.push(arr.slice(i, i + size))
-    }
-    return result
   }
 
   const recipients = Object.keys(allocation)

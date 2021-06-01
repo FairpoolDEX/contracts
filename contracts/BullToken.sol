@@ -37,7 +37,7 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(_claimers.length == _amounts.length, "_claimers.length must be equal to _amounts.length");
 
         for (uint i = 0; i < _claimers.length; i++) {
-            claims[_claimers[i]] = _amounts[i] * 10 ** 18;
+            claims[_claimers[i]] = _amounts[i];
             claimers.push(_claimers[i]);
         }
     }
