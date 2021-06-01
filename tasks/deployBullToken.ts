@@ -5,14 +5,23 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp } fro
 import { burnRateDenominator, burnRateNumerator } from "../test/support/BullToken.helpers"
 
 export async function deployBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const [deployer] = await hre.ethers.getSigners()
+  const { ethers, upgrades, network } = hre
+  const [deployer] = await ethers.getSigners()
   console.log(`export BULL_DEPLOYER=${deployer.address}`)
 
-  const Token = await hre.ethers.getContractFactory("BullToken")
-  const token = await hre.upgrades.deployProxy(Token, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])
+  const _airdropStartTimestamp = network.name === 'mainnet' ? airdropStartTimestamp : Math.floor(new Date().getTime() / 1000)
+
+  const Token = await ethers.getContractFactory("BullToken")
+  const token = await upgrades.deployProxy(Token, [
+    _airdropStartTimestamp,
+    airdropClaimDuration,
+    airdropStageDuration,
+    burnRateNumerator,
+    burnRateDenominator,
+  ])
   await token.deployed()
   console.log(`export BULL_PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console
 
-  const implementationAddress = await getImplementationAddress(hre.ethers.provider, token.address)
+  const implementationAddress = await getImplementationAddress(ethers.provider, token.address)
   console.log(`export BULL_IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
 }

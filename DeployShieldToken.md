@@ -46,7 +46,7 @@ Vesting "2": added for 2 addresses
 
 ## Verify on Etherscan
 
-`npx hardhat verify --network ropsten $IMPLEMENTATION_ADDRESS`
+`npx hardhat verify --network ropsten $SHLD_IMPLEMENTATION_ADDRESS`
 
 ## Attach to token in the console
 
@@ -54,7 +54,7 @@ Vesting "2": added for 2 addresses
 
 ```javascript
 const Token = await ethers.getContractFactory("ShieldToken")
-const token = await Token.attach(process.env['PROXY_ADDRESS'])
+const token = await Token.attach(process.env['SHLD_PROXY_ADDRESS'])
 ```
 
 ### Enable defense
