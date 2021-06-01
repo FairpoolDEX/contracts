@@ -1,4 +1,4 @@
-import { map, find } from "lodash"
+import { map, find, fromPairs } from "lodash"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { utils, BigNumber, BigNumberish } from "ethers"
 import neatcsv from "neat-csv"
@@ -33,11 +33,12 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
 }
 
 export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
-  const balancesChunks = chunk(balances, 100)
+  const balancesChunks = chunk(balances, 150)
   // const transactions = []
   for (let i = 0; i < balancesChunks.length; i++) {
+    const entries = balancesChunks[i].map(({address, amount}) => [address, amount.toString()])
     log && log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
-    log && log(balancesChunks[i])
+    log && log(fromPairs(entries))
     const addresses = map(balancesChunks[i], "address")
     const amounts = (map(balancesChunks[i], "amount") as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropRate))
     const func = i === 0 ? "setClaims" : "addClaims"
@@ -49,7 +50,7 @@ export async function setClaims(token: BullToken, balances: Balances, log: ((msg
 export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { token: tokenAddress, balances: balancesPath, extras: extrasPath } = args
   console.log(`Reading balances from ${balancesPath} and ${extrasPath}`)
-  const balances = await parseAllBalancesCSV([fs.createReadStream(balancesPath), fs.createReadStream(extrasPath)])
+  const balances = await parseAllBalancesCSV([fs.readFileSync(balancesPath), fs.readFileSync(extrasPath)])
   console.log(`Attaching to contract ${tokenAddress}`)
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress) as BullToken

@@ -15,7 +15,7 @@ import { deployBullToken } from "./tasks/deployBullToken"
 
 dotEnvConfig()
 
-const gasPrice: number = 35 * 1000000000
+const gasPrice: number = 20 * 1000000000
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
