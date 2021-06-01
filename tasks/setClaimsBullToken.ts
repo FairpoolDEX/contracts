@@ -1,15 +1,21 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
+import { utils, BigNumber } from "ethers"
 import neatcsv from "neat-csv"
 import fs from "fs"
 import { Readable as ReadableStream } from "stream"
+import { fromTokenAmount, toTokenAmount } from "../test/support/all.helpers"
 
-export async function parseSHLDCSV(data: string | Buffer | ReadableStream): Promise<void> {
-  const result = await neatcsv(data)
-  console.log('result', result)
+type Balances = Array<{ address: string, amount: BigNumber }>
+
+export async function parseBalancesCSV(data: string | Buffer | ReadableStream): Promise<Balances> {
+  return (await neatcsv(data)).map((row) => {
+    console.log("row", row)
+    return { address: row[0], amount: toTokenAmount(row[1]) }
+  })
 }
 
 export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const data = parseSHLDCSV(fs.createReadStream(args.claims))
+  const data = parseBalancesCSV(fs.createReadStream(args.claims))
   // chunk holders
 
   // const allocations: Allocations = (await import(args.allocations)).default
