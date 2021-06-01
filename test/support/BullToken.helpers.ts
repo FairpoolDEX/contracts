@@ -1,12 +1,13 @@
-import { days, fromTokenAmount, toTokenAmount, toTokenAmountString } from "./all.helpers"
+import { days, toTokenAmountString } from "./all.helpers"
 import { BullToken } from "../../typechain/BullToken"
-import { BigNumber } from "ethers"
 
 export const airdropStartTimestamp: number = Math.floor(new Date("2021-06-04 13:00:00 UTC").getTime() / 1000)
 
 export const airdropClaimDuration: number = 2 * days
 
 export const airdropStageDuration: number = 30 * days
+
+export const airdropRate: number = 10000 // BULL per SHLD
 
 export const burnRateNumerator = 999
 

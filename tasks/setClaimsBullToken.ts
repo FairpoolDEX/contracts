@@ -6,6 +6,7 @@ import fs from "fs"
 import { Readable as ReadableStream } from "stream"
 import { chunk } from "../test/support/all.helpers"
 import { BullToken } from "../typechain/BullToken"
+import { airdropRate } from "../test/support/BullToken.helpers"
 
 type Balances = Array<{ address: string, amount: BigNumber }>
 
@@ -31,17 +32,17 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
   })
 }
 
-export async function setClaims(token: BullToken, balances: Balances, log: (msg: any) => void): Promise<void> {
+export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
   const balancesChunks = chunk(balances, 100)
   // const transactions = []
   for (let i = 0; i < balancesChunks.length; i++) {
-    log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
-    log(balancesChunks[i])
+    log && log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
+    log && log(balancesChunks[i])
     const addresses = map(balancesChunks[i], "address")
-    const amounts = (map(balancesChunks[i], "amount") as BigNumber[]).map((amount: BigNumber) => amount.mul(10000))
+    const amounts = (map(balancesChunks[i], "amount") as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropRate))
     const func = i === 0 ? "setClaims" : "addClaims"
     const tx = await token[func](addresses, amounts)
-    log(`TX Hash: ${tx.hash}`)
+    log && log(`TX Hash: ${tx.hash}`)
   }
 }
 
