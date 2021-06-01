@@ -82,7 +82,8 @@ task("addAllocations", "Call addAllocations for allocations with lockup period")
 
 task("setClaims", "Call setClaims on BULL token contract")
   .addParam("token", "Token contract's address")
-  .addParam("claims", "CSV with SHLD holders exported from Etherscan")
+  .addParam("balances", "CSV with SHLD balances exported from Etherscan")
+  .addParam("extras", "CSV with SHLD balances calculated from locked liquidity")
   .setAction(setClaimsBullToken)
 
 export default config

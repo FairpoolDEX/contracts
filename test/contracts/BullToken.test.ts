@@ -2,7 +2,7 @@ import chai from "chai"
 import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
+import { toTokenAmount } from "../support/all.helpers"
 import { timeTravel } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain/ShieldToken"
 import { BullToken } from "../../typechain/BullToken"
@@ -72,8 +72,8 @@ describe("BullToken", async () => {
 
   it("should allow the owner to add claims", async () => {
     const claimersToAdd = ["0x005e288D713a5fB3d7c9cf1B43810A98688C7223"]
-    const amountsToAdd = [500]
-    const claimsWithAdded = Object.assign({}, claims, { [claimersToAdd[0]]: amountsToAdd[0] })
+    const amountsToAdd = [toTokenAmount('500')]
+    const claimsWithAdded = Object.assign({}, claims, { [claimersToAdd[0]]: amountsToAdd[0].toString() })
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.addClaims(claimersToAdd, amountsToAdd)
     const _claims = await getClaims(bullTokenWithOwner)
@@ -106,17 +106,17 @@ describe("BullToken", async () => {
   })
 
   it("should allow any user to claim the tokens", async () => {
-    const strangerAmount = 1000
+    const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-    expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(0)
+    expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-      expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(strangerAmount)
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
     }, airdropStartTimestamp)
 
     await timeTravel(async () => {
@@ -124,37 +124,37 @@ describe("BullToken", async () => {
       await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
       await bullTokenWithStranger.claim()
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-      expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(2 * strangerAmount)
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
     }, airdropStartTimestamp + airdropStageDuration)
   })
 
   it("should not allow the user to claim BULL tokens before or after the distribution stage finishes", async () => {
-    const strangerAmount = 1000
+    const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-    expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(0)
+    expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-      expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(0)
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
     }, airdropStartTimestamp + airdropClaimDuration + 1)
   })
 
   it("should burn BULL token on transfer", async () => {
-    const strangerAmount = 1000
-    const transferAmount = 150
+    const strangerAmount = toTokenAmount('1000')
+    const transferAmount = toTokenAmount('150')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
-    expect(fromTokenAmount(await bullTokenWithStranger.balanceOf(strangerAddress))).to.equal(0)
+    expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      await bullTokenWithStranger.transfer(ownerAddress, toTokenAmount(transferAmount))
-      expect(fromTokenAmount(await bullTokenWithOwner.balanceOf(ownerAddress))).to.equal(transferAmount * burnRateNumerator / burnRateDenominator)
+      await bullTokenWithStranger.transfer(ownerAddress, transferAmount)
+      expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(transferAmount.mul(burnRateNumerator).div(burnRateDenominator))
     }, airdropStartTimestamp)
   })
 
