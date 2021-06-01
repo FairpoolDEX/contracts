@@ -6,6 +6,8 @@ import { timeTravel, hh } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain/ShieldToken"
 import { BullToken } from "../../typechain/BullToken"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { parseBalancesCSV } from "../../tasks/setClaimsBullToken"
+import * as fs from "fs"
 
 chai.use(solidity)
 const { expect } = chai
@@ -25,9 +27,9 @@ describe("setClaimsBullToken", async () => {
   let bullTokenWithStranger: BullToken
 
   before(async () => {
-    const deployShieldTokenResult = await hh(["deployShieldToken"])
-    const deployBullTokenResult = await hh(["deployBullToken"])
-    console.log("deployBullTokenResult", deployBullTokenResult)
+    // const deployShieldTokenResult = await hh(["deployShieldToken"])
+    // const deployBullTokenResult = await hh(["deployBullToken"])
+    // console.log("deployBullTokenResult", deployBullTokenResult)
   })
 
   // beforeEach(async () => {
@@ -54,6 +56,12 @@ describe("setClaimsBullToken", async () => {
   //     await shieldTokenWithOwner.addAllocations(addresses, amounts, vestingTypeIndex)
   //   }
   // })
+
+  it("should parse the CSV export", async () => {
+    const data = await parseBalancesCSV(fs.createReadStream(`${__dirname}/../fixtures/SHLD.balances.csv`))
+    expect(data.length).to.be.greaterThan(0)
+    expect(data[0]).to.deep.equal({ address: "0x00000000000003441d59dde9a90bffb1cd3fabf1", amount: toTokenAmount("132814.914153007") })
+  })
 
   it.skip("should set claims", async () => {
     // const deployShieldTokenResult = await hh(["deployShieldToken"])

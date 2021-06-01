@@ -11,7 +11,7 @@
     "lint": "solhint contracts/*.sol && eslint .",
     "lint:markdown": "markdownlint --ignore node_modules **/*.md",
     "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
-    "test": "hardhat test",
+    "test": "hardhat --show-stack-traces test",
     "test:watch": "nodemon -x 'hardhat test'",
     "coverage": "npm run build && hardhat coverage --temp artifacts",
     "deploy": "hardhat run scripts/deployShieldToken.ts"
