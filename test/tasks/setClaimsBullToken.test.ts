@@ -76,10 +76,21 @@ describe("setClaimsBullToken", async () => {
   it("should not allow the stranger to set claims", async () => {
     const balances = await getBalances()
     await expect(
-      setClaims(bullTokenWithStranger, balances)
+      setClaims(bullTokenWithStranger, balances),
     ).to.be.revertedWith("caller is not the owner")
     const aliceClaim = await bullTokenWithStranger.claims(aliceAddress)
     expect(aliceClaim).to.equal(toTokenAmount("0").mul(airdropRate))
+  })
+
+  it("should allow the stranger to claim BULL", async () => {
+    const strangerAmount = toTokenAmount("10000")
+    const balances = await getBalances()
+    balances.push({ address: strangerAddress, amount: strangerAmount })
+    await setClaims(bullTokenWithOwner, balances)
+    await timeTravel(async () => {
+      await bullTokenWithStranger.claim()
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(airdropRate))
+    }, airdropStartTimestamp)
   })
 
 })
