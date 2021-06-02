@@ -18,11 +18,13 @@ For liquidity providers & stakers.
 
 `npx hardhat deployBullToken --network ropsten`
 
-Export environment variables.
+## Export environment variables
+
+(see output from the previous command)
 
 ## Set claims
 
-`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --balances /tmp/SHLD.balances.csv --extras /tmp/SHLD.extras.csv --network ropsten`
+`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --balances /tmp/SHLD.balances.csv --extras /tmp/SHLD.extras.csv --olds /tmp/SHLD.olds.csv --network ropsten`
 
 ## Verify on Etherscan
 
@@ -40,6 +42,6 @@ const token = await Token.attach(process.env['BULL_PROXY_ADDRESS'])
 ## Conduct the airdrop
 
 1. Set claims
-1. Save current SHLD balances to SHLD.old.csv
+1. Save current SHLD balances to SHLD.olds.csv
 1. Set claims again
 1. If it's the last time: set all claims to 0 (technically not necessary, because it won't allow to mint more than maxSupply)
