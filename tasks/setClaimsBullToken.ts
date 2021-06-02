@@ -1,12 +1,12 @@
-import { map, find, fromPairs } from "lodash"
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { utils, BigNumber, BigNumberish } from "ethers"
 import neatcsv from "neat-csv"
 import fs from "fs"
+import { map, fromPairs, shuffle } from "lodash"
+import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
+import { utils, BigNumber } from "ethers"
 import { Readable as ReadableStream } from "stream"
 import { chunk } from "../test/support/all.helpers"
 import { BullToken } from "../typechain/BullToken"
-import { airdropRate } from "../test/support/BullToken.helpers"
+import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
 
 type Balances = { [index: string]: BigNumber }
 
@@ -43,8 +43,8 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
 }
 
 export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
-  // TODO: shuffle balances array, so that 0's (aka deletes) are interspersed to maximize gas refund
-  const balancesArr = Object.entries(balances)
+  // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
+  const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, 400)
   // const transactions = []
   for (let i = 0; i < balancesArrChunks.length; i++) {
@@ -52,7 +52,7 @@ export async function setClaims(token: BullToken, balances: Balances, log: ((msg
     log && log(`Chunk ${i + 1} / ${balancesArrChunks.length}:`)
     log && log(fromPairs(entries))
     const addresses = map(entries, 0)
-    const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropRate))
+    const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     const tx = await token.setClaims(addresses, amounts)
     log && log(`TX Hash: ${tx.hash}`)
   }
