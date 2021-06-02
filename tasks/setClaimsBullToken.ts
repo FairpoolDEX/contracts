@@ -45,7 +45,7 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
 export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   const balancesArr = shuffle(Object.entries(balances))
-  const balancesArrChunks = chunk(balancesArr, 300)
+  const balancesArrChunks = chunk(balancesArr, 325)
   // const transactions = []
   for (let i = 0; i < balancesArrChunks.length; i++) {
     const entries = balancesArrChunks[i]
