@@ -5,7 +5,6 @@ import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { utils, BigNumber } from "ethers"
 import { Readable as ReadableStream } from "stream"
 import { chunk } from "../test/support/all.helpers"
-import { BullToken } from "../typechain/BullToken"
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
 
 type Balances = { [index: string]: BigNumber }
@@ -42,7 +41,7 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
   return balances
 }
 
-export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
+export async function setClaims(token: any, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, 325)
@@ -65,7 +64,7 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const balances = await parseAllBalancesCSV([fs.readFileSync(balancesPath), fs.readFileSync(extrasPath)], [fs.readFileSync(oldsPath)])
   console.log(`Attaching to contract ${tokenAddress}`)
   const Token = await hre.ethers.getContractFactory("BullToken")
-  const token = await Token.attach(tokenAddress) as BullToken
+  const token = await Token.attach(tokenAddress)
   console.log(`Setting claims`)
   await setClaims(token, balances, console.log.bind(console))
 }
