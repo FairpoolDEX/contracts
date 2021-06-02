@@ -36,3 +36,10 @@ Export environment variables.
 const Token = await ethers.getContractFactory("BullToken")
 const token = await Token.attach(process.env['BULL_PROXY_ADDRESS'])
 ```
+
+## Conduct the airdrop
+
+1. Set claims
+1. Save current SHLD balances to SHLD.old.csv
+1. Set claims again
+1. If it's the last time: set all claims to 0 (technically not necessary, because it won't allow to mint more than maxSupply)

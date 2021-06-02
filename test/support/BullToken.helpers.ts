@@ -1,4 +1,5 @@
-import { days, toTokenAmountString } from "./all.helpers"
+import { BigNumber } from "ethers"
+import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
 import { BullToken } from "../../typechain/BullToken"
 
 export const airdropStartTimestamp: number = Math.floor(new Date("2021-06-04 13:00:00 UTC").getTime() / 1000)
@@ -7,11 +8,21 @@ export const airdropClaimDuration: number = 2 * days
 
 export const airdropStageDuration: number = 30 * days
 
+export const airdropStageShareNumerator = 18 // 18% per stage
+
+export const airdropStageShareDenominator = 100
+
 export const airdropRate = 10000 // BULL per SHLD
 
 export const burnRateNumerator = 999
 
 export const burnRateDenominator = 1000
+
+export const maxSupply = 969163000 * airdropRate
+
+export function fromShieldToBull(bn: BigNumber): BigNumber {
+  return bn.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate)
+}
 
 type Claims = { [index: string]: string }
 

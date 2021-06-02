@@ -1,4 +1,8 @@
+import { BigNumber } from "ethers"
+
 export const SHIELD_RELEASE_TIME: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
+
+export const SHIELD_MAX_SUPPLY = 969163000
 
 // it's a test only allocations with a random addresses!
 
