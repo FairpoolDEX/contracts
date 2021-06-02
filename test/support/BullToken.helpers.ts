@@ -7,7 +7,7 @@ export const airdropClaimDuration: number = 2 * days
 
 export const airdropStageDuration: number = 30 * days
 
-export const airdropRate: number = 10000 // BULL per SHLD
+export const airdropRate = 10000 // BULL per SHLD
 
 export const burnRateNumerator = 999
 
@@ -21,11 +21,10 @@ export const claims: Claims = {
   "0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5": toTokenAmountString('400'),
 }
 
-export async function getClaims(token: BullToken): Promise<Claims> {
-  const _claimers = await token.getClaimers()
+export async function getClaims(token: BullToken, claimers: string[]): Promise<Claims> {
   const _claims: Claims = {}
-  for (let i = 0; i < _claimers.length; i++) {
-    _claims[_claimers[i]] = (await token.claims(_claimers[i])).toString()
+  for (let i = 0; i < claimers.length; i++) {
+    _claims[claimers[i]] = (await token.claims(claimers[i])).toString()
   }
   return _claims
 }

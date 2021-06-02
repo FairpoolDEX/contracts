@@ -8,7 +8,6 @@ import "hardhat/console.sol";
 
 contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     mapping(address => uint) public claims;
-    address[] public claimers;
     uint public airdropStartTimestamp;
     uint public airdropClaimDuration;
     uint public airdropStageDuration;
@@ -33,29 +32,11 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         burnRateDenominator = _burnRateDenominator;
     }
 
-    function addClaims(address[] calldata _claimers, uint[] calldata _amounts) public onlyOwner {
+    function setClaims(address[] calldata _claimers, uint[] calldata _amounts) public onlyOwner {
         require(_claimers.length == _amounts.length, "_claimers.length must be equal to _amounts.length");
-
         for (uint i = 0; i < _claimers.length; i++) {
             claims[_claimers[i]] = _amounts[i];
-            claimers.push(_claimers[i]);
         }
-    }
-
-    function clearClaims() public onlyOwner {
-        for (uint i = 0; i < claimers.length; i++) {
-            delete claims[claimers[i]];
-        }
-        delete claimers;
-    }
-
-    function setClaims(address[] calldata _claimers, uint[] calldata _amounts) external onlyOwner {
-        clearClaims();
-        addClaims(_claimers, _amounts);
-    }
-
-    function getClaimers() external view returns (address[] memory) {
-        return claimers;
     }
 
     function claim() external {
@@ -66,7 +47,6 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(claims[msg.sender] > 0, "Can't claim because this address has already claimed or didn't hold $SHLD at the snapshot time");
         uint amount = claims[msg.sender];
         claims[msg.sender] = 0;
-        // delete claimers not necessary?
         _mint(msg.sender, amount);
     }
 

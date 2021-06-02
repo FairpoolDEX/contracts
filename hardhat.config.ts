@@ -27,6 +27,9 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
+    hardhat: {
+      gasMultiplier: 1.2,
+    },
     // localhost: {
     //   accounts: {
     //     mnemonic: process.env.MNEMONIC || "",
@@ -35,6 +38,7 @@ const config: HardhatUserConfig = {
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
+      gasMultiplier: 1.2,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
@@ -43,6 +47,7 @@ const config: HardhatUserConfig = {
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
+      gasMultiplier: 1.2,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
@@ -84,6 +89,7 @@ task("setClaims", "Call setClaims on BULL token contract")
   .addParam("token", "Token contract's address")
   .addParam("balances", "CSV with SHLD balances exported from Etherscan")
   .addParam("extras", "CSV with SHLD balances calculated from locked liquidity")
+  .addParam("olds", "CSV with SHLD balances for setting to 0 (from previous stages)")
   .setAction(setClaimsBullToken)
 
 export default config
