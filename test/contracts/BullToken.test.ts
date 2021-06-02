@@ -66,25 +66,8 @@ describe("BullToken", async () => {
 
   it("should allow the owner to set claims", async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
-    const _claims = await getClaims(bullTokenWithOwner)
+    const _claims = await getClaims(bullTokenWithOwner, claimers)
     expect(_claims).to.deep.equal(claims)
-  })
-
-  it("should allow the owner to add claims", async () => {
-    const claimersToAdd = ["0x005e288D713a5fB3d7c9cf1B43810A98688C7223"]
-    const amountsToAdd = [toTokenAmount('500')]
-    const claimsWithAdded = Object.assign({}, claims, { [claimersToAdd[0]]: amountsToAdd[0].toString() })
-    await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.addClaims(claimersToAdd, amountsToAdd)
-    const _claims = await getClaims(bullTokenWithOwner)
-    expect(_claims).to.deep.equal(claimsWithAdded)
-  })
-
-  it("should allow the owner to clear claims", async () => {
-    await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.clearClaims()
-    const _claims = await getClaims(bullTokenWithOwner)
-    expect(_claims).to.deep.equal({})
   })
 
   it("should not allow non-owner to set claims", async () => {
@@ -93,23 +76,11 @@ describe("BullToken", async () => {
     ).to.be.revertedWith("caller is not the owner")
   })
 
-  it("should not allow non-owner to add claims", async () => {
-    await expect(
-      bullTokenWithStranger.addClaims(claimers, amounts),
-    ).to.be.revertedWith("caller is not the owner")
-  })
-
-  it("should not allow non-owner to clear claims", async () => {
-    await expect(
-      bullTokenWithStranger.clearClaims(),
-    ).to.be.revertedWith("caller is not the owner")
-  })
-
   it("should allow any user to claim the tokens", async () => {
     const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
@@ -121,7 +92,7 @@ describe("BullToken", async () => {
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
+      await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
       await bullTokenWithStranger.claim()
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
@@ -132,7 +103,7 @@ describe("BullToken", async () => {
     const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
@@ -147,7 +118,7 @@ describe("BullToken", async () => {
     const transferAmount = toTokenAmount('150')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.addClaims([strangerAddress], [strangerAmount])
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 

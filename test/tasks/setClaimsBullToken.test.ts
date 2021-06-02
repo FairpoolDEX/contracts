@@ -17,7 +17,8 @@ const { expect } = chai
 async function getBalances() {
   const balancesCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.balances.csv`)
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
-  return parseAllBalancesCSV([balancesCSV, extrasCSV])
+  const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.old.csv`)
+  return parseAllBalancesCSV([balancesCSV, extrasCSV], [oldCSV])
 }
 
 describe("setClaimsBullToken", async () => {
@@ -30,6 +31,7 @@ describe("setClaimsBullToken", async () => {
   const aliceAddress = "0x00000000000003441d59dde9a90bffb1cd3fabf1"
   const bobAddress = "0x7dcbefb3b9a12b58af8759e0eb8df05656db911d"
   const samAddress = "0x81dc6f15ee72f6e6d49cb6ca44c0bf8e63770027"
+  const calAddress = "0xb3b7874f13387d44a3398d298b075b7a3505d8d4"
 
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
@@ -53,24 +55,30 @@ describe("setClaimsBullToken", async () => {
   })
 
   it("should parse the CSV export", async () => {
+    // should add 0 balances for old addresses
+    // should not add 0 balances for current addresses
     const balances = await getBalances()
-    expect(balances.length).to.be.greaterThan(0)
-    const impBalance = find(balances, { address: aliceAddress })
-    const depBalance = find(balances, { address: bobAddress })
-    const stylBalance = find(balances, { address: samAddress })
-    if (!impBalance) throw new Error()
-    if (!depBalance) throw new Error()
-    if (!stylBalance) throw new Error()
-    expect(impBalance.amount).to.equal(toTokenAmount("132814.914153007"))
-    expect(depBalance.amount).to.equal(toTokenAmount("202903588.651523003442269483"))
-    expect(stylBalance.amount).to.equal(toTokenAmount("1057303.141521371440022475"))
+    expect(Object.keys(balances).length).to.be.greaterThan(0)
+    expect(balances[aliceAddress]).to.equal(toTokenAmount("132814.914153007"))
+    expect(balances[bobAddress]).to.equal(toTokenAmount("202903588.651523003442269483"))
+    expect(balances[samAddress]).to.equal(toTokenAmount("1057303.141521371440022475"))
+    expect(balances[calAddress]).to.equal(toTokenAmount("0"))
   })
 
-  it("should allow the owner to set claims", async () => {
+  it("should allow the owner to set claims multiple times", async () => {
     const balances = await getBalances()
     await setClaims(bullTokenWithOwner, balances)
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
+    const calClaim = await bullTokenWithOwner.claims(calAddress)
     expect(aliceClaim).to.equal(toTokenAmount("132814.914153007").mul(airdropRate))
+    expect(calClaim).to.equal(toTokenAmount("0").mul(airdropRate))
+    await timeTravel(async () => {
+      await setClaims(bullTokenWithOwner, balances)
+      const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
+      const calClaim = await bullTokenWithOwner.claims(calAddress)
+      expect(aliceClaim).to.equal(toTokenAmount("132814.914153007").mul(airdropRate))
+      expect(calClaim).to.equal(toTokenAmount("0").mul(airdropRate))
+    }, airdropStartTimestamp + airdropStageDuration)
   })
 
   it("should not allow the stranger to set claims", async () => {
@@ -85,7 +93,7 @@ describe("setClaimsBullToken", async () => {
   it("should allow the stranger to claim BULL", async () => {
     const strangerAmount = toTokenAmount("10000")
     const balances = await getBalances()
-    balances.push({ address: strangerAddress, amount: strangerAmount })
+    balances[strangerAddress] = strangerAmount
     await setClaims(bullTokenWithOwner, balances)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
@@ -93,4 +101,23 @@ describe("setClaimsBullToken", async () => {
     }, airdropStartTimestamp)
   })
 
-})
+  it("should allow multiple stages", async () => {
+    const strangerAmount = toTokenAmount("10000")
+    const balances = await getBalances()
+    balances[strangerAddress] = strangerAmount
+    await setClaims(bullTokenWithOwner, balances)
+    await timeTravel(async () => {
+      await bullTokenWithStranger.claim()
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(airdropRate))
+      await timeTravel(async () => {
+        const strangerAmount = toTokenAmount("10000")
+        const balances = await getBalances()
+        balances[strangerAddress] = strangerAmount
+        await setClaims(bullTokenWithOwner, balances)
+        await bullTokenWithStranger.claim()
+        expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2).mul(airdropRate))
+      }, airdropStartTimestamp + airdropStageDuration)
+    }, airdropStartTimestamp)
+  })
+
+  })
