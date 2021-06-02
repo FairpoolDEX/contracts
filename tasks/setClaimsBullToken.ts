@@ -45,12 +45,13 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
 export async function setClaims(token: BullToken, balances: Balances, log: ((msg: any) => void) | void): Promise<void> {
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   const balancesArr = shuffle(Object.entries(balances))
-  const balancesArrChunks = chunk(balancesArr, 400)
+  const balancesArrChunks = chunk(balancesArr, 300)
   // const transactions = []
   for (let i = 0; i < balancesArrChunks.length; i++) {
     const entries = balancesArrChunks[i]
+    const entriesForDisplay = balancesArrChunks[i].map(([address, amount]) => [address, amount.toString()])
     log && log(`Chunk ${i + 1} / ${balancesArrChunks.length}:`)
-    log && log(fromPairs(entries))
+    log && log(fromPairs(entriesForDisplay))
     const addresses = map(entries, 0)
     const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     const tx = await token.setClaims(addresses, amounts)

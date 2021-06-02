@@ -18,7 +18,7 @@ const { expect } = chai
 async function getBalances() {
   const balancesCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.balances.csv`)
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
-  const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.old.csv`)
+  const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.olds.csv`)
   return parseAllBalancesCSV([balancesCSV, extrasCSV], [oldCSV])
 }
 
