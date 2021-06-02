@@ -43,5 +43,5 @@ const token = await Token.attach(process.env['BULL_PROXY_ADDRESS'])
 
 1. Set claims
 1. Save current SHLD balances to SHLD.olds.csv
-1. Set claims again
-1. If it's the last time: set all claims to 0 (technically not necessary, because it won't allow to mint more than maxSupply)
+1. Set claims again (4x)
+1. On last time: mint the remaining amount to deployer, burn it, show the burn transaction to the community.
