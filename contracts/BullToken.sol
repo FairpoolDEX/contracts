@@ -42,6 +42,8 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
+    // TODO: Implement claimForAddresses
+
     function claim() external {
         require(block.timestamp >= airdropStartTimestamp, "Can't claim before the airdrop is started");
 //        uint a = block.timestamp - airdropStartTimestamp;
