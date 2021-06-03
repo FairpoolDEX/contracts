@@ -14,7 +14,9 @@
     "test": "hardhat --show-stack-traces test",
     "test:watch": "nodemon -x 'hardhat test'",
     "coverage": "npm run build && hardhat coverage --temp artifacts",
-    "deploy": "hardhat run scripts/deployShieldToken.ts"
+    "deployShieldToken": "hardhat run scripts/deployShieldToken.ts",
+    "flatten": "hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
+    "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

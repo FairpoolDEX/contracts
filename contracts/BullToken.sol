@@ -6,6 +6,9 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "hardhat/console.sol";
 
+/* mythx-disable SWC-103 */
+/* mythx-disable SWC-116 */
+
 contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     mapping(address => uint) public claims;
     uint public airdropStartTimestamp;
