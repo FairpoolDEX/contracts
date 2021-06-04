@@ -24,6 +24,14 @@ export async function skipBlocks(amount: number): Promise<void> {
   /* eslint-enable no-await-in-loop */
 }
 
+export async function getLatestBlock() {
+  return ethers.provider.getBlock("latest")
+}
+
+export async function getLatestBlockTimestamp() {
+  return (await getLatestBlock()).timestamp
+}
+
 export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
   return execa(`${__dirname}/../../node_modules/.bin/hardhat`, args, options)
 }
