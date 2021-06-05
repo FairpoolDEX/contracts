@@ -15,7 +15,19 @@ import { deployBullToken } from "./tasks/deployBullToken"
 
 dotEnvConfig()
 
-const gasPrice: number = 20 * 1000000000
+const gasPriceInGwei = parseInt(process.env.GAS_PRICE || "0", 10)
+if (gasPriceInGwei) {
+  console.info(`[INFO] Setting gas price to ${gasPriceInGwei} gwei`)
+} else {
+  console.error(`
+[ERROR] GAS_PRICE environment variable must be set to the number in gwei.
+
+Example for 20 gwei:
+GAS_PRICE=20 [hardhat command]
+  `.trim())
+  process.exit(1)
+}
+const gasPrice: number = gasPriceInGwei * 1000000000
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
