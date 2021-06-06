@@ -76,7 +76,7 @@ describe("BullToken", async () => {
     ).to.be.revertedWith("caller is not the owner")
   })
 
-  it("should allow any user to claim the tokens", async () => {
+  it("should allow any user to claim the tokens for his own address", async () => {
     const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
@@ -99,16 +99,40 @@ describe("BullToken", async () => {
     }, airdropStartTimestamp + airdropStageDuration)
   })
 
+  it("should allow any user to claim tokens for other addresses", async () => {
+    const strangerAmount = toTokenAmount('1000')
+
+    await bullTokenWithOwner.setClaims(claimers, amounts)
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
+    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith("Can't claim")
+    expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
+
+    await timeTravel(async () => {
+      await bullTokenWithStranger.claimMany([strangerAddress])
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
+    }, airdropStartTimestamp)
+
+    await timeTravel(async () => {
+      await bullTokenWithStranger.claimMany([strangerAddress])
+      await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
+      await bullTokenWithStranger.claimMany([strangerAddress])
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
+    }, airdropStartTimestamp + airdropStageDuration)
+  })
+
+
   it("should not allow the user to claim BULL tokens before or after the distribution stage finishes", async () => {
     const strangerAmount = toTokenAmount('1000')
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
+    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith("Can't claim")
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
+      await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith("Can't claim")
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
     }, airdropStartTimestamp + airdropClaimDuration + 1)
   })

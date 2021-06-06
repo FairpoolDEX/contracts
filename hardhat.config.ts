@@ -13,6 +13,7 @@ import { addAllocationsShieldToken } from "./tasks/addAllocationsShieldToken"
 import { setClaimsBullToken } from "./tasks/setClaimsBullToken"
 import { deployBullToken } from "./tasks/deployBullToken"
 import { claimBullToken, claimBullTokenTask } from "./tasks/claimBullToken"
+import { upgradeToken } from "./tasks/upgradeToken"
 
 dotEnvConfig()
 
@@ -109,5 +110,10 @@ task("claim", "Call claim() on BULL token contract")
   .addParam("token", "BULL token contract address")
   .addParam("keys", "TXT file with private keys (1 per line)")
   .setAction(claimBullTokenTask)
+
+task("upgradeToken", "Upgrade a token contract")
+  .addParam("name", "Contract name")
+  .addParam("address", "Contract proxy address")
+  .setAction(upgradeToken)
 
 export default config
