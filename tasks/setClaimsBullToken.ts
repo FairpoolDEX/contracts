@@ -7,7 +7,7 @@ import { Readable as ReadableStream } from "stream"
 import { chunk } from "../test/support/all.helpers"
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
 
-type Balances = { [index: string]: BigNumber }
+export type Balances = { [index: string]: BigNumber }
 
 export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>): Promise<Balances> {
   const balances: Balances = {}
