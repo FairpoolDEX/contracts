@@ -2,7 +2,7 @@
 
 ## Set gas price
 
-`export GAS_PRICE=20`
+`export GAS_PRICE=20 # Lookup on https://ethgasstation.info/`
 
 ## Export environment variables
 
