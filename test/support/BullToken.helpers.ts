@@ -2,7 +2,7 @@ import { BigNumber } from "ethers"
 import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
 import fs from "fs"
 import { Balances, parseAllBalancesCSV } from "../../tasks/setClaimsBullToken"
-import { Keys, parseKeys } from "../../tasks/claimBullToken"
+import { Addresses, parseAddresses } from "../../tasks/claimBullToken"
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -49,8 +49,8 @@ export async function getTestBalances(): Promise<Balances> {
   return parseAllBalancesCSV([balancesCSV, extrasCSV], [oldCSV])
 }
 
-export async function getTestKeys(): Promise<Keys> {
-  const testKeysBuffer = fs.readFileSync(`${__dirname}/../fixtures/keys.txt`)
-  return parseKeys(testKeysBuffer)
+export async function getTestAddresses(): Promise<Addresses> {
+  const testAddressesBuffer = fs.readFileSync(`${__dirname}/../fixtures/addresses.txt`)
+  return parseAddresses(testAddressesBuffer)
 }
 

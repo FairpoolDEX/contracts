@@ -21,16 +21,16 @@ export NETWORK=mainnet
 export BULL_PROXY_ADDRESS=0x1Bb022aB668085C6417B7d7007b0fbD53bACc383
 ```
 
-## Create keys file
+## Create addresses file
 
 ```
-rm -f /tmp/keys.txt
-echo $KEY1 >> /tmp/keys.txt
-echo $KEY2 >> /tmp/keys.txt
-# ... add more keys (1 key per line)
-# ... you can leave those keys that have already claimed BULL - the code checks the available claim amount before sending transaction
+rm -f /tmp/addresses.txt
+echo $ADDRESS1 >> /tmp/addresses.txt
+echo $ADDRESS2 >> /tmp/addresses.txt
+# ... add more addresses (1 address per line)
+# ... you can leave those addresses that have already claimed BULL - the code checks the available claim amount before sending transaction
 ```
 
 ## Claim BULL
 
-`npx hardhat claim --token $BULL_PROXY_ADDRESS --keys /tmp/keys.txt --network $NETWORK`
+`npx hardhat claim --token $BULL_PROXY_ADDRESS --addresses /tmp/addresses.txt --network $NETWORK`
