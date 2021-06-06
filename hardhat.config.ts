@@ -108,7 +108,7 @@ task("setClaims", "Call setClaims() on BULL token contract")
 
 task("claim", "Call claim() on BULL token contract")
   .addParam("token", "BULL token contract address")
-  .addParam("keys", "TXT file with private keys (1 per line)")
+  .addParam("addresses", "TXT file with private addresses (1 per line)")
   .setAction(claimBullTokenTask)
 
 task("upgradeToken", "Upgrade a token contract")
