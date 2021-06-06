@@ -12,6 +12,7 @@ import { transferManyShieldToken } from "./tasks/transferManyShieldToken"
 import { addAllocationsShieldToken } from "./tasks/addAllocationsShieldToken"
 import { setClaimsBullToken } from "./tasks/setClaimsBullToken"
 import { deployBullToken } from "./tasks/deployBullToken"
+import { claimBullToken, claimBullTokenTask } from "./tasks/claimBullToken"
 
 dotEnvConfig()
 
@@ -87,21 +88,26 @@ task("deployBullToken", "Deploy BullToken contract")
   .setAction(deployBullToken)
 
 task("transferMany", "Call transferMany for allocations without lockup period")
-  .addParam("token", "Token contract's address")
+  .addParam("token", "SHLD token contract address")
   .addParam("allocations", "JSON with allocations")
   .addParam("chunk", "Number of recipients in one chunk. Default value is 100.", 100, types.int)
   .setAction(transferManyShieldToken)
 
-task("addAllocations", "Call addAllocations for allocations with lockup period")
-  .addParam("token", "Token contract's address")
+task("addAllocations", "Call addAllocations() for allocations with lockup period")
+  .addParam("token", "SHLD token contract address")
   .addParam("allocations", "JSON with allocations")
   .setAction(addAllocationsShieldToken)
 
-task("setClaims", "Call setClaims on BULL token contract")
-  .addParam("token", "Token contract's address")
+task("setClaims", "Call setClaims() on BULL token contract")
+  .addParam("token", "BULL token contract address")
   .addParam("balances", "CSV with SHLD balances exported from Etherscan")
   .addParam("extras", "CSV with SHLD balances calculated from locked liquidity")
   .addParam("olds", "CSV with SHLD balances for setting to 0 (from previous stages)")
   .setAction(setClaimsBullToken)
+
+task("claim", "Call claim() on BULL token contract")
+  .addParam("token", "BULL token contract address")
+  .addParam("keys", "TXT file with private keys (1 per line)")
+  .setAction(claimBullTokenTask)
 
 export default config

@@ -15,19 +15,19 @@ export async function parseKeys(data: Buffer | string): Promise<Keys> {
 
 export async function claimBullToken(token: BullToken, keys: Keys, ethers: Ethers, log: ((msg: any) => void) | void): Promise<void> {
   for (const key of keys) {
-    // const provider = new ethers.providers.JsonRpcProvider(`https://main-rpc.linkpool.io`)
     const wallet = new ethers.Wallet(Buffer.from(key, "hex"))
     const signer = wallet.connect(ethers.provider)
+    const address = await signer.getAddress()
     const tokenWithSinger = token.connect(signer)
-    const amountToClaim = await tokenWithSinger.claims(signer.address)
-    const signerToString = `Address ${signer.address} (private key ${key.slice(0, 4)}...)`
+    const amountToClaim = await tokenWithSinger.claims(address)
+    const signerToString = `Address ${address} (private key ${key.slice(0, 4)}...)`
     if (amountToClaim.isZero()) {
       log && log(`[WARN] ${signerToString} doesn't have any $BULL to claim - skipping`)
       continue
     }
     log && log(`[INFO] ${signerToString} has ${amountToClaim} $BULL to claim - sending TX`)
     const tx = await tokenWithSinger.claim()
-    log && log(`[INFO] ${signerToString} confirmed TX: ${tx.hash}`)
+    log && log(`[INFO] ${signerToString} claim TX: ${tx.hash}`)
   }
 }
 
@@ -40,5 +40,5 @@ export async function claimBullTokenTask(args: TaskArguments, hre: HardhatRuntim
   const Token = await ethers.getContractFactory("BullToken") as unknown as BullToken
   const token = await Token.attach(tokenAddress)
   console.log(`[INFO] Claiming $BULL`)
-  await claimBullToken(token, keys, ethers)
+  await claimBullToken(token, keys, ethers, console.log.bind(console))
 }

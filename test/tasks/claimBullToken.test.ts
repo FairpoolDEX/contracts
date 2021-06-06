@@ -37,7 +37,7 @@ describe("claimBullToken", async () => {
   let addresses: string[]
   let balances: Balances
 
-  let defaultAmount = toTokenAmount("10000")
+  const defaultAmount = toTokenAmount("10000")
 
   before(async () => {
     // const deployShieldTokenResult = await hh(["deployShieldToken"])

@@ -1,5 +1,9 @@
 # Deploy Bull Token
 
+## Set SHLD old balances
+
+`/tmp/SHLD.olds.csv`
+
 ## Download SHLD balances
 
 `/tmp/SHLD.balances.csv`
@@ -10,9 +14,9 @@ For liquidity providers & stakers.
 
 `/tmp/SHLD.extras.csv`
 
-## Adjust gas
+## Set gas price
 
-`vim hardhat.config.ts`
+`export GAS_PRICE=20`
 
 ## Deploy token
 
