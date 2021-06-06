@@ -46,13 +46,28 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
     function claim() external {
         require(block.timestamp >= airdropStartTimestamp, "Can't claim before the airdrop is started");
-//        uint a = block.timestamp - airdropStartTimestamp;
-//        uint b = (block.timestamp - airdropStartTimestamp) % airdropStageDuration;
         require((block.timestamp - airdropStartTimestamp) % airdropStageDuration < airdropClaimDuration, "Can't claim when not in distribution period");
-        require(claims[msg.sender] > 0, "Can't claim because this address has already claimed or didn't hold $SHLD at the snapshot time");
-        uint amount = claims[msg.sender];
-        claims[msg.sender] = 0;
-        _mint(msg.sender, amount);
+        bool result = _claim(msg.sender);
+        require(result, "Can't claim because this address has already claimed or didn't hold $SHLD at the snapshot time");
+    }
+
+    function claimMany(address[] calldata addresses) external {
+        require(block.timestamp >= airdropStartTimestamp, "Can't claim before the airdrop is started");
+        require((block.timestamp - airdropStartTimestamp) % airdropStageDuration < airdropClaimDuration, "Can't claim when not in distribution period");
+        for (uint i = 0; i < addresses.length; i++) {
+            _claim(addresses[i]);
+        }
+        // This function allows to process addresses which don't have any $BULL to claim
+    }
+
+    function _claim(address _address) internal returns (bool) {
+        uint amount = claims[_address];
+        if (amount > 0) {
+            claims[_address] = 0;
+            _mint(_address, amount);
+            return true;
+        }
+        return false;
     }
 
     function transferMany(address[] calldata recipients, uint[] calldata amounts) external onlyOwner {
