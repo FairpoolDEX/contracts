@@ -1,18 +1,19 @@
 import fs from "fs"
-import { map, fromPairs, shuffle } from "lodash"
+import { without } from "lodash"
 import type { ethers } from "ethers"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { BullToken } from "../typechain"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
 
-type Key = string;
+export type Key = string;
+export type Keys = Key[];
 type Ethers = typeof ethers & HardhatEthersHelpers;
 
-export async function parseKeys(data: Buffer | string): Promise<Array<Key>> {
-  return data.toString().split("\n")
+export async function parseKeys(data: Buffer | string): Promise<Keys> {
+  return without(data.toString().split("\n"), '')
 }
 
-export async function claimBullToken(token: BullToken, keys: Array<Key>, ethers: Ethers, log: ((msg: any) => void) | void): Promise<void> {
+export async function claimBullToken(token: BullToken, keys: Keys, ethers: Ethers, log: ((msg: any) => void) | void): Promise<void> {
   for (const key of keys) {
     // const provider = new ethers.providers.JsonRpcProvider(`https://main-rpc.linkpool.io`)
     const wallet = new ethers.Wallet(Buffer.from(key, "hex"))
