@@ -20,7 +20,7 @@ contract QuoteToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
         _mint(owner(), 1_000_000 * 10 ** 18);
 
-        require(recipients.length == amounts.length);
+        require(recipients.length == amounts.length, "IRA");
         for (uint i = 0; i < recipients.length; i++) {
             _transfer(owner(), recipients[i], amounts[i]);
         }

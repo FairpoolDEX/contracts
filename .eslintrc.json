@@ -28,6 +28,7 @@
         "imports": "always-multiline",
         "exports": "always-multiline",
         "functions": "only-multiline"
-    }]
+    }],
+    "@typescript-eslint/no-empty-function": ["warn"]
   }
 }
