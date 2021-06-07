@@ -90,9 +90,9 @@ contract MCP is Ownable {
             uint amountLeft = claim.amountReserved - claim.amountUtilized;
             amountToUtilizeActual = Math.min(amountToUtilize, amountLeft);
             claim.amountUtilized += amountToUtilizeActual;
-            require(claim.amountUtilized <= claim.amountReserved);
+            require(claim.amountUtilized <= claim.amountReserved, "UCUR");
             offer.amountUtilized += amountToUtilizeActual;
-            require(offer.amountUtilized <= offer.amountReserved);
+            require(offer.amountUtilized <= offer.amountReserved, "UOUR");
             amountToUtilize -= amountToUtilizeActual;
             _totalUtilized += amountToUtilizeActual * offer.guaranteedPrice;
             if (amountToUtilize == 0) {
