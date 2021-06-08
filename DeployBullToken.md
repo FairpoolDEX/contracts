@@ -42,12 +42,3 @@ For liquidity providers & stakers.
 const Token = await ethers.getContractFactory("BullToken")
 const token = await Token.attach(process.env['BULL_PROXY_ADDRESS'])
 ```
-
-## Conduct the airdrop
-
-1. Set claims
-1. Save current SHLD balances to SHLD.olds.csv
-1. Set claims again (4x)
-   1. Update extras from pools
-   1. Update extras from claimers
-1. On last time: mint the remaining amount to deployer, burn it, show the burn transaction to the community.
