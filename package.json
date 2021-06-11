@@ -13,7 +13,7 @@
     "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
     "test": "GAS_PRICE=20 hardhat --show-stack-traces test",
     "test:watch": "nodemon -x 'GAS_PRICE=20 hardhat --show-stack-traces test'",
-    "coverage": "GAS_PRICE=20 npm run build && hardhat coverage --temp artifacts",
+    "coverage": "GAS_PRICE=20 npm run build && GAS_PRICE=20 hardhat coverage --temp artifacts",
     "deployShieldToken": "hardhat run scripts/deployShieldToken.ts",
     "flatten": "GAS_PRICE=20 hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
     "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol"

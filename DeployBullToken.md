@@ -26,13 +26,13 @@ For liquidity providers & stakers.
 
 (see output from the previous command)
 
-## Set claims
-
-`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --balances /tmp/SHLD.balances.csv --extras /tmp/SHLD.extras.csv --olds /tmp/SHLD.olds.csv --network ropsten`
-
 ## Verify on Etherscan
 
 `npx hardhat verify --network ropsten $BULL_IMPLEMENTATION_ADDRESS`
+
+## Set claims
+
+`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --balances /tmp/SHLD.balances.csv --extras /tmp/SHLD.extras.csv --olds /tmp/SHLD.olds.csv --network ropsten`
 
 ## Attach to token in the console
 
