@@ -146,7 +146,7 @@ That's it! Once the transaction is confirmed, you will receive the compensation 
 
 You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell protection to traders and also earn [Super-Yield](#super-yield).
 
-Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. When you put USDT, you can specify the [premium price](#premium-price) for each unit of protection. Each unit of protection will give the trader the right to sell 1 LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
+Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. When you put USDT, you can specify the [premium price](#premium-price) for each protection unit. Each protection unit will give the trader the right to sell 1 LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
 
 In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
 
@@ -155,17 +155,17 @@ Here is a full scenario:
 1. You put 20000 USDT into LINK-USDT-31-AUG-2021-10.0000 contract.
     1. "LINK-USDT-31-AUG-2021-10.0000" means "LINK-USDT contract that expires on 31 Aug 2021 and provides a [guaranteed price](#guaranteed-price) of 10.0000 USDT per LINK on or before that the expiration date".
     1. 20000 USDT are locked until 31 Aug 2021 (but you can use [Super-Yield](#super-yield) to continue earning).
-1. You receive 2000 [protection tokens](#protection-token) (20000 USDT deposit / 10.0000 [guaranteed price](#guaranteed-price)).
-    1. Each protection token gives the right to sell 1 LINK for 10 USDT on or before 31 Aug 2021.
-    1. Protection tokens are divisible (for example, you can use 0.5 protection tokens).
-1. You sell 2000 protection tokens for 2000 USDT total (10% premium on 20000 USDT deposit until 31 Aug 2021 = 40% premium per year, equivalent to 40% APY).
-    1. We will open a Uniswap market for protection tokens.
+1. You receive 2000 protection units (20000 USDT deposit / 10.0000 [guaranteed price](#guaranteed-price)).
+    1. Each protection unit gives the right to sell 1 LINK for 10 USDT on or before 31 Aug 2021.
+    1. Protection units are divisible (for example, you can use 0.5 protection units).
+1. You sell 2000 protection units for 2000 USDT total (10% premium on 20000 USDT deposit until 31 Aug 2021 = 40% premium per year, equivalent to 40% APY).
+    1. Protection units can be traded within our smart contract via limit orders.
 1. You enable [Super-Yield](#super-yield) and forward 20000 USDT to a [Yearn yVault](#yearn-yvault) that provides 30% APY in addition to premium (70% APY total).
 1. You wait until 31 Aug 2021.
 1. You withdraw from [MCP contract](#market-crash-protection-contract).
 1. You gain:
     1. 1500 USDT yield from Yearn.
-    1. 2000 USDT premium from traders for selling the protection tokens.
+    1. 2000 USDT premium from traders for selling protection.
     1. 20000 USDT or 2000 LINK liquidity:
         1. If LINK-USDT [market price](#market-price) stays above 10.0000 [guaranteed price](#guaranteed-price), the traders will not sell LINK for USDT. You will receive 20000 USDT.
         1. If LINK-USDT [market price](#market-price) falls below 10.0000 [guaranteed price](#guaranteed-price), the traders will sell LINK for USDT. You will receive 2000 LINK.
@@ -192,7 +192,7 @@ That's it! You will start earning yield from the [Yearn yVault](#yearn-yvault) a
 1. Click "Confirm".
 1. Sign the transaction.
 
-That's it! After the transaction is confirmed, you will receive [protection tokens](#protection-token), which you can sell to traders via Uniswap (there will be a market for each protection token). Also, don't forget to [enable Super-Yield](#how-to-earn-super-yield)!
+That's it! After the transaction is confirmed, you will have a protection offer in our contract. The traders can buy protection from you at the price that you have specified. Also, don't forget to [enable Super-Yield](#how-to-earn-super-yield)!
 
 ### How to withdraw
 
@@ -224,7 +224,7 @@ That's it! After the transaction is confirmed, you will receive a mix of [base t
 Market Crash Protection contract (MCP contract) is a smart contract with the following features:
 
 * Allows traders to receive compensation if the market price goes below the [guaranteed price](#guaranteed-price).
-* Allows liquidity providers to receive premiums by selling [protection tokens](#protection-token) to traders.
+* Allows liquidity providers to receive premiums by selling protection to traders.
 
 Market Crash Protection contract has the following methods:
 
@@ -255,7 +255,7 @@ Parameters:
 Effects:
 
 * Deposits [quote token](#quote-token)
-* Mints [protection token](#protection-token):
+* Mints protection units:
   * Address: method caller address
   * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
 
@@ -304,13 +304,13 @@ Notes:
 
 ### Trader
 
-Trader is a person who buys [protection tokens](#protection-token) and, optionally, sells the [base tokens](#base-token) into the [Market Crash Protection contract](#market-crash-protection-contract).
+Trader is a person who buys protection and, optionally, sells the [base tokens](#base-token) into the [Market Crash Protection contract](#market-crash-protection-contract).
 
 Trader wants to maximize the chance of making money (by comparison, a [liquidity provider](#liquidity-provider) wants to minimize the risk of losing money).
 
 Notes:
 
-1. Trader needs [protection tokens](#protection-token) in order to sell the [base tokens](#base-token) into [MCP contract](#market-crash-protection-contract).
+1. Trader needs to buy protection in order to sell the [base tokens](#base-token) into [MCP contract](#market-crash-protection-contract).
 1. Trader should use the following methods of the [MCP contract](#market-crash-protection-contract):
     * [Sell method](#sell-method)
 
@@ -369,7 +369,7 @@ Expiration date is a UNIX timestamp that is used to limit the usage of a specifi
 
 ### Premium
 
-Premium is money earned by liquidity providers by selling [protection tokens](#protection-token) to traders.
+Premium is money earned by liquidity providers by selling protection to traders.
 
 Premium is the first source of income for liquidity providers ([Super-Yield](#super-yield) is the second source).
 
@@ -377,10 +377,9 @@ Premium is calculated as [premium price](#premium-price) multiplied by amount of
 
 Notes:
 
-* Liquidity providers can offer protection tokens on any market at any price.
-* Traders can pay for protection tokens any price depending on how much they need them.
-* The actual trading price of protection tokens will be determined by market forces. If the traders are expecting a market crash, they will buy protection tokens at a relatively higher price (compared to a situation where they are not expecting a market crash).
-* The first market for protection tokens must be created by the developer who deploys the [MCP contract](#market-crash-protection-contract).
+* Liquidity providers can set any protection price.
+* Liquidity providers can change the protection price.
+* The actual price of protection will be determined by market forces. If the traders are expecting a market crash, they will buy protection at a relatively higher price (compared to a situation where they are not expecting a market crash).
 
 ### Super-Yield
 
@@ -416,22 +415,6 @@ Examples:
 * WETH
 * WBTC
 * USDT
-
-### Protection token
-
-Protection token is a token that gives the right to sell [base token](#base-token) at the [guaranteed price](#guaranteed-price) via specific [Market Crash Protection contract](#market-crash-protection-contract) and receive [quote token](#quote-token).
-
-Examples:
-
-* WBTC-USDT-30-JUN-2021-50000 - gives the right to sell 1 WBTC for 50000 USDT on or before June 30, 2021.
-* LINK-USDT-31-AUG-2021-10.0000 - gives the right to sell 1 LINK for 10 USDT on or before August 31, 2021.
-* AAVE-WETH-30-SEP-2021-0.05000 - gives the right to sell 1 AAVE for 0.05 WETH on or before September 30, 2021.
-
-Notes:
-
-* 1 protection token gives the right to sell 1 base token.
-* You need to hold protection tokens on the same address as base tokens to exercise the right to sell.
-* After you sell the base tokens into the [MCP contract](#market-crash-protection-contract), your protection tokens will be burnt at 1:1 rate (e.g. if you sell 100 LINK, the contract will burn 100 LINK protection tokens).
 
 ### Pair
 
