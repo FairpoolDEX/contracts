@@ -36,22 +36,23 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 
 **For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more in our [guides for traders](#guides-for-traders).
 
-**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by earning [premium](#premium) for selling [protection tokens](#protection-token) to [traders](#trader) 2) by earning [super-yield](#super-yield). Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
+**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by earning [premium](#premium) for selling protection to [traders](#trader) 2) by earning [super-yield](#super-yield) by forwarding your capital to Yearn vault. Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
 
 ## How it works
 
 ### General
 
-1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
-1. [Liquidity providers](#liquidity-provider) receive [protection tokens](#protection-token).
-1. [Liquidity providers](#liquidity-provider) sell [protection tokens](#protection-token) to [traders](#trader).
+1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract), specifying the following parameters: [quote token amount](#quote-token-amount), [guaranteed price](#guaranteed-price), [premium price](#premium-price), [expiration date](#expiration-date).
+1. [Liquidity providers](#liquidity-provider) sell protection to [traders](#trader).
 1. [Liquidity providers](#liquidity-provider) wait until the [expiration date](#expiration-date):
     1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price):
-        1. Traders keep their [base tokens](#base-token) + unused [protection tokens](#protection-token).
+        1. Traders keep their [base tokens](#base-token).
         1. Liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
     1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price):
-        1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract) + [protection tokens](#protection-token) are burnt.
+        1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract).
         1. Liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield).
+
+Traders can't sell [base tokens](#base-token) after the expiration date.
 
 ### Developer example
 
@@ -67,7 +68,7 @@ The contract needs to be deployed by the developer before it can be used.
 ### Trader example
 
 1. Trader buys [base tokens](#base-token).
-1. Trader buys [protection tokens](#protection-token) that cover these base tokens.
+1. Trader buys protection that cover these base tokens.
 1. Base tokens' [market price](#market-price) drops below the [guaranteed price](#guaranteed-price).
 1. Trader sends tokens to [MCP contract](#market-crash-protection-contract).
 1. Trader receives [quote tokens](#quote-token) in amount equal to `guaranteed_price * base_token_amount`
@@ -77,10 +78,10 @@ Note: the quote tokens compensation is larger than the trader would receive if h
 ### Liquidity provider example
 
 1. Liquidity provider deposits [quote tokens](#quote-token) into [MCP contract](#market-crash-protection-contract).
-1. Liquidity provider receives [protection tokens](#protection-token).
+1. Liquidity provider sells protection + Trader buys protection.
 1. [Base token](#base-token) [market price](#market-price) stays above the [guaranteed price](#guaranteed-price) (trader doesn't sell).
 1. [Expiration date](#expiration-date) passes (liquidity provider can withdraw).
-1. Liquidity provider withdraws [quote tokens](#quote-token) + keeps the [premium](#premium) from selling [protection tokens](#protection-token) + receives [Super-Yield](#super-yield).
+1. Liquidity provider withdraws [quote tokens](#quote-token) + keeps the [premium](#premium) from selling protection + receives [Super-Yield](#super-yield).
 
 ## Guides for traders
 
@@ -88,7 +89,7 @@ Note: the quote tokens compensation is larger than the trader would receive if h
 
 You can save money with Market Crash Protection contracts. They give you the right to sell your tokens at a guaranteed price even if the market price has crashed.
 
-Suppose you bought 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT). After that LINK crashed to 10 USDT (4x drop). If you don't have any [protection tokens](#protection-token), you have to bear the loss. But let's say you bought 1000 LINK protection tokens that allow you to sell 1000 LINK at 30 USDT each. In this case, you can sell your LINK tokens at a guaranteed price (30 USDT) instead of market price (10 USDT). So, you can recover 30000 USDT instead of 10000 USDT. That means you can save 20000 USDT.
+Suppose you bought 1000 LINK tokens at 40 USDT each (total spend: 40000 USDT). After that LINK crashed to 10 USDT (4x drop). If you don't have any protection, you have to bear the loss. But let's say you bought protection that allows you to sell 1000 LINK at 30 USDT each. In this case, you can sell your LINK tokens at a guaranteed price (30 USDT) instead of market price (10 USDT). So, you can recover 30000 USDT instead of 10000 USDT. That means you can save 20000 USDT.
 
 Here is a full scenario:
 
@@ -98,7 +99,7 @@ Here is a full scenario:
 1. LINK-USDT price crashes to 10 USDT before 31 Aug 2021.
 1. You sell 1000 LINK tokens to [MCP contract](#market-crash-protection-contract) for 30 USDT each (total gain: 30000 USDT)
 
-Protection tokens allow you to recover capital. Using the example above:
+Protection allows you to recover capital. Using the example above:
 
 * With protection, you would have 28000 USDT (30000 USDT recovered capital - 2000 USDT protection cost) (LINK crashed to 10 USDT, but you sold at 30 USDT guaranteed price using protection).
 * Without protection: you would have 10000 USDT (10000 USDT recovered capital) (LINK crashed to 10 USDT, and you sold at market price).
@@ -117,21 +118,20 @@ Protection tokens allow you to recover capital. Using the example above:
     1. If you want to buy protection for long term, choose a contract with an expiration date that is far in future.
     1. If you want to buy protection for short term, choose a contract with an expiration date that is closer to present moment.
 1. Click "Buy" button on the contract that you've chosen.
-1. Type how many [protection tokens](#protection-token) you want to buy.
-    1. Normally, you should buy the amount of [protection tokens](#protection-token) equal to amount of [base tokens](#base-token) that you own.
-1. Confirm the total cost of buying this amount of protection tokens.
+1. Type how much [base tokens](#base-token) you want to protect.
+1. Confirm the total cost of buying protection for this amount of base tokens.
 1. Click "Buy".
     1. The app will generate a Uniswap transaction.
 1. Sign the transaction.
 
-That's it! Once the transaction is confirmed, you will own the protection tokens & you can use them to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
+That's it! Once the transaction is confirmed, you will own the protection & you can use it to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
 
 ### How to receive compensation
 
 1. Open the Shield Finance web application.
 1. Click "Get compensation".
 1. Browse through the list of [base tokens](#base-token) that you can get compensation for.
-    1. App shows you only those tokens that are stored on the currently selected address. If you used a different address when you bought the protection tokens, please change the currently selected address in your wallet.
+    1. App shows you only those tokens that are stored on the currently selected address. If you used a different address when you bought the protection, please change the currently selected address in your wallet.
     1. App shows whether the [market price](#market-price) is below the [guaranteed price](#guaranteed-price). Technically, you can sell into [MCP contract](#market-crash-protection-contract) at any point in time (even if the market price is above the guaranteed price), but it makes economic sense to sell into [MCP contract](#market-crash-protection-contract) only if the market price is below the guaranteed price.
 1. Choose the token that you want to sell.
 1. Choose the amount of tokens that you want to sell.
@@ -144,9 +144,9 @@ That's it! Once the transaction is confirmed, you will receive the compensation 
 
 ### How to make money
 
-You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell [protection tokens](#protection-token) to traders and also earn [Super-Yield](#super-yield).
+You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell protection to traders and also earn [Super-Yield](#super-yield).
 
-Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. After you put USDT, you will get [protection tokens](#protection-token) that you can sell to traders on Uniswap. Each protection token will give the trader the right to sell LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
+Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. When you put USDT, you can specify the [premium price](#premium-price) for each unit of protection. Each unit of protection will give the trader the right to sell 1 LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
 
 In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
 
@@ -314,6 +314,20 @@ Notes:
 1. Trader should use the following methods of the [MCP contract](#market-crash-protection-contract):
     * [Sell method](#sell-method)
 
+### Market price
+
+Market price is a decimal number that represents the highest bid price at which you can sell the [base token](#base-token) for [quote token](#quote-token) on the open market. For example: "The market price of ETH is 3000 USDT".
+
+Examples:
+
+* 20.0
+* 40.45
+* 10000.0
+
+Notes:
+
+* Different markets may have different prices. For example, Binance ETHUSDT market may have a market price of 3000, while Uniswap ETHUSDT market may have a market price of 3010.
+
 ### Guaranteed price
 
 Guaranteed price is a decimal number that represents the price at which you can sell the [base token](#base-token) into the [MCP contract](#market-crash-protection-contract). See "[How to save money](#how-to-save-money)".
@@ -332,6 +346,20 @@ Notes:
 * A single [MCP contract](#market-crash-protection-contract) can specify a single guaranteed price.
 * It is possible to deploy multiple [MCP contracts](#market-crash-protection-contract) for different guaranteed prices.
 
+### Premium price
+
+Premium price is a decimal number that represents the price at which you can buy the protection for 1 unit of [base token](#base-token) from the [MCP contract](#market-crash-protection-contract). See "[How to save money](#how-to-save-money)".
+
+Examples:
+
+* 0.25
+* 1.0
+* 10.0
+
+Notes:
+
+* Liquidity providers set the premium price when they deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
+
 ### Expiration date
 
 Expiration date is a UNIX timestamp that is used to limit the usage of a specific [Market Crash Protection contract](#market-crash-protection-contract).
@@ -339,25 +367,13 @@ Expiration date is a UNIX timestamp that is used to limit the usage of a specifi
 * [Trader](#trader) can [sell base token](#sell-method) into [MCP contract](#market-crash-protection-contract) only before the expiration date.
 * [Liquidity provider](#liquidity-provider) can [withdraw liquidity](#withdraw-method) from [MCP contract](#market-crash-protection-contract) only after the expiration date.
 
-### Market price
-
-Market price is a decimal number that represents the highest bid price at which you can sell the [base token](#base-token) for [quote token](#quote-token) on the open market. For example: "The market price of ETH is 3000 USDT".
-
-Examples:
-
-* 20.0
-* 40.45
-* 10000.0
-
-Notes:
-
-* Different markets may have different prices. For example, Binance ETHUSDT market may have a market price of 3000, while Uniswap ETHUSDT market may have a market price of 3010.
-
 ### Premium
 
 Premium is money earned by liquidity providers by selling [protection tokens](#protection-token) to traders.
 
 Premium is the first source of income for liquidity providers ([Super-Yield](#super-yield) is the second source).
+
+Premium is calculated as [premium price](#premium-price) multiplied by amount of protection that was sold.
 
 Notes:
 
