@@ -152,14 +152,15 @@ In addition, you can make more money by enabling [Super-Yield](#super-yield). It
 
 Here is a full scenario:
 
-1. You put 20000 USDT into LINK-USDT-31-AUG-2021-10.0000 contract.
-    1. "LINK-USDT-31-AUG-2021-10.0000" means "LINK-USDT contract that expires on 31 Aug 2021 and provides a [guaranteed price](#guaranteed-price) of 10.0000 USDT per LINK on or before that the expiration date".
-    1. 20000 USDT are locked until 31 Aug 2021 (but you can use [Super-Yield](#super-yield) to continue earning).
+1. You put money into LINK-USDT contract:
+   1. [Quote amount](#quote-token-amount): 20000 USDT.
+   1. [Guaranteed price](#guaranteed-price): 10 USDT per 1 LINK (how much you will give for 1 token when trader sells tokens).
+   1. [Premium price](#premium-price): 1 USDT per 1 LINK (how much you will receive for 1 token when trader buys protection - no matter whether trader sells in future or not).
+   1. [Expiration date](#expiration-date): 31 Aug 2021 (note: your money are locked until this date, but you can use [Super-Yield](#super-yield) to continue earning during that time).
 1. You receive 2000 protection units (20000 USDT deposit / 10.0000 [guaranteed price](#guaranteed-price)).
     1. Each protection unit gives the right to sell 1 LINK for 10 USDT on or before 31 Aug 2021.
     1. Protection units are divisible (for example, you can use 0.5 protection units).
 1. You sell 2000 protection units for 2000 USDT total (10% premium on 20000 USDT deposit until 31 Aug 2021 = 40% premium per year, equivalent to 40% APY).
-    1. Protection units can be traded within our smart contract via limit orders.
 1. You enable [Super-Yield](#super-yield) and forward 20000 USDT to a [Yearn yVault](#yearn-yvault) that provides 30% APY in addition to premium (70% APY total).
 1. You wait until 31 Aug 2021.
 1. You withdraw from [MCP contract](#market-crash-protection-contract).
@@ -255,9 +256,6 @@ Parameters:
 Effects:
 
 * Deposits [quote token](#quote-token)
-* Mints protection units:
-  * Address: method caller address
-  * Amount: [Quote token amount](#quote-token-amount) / [Guaranteed price](#guaranteed-price)
 
 Notes:
 
