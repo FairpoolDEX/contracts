@@ -25,6 +25,7 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 1. [Guides for traders](#guides-for-traders)
     1. [How to save money](#how-to-save-money)
     1. [How to buy protection](#how-to-buy-protection)
+    1. [How to buy protection for the whole portfolio](#how-to-buy-protection-for-the-whole-portfolio)
     1. [How to receive compensation](#how-to-receive-compensation)
 1. [Guides for liquidity providers](#guides-for-liquidity-providers)
     1. [How to make money](#how-to-make-money)
@@ -121,10 +122,32 @@ Protection allows you to recover capital. Using the example above:
 1. Type how much [base tokens](#base-token) you want to protect.
 1. Confirm the total cost of buying protection for this amount of base tokens.
 1. Click "Buy".
-    1. The app will generate a Uniswap transaction.
+    1. The app will generate a blockchain transaction.
 1. Sign the transaction.
 
 That's it! Once the transaction is confirmed, you will own the protection & you can use it to [receive compensation](#how-to-receive-compensation) if the price of the [base token](#base-token) crashes.
+
+### How to buy protection for the whole portfolio
+
+[Portfolio Insurance](https://shield-finance.medium.com/portfolio-insurance-with-market-crash-protection-691b652075a) allows you to save time by purchasing protection for the whole portfolio at once. It works by executing multiple orders within a single blockchain transaction.
+
+Technical detail: the portfolio insurance transaction calls a `reserveMany` method of a router contract, passing arguments for multiple orders. The `reserveMany` method loops over orders: for each order call a `reserve` method of a regular MCP contract.
+
+1. Open the Shield Finance web application.
+1. Click "Buy protection for portfolio".
+1. Input your address where you hold the tokens.
+    1. Note: if you have already connected your wallet to Shield Finance web application, the input will be prefilled with the address that is currently selected in the wallet.
+1. Click "Analyze".
+1. Wait until our web application:
+   1. Downloads a list of tokens on your address (we use only publicly available information from blockchain).
+   1. Downloads a list of available insurances for your tokens.
+   1. Shows a list of best matching insurances for your tokens.
+   1. Shows a total price for protecting your portfolio.
+1. Click "Buy protection for portfolio"
+   1. The app will generate a blockchain transaction.
+1. Sign the transaction.
+
+That's it! Once the transaction is confirmed, you will own the protection for each token & you can use it to [receive compensation](#how-to-receive-compensation) if the price of any of the [base token](#base-token) crashes.
 
 ### How to receive compensation
 
