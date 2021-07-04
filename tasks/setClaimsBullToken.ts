@@ -59,12 +59,14 @@ export async function setClaims(token: any, balances: Balances, log: ((msg: any)
 }
 
 export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { token: tokenAddress, balances: balancesPath, extras: extrasPath, olds: oldsPath } = args
-  console.log(`Reading balances from ${balancesPath} and ${extrasPath}`)
-  const balances = await parseAllBalancesCSV([fs.readFileSync(balancesPath), fs.readFileSync(extrasPath)], [fs.readFileSync(oldsPath)])
-  console.log(`Attaching to contract ${tokenAddress}`)
+  const { token: tokenAddress, oldfolder: oldFolder, newfolder: newFolder } = args
+  const oldFolderFiles = fs.readdirSync(oldFolder).map((filename) => fs.readFileSync(`${oldFolder}/${filename}`))
+  const newFolderFiles = fs.readdirSync(newFolder).map((filename) => fs.readFileSync(`${newFolder}/${filename}`))
+  console.info(`Parsing balances`)
+  const balances = await parseAllBalancesCSV(newFolderFiles, oldFolderFiles)
+  console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
-  console.log(`Setting claims`)
-  await setClaims(token, balances, console.log.bind(console))
+  console.info(`Setting claims`)
+  await setClaims(token, balances, console.info.bind(console))
 }
