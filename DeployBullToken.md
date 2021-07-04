@@ -32,7 +32,7 @@ For liquidity providers & stakers.
 
 ## Set claims
 
-`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --balances /tmp/SHLD.balances.csv --extras /tmp/SHLD.extras.csv --olds /tmp/SHLD.olds.csv --network ropsten`
+`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --oldFolder /tmp/2021-06-04 --newFolder /tmp/2021-07-04 --network ropsten`
 
 ## Attach to token in the console
 

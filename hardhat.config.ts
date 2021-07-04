@@ -101,8 +101,8 @@ task("addAllocations", "Call addAllocations() for allocations with lockup period
 
 task("setClaims", "Call setClaims() on BULL token contract")
   .addParam("token", "BULL token contract address")
-  .addParam("old-folder", "Folder with CSV files containing new SHLD balances")
-  .addParam("new-folder", "Folder with CSV files containing old SHLD balances (to set their claims to 0)")
+  .addParam("oldfolder", "Folder with CSV files containing new SHLD balances")
+  .addParam("newfolder", "Folder with CSV files containing old SHLD balances (to set their claims to 0)")
   .setAction(setClaimsBullToken)
 
 task("claim", "Call claim() on BULL token contract")
