@@ -58,6 +58,10 @@ describe("setClaimsBullToken", async () => {
     expect(balances[calAddress]).to.equal(toTokenAmount("0"))
   })
 
+  it("should not allow to set more claims than SHLD total supply", async () => {
+    throw new Error('Implement me')
+  })
+
   it("should allow the owner to set claims multiple times", async () => {
     const balances = await getTestBalances()
     await setClaims(bullTokenWithOwner, balances)
