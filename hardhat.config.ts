@@ -101,9 +101,8 @@ task("addAllocations", "Call addAllocations() for allocations with lockup period
 
 task("setClaims", "Call setClaims() on BULL token contract")
   .addParam("token", "BULL token contract address")
-  .addParam("balances", "CSV with SHLD balances exported from Etherscan")
-  .addParam("extras", "CSV with SHLD balances calculated from locked liquidity")
-  .addParam("olds", "CSV with SHLD balances for setting to 0 (from previous stages)")
+  .addParam("old-folder", "Folder with CSV files containing new SHLD balances")
+  .addParam("new-folder", "Folder with CSV files containing old SHLD balances (to set their claims to 0)")
   .setAction(setClaimsBullToken)
 
 task("claim", "Call claim() on BULL token contract")
