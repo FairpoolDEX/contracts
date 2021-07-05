@@ -1,18 +1,12 @@
 # Deploy Bull Token
 
-## Set SHLD old balances
+## Download SHLD old balances to OLD_FOLDER
 
-`/tmp/SHLD.olds.csv`
+`export OLD_FOLDER=/tmp/SHLD-old`
 
-## Download SHLD balances
+## Download SHLD new balances to NEW_FOLDER
 
-`/tmp/SHLD.balances.csv`
-
-## Add SHLD extras
-
-For liquidity providers & stakers.
-
-`/tmp/SHLD.extras.csv`
+`export NEW_FOLDER=/tmp/SHLD-new`
 
 ## Set gas price
 
@@ -32,7 +26,7 @@ For liquidity providers & stakers.
 
 ## Set claims
 
-`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --oldFolder /tmp/2021-06-04 --newFolder /tmp/2021-07-04 --network ropsten`
+`npx hardhat setClaims --token $BULL_PROXY_ADDRESS --oldfolder $OLD_FOLDER --newfolder $NEW_FOLDER --network ropsten`
 
 ## Attach to token in the console
 
