@@ -1,5 +1,6 @@
 import { find } from "lodash"
 import chai from "chai"
+import chaiAsPromised from "chai-as-promised"
 import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
 import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
@@ -8,10 +9,12 @@ import { ShieldToken } from "../../typechain/ShieldToken"
 import { BullToken } from "../../typechain/BullToken"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims } from "../../tasks/setClaimsBullToken"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, maxSupply, fromShieldToBull, getTestBalances } from "../support/BullToken.helpers"
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, maxSupply, fromShieldToBull, getTestBalances, getBogusBalances } from "../support/BullToken.helpers"
 import { BigNumber } from "ethers"
+import { AssertionError } from "assert"
 
 chai.use(solidity)
+chai.use(chaiAsPromised)
 const { expect } = chai
 
 describe("setClaimsBullToken", async () => {
@@ -58,9 +61,9 @@ describe("setClaimsBullToken", async () => {
     expect(balances[calAddress]).to.equal(toTokenAmount("0"))
   })
 
-  // it("should not allow to set more claims than SHLD total supply", async () => {
-  //   throw new Error('Implement me')
-  // })
+  it("should not parse a bogus CSV export", async () => {
+    await expect(getBogusBalances()).to.be.rejectedWith("Can't parse balance")
+  })
 
   it("should allow the owner to set claims multiple times", async () => {
     const balances = await getTestBalances()

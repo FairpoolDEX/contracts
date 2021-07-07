@@ -49,8 +49,13 @@ export async function getTestBalances(): Promise<Balances> {
   return parseAllBalancesCSV([balancesCSV, extrasCSV], [oldCSV])
 }
 
+export async function getBogusBalances(): Promise<Balances> {
+  const tooLongFormatCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.too-long-format.csv`)
+  return parseAllBalancesCSV([tooLongFormatCSV], [])
+}
+
 export async function getTestAddresses(): Promise<Addresses> {
-  const testAddressesBuffer = fs.readFileSync(`${__dirname}/../fixtures/addresses.txt`)
+  const testAddressesBuffer = fs.readFileSync(`${__dirname}/../fixtures/addresses.csv`)
   return parseAddresses(testAddressesBuffer)
 }
 
