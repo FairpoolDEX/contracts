@@ -3,13 +3,12 @@ import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
 import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
 import { timeTravel, hh } from "../support/test.helpers"
-import { ShieldToken } from "../../typechain/ShieldToken"
-import { BullToken } from "../../typechain/BullToken"
+import { BullToken } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { Balances, parseAllBalancesCSV, setClaims } from "../../tasks/setClaimsBullToken"
+import { setClaims } from "../../tasks/setClaimsBullToken"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances } from "../support/BullToken.helpers"
-import { claimBullToken, Addresses } from "../../tasks/claimBullToken"
-import { Wallet, utils } from "ethers"
+import { claimBullToken } from "../../tasks/claimBullToken"
+import { BalanceMap, Addresses } from "../../types"
 
 chai.use(solidity)
 const { expect } = chai
@@ -25,7 +24,7 @@ describe("claimBullToken", async () => {
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
 
-  let balances: Balances
+  let balances: BalanceMap
   let addresses: Addresses
 
   const defaultAmount = toTokenAmount("10000")

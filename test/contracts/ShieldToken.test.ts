@@ -285,16 +285,32 @@ describe("ShieldToken", async () => {
         // check initial amount unfreeze
         await timeTravel(async () => {
           const initialAmount = toTokenAmount(frozenAmount * vestingInitialAmount / 100)
-          const unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          let unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          let transferableAmount = await token.getTransferableAmount(nonOwner.address)
           expect(unlockedAmount).to.equal(initialAmount)
+          expect(transferableAmount).to.equal(initialAmount)
+          const transferAmount = toTokenAmount("2")
+          await nonOwnerToken.transfer(owner.address, transferAmount)
+          unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          transferableAmount = await token.getTransferableAmount(nonOwner.address)
+          expect(unlockedAmount).to.equal(initialAmount)
+          expect(transferableAmount).to.equal(initialAmount.sub(transferAmount))
         }, SHIELD_RELEASE_TIME + lockPeriod + 1)
 
         // check monthly amount unfreeze
         await timeTravel(async () => {
           const initialAmount = toTokenAmount(frozenAmount * vestingInitialAmount / 100)
           const monthlyAmount = toTokenAmount(frozenAmount * (vestingMonthlyAmount / 10000) / 100)
-          const unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          let unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          let transferableAmount = await token.getTransferableAmount(nonOwner.address)
           expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
+          expect(transferableAmount).to.equal(initialAmount.add(monthlyAmount))
+          const transferAmount = toTokenAmount("2")
+          await nonOwnerToken.transfer(owner.address, transferAmount)
+          unlockedAmount = await token.getUnlockedAmount(nonOwner.address)
+          transferableAmount = await token.getTransferableAmount(nonOwner.address)
+          expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
+          expect(transferableAmount).to.equal(initialAmount.add(monthlyAmount).sub(transferAmount))
         }, SHIELD_RELEASE_TIME + lockPeriod + 24 * 3600 * 30 + 1)
 
       }, monthAfterRelease)

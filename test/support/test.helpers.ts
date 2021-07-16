@@ -1,5 +1,8 @@
 import { ethers } from "hardhat"
 import execa from "execa"
+import { BigNumber, Contract } from "ethers"
+import { string } from "hardhat/internal/core/params/argumentTypes"
+import { MaxUint256 } from "./all.helpers"
 
 type timeTravelCallback = () => Promise<void>;
 
@@ -10,10 +13,11 @@ export async function timeTravel(callback: timeTravelCallback, newBlockTimestamp
   await ethers.provider.send("evm_setNextBlockTimestamp", [newBlockTimestamp])
   // mine new block to really shift time
   await ethers.provider.send("evm_mine", [])
-  await callback()
-  // revert snapshot and come back in time to start point
-  await ethers.provider.send("evm_revert", [snapshot])
-  // mine new block to really shift time
+  await callback().finally(() => {
+    // revert snapshot and come back in time to start point
+    // mine new block to really shift time
+    ethers.provider.send("evm_revert", [snapshot])
+  })
 }
 
 export async function skipBlocks(amount: number): Promise<void> {
@@ -34,4 +38,20 @@ export async function getLatestBlockTimestamp() {
 
 export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
   return execa(`${__dirname}/../../node_modules/.bin/hardhat`, args, options)
+}
+
+export async function addLiquidity(router: Contract, token0: Contract, token1: Contract, token0Amount: BigNumber, token1Amount: BigNumber, LPTokensReceivingAddress: string, deadline = Number.MAX_SAFE_INTEGER): Promise<void> {
+  await token0.approve(router.address, MaxUint256)
+  await token1.approve(router.address, MaxUint256)
+  await router.addLiquidity(
+    token0.address,
+    token1.address,
+    token0Amount,
+    token1Amount,
+    token0Amount,
+    token1Amount,
+    LPTokensReceivingAddress,
+    MaxUint256,
+    deadline,
+  )
 }

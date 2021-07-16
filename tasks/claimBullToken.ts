@@ -1,14 +1,10 @@
 import fs from "fs"
 import { strict as assert } from "assert"
 import { uniq } from "lodash"
-import type { ethers } from "ethers"
 import neatcsv from "neat-csv"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-
-export type Address = string;
-export type Addresses = Address[];
-type Ethers = typeof ethers & HardhatEthersHelpers;
+import type { Addresses, Ethers } from "../types"
 
 export async function parseAddresses(data: Buffer | string): Promise<Addresses> {
   const rows = await neatcsv(data)

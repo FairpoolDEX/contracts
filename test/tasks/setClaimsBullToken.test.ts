@@ -1,8 +1,5 @@
 import { find } from "lodash"
-import chai from "chai"
-import chaiAsPromised from "chai-as-promised"
 import { ethers, upgrades } from "hardhat"
-import { solidity } from "ethereum-waffle"
 import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
 import { timeTravel, hh } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain/ShieldToken"
@@ -11,11 +8,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims } from "../../tasks/setClaimsBullToken"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, maxSupply, fromShieldToBull, getTestBalances, getBogusBalances } from "../support/BullToken.helpers"
 import { BigNumber } from "ethers"
-import { AssertionError } from "assert"
-
-chai.use(solidity)
-chai.use(chaiAsPromised)
-const { expect } = chai
+import { expect } from "../../util/expect"
 
 describe("setClaimsBullToken", async () => {
 

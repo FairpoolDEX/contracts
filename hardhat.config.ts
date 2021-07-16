@@ -14,6 +14,8 @@ import { setClaimsBullToken } from "./tasks/setClaimsBullToken"
 import { deployBullToken } from "./tasks/deployBullToken"
 import { claimBullToken, claimBullTokenTask } from "./tasks/claimBullToken"
 import { upgradeToken } from "./tasks/upgradeToken"
+import { date } from "./util/addParamTypes"
+import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
 
 dotEnvConfig()
 
@@ -31,6 +33,7 @@ GAS_PRICE=20 [hardhat command]
 }
 const gasPrice: number = gasPriceInGwei * 1000000000
 
+// @ts-ignore
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
@@ -43,6 +46,13 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       gasMultiplier: 1.2,
+      // forking: {
+      //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      //   blockNumber: 12779553,
+      // },
+      accounts: {
+        mnemonic: process.env.MNEMONIC || "",
+      },
     },
     // localhost: {
     //   accounts: {
@@ -80,6 +90,10 @@ const config: HardhatUserConfig = {
       ],
     },
   },
+  // typechain: {
+  //   // @ts-ignore
+  //   externalArtifacts: ['node_modules/@uniswap/v2-core/build/*.json'],
+  // },
 }
 
 task("deployShieldToken", "Deploy ShieldToken contract")
@@ -100,7 +114,7 @@ task("addAllocations", "Call addAllocations() for allocations with lockup period
   .setAction(addAllocationsShieldToken)
 
 task("setClaims", "Call setClaims() on BULL token contract")
-  .addParam("dry", "Dry-run", false, types.boolean, true)
+  .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
   .addParam("token", "BULL token contract address", "", types.string)
   .addParam("oldfolder", "Folder with CSV files containing new SHLD balances", "", types.string)
   .addParam("newfolder", "Folder with CSV files containing old SHLD balances (to set their claims to 0)", "", types.string)
@@ -111,6 +125,15 @@ task("claim", "Call claim() on BULL token contract")
   .addParam("claimer", "Claim transaction sender address")
   .addParam("claims", "CSV file with addresses")
   .setAction(claimBullTokenTask)
+
+task("rollback", "Change the balances of BullToken back to certain date")
+  .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
+  .addParam("token", "BULL token contract address")
+  .addParam("pools", "BULL token Uniswap pools addresses (comma-separated)")
+  .addParam("holders", "CSV file with token holder addresses")
+  .addParam("from", "From block number", undefined, types.int, false)
+  .addParam("to", "To block number", undefined, types.int, false)
+  .setAction(rollbackBullTokenTask)
 
 task("upgradeToken", "Upgrade a token contract")
   .addParam("name", "Contract name")

@@ -22,13 +22,17 @@
     "semi": [2, "never"],
     "prefer-const": 2,
     "no-unused-expressions": 0,
-    "comma-dangle": ["error", {
+    "comma-dangle": [
+      "error",
+      {
         "arrays": "always-multiline",
         "objects": "always-multiline",
         "imports": "always-multiline",
         "exports": "always-multiline",
         "functions": "only-multiline"
-    }],
-    "@typescript-eslint/no-empty-function": ["warn"]
+      }
+    ],
+    "@typescript-eslint/no-empty-function": ["warn"],
+    "@typescript-eslint/explicit-module-boundary-types": "off"
   }
 }

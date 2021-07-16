@@ -1,8 +1,9 @@
 import { BigNumber } from "ethers"
 import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
 import fs from "fs"
-import { Balances, parseAllBalancesCSV } from "../../tasks/setClaimsBullToken"
-import { Addresses, parseAddresses } from "../../tasks/claimBullToken"
+import { parseAllBalancesCSV } from "../../tasks/setClaimsBullToken"
+import { parseAddresses } from "../../tasks/claimBullToken"
+import { Addresses, BalanceMap } from "../../types"
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -22,6 +23,8 @@ export const burnRateDenominator = 1000
 
 export const maxSupply = 969163000 * airdropRate
 
+export const deployedAddress = "0x1bb022ab668085c6417b7d7007b0fbd53bacc383"
+
 export function fromShieldToBull(bn: BigNumber): BigNumber {
   return bn.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate)
 }
@@ -29,9 +32,9 @@ export function fromShieldToBull(bn: BigNumber): BigNumber {
 type Claims = { [index: string]: string }
 
 export const claims: Claims = {
-  "0xC30C915dE5FC456F00BaFea00b8fF2a24b3b384d": toTokenAmountString('100'),
-  "0x77BD3E7f5b353834EB93CF8076e2500BD2ADBff1": toTokenAmountString('20'),
-  "0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5": toTokenAmountString('400'),
+  "0xC30C915dE5FC456F00BaFea00b8fF2a24b3b384d": toTokenAmountString("100"),
+  "0x77BD3E7f5b353834EB93CF8076e2500BD2ADBff1": toTokenAmountString("20"),
+  "0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5": toTokenAmountString("400"),
 }
 
 export async function getClaims(token: any, claimers: string[]): Promise<Claims> {
@@ -42,14 +45,14 @@ export async function getClaims(token: any, claimers: string[]): Promise<Claims>
   return _claims
 }
 
-export async function getTestBalances(): Promise<Balances> {
+export async function getTestBalances(): Promise<BalanceMap> {
   const balancesCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.balances.csv`)
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
   const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.olds.csv`)
   return parseAllBalancesCSV([balancesCSV, extrasCSV], [oldCSV])
 }
 
-export async function getBogusBalances(): Promise<Balances> {
+export async function getBogusBalances(): Promise<BalanceMap> {
   const tooLongFormatCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.too-long-format.csv`)
   return parseAllBalancesCSV([tooLongFormatCSV], [])
 }

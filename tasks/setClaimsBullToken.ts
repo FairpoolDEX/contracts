@@ -7,11 +7,10 @@ import { utils, BigNumber } from "ethers"
 import { Readable as ReadableStream } from "stream"
 import { chunk } from "../test/support/all.helpers"
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
+import { BalanceMap } from "../types"
 
-export type Balances = { [index: string]: BigNumber }
-
-export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>): Promise<Balances> {
-  const balances: Balances = {}
+export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
+  const balances: BalanceMap = {}
   // const address = '0xf5396ed020a765e561f4f176b1e1d622fb6d4154'.toLowerCase()
   for (let i = 0; i < newDatas.length; i++) {
     const _balances = await parseBalancesCSV(newDatas[i])
@@ -35,8 +34,8 @@ export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | Read
   return balances
 }
 
-export async function parseBalancesCSV(data: string | Buffer | ReadableStream): Promise<Balances> {
-  const balances: Balances = {}
+export async function parseBalancesCSV(data: string | Buffer | ReadableStream): Promise<BalanceMap> {
+  const balances: BalanceMap = {}
   const rows = await neatcsv(data)
   for (let i = 0; i < rows.length; i++) {
     const addressRaw = rows[i]["HolderAddress"]
@@ -49,7 +48,7 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
   return balances
 }
 
-export async function setClaims(token: any, balances: Balances, dry = false, log: ((msg: any) => void) | undefined = undefined): Promise<void> {
+export async function setClaims(token: any, balances: BalanceMap, dry = false, log: ((msg: any) => void) | undefined = undefined): Promise<void> {
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, 325)
