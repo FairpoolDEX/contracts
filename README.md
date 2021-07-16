@@ -5,27 +5,27 @@
     # Install NVM: https://github.com/nvm-sh/nvm#installing-and-updating
     nvm install $(cat .nvmrc)
     nvm use # loads version from .nvmrc
-    npm install
-    npm run build
+    yarn install
+    yarn build
 
 ## Tasks
 
 Build the project
 
-    npm run build
+    yarn build
 
 Run tests
 
-    npm test
+    yarn test
 
 Watch tests
 
-    npm run test:watch
+    yarn test:watch
 
 Lint code
 
-    npm run lint
+    yarn lint
 
 Generate coverage
 
-    npm run coverage
+    yarn coverage
