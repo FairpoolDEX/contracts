@@ -17,6 +17,7 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     uint public maxSupply;
     uint public burnRateNumerator;
     uint public burnRateDenominator;
+    bool public rollbackManyDisabled;
 
     function initialize(uint _airdropStartTimestamp, uint _airdropClaimDuration, uint _airdropStageDuration, uint _burnRateNumerator, uint _burnRateDenominator) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
@@ -92,13 +93,32 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
+    function disableRollbackMany() public onlyOwner {
+        rollbackManyDisabled = true;
+    }
+
+    function rollbackMany(address[] calldata burnAddresses, address[] calldata mintAddresses, uint[] calldata amounts) public onlyOwner {
+        // WARN: this function doesn't refund fee-on-transfer, because it was not active during latest airdrop
+        require(rollbackManyDisabled == false, "rollbackMany is disabled");
+        require(burnAddresses.length == amounts.length, "Wrong array length (burnAddresses, amounts)");
+        require(mintAddresses.length == amounts.length, "Wrong array length (mintAddresses, amounts)");
+
+        for (uint i = 0; i < amounts.length; i++) {
+            _burn(burnAddresses[i], amounts[i]);
+            _mint(mintAddresses[i], amounts[i]);
+        }
+    }
+
     function _mint(address account, uint amount) internal virtual override {
         super._mint(account, amount);
         require(totalSupply() <= maxSupply, "Can't mint more than maxSupply");
     }
 
     function _transfer(address sender, address recipient, uint amount) internal override {
-        super._transfer(sender, recipient, amount * burnRateNumerator / burnRateDenominator);
+        uint receivedAmount = toReceivedAmount(amount, burnRateNumerator, burnRateDenominator);
+        uint burntAmount = amount - receivedAmount;
+        _burn(sender, burntAmount);
+        super._transfer(sender, recipient, receivedAmount);
     }
 
     function withdraw(uint amount) public onlyOwner {
@@ -119,5 +139,13 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         } else {
             _unpause();
         }
+    }
+
+    function fromReducedAmount(uint _amount, uint _burnRateNumerator, uint _burnRateDenominator) internal pure returns (uint) {
+        return _amount * _burnRateDenominator / _burnRateNumerator;
+    }
+
+    function toReceivedAmount(uint _amount, uint _burnRateNumerator, uint _burnRateDenominator) internal pure returns (uint) {
+        return _amount * _burnRateNumerator / _burnRateDenominator;
     }
 }

@@ -155,6 +155,17 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return totalTransferableAmount;
     }
 
+    function getLockedAmount(address sender) public view returns (uint256) {
+        uint256 unlockedAmount = getUnlockedAmount(sender);
+        return frozenWallets[sender].totalAmount - unlockedAmount;
+    }
+
+    function getTransferableAmount(address sender) public view returns (uint256) {
+        uint256 balance = balanceOf(sender);
+        uint256 lockedAmount = getLockedAmount(sender);
+        return balance - lockedAmount;
+    }
+
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
         uint256 amountsLength = amounts.length;
         uint256 recipientsLength = recipients.length;
@@ -175,11 +186,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
             super._transfer(msg.sender, recipient, amount);
         }
-    }
-
-    function getLockedAmount(address sender) public view returns (uint256) {
-        uint256 unlockedAmount = getUnlockedAmount(sender);
-        return frozenWallets[sender].totalAmount - unlockedAmount;
     }
 
     // Transfer control

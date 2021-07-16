@@ -139,7 +139,8 @@ describe("BullToken", async () => {
 
   it("should burn BULL token on transfer", async () => {
     const strangerAmount = toTokenAmount('1000')
-    const transferAmount = toTokenAmount('150')
+    const sentAmount = toTokenAmount('150')
+    const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
@@ -148,12 +149,37 @@ describe("BullToken", async () => {
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      await bullTokenWithStranger.transfer(ownerAddress, transferAmount)
-      expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(transferAmount.mul(burnRateNumerator).div(burnRateDenominator))
+      await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
+      expect(await bullTokenWithOwner.balanceOf(strangerAddress)).to.equal(strangerAmount.sub(sentAmount))
+      expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(recvAmount)
     }, airdropStartTimestamp)
   })
 
-  // The following tests are superseded by manual snapshotting
+  it("should allow the owner to rollback BULL token balances", async () => {
+    const strangerAmount = toTokenAmount('1000')
+    const sentAmount = toTokenAmount('150')
+    const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
+
+    await bullTokenWithOwner.setClaims(claimers, amounts)
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
+
+    await timeTravel(async () => {
+      const ownerAmount1 = await bullTokenWithOwner.balanceOf(ownerAddress)
+      await bullTokenWithStranger.claim()
+      await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
+      const ownerAmount2 = await bullTokenWithOwner.balanceOf(ownerAddress)
+      expect(ownerAmount2).to.equal(ownerAmount1.add(recvAmount))
+    }, airdropStartTimestamp)
+  })
+
+  it("should not allow the non-owner to rollback BULL token balances", async () => {
+
+  })
+
+  it("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
+
+  })
+    // The following tests are superseded by manual snapshotting
   // should not allow the user to claim more BULL tokens than SHLD tokens
   // should not allow the user to claim more BULL tokens than SHLD tokens after moving SHLD tokens to another address
   // should not allow the user to claim BULL tokens if he sells before the next distribution
