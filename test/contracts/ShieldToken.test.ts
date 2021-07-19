@@ -4,7 +4,7 @@ import { BigNumber } from "ethers"
 import chai from "chai"
 import { toTokenAmount } from "../support/all.helpers"
 import { timeTravel, skipBlocks } from "../support/test.helpers"
-import { ShieldToken } from "../../typechain/ShieldToken"
+import { ShieldToken } from "../../typechain"
 
 import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "../support/ShieldToken.helpers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"

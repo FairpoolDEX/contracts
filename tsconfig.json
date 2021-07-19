@@ -9,7 +9,7 @@
   },
   "include": [
     "./util",
-    "./scripts",
+    "./tasks/scripts",
     "./deploy",
     "./test",
     "./tasks",
