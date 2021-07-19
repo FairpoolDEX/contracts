@@ -1,7 +1,9 @@
+import os from "os"
 import fs from "fs"
-import { uniq } from "lodash"
+import { chain, map, max } from "lodash"
 import type { ethers } from "ethers"
 import neatcsv from "neat-csv"
+import dotenv from "dotenv"
 import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
@@ -9,9 +11,9 @@ import { fromTokenAmount, getUniswapV2PairContractFactory } from "../test/suppor
 import { Address, Addresses, Amount, BalanceMap, Ethers } from "../types"
 import { BigNumber, Contract, utils } from "ethers"
 import { expect } from "../util/expect"
-import { BullToken } from "../typechain"
 import { ContractTransaction } from "@ethersproject/contracts"
 import { BlockTag } from "@ethersproject/abstract-provider/src.ts/index"
+import { rollbackDate } from "../test/support/rollback.helpers"
 
 type Transfer = {
   from: Address,
@@ -25,27 +27,43 @@ type FlaggedTransfer = Transfer & {
 
 type FlaggedTransferType = "move" | "buy" | "sell"
 
+interface ExpectationsMap {
+  transfers: EtherscanTransfer[]
+  buys: { length: number }
+  sells: { length: number }
+}
+
+interface EtherscanTransfer {
+  address: string,
+  blockNumber: string
+  // ... more fields available
+}
+
 export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag): Promise<Array<Transfer>> {
   const TransferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" // ERC-20 Transfer event topic
   const transfersRaw = await token.queryFilter({ topics: [TransferTopic] }, from, to)
   return transfersRaw.map((e) => {
     if (!e.args) throw new Error()
+    // if (e.args.from === "0x59B8c20CA527ff18e2515b68F28939d6dD3E867B") {
+    //   console.log("e", e)
+    // }
     const transfer = {
       from: e.args.from,
       to: e.args.to,
       amount: e.args.value,
+      blockNumber: e.blockNumber,
     }
     return transfer
   })
 }
 
-export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: string[]): Promise<Array<FlaggedTransfer>> {
+export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: Address[]): Promise<Array<FlaggedTransfer>> {
   return transfers.map((t) => {
     let type: FlaggedTransferType = "move"
-    if (t.from in poolAddresses) {
+    if (poolAddresses.includes(t.from)) {
       type = "buy"
     }
-    if (t.to in poolAddresses) {
+    if (poolAddresses.includes(t.to)) {
       type = "sell"
     }
     return Object.assign({}, t, { type })
@@ -60,10 +78,16 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
   }
 }
 
-export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, ethers: Ethers, dry = false, info: ((msg: any) => void) | void): Promise<void> {
+export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
+  expect(chain(transfers).map("blockNumber").min().value()).greaterThan(from)
+  expect(chain(transfers).map("blockNumber").max().value()).lessThan(to)
+  expect(transfers.length).to.equal(expectations.transfers.length)
   const transfersR = transfers.slice(0).reverse()
   const transfersRF = await getFlaggedTransfers(transfersR, poolAddresses)
+  expect(transfersRF.filter(t => t.type === "move").length).greaterThan(0)
+  expect(transfersRF.filter(t => t.type === "buy").length).equal(expectations.buys.length)
+  expect(transfersRF.filter(t => t.type === "sell").length).equal(expectations.sells.length)
   const burnAddresses = []
   const mintAddresses = []
   const amounts = []
@@ -73,8 +97,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     mintAddresses.push(transfer.from)
   }
   console.info("Flagged events:")
-  console.table(transfersRF)
-  const { moves, buys, sells } = await splitFlaggedTransfers(transfersRF)
+  console.table(transfersRF.map((t) => Object.assign({}, t, { amount: fromTokenAmount(t.amount) })))
   if (!dry) {
     info && info(`Sending rollbackManyTx`)
     const rollbackManyTx = await token.rollbackMany(burnAddresses, mintAddresses, amounts) as ContractTransaction
@@ -91,7 +114,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     await Promise.all(syncTxes.map((tx: ContractTransaction) => tx.wait(3)))
 
     info && info(`Checking expectations`)
-    await expectBalancesAreEqual(token, from, to, holderAddresses)
+    await expectBalancesAreEqual(token, from, "latest", holderAddresses)
 
     info && info(`Sending disableRollbackManyTx`)
     const disableRollbackManyTx = await token.disableRollbackMany()
@@ -111,7 +134,7 @@ async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresse
 }
 
 export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { token: tokenAddress, pools: poolAddressesString, holders: holderAddressesPath, from, to, dry } = args
+  const { token: tokenAddress, from, to, pools: poolAddressesString, holders: holderAddressesPath, expectations: expectationsPath, dry } = args
   const { ethers, network } = hre
   console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await ethers.getContractFactory("BullToken")
@@ -119,6 +142,14 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const poolAddresses: Addresses = poolAddressesString.split(",")
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
   const holderAddresses: Addresses = (await neatcsv(holderAddressesFile)).map((row) => row["HolderAddress"])
+  const expectations: ExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
+  const provider = ethers.provider
+  // console.log('provider', provider)
+  // console.log('ethers.provider', ethers.provider)
+  const fromBlock = await provider.getBlock(from)
+  const toBlock = await provider.getBlock(to)
+  expect(fromBlock.timestamp * 1000).to.be.lt(rollbackDate.getTime())
+  expect(toBlock.timestamp * 1000).to.be.gt(rollbackDate.getTime())
 
   // const etherscan = Etherscan.init(process.env.ETHERSCAN_API_KEY, network)
   // var balance = api.account.balance("0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae")
@@ -126,6 +157,6 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   //   console.log(balanceData)
   // })
   console.info(`Rolling back the token`)
-  await rollbackBullToken(token, from, to, poolAddresses, holderAddresses, ethers, dry, console.info.bind(console))
+  await rollbackBullToken(token, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
 }
 

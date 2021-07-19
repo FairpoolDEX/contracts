@@ -1,6 +1,6 @@
 node_modules
 .env
-scripts/parameters.prod.ts
+tasks/scripts/parameters.prod.ts
 allocations.csv
 
 coverage

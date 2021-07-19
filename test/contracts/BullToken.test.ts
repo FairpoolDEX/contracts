@@ -4,8 +4,8 @@ import { solidity } from "ethereum-waffle"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { toTokenAmount } from "../support/all.helpers"
 import { timeTravel } from "../support/test.helpers"
-import { ShieldToken } from "../../typechain/ShieldToken"
-import { BullToken } from "../../typechain/BullToken"
+import { ShieldToken } from "../../typechain"
+import { BullToken } from "../../typechain"
 
 import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "../support/ShieldToken.helpers"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateNumerator, burnRateDenominator, claims, getClaims } from "../support/BullToken.helpers"
@@ -25,6 +25,7 @@ const { expect } = chai
  * - User claims BULL tokens
  */
 
+
 describe("BullToken", async () => {
 
   let owner: SignerWithAddress
@@ -38,6 +39,8 @@ describe("BullToken", async () => {
 
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
+
+  const strangerAmount = toTokenAmount("1000")
 
   beforeEach(async () => {
     [owner, stranger] = await ethers.getSigners()
@@ -77,8 +80,6 @@ describe("BullToken", async () => {
   })
 
   it("should allow any user to claim the tokens for his own address", async () => {
-    const strangerAmount = toTokenAmount('1000')
-
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
@@ -100,8 +101,6 @@ describe("BullToken", async () => {
   })
 
   it("should allow any user to claim tokens for other addresses", async () => {
-    const strangerAmount = toTokenAmount('1000')
-
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith("Can't claim")
@@ -120,10 +119,7 @@ describe("BullToken", async () => {
     }, airdropStartTimestamp + airdropStageDuration)
   })
 
-
   it("should not allow the user to claim BULL tokens before or after the distribution stage finishes", async () => {
-    const strangerAmount = toTokenAmount('1000')
-
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith("Can't claim")
@@ -138,8 +134,7 @@ describe("BullToken", async () => {
   })
 
   it("should burn BULL token on transfer", async () => {
-    const strangerAmount = toTokenAmount('1000')
-    const sentAmount = toTokenAmount('150')
+    const sentAmount = toTokenAmount("150")
     const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
@@ -156,9 +151,9 @@ describe("BullToken", async () => {
   })
 
   it("should allow the owner to rollback BULL token balances", async () => {
-    const strangerAmount = toTokenAmount('1000')
-    const sentAmount = toTokenAmount('150')
+    const sentAmount = toTokenAmount("150")
     const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
+    const feeAmount = sentAmount.sub(recvAmount)
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
@@ -169,17 +164,34 @@ describe("BullToken", async () => {
       await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
       const ownerAmount2 = await bullTokenWithOwner.balanceOf(ownerAddress)
       expect(ownerAmount2).to.equal(ownerAmount1.add(recvAmount))
+      const burnAddresses = [ownerAddress, "0x0000000000000000000000000000000000000000"]
+      const mintAddresses = [strangerAddress, strangerAddress]
+      const amounts = [recvAmount, feeAmount]
+      await bullTokenWithOwner.rollbackMany(burnAddresses, mintAddresses, amounts)
+      expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(0)
+      expect(await bullTokenWithOwner.balanceOf(strangerAddress)).to.equal(strangerAmount)
     }, airdropStartTimestamp)
   })
 
   it("should not allow the non-owner to rollback BULL token balances", async () => {
-
+    await timeTravel(async () => {
+      expect(bullTokenWithStranger.rollbackMany([ownerAddress], [strangerAddress], [toTokenAmount("100")])).to.be.revertedWith("caller is not the owner")
+    }, airdropStartTimestamp)
   })
 
   it("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
+    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
 
+    await timeTravel(async () => {
+      await bullTokenWithStranger.claim()
+
+      await bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])
+      await bullTokenWithOwner.disableRollbackMany()
+      await expect(bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])).to.be.revertedWith("rollbackMany is disabled")
+    }, airdropStartTimestamp)
   })
-    // The following tests are superseded by manual snapshotting
+
+  // The following tests are superseded by manual snapshotting
   // should not allow the user to claim more BULL tokens than SHLD tokens
   // should not allow the user to claim more BULL tokens than SHLD tokens after moving SHLD tokens to another address
   // should not allow the user to claim BULL tokens if he sells before the next distribution
