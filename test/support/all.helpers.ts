@@ -1,4 +1,3 @@
-import { ethers } from "hardhat"
 import { utils, BigNumber, Contract, ContractFactory } from "ethers"
 import UniswapV2FactoryJSON from "@uniswap/v2-core/build/UniswapV2Factory.json"
 import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
@@ -37,5 +36,14 @@ export async function getUniswapV2Router02ContractFactory(ethers: Ethers): Promi
 }
 
 export async function getUniswapV2PairContractFactory(ethers: Ethers): Promise<ContractFactory> {
-  return ethers.getContractFactory(UniswapV2Router02JSON.abi, UniswapV2Router02JSON.bytecode)
+  return ethers.getContractFactory(UniswapV2PairJSON.abi, UniswapV2PairJSON.bytecode)
+}
+
+export async function mineBlocks(count: number, ethers: Ethers): Promise<void> {
+  const network = await ethers.provider.getNetwork()
+  if (network.chainId === 31337) {
+    while (count--) {
+      await ethers.provider.send("evm_mine", [])
+    }
+  }
 }

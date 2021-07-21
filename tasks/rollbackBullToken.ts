@@ -7,7 +7,7 @@ import dotenv from "dotenv"
 import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-import { fromTokenAmount, getUniswapV2PairContractFactory } from "../test/support/all.helpers"
+import { fromTokenAmount, getUniswapV2PairContractFactory, mineBlocks } from "../test/support/all.helpers"
 import { Address, Addresses, Amount, BalanceMap, Ethers } from "../types"
 import { BigNumber, Contract, utils } from "ethers"
 import { expect } from "../util/expect"
@@ -99,27 +99,44 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
   console.info("Flagged events:")
   console.table(transfersRF.map((t) => Object.assign({}, t, { amount: fromTokenAmount(t.amount) })))
   if (!dry) {
-    info && info(`Sending rollbackManyTx`)
-    const rollbackManyTx = await token.rollbackMany(burnAddresses, mintAddresses, amounts) as ContractTransaction
-    info && info(`Awaiting rollbackManyTx: ${rollbackManyTx.hash}`)
-    await rollbackManyTx.wait(3)
+    const minConfirmations = 3
+    const rollbackManyTxPromises = []
+    const step = 50
+    for (let i = 0; i < transfersR.length; i += step) {
+      info && info(`Sending rollbackManyTx ${i / step}`)
+      rollbackManyTxPromises.push(token.rollbackMany(burnAddresses.slice(i, i + step), mintAddresses.slice(i, i + step), amounts.slice(i, i + step)) as ContractTransaction)
+    }
+    const rollbackManyTxes = await Promise.all(rollbackManyTxPromises)
+    info && info(`Awaiting rollbackManyTxes`)
+    await mineBlocks(minConfirmations, ethers)
+    await Promise.all(rollbackManyTxes.map((tx) => tx.wait(minConfirmations)))
 
-    info && info(`Sending syncTxes`)
-    const syncTxes = await Promise.all(poolAddresses.map(async (pa) => {
+    const syncTxPromises = []
+    for (let i = 0; i < poolAddresses.length; i += step) {
+      info && info(`Sending syncTx ${i} to ${poolAddresses[i]}`)
       const pairFactory = (await getUniswapV2PairContractFactory(ethers))
-      const pairContract = pairFactory.attach(pa)
-      return await pairContract.sync() as ContractTransaction
-    }))
-    info && info(`Awaiting syncTxes: ${syncTxes.map((tx) => tx.hash).join(",")}`)
-    await Promise.all(syncTxes.map((tx: ContractTransaction) => tx.wait(3)))
+      const pairContract = pairFactory.attach(poolAddresses[i])
+      syncTxPromises.push(pairContract.sync() as ContractTransaction)
+    }
+    const syncTxes = await Promise.all(rollbackManyTxPromises)
+    info && info(`Awaiting syncTxes`)
+    await mineBlocks(minConfirmations, ethers)
+    await Promise.all(syncTxes.map((tx) => tx.wait(minConfirmations)))
 
     info && info(`Checking expectations`)
     await expectBalancesAreEqual(token, from, "latest", holderAddresses)
 
     info && info(`Sending disableRollbackManyTx`)
     const disableRollbackManyTx = await token.disableRollbackMany()
-    info && info(`Awaiting disableRollbackManyTx: ${rollbackManyTx.hash}`)
-    await disableRollbackManyTx.wait(3)
+    info && info(`Awaiting disableRollbackManyTx: ${disableRollbackManyTx.hash}`)
+    await mineBlocks(minConfirmations, ethers)
+    await disableRollbackManyTx.wait(minConfirmations)
+
+    info && info(`Sending unpauseTx`)
+    const unpauseTx = await token.pause(false)
+    info && info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
+    await mineBlocks(minConfirmations, ethers)
+    await unpauseTx.wait(minConfirmations)
   }
 }
 

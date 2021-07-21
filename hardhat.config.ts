@@ -54,11 +54,12 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.MNEMONIC || "",
       },
     },
-    // localhost: {
+    localhost: {
     //   accounts: {
     //     mnemonic: process.env.MNEMONIC || "",
     //   },
-    // },
+      timeout: 30 * 60 * 1000,
+    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
@@ -75,7 +76,7 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
-      timeout: 100000,
+      timeout: 2 * 60 * 1000,
     },
   },
   etherscan: {

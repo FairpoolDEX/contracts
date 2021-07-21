@@ -103,10 +103,13 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(burnAddresses.length == amounts.length, "Wrong array length (burnAddresses, amounts)");
         require(mintAddresses.length == amounts.length, "Wrong array length (mintAddresses, amounts)");
 
+        bool _paused = paused();
+        if (_paused) _unpause();
         for (uint i = 0; i < amounts.length; i++) {
             if (burnAddresses[i] != address(0)) _burn(burnAddresses[i], amounts[i]);
             if (mintAddresses[i] != address(0)) _mint(mintAddresses[i], amounts[i]);
         }
+        if (_paused) _pause();
     }
 
     function _mint(address account, uint amount) internal virtual override {
