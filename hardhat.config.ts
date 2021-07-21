@@ -33,7 +33,6 @@ GAS_PRICE=20 [hardhat command]
 }
 const gasPrice: number = gasPriceInGwei * 1000000000
 
-// @ts-ignore
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
