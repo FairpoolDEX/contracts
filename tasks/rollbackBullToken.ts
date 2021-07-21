@@ -7,7 +7,7 @@ import dotenv from "dotenv"
 import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-import { fromTokenAmount, getUniswapV2PairContractFactory, mineBlocks } from "../test/support/all.helpers"
+import { fromTokenAmount, getUniswapV2PairContractFactory, mineBlocks, toTokenAmount } from "../test/support/all.helpers"
 import { Address, Addresses, Amount, BalanceMap, Ethers } from "../types"
 import { BigNumber, Contract, utils } from "ethers"
 import { expect } from "../util/expect"
@@ -31,6 +31,7 @@ interface ExpectationsMap {
   transfers: EtherscanTransfer[]
   buys: { length: number }
   sells: { length: number }
+  balances: { [address: string]: string }
 }
 
 interface EtherscanTransfer {
@@ -151,6 +152,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     }
 
     if (info) info(`Checking expectations`)
+    await expectBalancesMatchExpectations(token, expectations)
     await expectBalancesAreEqual(token, from, "latest", holderAddresses)
 
     if (info) info(`Sending disableRollbackManyTx`)
@@ -165,6 +167,13 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     // if (info) info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
     // await mineBlocks(minConfirmations, ethers)
     // await unpauseTx.wait(minConfirmations)
+  }
+}
+
+export async function expectBalancesMatchExpectations(token: Contract, expectations: ExpectationsMap) {
+  for (const address in expectations.balances) {
+    const actualBalance = await token.balanceOf(address)
+    expect(actualBalance).to.equal(toTokenAmount(expectations.balances[address]))
   }
 }
 

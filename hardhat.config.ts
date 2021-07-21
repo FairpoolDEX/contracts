@@ -117,8 +117,9 @@ task("addAllocations", "Call addAllocations() for allocations with lockup period
 task("setClaims", "Call setClaims() on BULL token contract")
   .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
   .addParam("token", "BULL token contract address", "", types.string)
-  .addParam("oldfolder", "Folder with CSV files containing new SHLD balances", "", types.string)
-  .addParam("newfolder", "Folder with CSV files containing old SHLD balances (to set their claims to 0)", "", types.string)
+  .addParam("newfolder", "Folder with CSV files containing new SHLD balances", "", types.string)
+  .addParam("oldfolder", "Folder with CSV files containing old SHLD balances (to set their claims to 0 if they don't hold SHLD anymore)", "", types.string)
+  .addParam("blacklistfolder", "Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)", "", types.string)
   .setAction(setClaimsBullToken)
 
 task("claim", "Call claim() on BULL token contract")
