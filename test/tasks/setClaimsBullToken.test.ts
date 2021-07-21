@@ -21,6 +21,7 @@ describe("setClaimsBullToken", async () => {
   const bobAddress = "0x7dcbefb3b9a12b58af8759e0eb8df05656db911d"
   const samAddress = "0x81dc6f15ee72f6e6d49cb6ca44c0bf8e63770027"
   const calAddress = "0xb3b7874f13387d44a3398d298b075b7a3505d8d4"
+  const blackAddress = "0x011850bf8aeeea25f915d2bc983d5354ccb48836"
 
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
@@ -52,6 +53,7 @@ describe("setClaimsBullToken", async () => {
     expect(balances[bobAddress]).to.equal(toTokenAmount("202903588.651523003442269483"))
     expect(balances[samAddress]).to.equal(toTokenAmount("1057303.141521371440022475"))
     expect(balances[calAddress]).to.equal(toTokenAmount("0"))
+    expect(balances[blackAddress]).to.equal(toTokenAmount("0"))
   })
 
   it("should not parse a bogus CSV export", async () => {

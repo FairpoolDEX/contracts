@@ -9,7 +9,7 @@ import { chunk } from "../test/support/all.helpers"
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
 import { BalanceMap } from "../types"
 
-export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
+export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
   const balances: BalanceMap = {}
   // const address = '0xf5396ed020a765e561f4f176b1e1d622fb6d4154'.toLowerCase()
   for (let i = 0; i < newDatas.length; i++) {
@@ -31,6 +31,12 @@ export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | Read
       }
     }
   }
+  for (let i = 0; i < blacklistDatas.length; i++) {
+    const _balances = await parseBalancesCSV(blacklistDatas[i])
+    for (const key of Object.keys(_balances)) {
+      balances[key] = BigNumber.from(0)
+    }
+  }
   return balances
 }
 
@@ -42,7 +48,7 @@ export async function parseBalancesCSV(data: string | Buffer | ReadableStream): 
     const amountRaw = rows[i]["Balance"]
     const addressParsed = addressRaw.toLowerCase()
     const amountParsed = utils.parseUnits(amountRaw, 18)
-    assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), '0'), trimEnd(amountRaw, '0'), "Can't parse balance")
+    assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), "0"), trimEnd(amountRaw, "0"), "Can't parse balance")
     balances[addressParsed] = amountParsed
   }
   return balances
@@ -68,11 +74,12 @@ export async function setClaims(token: any, balances: BalanceMap, dry = false, l
 }
 
 export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { token: tokenAddress, oldfolder: oldFolder, newfolder: newFolder, dry } = args
-  const oldFolderFiles = fs.readdirSync(oldFolder).map((filename) => fs.readFileSync(`${oldFolder}/${filename}`))
+  const { token: tokenAddress, oldfolder: oldFolder, newfolder: newFolder, blacklistfolder: blacklistFolder, dry } = args
   const newFolderFiles = fs.readdirSync(newFolder).map((filename) => fs.readFileSync(`${newFolder}/${filename}`))
+  const oldFolderFiles = fs.readdirSync(oldFolder).map((filename) => fs.readFileSync(`${oldFolder}/${filename}`))
+  const blacklistFolderFiles = fs.readdirSync(blacklistFolder).map((filename) => fs.readFileSync(`${newFolder}/${filename}`))
   console.info(`Parsing balances`)
-  const balances = await parseAllBalancesCSV(newFolderFiles, oldFolderFiles)
+  const balances = await parseAllBalancesCSV(newFolderFiles, oldFolderFiles, blacklistFolderFiles)
   console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
