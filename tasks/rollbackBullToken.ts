@@ -1,6 +1,6 @@
 import os from "os"
 import fs from "fs"
-import { chain, map, max } from "lodash"
+import { chain, map, min, max, sortBy } from "lodash"
 import type { ethers } from "ethers"
 import neatcsv from "neat-csv"
 import dotenv from "dotenv"
@@ -52,6 +52,7 @@ export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag
       to: e.args.to,
       amount: e.args.value,
       blockNumber: e.blockNumber,
+      transactionHash: e.transactionHash,
     }
     return transfer
   })
@@ -80,8 +81,10 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
 
 export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
-  expect(chain(transfers).map("blockNumber").min().value()).greaterThan(from)
-  expect(chain(transfers).map("blockNumber").max().value()).lessThan(to)
+  const blockNumbers = map(transfers, "blockNumber")
+  expect(min(blockNumbers)).greaterThan(from)
+  expect(max(blockNumbers)).lessThan(to)
+  expect(blockNumbers).to.deep.equal(sortBy(blockNumbers))
   expect(transfers.length).to.equal(expectations.transfers.length)
   const transfersR = transfers.slice(0).reverse()
   const transfersRF = await getFlaggedTransfers(transfersR, poolAddresses)
@@ -96,45 +99,60 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     burnAddresses.push(transfer.to)
     mintAddresses.push(transfer.from)
   }
-  console.info("Flagged events:")
-  console.table(transfersRF.map((t) => Object.assign({}, t, { amount: fromTokenAmount(t.amount) })))
+  // console.info("Flagged events:")
+  // console.table(transfersRF.map((t) => Object.assign({}, t, { amount: fromTokenAmount(t.amount) })))
   if (!dry) {
     const minConfirmations = 3
-    const rollbackManyTxPromises = []
-    const step = 50
-    for (let i = 0; i < transfersR.length; i += step) {
-      info && info(`Sending rollbackManyTx ${i / step}`)
-      rollbackManyTxPromises.push(token.rollbackMany(burnAddresses.slice(i, i + step), mintAddresses.slice(i, i + step), amounts.slice(i, i + step)) as ContractTransaction)
-    }
-    const rollbackManyTxes = await Promise.all(rollbackManyTxPromises)
-    info && info(`Awaiting rollbackManyTxes`)
-    await mineBlocks(minConfirmations, ethers)
-    await Promise.all(rollbackManyTxes.map((tx) => tx.wait(minConfirmations)))
 
-    const syncTxPromises = []
-    for (let i = 0; i < poolAddresses.length; i += step) {
-      info && info(`Sending syncTx ${i} to ${poolAddresses[i]}`)
+    // const irrevertableTransferReports = []
+    // for (let i = 0; i < transfersR.length; i++) {
+    //   // if (burnAddresses[i] === '0x0000000000000000000000000000000000000000') continue
+    //   const amount = amounts[i]
+    //   const burnBalance = await token.balanceOf(burnAddresses[i])
+    //   const mintBalance = await token.balanceOf(mintAddresses[i])
+    //   if (amount.gt(burnBalance)) {
+    //     irrevertableTransferReports.push({
+    //       transfer: transfersR[i],
+    //       amount: fromTokenAmount(amount),
+    //       burnBalance: fromTokenAmount(burnBalance),
+    //     })
+    //   }
+    // }
+    // console.log('irrevertableTransferReports', irrevertableTransferReports)
+    // console.log('irrevertableTransferReports.length', irrevertableTransferReports.length)
+    // throw new Error()
+
+    const step = 1000
+    for (let i = 0; i < transfersR.length; i += step) {
+      if (info) info(`Sending rollbackManyTx ${i / step}`)
+      const tx = await token.rollbackMany(burnAddresses.slice(i, i + step), mintAddresses.slice(i, i + step), amounts.slice(i, i + step), { gasLimit: 2500000 }) as ContractTransaction
+      if (info) info(`Awaiting rollbackManyTx ${i / step}`)
+      await mineBlocks(minConfirmations, ethers)
+      await tx.wait(minConfirmations)
+    }
+
+    for (let i = 0; i < poolAddresses.length; i++) {
+      if (info) info(`Sending syncTx ${i} to ${poolAddresses[i]}`)
       const pairFactory = (await getUniswapV2PairContractFactory(ethers))
       const pairContract = pairFactory.attach(poolAddresses[i])
-      syncTxPromises.push(pairContract.sync() as ContractTransaction)
+      const tx = await pairContract.sync() as ContractTransaction
+      if (info) info(`Awaiting syncTx ${i} to ${poolAddresses[i]}`)
+      await mineBlocks(minConfirmations, ethers)
+      await tx.wait(minConfirmations)
     }
-    const syncTxes = await Promise.all(rollbackManyTxPromises)
-    info && info(`Awaiting syncTxes`)
-    await mineBlocks(minConfirmations, ethers)
-    await Promise.all(syncTxes.map((tx) => tx.wait(minConfirmations)))
 
-    info && info(`Checking expectations`)
+    if (info) info(`Checking expectations`)
     await expectBalancesAreEqual(token, from, "latest", holderAddresses)
 
-    info && info(`Sending disableRollbackManyTx`)
+    if (info) info(`Sending disableRollbackManyTx`)
     const disableRollbackManyTx = await token.disableRollbackMany()
-    info && info(`Awaiting disableRollbackManyTx: ${disableRollbackManyTx.hash}`)
+    if (info) info(`Awaiting disableRollbackManyTx: ${disableRollbackManyTx.hash}`)
     await mineBlocks(minConfirmations, ethers)
     await disableRollbackManyTx.wait(minConfirmations)
 
-    info && info(`Sending unpauseTx`)
+    if (info) info(`Sending unpauseTx`)
     const unpauseTx = await token.pause(false)
-    info && info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
+    if (info) info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
     await mineBlocks(minConfirmations, ethers)
     await unpauseTx.wait(minConfirmations)
   }
@@ -167,6 +185,14 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const toBlock = await provider.getBlock(to)
   expect(fromBlock.timestamp * 1000).to.be.lt(rollbackDate.getTime())
   expect(toBlock.timestamp * 1000).to.be.gt(rollbackDate.getTime())
+
+  const net = await ethers.provider.getNetwork()
+  if (net.chainId === 31337) {
+    const snapshot = await ethers.provider.send("evm_snapshot", [])
+    process.on("SIGINT", async function() {
+      await ethers.provider.send("evm_revert", [snapshot])
+    })
+  }
 
   // const etherscan = Etherscan.init(process.env.ETHERSCAN_API_KEY, network)
   // var balance = api.account.balance("0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae")
