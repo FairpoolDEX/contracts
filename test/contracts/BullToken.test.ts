@@ -186,7 +186,7 @@ describe("BullToken", async () => {
       await bullTokenWithStranger.claim()
 
       await bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])
-      await bullTokenWithOwner.disableRollbackMany()
+      await bullTokenWithOwner.finishRollbackMany()
       await expect(bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])).to.be.revertedWith("rollbackMany is disabled")
     }, airdropStartTimestamp)
   })
