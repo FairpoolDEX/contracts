@@ -79,7 +79,7 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
   }
 }
 
-export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((msg: any) => void) | void): Promise<void> {
+export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
   const blockNumbers = map(transfers, "blockNumber")
   expect(min(blockNumbers)).greaterThan(from)
@@ -88,9 +88,18 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
   expect(transfers.length).to.equal(expectations.transfers.length)
   const transfersR = transfers.slice(0).reverse()
   const transfersRF = await getFlaggedTransfers(transfersR, poolAddresses)
-  expect(transfersRF.filter(t => t.type === "move").length).greaterThan(0)
-  expect(transfersRF.filter(t => t.type === "buy").length).equal(expectations.buys.length)
-  expect(transfersRF.filter(t => t.type === "sell").length).equal(expectations.sells.length)
+  const moves = transfersRF.filter(t => t.type === "move")
+  const buys = transfersRF.filter(t => t.type === "buy")
+  const sells = transfersRF.filter(t => t.type === "sell")
+  const buyers = buys.map(t => t.to)
+  const sellers = sells.map(t => t.from)
+  expect(moves.length).greaterThan(0)
+  expect(buys.length).equal(expectations.buys.length)
+  expect(sells.length).equal(expectations.sells.length)
+  // if (info) info('buyers')
+  // if (info) buyers.forEach(b => console.info(b))
+  // if (info) info('sellers')
+  // if (info) sellers.forEach(s => console.info(s))
   const burnAddresses = []
   const mintAddresses = []
   const amounts = []
@@ -145,16 +154,17 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
     await expectBalancesAreEqual(token, from, "latest", holderAddresses)
 
     if (info) info(`Sending disableRollbackManyTx`)
-    const disableRollbackManyTx = await token.disableRollbackMany()
-    if (info) info(`Awaiting disableRollbackManyTx: ${disableRollbackManyTx.hash}`)
+    const finishRollbackManyTx = await token.finishRollbackMany()
+    if (info) info(`Awaiting finishRollbackManyTx: ${finishRollbackManyTx.hash}`)
     await mineBlocks(minConfirmations, ethers)
-    await disableRollbackManyTx.wait(minConfirmations)
+    await finishRollbackManyTx.wait(minConfirmations)
 
-    if (info) info(`Sending unpauseTx`)
-    const unpauseTx = await token.pause(false)
-    if (info) info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
-    await mineBlocks(minConfirmations, ethers)
-    await unpauseTx.wait(minConfirmations)
+    // NOTE: unpauseTx not needed since finishRollbackMany runs _unpause()
+    // if (info) info(`Sending unpauseTx`)
+    // const unpauseTx = await token.pause(false)
+    // if (info) info(`Awaiting unpauseTx: ${unpauseTx.hash}`)
+    // await mineBlocks(minConfirmations, ethers)
+    // await unpauseTx.wait(minConfirmations)
   }
 }
 
@@ -201,5 +211,6 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   // })
   console.info(`Rolling back the token`)
   await rollbackBullToken(token, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
+  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }
 

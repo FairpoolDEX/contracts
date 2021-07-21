@@ -93,10 +93,6 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         }
     }
 
-    function disableRollbackMany() public onlyOwner {
-        rollbackManyDisabled = true;
-    }
-
     function rollbackMany(address[] calldata burnAddresses, address[] calldata mintAddresses, uint[] calldata amounts) public onlyOwner {
         // WARN: this function doesn't refund fee-on-transfer, because it was not active during latest airdrop
         require(rollbackManyDisabled == false, "rollbackMany is disabled");
@@ -110,6 +106,11 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
             if (mintAddresses[i] != address(0)) _mint(mintAddresses[i], amounts[i]);
         }
         if (_paused) _pause();
+    }
+
+    function finishRollbackMany() public onlyOwner {
+        rollbackManyDisabled = true;
+        if (paused()) _unpause();
     }
 
     function _mint(address account, uint amount) internal virtual override {

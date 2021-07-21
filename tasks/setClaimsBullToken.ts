@@ -78,5 +78,5 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const token = await Token.attach(tokenAddress)
   console.info(`Setting claims`)
   await setClaims(token, balances, dry, console.info.bind(console))
-  if (dry) console.info(`Dry run completed, no transactions were sent`)
+  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }
