@@ -6,7 +6,7 @@ export const date: CLIArgumentType<Date> = {
   name: "date",
   parse: (argName, strValue) => new Date(strValue),
   validate: (argName: string, value: any): void => {
-    const isValid = value && Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value);
+    const isValid = value && Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value)
 
     if (!isValid) {
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
