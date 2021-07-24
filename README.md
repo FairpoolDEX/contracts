@@ -29,3 +29,7 @@ Lint code
 Generate coverage
 
     yarn coverage
+
+## License
+
+The code in this repository is provided for informational purposes only. If you want to use it for any other purpose, you need to obtain an explicit permission from the copyright holder.
