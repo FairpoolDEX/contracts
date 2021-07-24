@@ -22,14 +22,15 @@ contract MCP is Ownable {
         uint guaranteedPrice;
         uint expirationDate; // UNIX timestamp
         uint protectionPrice;
-        uint placementDate;
+        uint creationDate;
         Status status;
     }
 
-    address base; // SHLD, BULL, LINK, ...
-    address quote; // USDT, WETH, WBTC, ...
-    uint feeNumerator; // in basis points (0.0001, or 1 / 10000)
-    uint constant feeDenominator = 10000;
+    address public base; // SHLD, BULL, LINK, ...
+    address public quote; // USDT, WETH, WBTC, ...
+    uint public feeNumerator; // in basis points (0.0001, or 1 / 10000)
+    // solhint-disable-next-line const-name-snakecase
+    uint public constant feeDenominator = 10000;
     Protection[] public protections;
 //    mapping(address => uint[]) public protectionsByBuyer;
 //    mapping(address => uint[]) public protectionsBySeller;
@@ -62,7 +63,7 @@ contract MCP is Ownable {
             guaranteedPrice: _guaranteedPrice,
             expirationDate: _expirationDate,
             protectionPrice: _protectionPrice,
-            placementDate: block.timestamp,
+            creationDate: block.timestamp,
             status: Status.Bought
         }));
         emit Buy(msg.sender, protections.length - 1);
@@ -72,7 +73,7 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Bought, "SPSB");
         require(protection.seller == msg.sender || protection.seller == address(0), "SPSS");
-        require(protection.expirationDate >= block.timestamp);
+        require(protection.expirationDate >= block.timestamp, "SPET");
         protection.seller = msg.sender;
         protection.status = Status.Sold;
         uint coverage = protection.guaranteedAmount * protection.guaranteedPrice;
@@ -87,7 +88,7 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Sold, "UPSS");
         require(protection.buyer == msg.sender, "UPBS");
-        require(protection.expirationDate >= block.timestamp);
+        require(protection.expirationDate >= block.timestamp, "UPET");
         protection.status = Status.Used;
         take(IERC20(base), protection.guaranteedAmount);
         give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
@@ -98,7 +99,7 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Bought, "CPSB");
         require(protection.buyer == msg.sender, "CPBS");
-        require(protection.placementDate + 21600 /* 6 hours * 60 minutes * 60 seconds */ > block.timestamp);
+        require(protection.creationDate + 21600 /* 6 hours * 60 minutes * 60 seconds */ > block.timestamp, "CPCT");
         protection.status = Status.Cancelled;
         // no need to require(protection.expirationDate >= block.timestamp) - always allow the user to cancel the protection that was not sold into
         give(IERC20(quote), protection.guaranteedAmount * protection.protectionPrice);
@@ -109,7 +110,7 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Sold || protection.status == Status.Used, "WPSU");
         require(protection.seller == msg.sender, "WPSS");
-        require(protection.expirationDate < block.timestamp);
+        require(protection.expirationDate < block.timestamp, "WPET");
         protection.status = Status.Withdrawn;
         if (protection.status == Status.Sold) {
             give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
@@ -133,11 +134,11 @@ contract MCP is Ownable {
     function move(IERC20 token, address sender, address recipient, uint amount) internal {
         uint senderBalanceBefore = token.balanceOf(sender);
         uint recipientBalanceBefore = token.balanceOf(recipient);
-        require(token.transferFrom(sender, recipient, amount), "MBAL");
+        require(token.transferFrom(sender, recipient, amount), "MCBL");
         uint senderBalanceAfter = token.balanceOf(sender);
         uint recipientBalanceAfter = token.balanceOf(recipient);
-        require(senderBalanceAfter == senderBalanceBefore - amount);
-        require(recipientBalanceBefore == recipientBalanceBefore + amount);
+        require(senderBalanceAfter == senderBalanceBefore - amount, "MSBL");
+        require(recipientBalanceAfter == recipientBalanceBefore + amount, "MRBL");
     }
 
     /* Views */
