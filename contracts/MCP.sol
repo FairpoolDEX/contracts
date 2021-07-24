@@ -12,155 +12,138 @@ import "hardhat/console.sol";
 contract MCP is Ownable {
     // NOTE: This contract uses Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
 
-    struct Offer {
-        uint amountProvided; // quantity of base asset that was provided to be bought by liquidity provider
-        uint amountReserved; // quantity of base asset that was reserved by traders
-        uint amountUtilized; // quantity of base asset that was utilized (sold) by traders
+    // NOTE: Created status is needed because enum vars are initialized to their first element; we don't want to initialize status to Bought because we need to check that the struct exists (which is done by checking that status has been set to a non-default value)
+    enum Status { Created, Bought, Sold, Used, Cancelled, Withdrawn }
+
+    struct Protection {
+        address buyer;
+        address seller;
+        uint guaranteedAmount;
         uint guaranteedPrice;
-        uint protectionPrice;
         uint expirationDate; // UNIX timestamp
-        bool isWithdrawn;
+        uint protectionPrice;
+        uint placementDate;
+        Status status;
     }
 
-    struct Claim {
-        uint amountReserved;
-        uint amountUtilized;
-        uint offerIndex;
-    }
+    address base; // SHLD, BULL, LINK, ...
+    address quote; // USDT, WETH, WBTC, ...
+    uint feeNumerator; // in basis points (0.0001, or 1 / 10000)
+    uint constant feeDenominator = 10000;
+    Protection[] public protections;
+//    mapping(address => uint[]) public protectionsByBuyer;
+//    mapping(address => uint[]) public protectionsBySeller;
 
-    address public base; // SHLD, BULL, LINK, ...
-    address public quote; // USDT, WETH, WBTC, ...
-    Offer[] public offers;
-    Claim[] public claims;
-    mapping(address => uint[]) public offersByAddress;
-    mapping(address => uint[]) public claimsByAddress;
+    event Buy(address indexed sender, uint protectionIndex);
+    event Sell(address indexed sender, uint protectionIndex);
+    event Use(address indexed sender, uint protectionIndex);
+    event Cancel(address indexed sender, uint protectionIndex);
+    event Withdraw(address indexed sender, uint protectionIndex);
 
-    event Provide(address indexed sender, uint amountProvided, uint guaranteedPrice, uint protectionPrice, uint expirationDate);
-    event Reserve(address indexed sender, uint amountReserved, uint offerIndex);
-    event Utilize(address indexed sender, uint amountUtilized);
-    event Withdraw(address indexed sender, uint offerIndex);
-
-    constructor(address _base, address _quote) {
+    constructor(address _base, address _quote, uint _feeNumerator) {
+        // FIXME: Check that base & quote are ERC20 tokens
+        // FIXME: Implement automatic ETH -> WETH conversion like on Uniswap
         base = _base;
         quote = _quote;
+        feeNumerator = _feeNumerator;
     }
 
-    function provide(uint _amountProvided, uint _guaranteedPrice, uint _protectionPrice, uint _expirationDate) public {
+    function buy(address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _protectionPrice) public {
         require(_expirationDate >= block.timestamp, "PEXP");
-        offers.push(Offer({
-            amountProvided: _amountProvided,
-            amountReserved: 0,
-            amountUtilized: 0,
+//        protectionsByBuyer[msg.sender].push(protections.length - 1);
+        // TODO: Should the user pay in base or quote currency?
+        uint premium = _guaranteedAmount * _protectionPrice;
+        uint fee = premium * feeNumerator / feeDenominator;
+        take(IERC20(quote), premium + fee);
+        protections.push(Protection({
+            buyer: msg.sender,
+            seller: _seller,
+            guaranteedAmount: _guaranteedAmount,
             guaranteedPrice: _guaranteedPrice,
-            protectionPrice: _protectionPrice,
             expirationDate: _expirationDate,
-            isWithdrawn: false
+            protectionPrice: _protectionPrice,
+            placementDate: block.timestamp,
+            status: Status.Bought
         }));
-        offersByAddress[msg.sender].push(offers.length - 1);
-        take(IERC20(quote), _amountProvided * _guaranteedPrice);
-        emit Provide(msg.sender, _amountProvided, _guaranteedPrice, _protectionPrice, _expirationDate);
+        emit Buy(msg.sender, protections.length - 1);
     }
 
-    function reserve(uint _amountReserved, uint _offerIndex) public {
-        Offer storage offer = offers[_offerIndex];
-        require(offer.expirationDate >= block.timestamp, "REXP");
-        offer.amountReserved += _amountReserved;
-        require(offer.amountReserved <= offer.amountProvided, "RAMP");
-        claims.push(Claim({
-            amountReserved: _amountReserved,
-            amountUtilized: 0,
-            offerIndex: _offerIndex
-        }));
-        claimsByAddress[msg.sender].push(claims.length - 1);
-        uint _totalReserved = _amountReserved * offer.guaranteedPrice;
-        uint _premiumReserved = _amountReserved * offer.protectionPrice;
-        take(IERC20(quote), _totalReserved + _premiumReserved);
-        emit Reserve(msg.sender, _amountReserved, _offerIndex);
+    function sell(uint _protectionIndex) public {
+        Protection storage protection = protections[_protectionIndex];
+        require(protection.status == Status.Bought, "SPSB");
+        require(protection.seller == msg.sender || protection.seller == address(0), "SPSS");
+        require(protection.expirationDate >= block.timestamp);
+        protection.seller = msg.sender;
+        protection.status = Status.Sold;
+        uint coverage = protection.guaranteedAmount * protection.guaranteedPrice;
+        uint premium = protection.guaranteedAmount * protection.protectionPrice;
+        uint fee = premium * feeNumerator / feeDenominator;
+        take(IERC20(quote), coverage - premium);
+        move(IERC20(quote), address(this), owner(), fee);
+        emit Sell(msg.sender, _protectionIndex);
     }
 
-    function utilize(uint _amountUtilized) public {
-        uint _totalUtilized = 0;
-        uint amountToUtilize = _amountUtilized;
-        uint amountToUtilizeActual;
-        uint[] storage claimIndexes = claimsByAddress[msg.sender];
-        for (uint i = 0; i < claimIndexes.length; i++) {
-            Claim storage claim = claims[claimIndexes[i]];
-            Offer storage offer = offers[claim.offerIndex];
-            if (offer.expirationDate < block.timestamp) continue; // allow to utilize those offers that haven't expired yet
-            uint amountLeft = claim.amountReserved - claim.amountUtilized;
-            amountToUtilizeActual = Math.min(amountToUtilize, amountLeft);
-            claim.amountUtilized += amountToUtilizeActual;
-            require(claim.amountUtilized <= claim.amountReserved, "UCUR");
-            offer.amountUtilized += amountToUtilizeActual;
-            require(offer.amountUtilized <= offer.amountReserved, "UOUR");
-            amountToUtilize -= amountToUtilizeActual;
-            _totalUtilized += amountToUtilizeActual * offer.guaranteedPrice;
-            if (amountToUtilize == 0) {
-                break;
-            }
+    function use(uint _protectionIndex) public {
+        Protection storage protection = protections[_protectionIndex];
+        require(protection.status == Status.Sold, "UPSS");
+        require(protection.buyer == msg.sender, "UPBS");
+        require(protection.expirationDate >= block.timestamp);
+        protection.status = Status.Used;
+        take(IERC20(base), protection.guaranteedAmount);
+        give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
+        emit Use(msg.sender, _protectionIndex);
+    }
+
+    function cancel(uint _protectionIndex) public {
+        Protection storage protection = protections[_protectionIndex];
+        require(protection.status == Status.Bought, "CPSB");
+        require(protection.buyer == msg.sender, "CPBS");
+        require(protection.placementDate + 21600 /* 6 hours * 60 minutes * 60 seconds */ > block.timestamp);
+        protection.status = Status.Cancelled;
+        // no need to require(protection.expirationDate >= block.timestamp) - always allow the user to cancel the protection that was not sold into
+        give(IERC20(quote), protection.guaranteedAmount * protection.protectionPrice);
+        emit Cancel(msg.sender, _protectionIndex);
+    }
+
+    function withdraw(uint _protectionIndex) public {
+        Protection storage protection = protections[_protectionIndex];
+        require(protection.status == Status.Sold || protection.status == Status.Used, "WPSU");
+        require(protection.seller == msg.sender, "WPSS");
+        require(protection.expirationDate < block.timestamp);
+        protection.status = Status.Withdrawn;
+        if (protection.status == Status.Sold) {
+            give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
         }
-        require(amountToUtilize == 0, "UATU"); // Can't utilize full amount
-        take(IERC20(base), _amountUtilized);
-        give(IERC20(quote), _totalUtilized);
-        emit Utilize(msg.sender, _amountUtilized);
-    }
-
-    function withdraw(uint _offerIndex) public {
-        withdrawInternal(_offerIndex);
-    }
-
-    function withdrawMany(uint[] calldata _offerIndexes) public {
-        for (uint i = 0; i < _offerIndexes.length; i++) {
-            withdrawInternal(_offerIndexes[i]);
+        if (protection.status == Status.Used) {
+            give(IERC20(base), protection.guaranteedAmount);
         }
-    }
-
-    function withdrawInternal(uint _offerIndex) internal {
-        Offer storage offer = offers[_offerIndex];
-        require(block.timestamp >= offer.expirationDate, "WEXP");
-        require(!offer.isWithdrawn, "WITH");
-        offer.isWithdrawn = true;
-        uint amountToWithdraw = offer.amountUtilized;
-        uint totalToWithdraw = (offer.amountProvided - offer.amountUtilized) * offer.guaranteedPrice;
-        uint premiumToWithdraw = (offer.amountProvided - offer.amountUtilized) * offer.protectionPrice;
-        give(IERC20(base), amountToWithdraw);
-        give(IERC20(quote), totalToWithdraw + premiumToWithdraw);
-        emit Withdraw(msg.sender, _offerIndex);
-        /**
-         * Delete the offer from contract storage?
-         * - And save gas
-         * - And stay under contract memory limit
-         * - But lose history
-         * - But need to maintain claimIndexes (to clear expired claims)
-         */
+        emit Withdraw(msg.sender, _protectionIndex);
     }
 
     /* Utility functions */
 
-    // NOTE: `give` and `take` functions will revert the transaction if the `token` burns on transfer (e.g. if `token` is deflationary)
-
     function give(IERC20 token, uint amount) internal {
-        uint balanceBefore = token.balanceOf(msg.sender);
-        token.transfer(msg.sender, amount);
-        uint balanceAfter = token.balanceOf(msg.sender);
-        require(balanceAfter == balanceBefore + amount, "GBAL");
+        move(token, address(this), msg.sender, amount);
     }
 
     function take(IERC20 token, uint amount) internal {
-        uint balanceBefore = token.balanceOf(address(this));
-        token.transfer(address(this), amount);
-        uint balanceAfter = token.balanceOf(address(this));
-        require(balanceAfter == balanceBefore + amount, "TBAL");
+        move(token, msg.sender, address(this), amount);
+    }
+
+    function move(IERC20 token, address sender, address recipient, uint amount) internal {
+        uint senderBalanceBefore = token.balanceOf(sender);
+        uint recipientBalanceBefore = token.balanceOf(recipient);
+        require(token.transferFrom(sender, recipient, amount), "MBAL");
+        uint senderBalanceAfter = token.balanceOf(sender);
+        uint recipientBalanceAfter = token.balanceOf(recipient);
+        require(senderBalanceAfter == senderBalanceBefore - amount);
+        require(recipientBalanceBefore == recipientBalanceBefore + amount);
     }
 
     /* Views */
 
-    function offersLength() public view returns (uint) {
-        return offers.length;
-    }
-
-    function claimsLength() public view returns (uint) {
-        return claims.length;
+    function protectionsLength() public view returns (uint) {
+        return protections.length;
     }
 
     /* Helpful functions that allow to withdraw token or ether if user sends them to MCP contract by mistake */

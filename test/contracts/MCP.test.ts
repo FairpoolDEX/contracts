@@ -128,4 +128,12 @@ describe("Market Crash Protection", async () => {
     // TODO: test that a pair with non-ERC20 quote address can't be deployed
   })
 
+
+  // TODO: must not allow to do anything with a cancelled protection
+  // TODO: must take a fee
+  // TODO: must allow the owner to withdraw the fees
+  // TODO: must not allow the stranger to withdraw the fees
+  // TODO: must not transfer the fee to the owner before the sale
+  // TODO: must return the fee if the protection is cancelled
+  // TODO: must not allow to buy/sell protection for toxic tokens that don't transfer the full amount (e.g. Salmonella)
 })
