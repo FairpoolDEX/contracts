@@ -16,8 +16,6 @@ Are you a trader? Learn more in our [guides for traders](#guides-for-traders).
 
 Are you a liquidity provider? Check out [guides for liquidity providers](#guides-for-liquidity-providers).
 
-Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feature.
-
 ## Contents
 
 1. [Overview](#overview)
@@ -29,7 +27,6 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
     1. [How to receive compensation](#how-to-receive-compensation)
 1. [Guides for liquidity providers](#guides-for-liquidity-providers)
     1. [How to make money](#how-to-make-money)
-    1. [How to earn Super-Yield](#how-to-earn-super-yield)
     1. [How to deposit](#how-to-deposit)
     1. [How to withdraw](#how-to-withdraw)
 
@@ -37,23 +34,35 @@ Also: **[Learn about Super-Yield](#how-to-earn-super-yield)** - our special feat
 
 **For traders:** Market Crash Protection guarantees the price at which you can sell the token. If the market price goes below the guaranteed price, you can sell the token to the Market Crash Protection contract at the guaranteed price & save money. Learn more in our [guides for traders](#guides-for-traders).
 
-**For liquidity providers:** Market Crash Protection provides 2 ways to make money: 1) by earning [premium](#premium) for selling protection to [traders](#trader) 2) by earning [super-yield](#super-yield) by forwarding your capital to Yearn vault. Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
+**For liquidity providers:** Market Crash Protection allows you to earn [premium](#premium) for selling protection to [traders](#trader). Learn about the risks & benefits in our [guides for liquidity providers](#guides-for-liquidity-providers).
 
 ## How it works
 
 ### General
 
-1. [Liquidity providers](#liquidity-provider) deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract), specifying the following parameters: [quote token amount](#quote-token-amount), [guaranteed price](#guaranteed-price), [premium price](#premium-price), [expiration date](#expiration-date).
-1. [Liquidity providers](#liquidity-provider) sell protection to [traders](#trader).
-1. [Liquidity providers](#liquidity-provider) wait until the [expiration date](#expiration-date):
-    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price):
-        1. Traders keep their [base tokens](#base-token).
-        1. Liquidity providers get initial [quote tokens](#quote-token) + [premium](#premium) + [Super-Yield](#super-yield).
-    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price):
-        1. Traders sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract).
-        1. Liquidity providers get traders' [base tokens](#base-token) + [premium](#premium) + [Super-Yield](#super-yield).
+Market Crash Protection is a smart contract that allows traders to buy protection from liquidity providers. It works like a specialized exchange for put options. It requires the trades to happen on-chain, but allows the orders to be placed off-chain (to enable scaling & minimize transaction costs).
 
-Traders can't sell [base tokens](#base-token) after the expiration date.
+1. [Liquidity provider](#liquidity-provider) places an order to sell protection:
+    1. Order is placed off-chain, so that LP doesn't need to pay for transaction.
+    1. Order is placed via REST API, so that LP can automate the process.
+1. [Trader](#trader) opens the application.
+1. [Trader](#trader) finds a suitable protection via UI.
+1. [Trader](#trader) sends a transaction to buy the protection.
+    1. Smart contract takes [premium](#premium) from trader.
+1. [Liquidity provider](#liquidity-provider) sends a transaction to sell the protection.
+    1. Smart contract takes [collateral](#collateral) from liquidity provider.
+    1. Smart contract gives [premium](#premium) to liquidity provider.
+1. Both wait until the [expiration date](#expiration-date):
+    1. If the token's [market price](#market-price) stays above the [guaranteed price](#guaranteed-price):
+        1. Trader keep his [base tokens](#base-token).
+        1. Liquidity provider withdraws his [quote tokens](#quote-token) from MCP contract.
+    1. If the token's [market price](#market-price) goes below the [guaranteed price](#guaranteed-price):
+        1. Trader sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract).
+        1. Liquidity provider withdraws [base tokens](#base-token) from MCP contract.
+
+[Trader](#trader) can cancel his order & get his money back after certain timeout (by default: 6 hours), but only if the [liquidity provider](#liquidity-provider) doesn't sell protection before the trader cancels. 
+
+Trader can't sell [base tokens](#base-token) after the expiration date.
 
 ### Developer example
 
@@ -167,9 +176,9 @@ That's it! Once the transaction is confirmed, you will receive the compensation 
 
 ### How to make money
 
-You can make money with [Market Crash Protection contracts](#market-crash-protection-contract). They allow you to sell protection to traders and also earn [Super-Yield](#super-yield).
+You can make money with [Market Crash Protection contracts](#market-crash-protection-contract) by selling protection to traders.
 
-Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. When you put USDT, you can specify the [premium price](#premium-price) for each protection unit. Each protection unit will give the trader the right to sell 1 LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
+Suppose you believe that LINK price will not crash below 10 USDT on or before 31 Aug 2021. You can put USDT into an [MCP contract](#market-crash-protection-contract) that provides protection for LINK-USDT pair with a guaranteed price of 10 USDT and expiration date of 31 Aug 2021. When you put USDT, you can specify the [protection price](#protection-price) for each protection unit. Each protection unit will give the trader the right to sell 1 LINK into [MCP contract](#market-crash-protection-contract) at a guaranteed price of 10 USDT on or before 31 Aug 2021.
 
 In addition, you can make more money by enabling [Super-Yield](#super-yield). It allows you to forward liquidity to [Yearn yVaults](#yearn-yvault), so that your capital continues to earn yield. Guide: [How to earn Super-Yield](#how-to-earn-super-yield).
 
@@ -178,7 +187,7 @@ Here is a full scenario:
 1. You put money into LINK-USDT contract:
    1. [Quote amount](#quote-token-amount): 20000 USDT.
    1. [Guaranteed price](#guaranteed-price): 10 USDT per 1 LINK (how much you will give for 1 token when trader sells tokens).
-   1. [Premium price](#premium-price): 1 USDT per 1 LINK (how much you will receive for 1 token when trader buys protection - no matter whether trader sells in future or not).
+   1. [Protection price](#protection-price): 1 USDT per 1 LINK (how much you will receive for 1 token when trader buys protection - no matter whether trader sells in future or not).
    1. [Expiration date](#expiration-date): 31 Aug 2021 (note: your money are locked until this date, but you can use [Super-Yield](#super-yield) to continue earning during that time).
 1. You receive 2000 protection units (20000 USDT deposit / 10.0000 [guaranteed price](#guaranteed-price)).
     1. Each protection unit gives the right to sell 1 LINK for 10 USDT on or before 31 Aug 2021.
@@ -250,57 +259,7 @@ Market Crash Protection contract (MCP contract) is a smart contract with the fol
 * Allows traders to receive compensation if the market price goes below the [guaranteed price](#guaranteed-price).
 * Allows liquidity providers to receive premiums by selling protection to traders.
 
-Market Crash Protection contract has the following methods:
-
-* [Initialize](#initialize-method)
-* [Deposit](#deposit-method)
-* [Withdraw](#withdraw-method)
-* [Sell](#sell-method)
-
-### Initialize method
-
-Initialize method allows the [developer](#developer) to set the contract parameters.
-
-Parameters:
-
-* [Base token address](#base-token-address)
-* [Quote token address](#quote-token-address)
-* [Guaranteed price](#guaranteed-price)
-* [Yearn yVault address](#yearn-yvault-address)
-
-### Deposit method
-
-Deposit method allows the [liquidity provider](#liquidity-provider) to put the [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
-
-Parameters:
-
-* [Quote token amount](#quote-token-amount)
-
-Effects:
-
-* Deposits [quote token](#quote-token)
-
-Notes:
-
-* Anybody can call the deposit method (no permission needed to become a liquidity provider).
-
-### Withdraw method
-
-Withdraw method allows the [liquidity provider](#liquidity-provider) to take the [base tokens](#base-token) and the remaining [quote tokens](#quote-token) out of the [MCP contract](#market-crash-protection-contract).
-
-The amount of base & quote tokens is calculated separately for each liquidity provider, depending on the amount of quote tokens that he / she initially deposited. See [How to deposit](#how-to-deposit), [How to withdraw](#how-to-withdraw).
-
-Notes:
-
-* Withdraw method can only be called after the [expiration date](#expiration-date).
-
-### Sell method
-
-Sell method allows the [trader](#trader) to exchange [base tokens](#base-token) for [quote tokens](#quote-token) at a [guaranteed price](#guaranteed-price).
-
-Notes:
-
-* Sell method can only be called before the [expiration date](#expiration-date).
+Reference implementation: [MCP.sol](./contracts/MCP.sol)
 
 ### Developer
 
@@ -367,9 +326,9 @@ Notes:
 * A single [MCP contract](#market-crash-protection-contract) can specify a single guaranteed price.
 * It is possible to deploy multiple [MCP contracts](#market-crash-protection-contract) for different guaranteed prices.
 
-### Premium price
+### Protection price
 
-Premium price is a decimal number that represents the price at which you can buy the protection for 1 unit of [base token](#base-token) from the [MCP contract](#market-crash-protection-contract). See "[How to save money](#how-to-save-money)".
+Protection price is a decimal number that represents the price at which you can buy the protection for 1 unit of [base token](#base-token) from the [MCP contract](#market-crash-protection-contract). See "[How to save money](#how-to-save-money)".
 
 Examples:
 
@@ -379,7 +338,19 @@ Examples:
 
 Notes:
 
-* Liquidity providers set the premium price when they deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
+* Liquidity providers set the protection price when they deposit [quote tokens](#quote-token) into the [MCP contract](#market-crash-protection-contract).
+
+### Guaranteed amount
+
+Guaranteed amount is a decimal number that represents the amount of [base tokens](#base-token) under protection.
+
+When the trader uses protection, he sells "guaranteed amount" of base tokens.
+
+Examples:
+
+* 100.0
+* 4000.0
+* 7500.145
 
 ### Expiration date
 
@@ -394,7 +365,7 @@ Premium is money earned by liquidity providers by selling protection to traders.
 
 Premium is the first source of income for liquidity providers ([Super-Yield](#super-yield) is the second source).
 
-Premium is calculated as [premium price](#premium-price) multiplied by amount of protection that was sold.
+Premium is calculated as [guaranteed amount](#guaranteed-amount) multiplied by [protection price](#protection-price).
 
 Notes:
 
@@ -402,16 +373,17 @@ Notes:
 * Liquidity providers can change the protection price.
 * The actual price of protection will be determined by market forces. If the traders are expecting a market crash, they will buy protection at a relatively higher price (compared to a situation where they are not expecting a market crash).
 
-### Super-Yield
+### Collateral
 
-Super-Yield is extra money earned by liquidity providers in addition to [premium](#premium).
+Collateral is money deposited by liquidity providers into MCP that is used to pay the [trader](#trader) if he decides to use the protection.
 
-Liquidity providers can earn Super-Yield by forwarding the funds from [MCP contract](#market-crash-protection-contract) to [Yearn yVault](#yearn-yvault). They can withdraw the funds back to MCP contract anytime. Alternatively, the MCP contract will withdraw from Yearn automatically when the [traders](#trader) decide to sell the [base token](#base-token), and the contract needs the [quote token](#quote-token) to pay the traders.
+Collateral is calculated as [guaranteed amount](#guaranteed-amount) multiplied by [guaranteed price](#guaranteed-price).
 
 Notes:
 
-* Developer sets the yVault address at the contract deploy time.
-* Liquidity providers keep 100% of the yield.
+* Liquidity providers can set any protection price.
+* Liquidity providers can change the protection price.
+* The actual price of protection will be determined by market forces. If the traders are expecting a market crash, they will buy protection at a relatively higher price (compared to a situation where they are not expecting a market crash).
 
 ### Base token
 
