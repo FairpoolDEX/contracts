@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 /* mythx-disable SWC-103 */
 /* mythx-disable SWC-116 */
 
+// FIXME: check against https://swcregistry.io/
 contract MCP is Ownable {
     // NOTE: This contract uses Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
 
@@ -26,9 +27,9 @@ contract MCP is Ownable {
         Status status;
     }
 
-    address public base; // SHLD, BULL, LINK, ...
-    address public quote; // USDT, WETH, WBTC, ...
-    uint public feeNumerator; // in basis points (0.0001, or 1 / 10000)
+    address public immutable base; // SHLD, BULL, LINK, ...
+    address public immutable quote; // USDT, WETH, WBTC, ...
+    uint public immutable feeNumerator; // in basis points (0.0001, or 1 / 10000)
     // solhint-disable-next-line const-name-snakecase
     uint public constant feeDenominator = 10000;
     Protection[] public protections;
