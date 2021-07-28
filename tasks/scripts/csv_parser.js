@@ -12,6 +12,9 @@ const VESTING_TYPES = {
   "Development": "4",
   "Marketing": "5",
   "General Reserve": "7",
+  "Liquidity provisioning": "",
+  "Liquidity mining": "",
+  "Rewards": "",
   "Public": "",
 }
 

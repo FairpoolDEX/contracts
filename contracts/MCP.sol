@@ -29,7 +29,7 @@ contract MCP is Ownable {
 
     address public immutable base; // SHLD, BULL, LINK, ...
     address public immutable quote; // USDT, WETH, WBTC, ...
-    uint public immutable feeNumerator; // in basis points (0.0001, or 1 / 10000)
+    uint public immutable feeNumerator; // in basis points (feeMultiplier == feeNumerator / feeDenominator)
     // solhint-disable-next-line const-name-snakecase
     uint public constant feeDenominator = 10000;
     Protection[] public protections;
@@ -51,7 +51,7 @@ contract MCP is Ownable {
     }
 
     function buy(address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _protectionPrice) public {
-        require(_expirationDate >= block.timestamp, "PEXP");
+        require(_expirationDate > block.timestamp, "PEXP");
 //        protectionsByBuyer[msg.sender].push(protections.length - 1);
         // TODO: Should the user pay in base or quote currency?
         uint premium = _guaranteedAmount * _protectionPrice;

@@ -6,11 +6,11 @@ import { MaxUint256 } from "./all.helpers"
 
 type timeTravelCallback = () => Promise<void>;
 
-export async function timeTravel(callback: timeTravelCallback, newBlockTimestamp: number): Promise<void> {
+export async function timeTravel(callback: timeTravelCallback, nextBlockTimestamp: number): Promise<void> {
   // save snapshot to rollback after calling callback
   const snapshot = await ethers.provider.send("evm_snapshot", [])
   // set new block timestamp
-  await ethers.provider.send("evm_setNextBlockTimestamp", [newBlockTimestamp])
+  await setNextBlockTimestamp(nextBlockTimestamp)
   // mine new block to really shift time
   await ethers.provider.send("evm_mine", [])
   await callback().finally(() => {
@@ -34,6 +34,10 @@ export async function getLatestBlock() {
 
 export async function getLatestBlockTimestamp() {
   return (await getLatestBlock()).timestamp
+}
+
+export async function setNextBlockTimestamp(timestamp: number) {
+  return ethers.provider.send("evm_setNextBlockTimestamp", [timestamp])
 }
 
 export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {

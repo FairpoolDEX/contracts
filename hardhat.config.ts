@@ -44,6 +44,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
+      initialDate: new Date(0).toISOString(),
       gasMultiplier: 1.2,
       // forking: {
       //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,

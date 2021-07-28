@@ -7,6 +7,10 @@ export type Addresses = Address[];
 
 export type Amount = BigNumber
 
+export type Price = BigNumber;
+
+export type Timestamp = number;
+
 export type BalanceMap = { [index: string]: Amount }
 
 export type Ethers = typeof ethers & HardhatEthersHelpers;

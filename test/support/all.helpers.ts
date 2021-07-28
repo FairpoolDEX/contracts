@@ -4,6 +4,9 @@ import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
 import WETH9JSON from "@uniswap/v2-periphery/build/WETH9.json"
 import UniswapV2Router02JSON from "@uniswap/v2-periphery/build/UniswapV2Router02.json"
 import { Ethers } from "../../types"
+import { toInteger } from "lodash"
+import { DateTime } from "luxon"
+import { DurationInput } from "luxon/src/duration"
 
 export const toTokenAmount = (value: string | number): BigNumber => utils.parseUnits(typeof value === "number" ? value.toFixed(18) : value, "18")
 
@@ -11,9 +14,11 @@ export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.fo
 
 export const toTokenAmountString = (value: string | number): string => toTokenAmount(value).toString()
 
-export const days: number = 24 * 60 * 60
-
 export const MaxUint256 = BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+
+export function dateAdd(date: Date, duration: DurationInput) {
+  return DateTime.fromJSDate(date).plus(duration).toJSDate()
+}
 
 export function chunk(arr: any[], size: number): Array<Array<any>> {
   const result = []
@@ -47,3 +52,15 @@ export async function mineBlocks(count: number, ethers: Ethers): Promise<void> {
     }
   }
 }
+
+export const seconds = 1000
+
+export const minutes = 60 * seconds
+
+export const hours = 60 * minutes
+
+export const days = 24 * hours
+
+export const months = 30 * days // nominal, not calendar
+
+export const years = 12 * months
