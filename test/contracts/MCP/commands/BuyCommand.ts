@@ -16,10 +16,10 @@ export class BuyCommand extends MCPCommand implements fc.AsyncCommand<MCPBlockch
   }
 
   async run(model: MCPBlockchainModel, real: MCPBlockchainReal) {
-    await this.expectTxes(
-      model.buy(this.buyer, this.seller, this.guaranteedAmount, this.guaranteedPrice, this.expirationDate, this.protectionPrice),
-      real.mcp.attach(this.buyer).buy(this.seller, this.guaranteedAmount, this.guaranteedPrice, dateToTimestampSeconds(this.expirationDate), this.protectionPrice),
-    )
+    // await this.expectTxes(
+      // model.buy(this.buyer, this.seller, this.guaranteedAmount, this.guaranteedPrice, this.expirationDate, this.protectionPrice),
+      // real.mcp.attach(this.buyer).buy(this.seller, this.guaranteedAmount, this.guaranteedPrice, dateToTimestampSeconds(this.expirationDate), this.protectionPrice),
+    // )
     expect(model.mcp.protections.length).to.equal(await real.mcp.protectionsLength())
   }
 
