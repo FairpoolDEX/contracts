@@ -51,9 +51,9 @@ contract MCP is Ownable {
     }
 
     function buy(address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _protectionPrice) public {
-        require(_expirationDate > block.timestamp, "PEXP");
+        require(_expirationDate > block.timestamp, "BEXP");
 //        protectionsByBuyer[msg.sender].push(protections.length - 1);
-        // TODO: Should the user pay in base or quote currency?
+        // TODO: Should the user pay in base or quote currency? (add `address feeToken` parameter?)
         uint premium = _guaranteedAmount * _protectionPrice;
         uint fee = premium * feeNumerator / feeDenominator;
         take(IERC20(quote), premium + fee);
@@ -81,7 +81,7 @@ contract MCP is Ownable {
         uint premium = protection.guaranteedAmount * protection.protectionPrice;
         uint fee = premium * feeNumerator / feeDenominator;
         take(IERC20(quote), coverage - premium);
-        move(IERC20(quote), address(this), owner(), fee);
+        xfer(IERC20(quote), owner(), fee);
         emit Sell(msg.sender, _protectionIndex);
     }
 
@@ -130,6 +130,10 @@ contract MCP is Ownable {
 
     function take(IERC20 token, uint amount) internal {
         move(token, msg.sender, address(this), amount);
+    }
+
+    function xfer(IERC20 token, address recipient, uint amount) internal {
+        require(token.transfer(recipient, amount), "XFER");
     }
 
     function move(IERC20 token, address sender, address recipient, uint amount) internal {

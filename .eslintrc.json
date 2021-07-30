@@ -32,7 +32,8 @@
         "functions": "only-multiline"
       }
     ],
-    "@typescript-eslint/no-empty-function": ["warn"],
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-empty-function": "warn",
     "@typescript-eslint/explicit-module-boundary-types": "off"
   }
 }

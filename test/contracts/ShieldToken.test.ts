@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle"
 import { BigNumber } from "ethers"
 import chai from "chai"
 import { toTokenAmount } from "../support/all.helpers"
-import { timeTravel, skipBlocks } from "../support/test.helpers"
+import { skipBlocks, timeTravel } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain"
 
 import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "../support/ShieldToken.helpers"
@@ -171,16 +171,14 @@ describe("ShieldToken", async () => {
     })
 
     it("shouldn't be able to change release time by non owner", async () => {
-      const newReleaseTime = Math.floor(new Date("2022.01.01 15:00:00 GMT").getTime() / 1000)
       await expect(
-        token.connect(nonOwner).setReleaseTime(newReleaseTime),
+        token.connect(nonOwner).setReleaseTime(Math.floor(new Date("2022.01.01 15:00:00 GMT").getTime() / 1000)),
       ).to.be.revertedWith("caller is not the owner")
     })
 
-    it("shouldn't be able to change release time from past", async () => {
-      const badReleaseTime = Math.floor(new Date().getTime() / 1000) - 3600
+    it.only("shouldn't be able to change release time from past", async () => {
       await expect(
-        token.setReleaseTime(badReleaseTime),
+        token.setReleaseTime(1),
       ).to.be.revertedWith("Release time should be in future")
     })
 
