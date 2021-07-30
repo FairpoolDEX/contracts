@@ -20,7 +20,7 @@ export function dateAdd(date: Date, duration: DurationInput) {
   return DateTime.fromJSDate(date).plus(duration).toJSDate()
 }
 
-export function chunk(arr: any[], size: number): Array<Array<any>> {
+export function chunk<T>(arr: T[], size: number): T[][] {
   const result = []
   for (let i = 0; i < arr.length; i += size) {
     result.push(arr.slice(i, i + size))

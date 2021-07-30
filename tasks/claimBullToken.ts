@@ -5,13 +5,14 @@ import neatcsv from "neat-csv"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
 import type { Addresses, Ethers } from "../types"
+import { Contract } from "ethers"
 
 export async function parseAddresses(data: Buffer | string): Promise<Addresses> {
   const rows = await neatcsv(data)
   return uniq(rows.map((row) => row["Address"].toLowerCase()))
 }
 
-export async function claimBullToken(token: any, addresses: Addresses, ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
+export async function claimBullToken(token: Contract, addresses: Addresses, ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
   if (addresses.length > 300) {
     throw new Error(`Can't claim if addresses array is longer than 300 elements`)
   }

@@ -101,12 +101,12 @@ xdescribe("rollbackBullToken", async () => {
       await timeTravel(async () => {
         await bullTokenWithStranger.claim()
         const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract)
-        await sell(bullTokenWithStranger, pair)
-        await sell(bullTokenWithAlice, pair)
-        await buy(bullTokenWithBob, pair)
-        await sell(bullTokenWithAlice, pair)
-        await revert(bullTokenWithOwner, pair, airdropSecondTimestamp)
-        await sync(pair)
+        // await sell(bullTokenWithStranger, pair)
+        // await sell(bullTokenWithAlice, pair)
+        // await buy(bullTokenWithBob, pair)
+        // await sell(bullTokenWithAlice, pair)
+        // await revert(bullTokenWithOwner, pair, airdropSecondTimestamp)
+        // await sync(pair)
         // expect(newBalances).deep.equal(oldBalances)
         // expect(canBuy(bullTokenWithStranger, pair))
         // expect(canSell(bullTokenWithStranger, pair))
@@ -123,18 +123,18 @@ async function deployUniswapPair(uniswapV2Factory: Contract, token0: Contract, t
   return await ethers.getContractAt(UniswapV2PairJSON.abi, pairAddress)
 }
 
-async function sell(token: BullToken, pair: Contract) {
-
-}
-
-async function buy(token: BullToken, pair: Contract) {
-
-}
-
-async function revert(token: BullToken, pair: Contract, timestamp: number) {
-
-}
-
-async function sync(pair: Contract) {
-
-}
+// async function sell(token: BullToken, pair: Contract) {
+//
+// }
+//
+// async function buy(token: BullToken, pair: Contract) {
+//
+// }
+//
+// async function revert(token: BullToken, pair: Contract, timestamp: number) {
+//
+// }
+//
+// async function sync(pair: Contract) {
+//
+// }

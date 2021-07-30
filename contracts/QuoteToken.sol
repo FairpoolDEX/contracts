@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 contract QuoteToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
-    function initialize(address[] calldata recipients, uint[] calldata amounts) public initializer {
+    function initialize(uint totalSupply, address[] calldata recipients, uint[] calldata amounts) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -18,7 +18,7 @@ contract QuoteToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         __Pausable_init_unchained();
         __ERC20Pausable_init_unchained();
 
-        _mint(owner(), 1_000_000 * 10 ** 18);
+        _mint(owner(), totalSupply);
 
         require(recipients.length == amounts.length, "IRA");
         for (uint i = 0; i < recipients.length; i++) {
