@@ -18,25 +18,24 @@ contract MCP is Ownable {
     enum Status { Created, Bought, Sold, Used, Cancelled, Withdrawn }
 
     struct Protection {
+        address base; // SHLD, BULL, LINK, ...
+        address quote; // USDT, WETH, WBTC, ...
         address buyer;
         address seller;
         uint guaranteedAmount;
         uint guaranteedPrice;
-        uint expirationDate; // UNIX timestamp
-        uint protectionPrice;
-        uint creationDate;
+        uint expirationDate; // UNIX timestamp in seconds
+        uint premium;
+        uint fee;
+        bool payInBase; // true - pay in base, false - pay in quote
+        uint creationDate; // UNIX timestamp in seconds
         Status status;
     }
 
-    address public immutable base; // SHLD, BULL, LINK, ...
-    address public immutable quote; // USDT, WETH, WBTC, ...
-    uint public immutable feeNumerator; // in basis points (feeMultiplier == feeNumerator / feeDenominator)
+    uint public feeDivisorMin;
     // solhint-disable-next-line const-name-snakecase
-    uint public constant feeDenominator = 10000;
     uint public constant cancellationTimeout = 6 /* hours */ * 60 /* minutes */ * 60 /* seconds */;
     Protection[] public protections;
-//    mapping(address => uint[]) public protectionsByBuyer;
-//    mapping(address => uint[]) public protectionsBySeller;
 
     event Buy(address indexed sender, uint protectionIndex);
     event Sell(address indexed sender, uint protectionIndex);
@@ -44,28 +43,31 @@ contract MCP is Ownable {
     event Cancel(address indexed sender, uint protectionIndex);
     event Withdraw(address indexed sender, uint protectionIndex);
 
-    constructor(address _base, address _quote, uint _feeNumerator) {
-        // FIXME: Check that base & quote are ERC20 tokens
-        // FIXME: Implement automatic ETH -> WETH conversion like on Uniswap
-        base = _base;
-        quote = _quote;
-        feeNumerator = _feeNumerator;
+    constructor(uint _feeDivisorMin) {
+        feeDivisorMin = _feeDivisorMin;
     }
 
-    function buy(address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _protectionPrice) public {
+    function setFeeDivisorMin(uint _feeDivisorMin) public onlyOwner {
+        require(_feeDivisorMin > 0, "SFSM");
+        feeDivisorMin = _feeDivisorMin;
+    }
+
+    function buy(address _base, address _quote, address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _premium, uint _fee, bool _payInBase) public {
         require(_expirationDate > block.timestamp, "BEXP");
-//        protectionsByBuyer[msg.sender].push(protections.length - 1);
-        // TODO: Should the user pay in base or quote currency? (add `address feeToken` parameter?)
-        uint premium = _guaranteedAmount * _protectionPrice;
-        uint fee = premium * feeNumerator / feeDenominator;
-        take(IERC20(quote), premium + fee);
+        require(_premium > 0, "BPGZ");
+        require(_fee > (_premium / feeDivisorMin), "BFSM");
+        take(IERC20(_payInBase ? _base : _quote), _premium + _fee);
         protections.push(Protection({
+            base: _base,
+            quote: _quote,
             buyer: msg.sender,
             seller: _seller,
             guaranteedAmount: _guaranteedAmount,
             guaranteedPrice: _guaranteedPrice,
             expirationDate: _expirationDate,
-            protectionPrice: _protectionPrice,
+            premium: _premium,
+            fee: _fee,
+            payInBase: _payInBase,
             creationDate: block.timestamp,
             status: Status.Bought
         }));
@@ -79,11 +81,15 @@ contract MCP is Ownable {
         require(protection.expirationDate >= block.timestamp, "SPET");
         protection.seller = msg.sender;
         protection.status = Status.Sold;
-        uint coverage = protection.guaranteedAmount * protection.guaranteedPrice;
-        uint premium = protection.guaranteedAmount * protection.protectionPrice;
-        uint fee = premium * feeNumerator / feeDenominator;
-        take(IERC20(quote), coverage - premium);
-        xfer(IERC20(quote), owner(), fee);
+        if (protection.payInBase) {
+            take(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice);
+            give(IERC20(protection.base), protection.premium);
+            xfer(IERC20(protection.base), owner(), protection.fee);
+        } else {
+            // optimize paying in quote by subtracting premium from coverage
+            take(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice - protection.premium);
+            xfer(IERC20(protection.quote), owner(), protection.fee);
+        }
         emit Sell(msg.sender, _protectionIndex);
     }
 
@@ -93,8 +99,8 @@ contract MCP is Ownable {
         require(protection.buyer == msg.sender, "UPBS");
         require(protection.expirationDate >= block.timestamp, "UPET");
         protection.status = Status.Used;
-        take(IERC20(base), protection.guaranteedAmount);
-        give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
+        take(IERC20(protection.base), protection.guaranteedAmount);
+        give(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice);
         emit Use(msg.sender, _protectionIndex);
     }
 
@@ -105,9 +111,7 @@ contract MCP is Ownable {
         require(protection.creationDate + cancellationTimeout > block.timestamp, "CPCT");
         protection.status = Status.Cancelled;
         // no need to require(protection.expirationDate >= block.timestamp) - always allow the user to cancel the protection that was not sold into
-        uint premium = protection.guaranteedAmount * protection.protectionPrice;
-        uint fee = premium * feeNumerator / feeDenominator;
-        give(IERC20(quote), premium + fee);
+        give(IERC20(protection.payInBase ? protection.base : protection.quote), protection.premium + protection.fee);
         emit Cancel(msg.sender, _protectionIndex);
     }
 
@@ -118,12 +122,12 @@ contract MCP is Ownable {
         if (protection.status == Status.Sold) {
             require(protection.expirationDate < block.timestamp, "WPET");
             protection.status = Status.Withdrawn;
-            give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
+            give(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice);
             emit Withdraw(msg.sender, _protectionIndex);
         } else if (protection.status == Status.Used) {
             // no require(protection.expirationDate < block.timestamp, "WPET"); - allow to withdraw early if protection has been used
             protection.status = Status.Withdrawn;
-            give(IERC20(base), protection.guaranteedAmount);
+            give(IERC20(protection.base), protection.guaranteedAmount);
             emit Withdraw(msg.sender, _protectionIndex);
         } else {
             revert("WPRV");
