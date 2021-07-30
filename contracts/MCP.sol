@@ -32,6 +32,7 @@ contract MCP is Ownable {
     uint public immutable feeNumerator; // in basis points (feeMultiplier == feeNumerator / feeDenominator)
     // solhint-disable-next-line const-name-snakecase
     uint public constant feeDenominator = 10000;
+    uint public constant cancellationTimeout = 6 /* hours */ * 60 /* minutes */ * 60 /* seconds */;
     Protection[] public protections;
 //    mapping(address => uint[]) public protectionsByBuyer;
 //    mapping(address => uint[]) public protectionsBySeller;
@@ -100,10 +101,12 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Bought, "CPSB");
         require(protection.buyer == msg.sender, "CPBS");
-        require(protection.creationDate + 21600 /* 6 hours * 60 minutes * 60 seconds */ > block.timestamp, "CPCT");
+        require(protection.creationDate + cancellationTimeout > block.timestamp, "CPCT");
         protection.status = Status.Cancelled;
         // no need to require(protection.expirationDate >= block.timestamp) - always allow the user to cancel the protection that was not sold into
-        give(IERC20(quote), protection.guaranteedAmount * protection.protectionPrice);
+        uint premium = protection.guaranteedAmount * protection.protectionPrice;
+        uint fee = premium * feeNumerator / feeDenominator;
+        give(IERC20(quote), premium + fee);
         emit Cancel(msg.sender, _protectionIndex);
     }
 
@@ -124,16 +127,16 @@ contract MCP is Ownable {
 
     /* Utility functions */
 
+    function xfer(IERC20 token, address recipient, uint amount) internal {
+        require(token.transfer(recipient, amount), "XFER");
+    }
+
     function give(IERC20 token, uint amount) internal {
-        move(token, address(this), msg.sender, amount);
+        require(token.transfer(msg.sender, amount), "GIVE");
     }
 
     function take(IERC20 token, uint amount) internal {
         move(token, msg.sender, address(this), amount);
-    }
-
-    function xfer(IERC20 token, address recipient, uint amount) internal {
-        require(token.transfer(recipient, amount), "XFER");
     }
 
     function move(IERC20 token, address sender, address recipient, uint amount) internal {

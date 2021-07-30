@@ -43,11 +43,11 @@ describe("Market Crash Protection", async () => {
    */
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
-  let mark: SignerWithAddress
-  let bob: SignerWithAddress
-  let sam: SignerWithAddress
-  let bella: SignerWithAddress
-  let sally: SignerWithAddress
+  let mark: SignerWithAddress // MCP contract owner
+  let bob: SignerWithAddress // buyer
+  let sam: SignerWithAddress // seller
+  let bella: SignerWithAddress // buyer
+  let sally: SignerWithAddress // seller
 
   let base: BaseToken
   let baseAsOwner: BaseToken
@@ -168,11 +168,11 @@ describe("Market Crash Protection", async () => {
     })
 
     it("must not allow to buy if expiration date is less than block timestamp", async () => {
-      expect(mcpAsBob.buy(seller, guaranteedAmount, guaranteedPrice, dateToTimestampSeconds(now) - 1, protectionPrice)).to.be.revertedWith("BEXP")
+      await expect(mcpAsBob.buy(seller, guaranteedAmount, guaranteedPrice, dateToTimestampSeconds(now) - 1, protectionPrice)).to.be.revertedWith("BEXP")
     })
 
     it("must not allow to buy if buyer doesn't have enough balance", async () => {
-      expect(mcpAsBob.buy(seller, guaranteedAmount, guaranteedPrice, expirationDate, protectionPrice + initialQuoteAmount)).to.be.revertedWith("transfer amount exceeds balance")
+      await expect(mcpAsBob.buy(seller, guaranteedAmount, guaranteedPrice, expirationDate, protectionPrice + initialQuoteAmount)).to.be.revertedWith("transfer amount exceeds balance")
     })
   })
 
@@ -191,38 +191,47 @@ describe("Market Crash Protection", async () => {
         [mark, base, initialBaseAmount],
         [mark, quote, initialQuoteAmount + fee],
       ])
-      // expect(await baseAsOwner.balanceOf(bob.address)).to.equal(initialBaseAmount)
-      // expect(await quoteAsOwner.balanceOf(bob.address)).to.equal(initialQuoteAmount - premium - fee)
-      // expect(await baseAsOwner.balanceOf(sam.address)).to.equal(initialBaseAmount)
-      // expect(await quoteAsOwner.balanceOf(sam.address)).to.equal(initialQuoteAmount)
     })
 
     it("must not allow to sell if seller doesn't have enough balance", async () => {
-
+      await quoteAsSam.transfer(mark.address, await quoteAsSam.balanceOf(sam.address))
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("transfer amount exceeds balance")
     })
 
     it("must not allow to sell if seller address is different from specified address", async () => {
-      expect(mcpAsMark.sell(protectionIndex)).to.be.revertedWith("SPSS")
+      await expect(mcpAsMark.sell(protectionIndex)).to.be.revertedWith("SPSS")
+    })
+
+    it("must not allow to sell if protection has expired", async () => {
+      await setNextBlockTimestamp(expirationDate + 1)
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("SPET")
     })
 
     it("must not allow to sell if protection does not exist", async () => {
-
+      await expect(mcpAsSam.sell(protectionIndex + 1)).to.be.revertedWith("revert")
     })
 
     it("must not allow to sell if protection is cancelled", async () => {
-
+      await mcpAsBob.cancel(protectionIndex)
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("SPSB")
     })
 
     it("must not allow to sell if protection is sold", async () => {
-
+      await mcpAsSam.sell(protectionIndex)
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("SPSB")
     })
 
     it("must not allow to sell if protection is used", async () => {
-
+      await mcpAsSam.sell(protectionIndex)
+      await mcpAsBob.use(protectionIndex)
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("SPSB")
     })
 
     it("must not allow to sell if protection is withdrawn", async () => {
-
+      await mcpAsSam.sell(protectionIndex)
+      await setNextBlockTimestamp(expirationDate + 1)
+      await mcpAsSam.withdraw(protectionIndex)
+      await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith("SPSB")
     })
   })
   xit("must not allow the provider to offer protection if he doesn't have enough quote asset", async () => {
