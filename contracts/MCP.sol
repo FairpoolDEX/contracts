@@ -11,7 +11,8 @@ import "hardhat/console.sol";
 
 // FIXME: check against https://swcregistry.io/
 contract MCP is Ownable {
-    // NOTE: This contract uses Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
+    // NOTE: Contract functions use Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
+    // NOTE: Contract functions protect against reentrancy by setting protection status before calling external contracts
 
     // NOTE: Created status is needed because enum vars are initialized to their first element; we don't want to initialize status to Bought because we need to check that the struct exists (which is done by checking that status has been set to a non-default value)
     enum Status { Created, Bought, Sold, Used, Cancelled, Withdrawn }
@@ -114,15 +115,19 @@ contract MCP is Ownable {
         Protection storage protection = protections[_protectionIndex];
         require(protection.status == Status.Sold || protection.status == Status.Used, "WPSU");
         require(protection.seller == msg.sender, "WPSS");
-        require(protection.expirationDate < block.timestamp, "WPET");
-        protection.status = Status.Withdrawn;
         if (protection.status == Status.Sold) {
+            require(protection.expirationDate < block.timestamp, "WPET");
+            protection.status = Status.Withdrawn;
             give(IERC20(quote), protection.guaranteedAmount * protection.guaranteedPrice);
-        }
-        if (protection.status == Status.Used) {
+            emit Withdraw(msg.sender, _protectionIndex);
+        } else if (protection.status == Status.Used) {
+            // no require(protection.expirationDate < block.timestamp, "WPET"); - allow to withdraw early if protection has been used
+            protection.status = Status.Withdrawn;
             give(IERC20(base), protection.guaranteedAmount);
+            emit Withdraw(msg.sender, _protectionIndex);
+        } else {
+            revert("WPRV");
         }
-        emit Withdraw(msg.sender, _protectionIndex);
     }
 
     /* Utility functions */

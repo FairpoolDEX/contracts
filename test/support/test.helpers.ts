@@ -53,8 +53,8 @@ export async function setNextBlockTimestamp(timestamp: number) {
 }
 
 export async function expectBalances(balances: [SignerWithAddress, Contract, BigNumberish][]) {
-  return Promise.all(balances.map(async ([signer, token, amount]) => {
-    expect(await token.balanceOf(signer.address)).to.equal(amount)
+  return Promise.all(balances.map(async ([signer, token, amount], index: number) => {
+    expect(await token.balanceOf(signer.address), `index ${index}`).to.equal(amount)
   }))
 }
 
