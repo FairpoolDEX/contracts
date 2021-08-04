@@ -7,7 +7,7 @@ import { timeTravel } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain"
 import { BullToken } from "../../typechain"
 
-import { SHIELD_ALLOCATIONS, SHIELD_RELEASE_TIME } from "../support/ShieldToken.helpers"
+import { SHIELD_ALLOCATIONS, shieldReleaseTime } from "../support/ShieldToken.helpers"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateNumerator, burnRateDenominator, claims, getClaims } from "../support/BullToken.helpers"
 
 const claimers = Object.keys(claims)
@@ -49,7 +49,7 @@ describe("BullToken", async () => {
     ownerAddress = await owner.getAddress()
 
     const shieldTokenFactory = await ethers.getContractFactory("ShieldToken")
-    shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [SHIELD_RELEASE_TIME])) as unknown as ShieldToken
+    shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [shieldReleaseTime])) as unknown as ShieldToken
     await shieldTokenWithOwner.deployed()
     shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)
 

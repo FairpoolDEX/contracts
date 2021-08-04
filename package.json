@@ -33,6 +33,7 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "csv-parser": "^3.0.0",
+    "decimal.js": "^10.3.1",
     "dotenv": "^8.6.0",
     "eslint-plugin-react": "^7.24.0",
     "ethereum-waffle": "^3.2.1",

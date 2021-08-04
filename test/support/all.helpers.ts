@@ -1,14 +1,20 @@
-import { utils, BigNumber, Contract, ContractFactory } from "ethers"
+import { BigNumber, ContractFactory, utils } from "ethers"
 import UniswapV2FactoryJSON from "@uniswap/v2-core/build/UniswapV2Factory.json"
 import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
 import WETH9JSON from "@uniswap/v2-periphery/build/WETH9.json"
 import UniswapV2Router02JSON from "@uniswap/v2-periphery/build/UniswapV2Router02.json"
 import { Ethers } from "../../types"
-import { toInteger } from "lodash"
 import { DateTime } from "luxon"
 import { DurationInput } from "luxon/src/duration"
+import Decimal from "decimal.js"
 
-export const toTokenAmount = (value: string | number): BigNumber => utils.parseUnits(typeof value === "number" ? value.toFixed(18) : value, "18")
+export const toTokenAmount = (value: Decimal | string | number): BigNumber => {
+  if (value instanceof Decimal) {
+    return BigNumber.from(value.mul(new Decimal(10).pow(18)).toFixed(0))
+  } else {
+    return utils.parseUnits(typeof value === "number" ? value.toFixed(18) : value, "18")
+  }
+}
 
 export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.formatUnits(value, "18"))
 
