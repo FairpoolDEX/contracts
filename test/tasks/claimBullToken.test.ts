@@ -2,11 +2,11 @@ import chai from "chai"
 import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
 import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
-import { timeTravel, hh } from "../support/test.helpers"
+import { timeTravel } from "../support/test.helpers"
 import { BullToken } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { setClaims } from "../../tasks/setClaimsBullToken"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances } from "../support/BullToken.helpers"
+import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
 import { BalanceMap, Addresses } from "../../types"
 
@@ -26,8 +26,9 @@ describe("claimBullToken", async () => {
 
   let balances: BalanceMap
   let addresses: Addresses
+  let expectations: SetClaimsExpectationsMap
 
-  const defaultAmount = toTokenAmount("10000")
+  const defaultAmount = toTokenAmount(10)
 
   before(async () => {
     // const deployShieldTokenResult = await hh(["deployShieldToken"])
@@ -48,10 +49,11 @@ describe("claimBullToken", async () => {
 
     balances = await getTestBalances()
     addresses = await getTestAddresses()
+    expectations = await getTestExpectations()
     for (let i = 0; i < addresses.length; i++) {
       balances[addresses[i]] = defaultAmount
     }
-    await setClaims(bullTokenWithOwner, balances)
+    await setClaims(bullTokenWithOwner, balances, expectations)
   })
 
   it("should allow to claim the tokens", async () => {

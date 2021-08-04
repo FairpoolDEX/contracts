@@ -17,29 +17,7 @@ import Base = Mocha.reporters.Base
 import { beforeEach } from "mocha"
 import { Address } from "../../types"
 
-/**
- * Contract-pair design:
- * - One contract for all pairs
- *   - And easy to manage (no need to update app config with a new address after deployment)
- *   - And buyer pays the storage cost
- * - One contract per pair
- *   - And easier to understand (mimics the Uniswap design)
- *   - And can be deployed by anyone, so we won't have to pay the deployment fees (but we will have to pay them for initial contracts)
- *   - But there can be multiple contacts for a single pair
- *     - But that's not a big problem
- */
-
 describe("Market Crash Protection", async () => {
-  /**
-   * Username:
-   * - Must start with a marker letter
-   *
-   * Marker letter
-   * - Must represent a user type
-   *   - D for Developer
-   *   - B for Buyer
-   *   - S for Seller
-   */
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
   let mark: SignerWithAddress // MCP contract owner
@@ -85,9 +63,9 @@ describe("Market Crash Protection", async () => {
   // let USDT = { address: "0xdac17f958d2ee523a2206206994597c13d831ec7" }
   // let SHLD = { address: "0xd49efa7bc0d339d74f487959c573d518ba3f8437" }
 
-  let _base: Address
-  let _quote: Address
-  let _seller: Address
+  let baseAddress: Address
+  let quoteAddress: Address
+  let sellerAddress: Address
   let guaranteedAmount: number
   let guaranteedPrice: number
   let expirationDate: number
@@ -135,9 +113,9 @@ describe("Market Crash Protection", async () => {
 
     now = new Date(await getLatestBlockTimestamp() * 1000)
 
-    _base = base.address
-    _quote = quote.address
-    _seller = sam.address
+    baseAddress = base.address
+    quoteAddress = quote.address
+    sellerAddress = sam.address
     guaranteedAmount = 100
     guaranteedPrice = 5
     expirationDate = dateToTimestampSeconds(now) + 100
@@ -156,11 +134,11 @@ describe("Market Crash Protection", async () => {
   })
 
   for (const payInBase of [true, false]) {
-    const suffix = payInBase ? "(base)" : "(quote)"
+    const suffix = payInBase ? "(pay in base)" : "(pay in quote)"
 
     describe(`buy ${suffix}`, async () => {
       it(`must allow to buy ${suffix}`, async () => {
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await expectBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0)],
@@ -172,27 +150,27 @@ describe("Market Crash Protection", async () => {
       })
 
       it(`must not allow to buy if expiration date is less than block timestamp ${suffix}`, async () => {
-        await expect(mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, dateToTimestampSeconds(now) - 1, premium, fee, payInBase)).to.be.revertedWith("BEXP")
+        await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, dateToTimestampSeconds(now) - 1, premium, fee, payInBase)).to.be.revertedWith("BEXP")
       })
 
       it(`must not allow to buy if buyer doesn't have enough balance ${suffix}`, async () => {
         const premiumNext = premium + (payInBase ? initialBaseAmount : initialQuoteAmount)
         const feeNext = getFee(premiumNext)
-        await expect(mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premiumNext, feeNext, payInBase)).to.be.revertedWith("transfer amount exceeds balance")
+        await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premiumNext, feeNext, payInBase)).to.be.revertedWith("transfer amount exceeds balance")
       })
 
       it(`must not allow to buy if buyer sets a zero premium ${suffix}`, async () => {
-        await expect(mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, 0, fee, payInBase)).to.be.revertedWith("BPGZ")
+        await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, 0, fee, payInBase)).to.be.revertedWith("BPGZ")
       })
 
       it(`must not allow to buy if buyer sets a fee that is less than premium / feeDivisorMin ${suffix}`, async () => {
-        await expect(mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, 0, payInBase)).to.be.revertedWith("BFSM")
+        await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, 0, payInBase)).to.be.revertedWith("BFSM")
       })
     })
 
     describe(`sell ${suffix}`, async () => {
       beforeEach(async () => {
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
       })
 
       it(`must allow to sell ${suffix}`, async () => {
@@ -251,7 +229,7 @@ describe("Market Crash Protection", async () => {
 
     describe(`cancel ${suffix}`, async () => {
       beforeEach(async () => {
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
       })
 
       it(`must allow to cancel ${suffix}`, async () => {
@@ -306,7 +284,7 @@ describe("Market Crash Protection", async () => {
 
     describe(`use ${suffix}`, async () => {
       beforeEach(async () => {
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await mcpAsSam.sell(protectionIndex)
       })
 
@@ -358,7 +336,7 @@ describe("Market Crash Protection", async () => {
 
     describe(`withdraw ${suffix}`, async () => {
       beforeEach(async () => {
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await mcpAsSam.sell(protectionIndex)
       })
 
@@ -401,7 +379,7 @@ describe("Market Crash Protection", async () => {
 
       it(`must not allow to withdraw if protection is cancelled ${suffix}`, async () => {
         const protectionIndexNext = protectionIndex + 1
-        await mcpAsBob.buy(_base, _quote, _seller, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
+        await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await mcpAsBob.cancel(protectionIndexNext)
         await expect(mcpAsSam.withdraw(protectionIndexNext)).to.be.revertedWith("WPSU")
       })

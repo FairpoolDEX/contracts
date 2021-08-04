@@ -14,8 +14,6 @@ import { maxSupply as bullMaxSupply } from "../test/support/BullToken.helpers"
 
 export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>, retroDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
   const balances: BalanceMap = {}
-  // Add $BULL 10%
-  balances["0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D".toLowerCase()] = toTokenAmount(BigNumber.from(bullMaxSupply).div(10).div(airdropRate).div(airdropStageShareNumerator).mul(airdropStageShareDenominator).toNumber())
   // const address = '0xf5396ed020a765e561f4f176b1e1d622fb6d4154'.toLowerCase()
   for (let i = 0; i < newDatas.length; i++) {
     const _balances = await parseBalancesCSV(newDatas[i])
@@ -88,16 +86,20 @@ function rewriteAddress(address: Address) {
   return rewriteAddressMap[address] || address
 }
 
-export async function setClaims(token: any, balances: BalanceMap, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
+export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
+  for (const _address in expectations.balances) {
+    const address = _address.toLowerCase()
+    expect(balances[address] || BigNumber.from("0"), `Address: ${address}`).to.equal(expectations.balances[_address])
+  }
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, 325)
   const totalSHLDAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
   let totalBULLAmount = BigNumber.from(0)
   log && log("CUR", totalSHLDAmount.toString())
-  log && log("MAX", shieldMaxSupplyTokenAmount.mul(3).toString())
-  expect(totalSHLDAmount.gt(shieldMaxSupplyTokenAmount.mul(3))).to.be.true
-  expect(totalSHLDAmount.lt(shieldMaxSupplyTokenAmount.mul(5))).to.be.true
+  log && log("MAX", expectations.totalSHLDAmount.max.toString())
+  expect(totalSHLDAmount.gt(expectations.totalSHLDAmount.min)).to.be.true
+  expect(totalSHLDAmount.lt(expectations.totalSHLDAmount.max)).to.be.true
   // const transactions = []
   for (let i = 0; i < balancesArrChunks.length; i++) {
     const entries = balancesArrChunks[i]
@@ -113,25 +115,18 @@ export async function setClaims(token: any, balances: BalanceMap, dry = false, l
     }
   }
   log && log("totalBULLAmount", totalBULLAmount.toString())
-  const totalBULLAmountMin = shieldMaxSupplyTokenAmount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
-  const totalBULLAmountMax = shieldMaxSupplyTokenAmount.mul(airdropRate)
   log && log("BCUR", "1490403967926689867814673435496")
   log && log("BADD", totalBULLAmount.toString())
-  log && log("BMIN", totalBULLAmountMin.toString())
-  log && log("BMAX", totalBULLAmountMax.toString())
-  expect(totalBULLAmount.gt(totalBULLAmountMin)).to.be.true
-  expect(totalBULLAmount.lt(totalBULLAmountMax)).to.be.true
+  log && log("BMIN", expectations.totalBULLAmount.min.toString())
+  log && log("BMAX", expectations.totalBULLAmount.max.toString())
+  expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
+  expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
 }
 
-interface SetClaimsExpectationsMap {
-  balances: { [address: string]: string }
-}
-
-async function checkExpectations(balances: BalanceMap, expectations: SetClaimsExpectationsMap) {
-  for (const _address in expectations.balances) {
-    const address = _address.toLowerCase()
-    expect(balances[address] || BigNumber.from("0"), `Address: ${address}`).to.equal(expectations.balances[_address])
-  }
+export interface SetClaimsExpectationsMap {
+  balances: { [address: string]: string },
+  totalSHLDAmount: { min: BigNumber, max: BigNumber },
+  totalBULLAmount: { min: BigNumber, max: BigNumber },
 }
 
 export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
@@ -143,11 +138,10 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const expectations: SetClaimsExpectationsMap = (await import(expectationsPath)).default
   console.info(`Parsing balances`)
   const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
-  await checkExpectations(balances, expectations)
   console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
   console.info(`Setting claims`)
-  await setClaims(token, balances, dry, console.info.bind(console))
+  await setClaims(token, balances, expectations, dry, console.info.bind(console))
   if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }

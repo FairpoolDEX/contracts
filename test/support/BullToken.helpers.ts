@@ -1,9 +1,10 @@
 import { BigNumber } from "ethers"
 import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
 import fs from "fs"
-import { parseAllBalancesCSV } from "../../tasks/setClaimsBullToken"
+import { parseAllBalancesCSV, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { parseAddresses } from "../../tasks/claimBullToken"
 import { Addresses, BalanceMap } from "../../types"
+import { shieldMaxSupplyTokenAmount } from "./ShieldToken.helpers"
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -51,6 +52,15 @@ export async function getTestBalances(): Promise<BalanceMap> {
   const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.olds.csv`)
   const blacklistCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.blacklist.csv`)
   return parseAllBalancesCSV([], [oldCSV], [balancesCSV, extrasCSV], [blacklistCSV])
+}
+
+export async function getTestExpectations(): Promise<SetClaimsExpectationsMap> {
+  const totalSHLDAmountMax = shieldMaxSupplyTokenAmount.mul(2) // it's OK to multiply by 2, because extra claims from prevoius period would make the totalSHLDAmount go over shieldMaxSupplyTokenAmount
+  return {
+    balances: {},
+    totalSHLDAmount: { min: BigNumber.from(0), max: totalSHLDAmountMax },
+    totalBULLAmount: { min: BigNumber.from(0), max: totalSHLDAmountMax.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator) },
+  }
 }
 
 export async function getBogusBalances(): Promise<BalanceMap> {
