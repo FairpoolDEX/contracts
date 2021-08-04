@@ -1,8 +1,11 @@
 import { BigNumber } from "ethers"
+import { toTokenAmount } from "./all.helpers"
 
-export const SHIELD_RELEASE_TIME: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
+export const shieldReleaseTime: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
 
-export const SHIELD_MAX_SUPPLY = 969163000
+export const shieldMaxSupply = 969163000
+
+export const shieldMaxSupplyTokenAmount = toTokenAmount(shieldMaxSupply)
 
 // it's a test only allocations with a random addresses!
 

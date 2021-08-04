@@ -12,7 +12,7 @@ export GAS_PRICE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&acti
 ## Deploy token
 
 ```
-npx hardhat deployBullToken --network $NETWORK
+hardhat deployBullToken --network $NETWORK
 ```
 
 ## Export environment variables
@@ -22,19 +22,19 @@ npx hardhat deployBullToken --network $NETWORK
 ## Verify on Etherscan
 
 ```
-npx hardhat verify --network $NETWORK $BULL_IMPLEMENTATION_ADDRESS
+hardhat verify --network $NETWORK $BULL_IMPLEMENTATION_ADDRESS
 ```
 
 ## Set claims
 
 ```
-npx hardhat setClaims --token $BULL_PROXY_ADDRESS --oldfolder $OLD_FOLDER --newfolder $NEW_FOLDER --network $NETWORK --dry true
+hardhat setClaims --token $BULL_PROXY_ADDRESS --prevfolder $OLD_FOLDER --nextfolder $NEW_FOLDER --network $NETWORK --dry true
 ```
 
 ## Attach to token in the console
 
 ```
-npx hardhat console --network $NETWORK
+hardhat console --network $NETWORK
 ```
 
 ```javascript
