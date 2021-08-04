@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js"
 import { toTokenAmount } from "../support/all.helpers"
+import { shieldMaxSupplyTokenAmount } from "../support/ShieldToken.helpers"
+import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../support/BullToken.helpers"
 
 export default {
   balances: {
@@ -38,5 +40,13 @@ export default {
           .mul(3),
         ),
     ),
+  },
+  totalSHLDAmount: {
+    min: shieldMaxSupplyTokenAmount.mul(3),
+    max: shieldMaxSupplyTokenAmount.mul(5),
+  },
+  totalBULLAmount: {
+    min: shieldMaxSupplyTokenAmount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator),
+    max: shieldMaxSupplyTokenAmount.mul(airdropRate),
   },
 }

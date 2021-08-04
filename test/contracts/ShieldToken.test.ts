@@ -176,7 +176,7 @@ describe("ShieldToken", async () => {
       ).to.be.revertedWith("caller is not the owner")
     })
 
-    it.only("shouldn't be able to change release time from past", async () => {
+    it("shouldn't be able to change release time from past", async () => {
       await expect(
         token.setReleaseTime(1),
       ).to.be.revertedWith("Release time should be in future")

@@ -3,8 +3,8 @@ import { toTokenAmount, fromTokenAmount, getWETH9ContractFactory, getUniswapV2Fa
 import { addLiquidity, timeTravel } from "../support/test.helpers"
 import { BullToken, QuoteToken } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { setClaims } from "../../tasks/setClaimsBullToken"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, deployedAddress, fromShieldToBull, getTestAddresses, getTestBalances } from "../support/BullToken.helpers"
+import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, deployedAddress, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
 import { BalanceMap, Addresses } from "../../types"
 import { ContractFactory, Wallet, utils, Contract } from "ethers"
@@ -19,6 +19,7 @@ xdescribe("rollbackBullToken", async () => {
 
   let balances: BalanceMap
   let addresses: Addresses
+  let expectations: SetClaimsExpectationsMap
 
   const defaultAmount = toTokenAmount("10000")
 
@@ -49,10 +50,11 @@ xdescribe("rollbackBullToken", async () => {
 
     balances = await getTestBalances()
     addresses = await getTestAddresses()
+    expectations = await getTestExpectations()
     for (let i = 0; i < addresses.length; i++) {
       balances[addresses[i]] = defaultAmount
     }
-    await setClaims(bullTokenWithOwner, balances)
+    await setClaims(bullTokenWithOwner, balances, expectations)
 
     const quoteTokenFactory = await ethers.getContractFactory("QuoteToken")
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken
