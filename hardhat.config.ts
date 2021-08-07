@@ -17,6 +17,7 @@ import { claimBullToken, claimBullTokenTask } from "./tasks/claimBullToken"
 import { upgradeToken } from "./tasks/upgradeToken"
 import { date } from "./util/addParamTypes"
 import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
+import { deployMCP } from "./tasks/deployMCP"
 
 dotEnvConfig()
 
@@ -103,6 +104,10 @@ task("deployShieldToken", "Deploy ShieldToken contract")
 
 task("deployBullToken", "Deploy BullToken contract")
   .setAction(deployBullToken)
+
+task("deployMCP", "Deploy MCP contract")
+  .addParam("feeDivisorMin", "Minimal fee divisor", 100, types.int)
+  .setAction(deployMCP)
 
 task("transferMany", "Call transferMany for allocations without lockup period")
   .addParam("token", "SHLD token contract address")
