@@ -22,6 +22,14 @@ Watch tests
 
     yarn test:watch
 
+Fork mainnet
+
+    set -o allexport; source .env; set +o allexport # Export .env vars
+    hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY
+    # switch to another console
+    export NETWORK=localhost # set NETWORK to local fork
+    hardhat deployBullToken --network $NETWORK # or any other command with --network $NETWORK
+
 Lint code
 
     yarn lint
