@@ -9,6 +9,8 @@ import "hardhat/console.sol";
 /* mythx-disable SWC-103 */
 /* mythx-disable SWC-116 */
 
+// TODO: Use safeTransferFrom from uniswap-v2-periphery
+// TODO: Use lock modifier from UniswapV2Pair from uniswap-v2-core
 // FIXME: check against https://swcregistry.io/
 contract MCP is Ownable {
     // NOTE: Contract functions use Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
