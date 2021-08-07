@@ -8,6 +8,7 @@
     "build": "yarn clean && yarn compile",
     "clean": "GAS_PRICE=20 hardhat clean",
     "compile": "GAS_PRICE=20 hardhat compile",
+    "fork": "GAS_PRICE=20 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY",
     "lint": "solhint contracts/*.sol && eslint .",
     "lint:markdown": "markdownlint --ignore node_modules **/*.md",
     "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
