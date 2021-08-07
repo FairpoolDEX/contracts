@@ -1,9 +1,10 @@
 import { HardhatUserConfig } from "hardhat/types"
 import { task, types } from "hardhat/config"
+import '@nomiclabs/hardhat-ethers'
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
+import "@typechain/hardhat"
 import "hardhat-watcher"
-import "hardhat-typechain"
 import "solidity-coverage"
 import "@openzeppelin/hardhat-upgrades"
 import { config as dotEnvConfig } from "dotenv"
