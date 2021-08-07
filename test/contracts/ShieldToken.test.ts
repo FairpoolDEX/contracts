@@ -1,6 +1,6 @@
 import { ethers, upgrades } from "hardhat"
 import { solidity } from "ethereum-waffle"
-import { BigNumber } from "ethers"
+import { BigNumber, Contract, Wallet } from "ethers"
 import chai from "chai"
 import { toTokenAmount } from "../support/all.helpers"
 import { skipBlocks, timeTravel } from "../support/test.helpers"
@@ -93,20 +93,24 @@ describe("ShieldToken", async () => {
     it("should withdraw ETH", async () => {
       const amount = 1
       // send some ETH to token's address using payable addAllocations func
-      await token.addAllocations([], [], "0", { value: amount, gasPrice: 0 })
+      await token.addAllocations([], [], "0", { value: amount })
 
+      await expect(await token.provider.getBalance(token.address)).to.equal(amount)
       await expect(
         await token.withdraw(amount),
-      ).to.changeEtherBalances([owner, token], [amount, -amount])
+      ).to.changeEtherBalances([owner], [amount])
+      await expect(await token.provider.getBalance(token.address)).to.equal(0)
     })
 
     it("should withdraw ERC20 token", async () => {
       const amount = 1000
       await token.transfer(token.address, amount)
 
+      await expect(await token.balanceOf(token.address)).to.equal(amount)
       await expect(() => {
         token.withdrawToken(token.address, amount)
-      }).to.changeTokenBalances(token, [owner, token], [amount, -amount])
+      }).to.changeTokenBalances(token, [owner], [amount])
+      await expect(await token.balanceOf(token.address)).to.equal(0)
     })
 
     it("should run only by owner", async () => {
