@@ -50,14 +50,15 @@ contract MCP is Ownable {
     }
 
     function setFeeDivisorMin(uint _feeDivisorMin) public onlyOwner {
-        require(_feeDivisorMin > 0, "SFSM");
+        require(_feeDivisorMin > 0, "MCP: SFSM");
         feeDivisorMin = _feeDivisorMin;
     }
 
     function buy(address _base, address _quote, address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _premium, uint _fee, bool _payInBase) public {
-        require(_expirationDate > block.timestamp, "BEXP");
-        require(_premium > 0, "BPGZ");
-        require(_fee > (_premium / feeDivisorMin), "BFSM");
+        require(_expirationDate > block.timestamp, "MCP: BEXP");
+        require(_premium > feeDivisorMin, "MCP: BPGD");
+        require(_fee >= (_premium / feeDivisorMin), "MCP: BFSM");
+        assert(_premium > 0); // using assert because it should always be true if _premium > feeDivisorMin
         take(IERC20(_payInBase ? _base : _quote), _premium + _fee);
         protections.push(Protection({
             base: _base,
@@ -78,9 +79,9 @@ contract MCP is Ownable {
 
     function sell(uint _protectionIndex) public {
         Protection storage protection = protections[_protectionIndex];
-        require(protection.status == Status.Bought, "SPSB");
-        require(protection.seller == msg.sender || protection.seller == address(0), "SPSS");
-        require(protection.expirationDate >= block.timestamp, "SPET");
+        require(protection.status == Status.Bought, "MCP: SPSB");
+        require(protection.seller == msg.sender || protection.seller == address(0), "MCP: SPSS");
+        require(protection.expirationDate >= block.timestamp, "MCP: SPET");
         protection.seller = msg.sender;
         protection.status = Status.Sold;
         if (protection.payInBase) {
@@ -97,9 +98,9 @@ contract MCP is Ownable {
 
     function use(uint _protectionIndex) public {
         Protection storage protection = protections[_protectionIndex];
-        require(protection.status == Status.Sold, "UPSS");
-        require(protection.buyer == msg.sender, "UPBS");
-        require(protection.expirationDate >= block.timestamp, "UPET");
+        require(protection.status == Status.Sold, "MCP: UPSS");
+        require(protection.buyer == msg.sender, "MCP: UPBS");
+        require(protection.expirationDate >= block.timestamp, "MCP: UPET");
         protection.status = Status.Used;
         take(IERC20(protection.base), protection.guaranteedAmount);
         give(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice);
@@ -108,9 +109,9 @@ contract MCP is Ownable {
 
     function cancel(uint _protectionIndex) public {
         Protection storage protection = protections[_protectionIndex];
-        require(protection.status == Status.Bought, "CPSB");
-        require(protection.buyer == msg.sender, "CPBS");
-        require(protection.creationDate + cancellationTimeout > block.timestamp, "CPCT");
+        require(protection.status == Status.Bought, "MCP: CPSB");
+        require(protection.buyer == msg.sender, "MCP: CPBS");
+        require(protection.creationDate + cancellationTimeout > block.timestamp, "MCP: CPCT");
         protection.status = Status.Cancelled;
         // no need to require(protection.expirationDate >= block.timestamp) - always allow the user to cancel the protection that was not sold into
         give(IERC20(protection.payInBase ? protection.base : protection.quote), protection.premium + protection.fee);
@@ -119,15 +120,15 @@ contract MCP is Ownable {
 
     function withdraw(uint _protectionIndex) public {
         Protection storage protection = protections[_protectionIndex];
-        require(protection.status == Status.Sold || protection.status == Status.Used, "WPSU");
-        require(protection.seller == msg.sender, "WPSS");
+        require(protection.status == Status.Sold || protection.status == Status.Used, "MCP: WPSU");
+        require(protection.seller == msg.sender, "MCP: WPSS");
         if (protection.status == Status.Sold) {
-            require(protection.expirationDate < block.timestamp, "WPET");
+            require(protection.expirationDate < block.timestamp, "MCP: WPET");
             protection.status = Status.Withdrawn;
             give(IERC20(protection.quote), protection.guaranteedAmount * protection.guaranteedPrice);
             emit Withdraw(msg.sender, _protectionIndex);
         } else if (protection.status == Status.Used) {
-            // no require(protection.expirationDate < block.timestamp, "WPET"); - allow to withdraw early if protection has been used
+            // no require(protection.expirationDate < block.timestamp, "MCP: WPET"); - allow to withdraw early if protection has been used
             protection.status = Status.Withdrawn;
             give(IERC20(protection.base), protection.guaranteedAmount);
             emit Withdraw(msg.sender, _protectionIndex);
@@ -139,11 +140,11 @@ contract MCP is Ownable {
     /* Utility functions */
 
     function xfer(IERC20 token, address recipient, uint amount) internal {
-        require(token.transfer(recipient, amount), "XFER");
+        require(token.transfer(recipient, amount), "MCP: XFER");
     }
 
     function give(IERC20 token, uint amount) internal {
-        require(token.transfer(msg.sender, amount), "GIVE");
+        require(token.transfer(msg.sender, amount), "MCP: GIVE");
     }
 
     function take(IERC20 token, uint amount) internal {
@@ -153,11 +154,11 @@ contract MCP is Ownable {
     function move(IERC20 token, address sender, address recipient, uint amount) internal {
         uint senderBalanceBefore = token.balanceOf(sender);
         uint recipientBalanceBefore = token.balanceOf(recipient);
-        require(token.transferFrom(sender, recipient, amount), "MCBL");
+        require(token.transferFrom(sender, recipient, amount), "MCP: MCBL");
         uint senderBalanceAfter = token.balanceOf(sender);
         uint recipientBalanceAfter = token.balanceOf(recipient);
-        require(senderBalanceAfter == senderBalanceBefore - amount, "MSBL");
-        require(recipientBalanceAfter == recipientBalanceBefore + amount, "MRBL");
+        require(senderBalanceAfter == senderBalanceBefore - amount, "MCP: MSBL");
+        require(recipientBalanceAfter == recipientBalanceBefore + amount, "MCP: MRBL");
     }
 
     /* Views */
@@ -173,10 +174,10 @@ contract MCP is Ownable {
     }
 
     function withdrawEther(uint amount) public onlyOwner {
-        require(address(this).balance >= amount, "Address: insufficient balance");
+        require(address(this).balance >= amount, "MCP: Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
         (bool success,) = _msgSender().call{value : amount}("");
-        require(success, "Unable to send value");
+        require(success, "MCP: Unable to send value");
     }
 }
