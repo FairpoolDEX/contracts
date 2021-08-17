@@ -408,6 +408,18 @@ describe("Market Crash Protection", async () => {
     await expect(mcpAsBob.setFeeDivisorMin(2)).to.be.revertedWith("not the owner")
   })
 
+  it("must allow the owner to set cancellationTimeout", async () => {
+    await mcpAsMark.setCancellationTimeout(2)
+  })
+
+  it("must not allow the owner to set cancellationTimeout to zero", async () => {
+    await expect(mcpAsMark.setCancellationTimeout(0)).to.be.revertedWith("MCP: SCTM")
+  })
+
+  it("must not allow non-owner to set cancellationTimeout", async () => {
+    await expect(mcpAsBob.setCancellationTimeout(2)).to.be.revertedWith("not the owner")
+  })
+
   // TODO: must not allow the developer to deploy an MCP contract with invalid base & quote addresses
   // TODO: must not allow to do anything with a cancelled protection
   // TODO: must not allow to buy/sell protection for toxic tokens that don't transfer the full amount (e.g. Salmonella)

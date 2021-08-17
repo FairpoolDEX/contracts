@@ -1,6 +1,6 @@
 import { HardhatUserConfig } from "hardhat/types"
-import { task, types } from "hardhat/config"
-import '@nomiclabs/hardhat-ethers'
+import { subtask, task, types } from "hardhat/config"
+import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
 import "@typechain/hardhat"
@@ -18,6 +18,8 @@ import { upgradeToken } from "./tasks/upgradeToken"
 import { date } from "./util/addParamTypes"
 import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
 import { deployMCP } from "./tasks/deployMCP"
+import { deployERC20Token } from "./tasks/deployERC20Token"
+import { TASK_VERIFY_GET_CONSTRUCTOR_ARGUMENTS } from "@nomiclabs/hardhat-etherscan/src/constants"
 
 dotEnvConfig()
 
@@ -57,9 +59,9 @@ const config: HardhatUserConfig = {
       },
     },
     localhost: {
-    //   accounts: {
-    //     mnemonic: process.env.MNEMONIC || "",
-    //   },
+      //   accounts: {
+      //     mnemonic: process.env.MNEMONIC || "",
+      //   },
       timeout: 30 * 60 * 1000,
     },
     mainnet: {
@@ -108,6 +110,12 @@ task("deployBullToken", "Deploy BullToken contract")
 task("deployMCP", "Deploy MCP contract")
   .addParam("feeDivisorMin", "Minimal fee divisor", 100, types.int)
   .setAction(deployMCP)
+
+task("deployERC20Token", "Deploy ERC20 token")
+  .addParam("contract", "Contract name", undefined, types.string)
+  .addOptionalParam("constructorArgsModule", "File path to a javascript module that exports the list of arguments.", undefined, types.inputFile)
+  .addOptionalVariadicPositionalParam("constructorArgsParams", "Contract constructor arguments. Ignored if the --constructorArgsModule option is used.", [])
+  .setAction(deployERC20Token)
 
 task("transferMany", "Call transferMany for allocations without lockup period")
   .addParam("token", "SHLD token contract address")

@@ -36,7 +36,7 @@ contract MCP is Ownable {
 
     uint public feeDivisorMin;
     // solhint-disable-next-line const-name-snakecase
-    uint public constant cancellationTimeout = 6 /* hours */ * 60 /* minutes */ * 60 /* seconds */;
+    uint public cancellationTimeout = 6 /* hours */ * 60 /* minutes */ * 60 /* seconds */;
     Protection[] public protections;
 
     event Buy(address indexed sender, uint protectionIndex);
@@ -52,6 +52,11 @@ contract MCP is Ownable {
     function setFeeDivisorMin(uint _feeDivisorMin) public onlyOwner {
         require(_feeDivisorMin > 0, "MCP: SFSM");
         feeDivisorMin = _feeDivisorMin;
+    }
+
+    function setCancellationTimeout(uint _cancellationTimeout) public onlyOwner {
+        require(_cancellationTimeout > 0, "MCP: SCTM");
+        cancellationTimeout = _cancellationTimeout;
     }
 
     function buy(address _base, address _quote, address _seller, uint _guaranteedAmount, uint _guaranteedPrice, uint _expirationDate, uint _premium, uint _fee, bool _payInBase) public {
