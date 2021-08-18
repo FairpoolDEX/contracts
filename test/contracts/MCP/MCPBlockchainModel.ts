@@ -1,4 +1,4 @@
-import { Address, Amount, Price, Timestamp } from "../../../types"
+import { Address, Amount, Price, Timestamp } from "../../../util/types"
 import { BigNumber } from "ethers"
 import { expect } from "../../../util/expect"
 import { Metronome } from "../../support/Metronome"

@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn clean && yarn compile",
-    "clean": "GAS_PRICE=20 hardhat clean",
-    "compile": "GAS_PRICE=20 hardhat compile",
+    "clean": "GAS_PRICE=20 hardhat clean --show-stack-traces",
+    "compile": "GAS_PRICE=20 hardhat compile --show-stack-traces",
     "fork": "GAS_PRICE=20 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY",
     "lint": "solhint contracts/*.sol && eslint .",
     "lint:markdown": "markdownlint --ignore node_modules **/*.md",
@@ -74,6 +74,7 @@
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-prettier": "^3.4.0",
+    "hardhat-dependency-compiler": "^1.1.1",
     "markdownlint": "^0.22.0",
     "markdownlint-cli": "^0.26.0"
   }

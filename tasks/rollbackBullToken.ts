@@ -7,13 +7,14 @@ import dotenv from "dotenv"
 import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-import { fromTokenAmount, getUniswapV2PairContractFactory, mineBlocks, toTokenAmount } from "../test/support/all.helpers"
-import { Address, Addresses, Amount, BalanceMap, Ethers } from "../types"
+import { fromTokenAmount, mineBlocks, toTokenAmount } from "../test/support/all.helpers"
+import { Address, Addresses, Amount, BalanceMap, Ethers } from "../util/types"
 import { BigNumber, Contract, utils } from "ethers"
 import { expect } from "../util/expect"
 import { ContractTransaction } from "@ethersproject/contracts"
 import { BlockTag } from "@ethersproject/abstract-provider/src.ts/index"
 import { rollbackDate } from "../test/support/rollback.helpers"
+import { getUniswapV2PairContractFactory } from "../test/support/Uniswap.helpers"
 
 type Transfer = {
   from: Address,

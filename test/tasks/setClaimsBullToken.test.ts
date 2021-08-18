@@ -8,7 +8,7 @@ import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullTo
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, maxSupply, fromShieldToBull, getTestBalances, getBogusBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { BigNumber } from "ethers"
 import { expect } from "../../util/expect"
-import { BalanceMap } from "../../types"
+import { BalanceMap } from "../../util/types"
 
 describe("setClaimsBullToken", async () => {
 

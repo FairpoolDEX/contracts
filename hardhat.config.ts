@@ -7,6 +7,7 @@ import "@typechain/hardhat"
 import "hardhat-watcher"
 import "solidity-coverage"
 import "@openzeppelin/hardhat-upgrades"
+import "hardhat-dependency-compiler"
 import { config as dotEnvConfig } from "dotenv"
 import { deployShieldToken } from "./tasks/deployShieldToken"
 import { transferManyShieldToken } from "./tasks/transferManyShieldToken"
@@ -20,6 +21,7 @@ import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
 import { deployMCP } from "./tasks/deployMCP"
 import { deployERC20Token } from "./tasks/deployERC20Token"
 import { TASK_VERIFY_GET_CONSTRUCTOR_ARGUMENTS } from "@nomiclabs/hardhat-etherscan/src/constants"
+import * as os from "os"
 
 dotEnvConfig()
 
@@ -43,13 +45,37 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 999999,
+          },
+        },
+      },
+      {
+        version: "0.5.16",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 999999,
+          },
+        },
+      },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 999999,
+          },
+        },
       },
     ],
   },
   networks: {
     hardhat: {
       initialDate: new Date(0).toISOString(),
-      gasMultiplier: 1.2,
+      gasMultiplier: 1,
       // forking: {
       //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       //   blockNumber: 12779553,
@@ -95,9 +121,24 @@ const config: HardhatUserConfig = {
       ],
     },
   },
-  // typechain: {
-  //   // @ts-ignore
-  //   externalArtifacts: ['node_modules/@uniswap/v2-core/build/*.json'],
+  typechain: {
+    externalArtifacts: [
+      "node_modules/@uniswap/v2-core/build/!(Combined-Json).json",
+      "node_modules/@uniswap/v2-periphery/build/!(Combined-Json).json",
+    ],
+  },
+  dependencyCompiler: {
+    paths: [
+      "@uniswap/v2-core/contracts/UniswapV2Pair.sol",
+      "@uniswap/v2-core/contracts/UniswapV2Factory.sol",
+      "@uniswap/v2-periphery/contracts/UniswapV2Router02.sol",
+      "@uniswap/v2-periphery/contracts/test/WETH9.sol",
+    ],
+    // path: `${os.tmpdir()}/hardhat-dependency-compiler`,
+  },
+  // paths: {
+  //   // sources: "?(.|./node_modules/@uniswap/v2-core|./node_modules/@uniswap/v2-periphery)/contracts",
+  //   sources: "+(./contracts)",
   // },
 }
 

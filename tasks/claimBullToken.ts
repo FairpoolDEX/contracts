@@ -4,7 +4,7 @@ import { uniq } from "lodash"
 import neatcsv from "neat-csv"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-import type { Addresses, Ethers } from "../types"
+import type { Addresses, Ethers } from "../util/types"
 import { Contract } from "ethers"
 
 export async function parseAddresses(data: Buffer | string): Promise<Addresses> {
