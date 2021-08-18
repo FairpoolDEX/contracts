@@ -6,7 +6,8 @@
     "cache",
     "coverage",
     "artifacts",
-    "typechain"
+    "typechain",
+    "contracts/hardhat-dependency-compiler"
   ],
   "ignore": [],
   "ext": "js,json,ts,sol"

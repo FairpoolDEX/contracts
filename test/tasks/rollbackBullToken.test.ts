@@ -1,15 +1,14 @@
 import { ethers, upgrades } from "hardhat"
-import { toTokenAmount, fromTokenAmount, getWETH9ContractFactory, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory } from "../support/all.helpers"
+import { toTokenAmount } from "../support/all.helpers"
 import { addLiquidity, timeTravel } from "../support/test.helpers"
-import { BullToken, QuoteToken } from "../../typechain"
+import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, deployedAddress, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
-import { BalanceMap, Addresses } from "../../types"
-import { ContractFactory, Wallet, utils, Contract } from "ethers"
-import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
-import { expect } from "../../util/expect"
+import { Addresses, BalanceMap } from "../../util/types"
+import { Contract, ContractFactory } from "ethers"
+import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 
 xdescribe("rollbackBullToken", async () => {
   let bullTokenFactory: ContractFactory
@@ -26,9 +25,9 @@ xdescribe("rollbackBullToken", async () => {
   const airdropFirstTimestamp = airdropStartTimestamp
   const airdropSecondTimestamp = airdropStartTimestamp + airdropStageDuration
 
-  let uniswapV2Factory: Contract
-  let uniswapV2Router: Contract
-  let weth: Contract
+  let uniswapV2Factory: UniswapV2Factory
+  let uniswapV2Router: UniswapV2Router02
+  let weth: WETH9
   let quoteTokenWithOwner: QuoteToken
 
   before(async () => {
@@ -60,13 +59,13 @@ xdescribe("rollbackBullToken", async () => {
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken
 
     const wethContractFactory = await getWETH9ContractFactory(ethers)
-    weth = await wethContractFactory.deploy()
+    weth = await wethContractFactory.deploy() as WETH9
 
     const UniswapV2FactoryContractFactory = await getUniswapV2FactoryContractFactory(ethers)
-    uniswapV2Factory = await UniswapV2FactoryContractFactory.deploy(owner.address)
+    uniswapV2Factory = await UniswapV2FactoryContractFactory.deploy(owner.address) as UniswapV2Factory
 
     const UniswapV2Router02ContractFactory = await getUniswapV2Router02ContractFactory(ethers)
-    uniswapV2Router = await UniswapV2Router02ContractFactory.deploy(uniswapV2Factory.address, weth.address)
+    uniswapV2Router = await UniswapV2Router02ContractFactory.deploy(uniswapV2Factory.address, weth.address) as UniswapV2Router02
   })
 
   // https://www.dextools.io/app/uniswap/pair-explorer/0x59b8c20ca527ff18e2515b68f28939d6dd3e867b
@@ -75,7 +74,7 @@ xdescribe("rollbackBullToken", async () => {
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)
       await claimBullToken(bullTokenWithAlice, addresses, ethers)
-      const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract)
+      const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, ethers)
 
       await bullTokenWithStranger.transfer(alice.address, toTokenAmount("10"))
       await bullTokenWithAlice.transfer(stranger.address, toTokenAmount("5"))
@@ -102,7 +101,7 @@ xdescribe("rollbackBullToken", async () => {
       await claimBullToken(bullTokenWithAlice, addresses, ethers)
       await timeTravel(async () => {
         await bullTokenWithStranger.claim()
-        const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract)
+        const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, ethers)
         // await sell(bullTokenWithStranger, pair)
         // await sell(bullTokenWithAlice, pair)
         // await buy(bullTokenWithBob, pair)
@@ -118,12 +117,6 @@ xdescribe("rollbackBullToken", async () => {
   })
 
 })
-
-async function deployUniswapPair(uniswapV2Factory: Contract, token0: Contract, token1: Contract) {
-  await uniswapV2Factory.createPair(token0.address, token1.address)
-  const pairAddress = await uniswapV2Factory.getPair(token0.address, token1.address)
-  return await ethers.getContractAt(UniswapV2PairJSON.abi, pairAddress)
-}
 
 // async function sell(token: BullToken, pair: Contract) {
 //

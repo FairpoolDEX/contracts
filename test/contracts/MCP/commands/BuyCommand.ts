@@ -1,5 +1,5 @@
 import fc from "fast-check"
-import { Address, Amount, Price, Timestamp } from "../../../../types"
+import { Address, Amount, Price, Timestamp } from "../../../../util/types"
 import { MCPBlockchainModel } from "../MCPBlockchainModel"
 import { MCPBlockchainReal } from "../MCPBlockchainReal"
 import { dateToTimestampSeconds } from "hardhat/internal/util/date"

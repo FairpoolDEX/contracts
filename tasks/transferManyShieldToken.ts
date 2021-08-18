@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { Allocations } from "../types"
+import { Allocations } from "../util/types"
 import { chunk } from "../test/support/all.helpers"
 import { BigNumber } from "ethers"
 import { expect } from "../util/expect"

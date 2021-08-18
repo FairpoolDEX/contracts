@@ -8,7 +8,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
-import { BalanceMap, Addresses } from "../../types"
+import { BalanceMap, Addresses } from "../../util/types"
 
 chai.use(solidity)
 const { expect } = chai

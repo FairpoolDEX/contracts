@@ -15,7 +15,7 @@ import { BigNumber, BigNumberish } from "ethers"
 import { dateToTimestampSeconds } from "hardhat/internal/util/date"
 import Base = Mocha.reporters.Base
 import { beforeEach } from "mocha"
-import { Address } from "../../types"
+import { Address } from "../../util/types"
 
 describe("Market Crash Protection", async () => {
   let owner: SignerWithAddress
@@ -107,7 +107,7 @@ describe("Market Crash Protection", async () => {
 
     const approvals = flatten([bob, sam, bella, sally].map((signer) => [
       baseAsOwner.connect(signer).approve(mcpAsMark.address, initialBaseAmount),
-      quoteAsOwner.connect(signer).approve(mcpAsMark.address, initialBaseAmount),
+      quoteAsOwner.connect(signer).approve(mcpAsMark.address, initialQuoteAmount),
     ]))
     await Promise.all(approvals)
 

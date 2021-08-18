@@ -3,7 +3,7 @@ import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
 import fs from "fs"
 import { parseAllBalancesCSV, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { parseAddresses } from "../../tasks/claimBullToken"
-import { Addresses, BalanceMap } from "../../types"
+import { Addresses, BalanceMap } from "../../util/types"
 import { shieldMaxSupplyTokenAmount } from "./ShieldToken.helpers"
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
