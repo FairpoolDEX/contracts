@@ -8,6 +8,7 @@ import { getLatestBlockTimestamp, zero } from "../test.helpers"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../Uniswap.helpers"
 import { flatten } from "lodash"
 import { nail } from "../../../util/string"
+import { expect } from "../../../util/expect"
 
 export class TradingSimulation {
   constructor(
@@ -16,6 +17,7 @@ export class TradingSimulation {
     public alice: SignerWithAddress,
     public bob: SignerWithAddress,
     public sam: SignerWithAddress,
+    public zed: SignerWithAddress,
     public base: BaseToken,
     public quote: QuoteToken,
     public weth: WETH9,
@@ -33,6 +35,9 @@ export class TradingSimulation {
     public ethers: Ethers,
   ) { }
 
+  public feeNumerator = BigNumber.from(997)
+  public feeDenominator = BigNumber.from(1000)
+
   static async create(
     $baseTotalAmount: BigNumber,
     $quoteTotalAmount: BigNumber,
@@ -44,7 +49,7 @@ export class TradingSimulation {
     ethers: Ethers,
   ) {
     const signers = await ethers.getSigners()
-    const [owner, stranger, alice, bob, sam] = signers
+    const [owner, stranger, alice, bob, sam, zed] = signers
 
     const baseTotalAmount = $baseTotalAmount.mul(scale)
     const quoteTotalAmount = $quoteTotalAmount.mul(scale)
@@ -77,7 +82,7 @@ export class TradingSimulation {
 
     const pair = await deployUniswapPair(factory, base as Contract, quote as Contract, ethers) as UniswapV2Pair
 
-    const approvals = flatten([owner, stranger, alice, bob, sam].map((signer) => [
+    const approvals = flatten(signers.map((signer) => [
       base.connect(signer).approve(router.address, MaxUint256),
       quote.connect(signer).approve(router.address, MaxUint256),
     ]))
@@ -91,6 +96,7 @@ export class TradingSimulation {
       alice,
       bob,
       sam,
+      zed,
       base,
       quote,
       weth,
@@ -123,38 +129,60 @@ export class TradingSimulation {
   }
 
   async tradeFromBobInCycle() {
-    const reservesBefore = await this.pair.getReserves()
-    console.log("reserves before", { _reserve0: reservesBefore._reserve0.toString(), _reserve1: reservesBefore._reserve1.toString() })
-    for (let i = 0; i < 700; i++) {
+    /**
+     * baseReserveBefore / quoteReserveBefore = baseReserveAfter / quoteReserveAfter
+     *
+     * baseBalanceInterim = baseBalanceBefore - baseAmountInterim
+     * quoteBalanceInterim = quoteBalanceBefore + quoteAmountInterim * (1 - 0.003)
+     * baseReserveInterim = baseReserveBefore + baseAmountInterim
+     * quoteReserveInterim = quoteReserveBefore - quoteAmountInterim * (1 - 0.003)
+     * baseReserveInterim * quoteReserveInterim = baseReserveBefore * quoteReserveBefore
+     *
+     * baseBalanceAfter = baseBalanceInterim + baseAmountAfter * (1 - 0.003)
+     * quoteBalanceAfter = quoteBalanceInterim - quoteAmountAfter
+     * baseReserveAfter = baseReserveInterim - baseAmountAfter * (1 - 0.003)
+     * quoteReserveAfter = quoteReserveInterim + quoteAmountAfter
+     * baseReserveAfter * quoteReserveAfter = baseReserveInterim * quoteReserveInterim
+     *
+     * quoteAmountAfter = quoteReserveAfter - quoteBalanceInterim
+     */
+    const { _reserve0: baseReserveBefore, _reserve1: quoteReserveBefore } = await this.pair.getReserves()
+    console.log("reserves before", baseReserveBefore.toString(), quoteReserveBefore.toString())
+    const ratioBefore = baseReserveBefore.div(quoteReserveBefore)
+    for (let i = 0; i < 500; i++) {
       // console.log(`trade from bob ${i}`)
-      const quoteTradeAmount = await this.quote.balanceOf(this.bob.address)
-      const baseTradeAmount = await this.base.balanceOf(this.bob.address)
-      // const this.baseBalanceBefore = await this.base.balanceOf(bob.address)
+      const baseBalanceBefore = await this.base.balanceOf(this.bob.address)
+      const quoteBalanceBefore = await this.quote.balanceOf(this.bob.address)
+      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseBalanceBefore, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
+      const quoteBalanceAfter = await this.quote.balanceOf(this.bob.address)
+      const quoteTradeAmount = quoteBalanceAfter.sub(quoteBalanceBefore).mul(this.feeDenominator).div(this.feeNumerator)
       await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteTradeAmount, 0, [this.quote.address, this.base.address], this.bob.address, MaxUint256)
-      // const this.baseBalanceAfter = await this.base.balanceOf(bob.address)
-      // const this.baseTradeAmount = this.baseBalanceAfter.sub(baseBalanceBefore)
-      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseTradeAmount, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
+      // const this.baseBalanceAfter =
+      // const this.
     }
-    const reservesAfter = await this.pair.getReserves()
-    console.log("reserves after", { _reserve0: reservesAfter._reserve0.toString(), _reserve1: reservesAfter._reserve1.toString() })
+    const { _reserve0: baseReserveAfter, _reserve1: quoteReserveAfter } = await this.pair.getReserves()
+    console.log("reserves after", baseReserveAfter.toString(), quoteReserveAfter.toString())
+    const ratioAfter = baseReserveAfter.div(quoteReserveAfter)
+    console.log('ratios', ratioBefore.toString(), ratioAfter.toString())
+    expect(ratioBefore).to.eq(ratioAfter)
   }
 
-  async buyFromBob() {
-    const quoteIn = await this.quote.balanceOf(this.bob.address)
+  async buyFromZed() {
+    const quoteIn = await this.quote.balanceOf(this.zed.address)
     // const this.basePumpOut = toAmountAfterFee(quotePumpIn).mul(priceInverse)
     // expect(quotePumpIn.lt(quoteLiquidity))
     // expect(basePumpOut.lt(baseLiquidity))
     // expect(basePumpOut.gt(quotePumpIn))
     // console.log('quotePumpIn.toString()', quotePumpIn.toString())
     // console.log('basePumpOut.toString()', this.basePumpOut.toString())
-    await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteIn, 0, [this.quote.address, this.base.address], this.bob.address, MaxUint256)
+    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteIn, 0, [this.quote.address, this.base.address], this.zed.address, MaxUint256)
     // expect(await this.base.balanceOf(bob.address)).to.be.gt(baseInitialAmount)
     // expect(await quote.balanceOf(bob.address)).to.be.lt(quoteInitialAmount)
   }
 
-  async sellFromBob() {
-    const baseIn = this.baseInitialAmount.div(this.pumpRatio)
-    await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseIn, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
+  async sellFromZed() {
+    const baseIn = await this.base.balanceOf(this.zed.address)
+    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseIn, 0, [this.base.address, this.quote.address], this.zed.address, MaxUint256)
   }
 
   async calculateProfitFromAlice(activity: string) {
@@ -175,11 +203,13 @@ export class TradingSimulation {
         "sam    ": (await this.base.balanceOf(this.sam.address)).toString().padStart(padding),
         "alice   ": (await this.base.balanceOf(this.alice.address)).toString().padStart(padding),
         "bob    ": (await this.base.balanceOf(this.bob.address)).toString().padStart(padding),
+        "zed    ": (await this.base.balanceOf(this.zed.address)).toString().padStart(padding),
       },
       quote: {
         "sam    ": (await this.quote.balanceOf(this.sam.address)).toString().padStart(padding),
         "alice   ": (await this.quote.balanceOf(this.alice.address)).toString().padStart(padding),
         "bob    ": (await this.quote.balanceOf(this.bob.address)).toString().padStart(padding),
+        "zed    ": (await this.quote.balanceOf(this.zed.address)).toString().padStart(padding),
       },
     }, { compact: false })
   }
