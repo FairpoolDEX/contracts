@@ -20,8 +20,8 @@ export class BuyAndSellSimulation extends TradingSimulation {
     await this.tradeFromBobInCycle()
     await this.logBalances()
 
-    console.log("buy from bob")
-    await this.buyFromBob()
+    console.log("buy from zed")
+    await this.buyFromZed()
     await this.logBalances()
 
     console.log("sell from alice")

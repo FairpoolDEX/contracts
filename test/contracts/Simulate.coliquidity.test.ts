@@ -11,7 +11,7 @@ import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 import { ColiquiditySimulation } from "../support/Simulation/ColiquiditySimulation"
 
-describe("Coliquidity", async function() {
+describe("ColiquiditySimulation", async function() {
   let simulation: ColiquiditySimulation
   let snapshot: unknown
 
