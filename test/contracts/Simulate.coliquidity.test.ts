@@ -20,7 +20,7 @@ describe("ColiquiditySimulation", async function() {
       BigNumber.from("1000000000000"),
       BigNumber.from("1000000000"),
       BigNumber.from("100000000"),
-      BigNumber.from("100"),
+      BigNumber.from("100000"),
       BigNumber.from("5"),
       BigNumber.from("10"),
       BigNumber.from("10"),

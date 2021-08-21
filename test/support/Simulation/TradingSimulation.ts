@@ -153,9 +153,14 @@ export class TradingSimulation {
       // console.log(`trade from bob ${i}`)
       const baseBalanceBefore = await this.base.balanceOf(this.bob.address)
       const quoteBalanceBefore = await this.quote.balanceOf(this.bob.address)
+      // console.log('baseBalanceBefore', baseBalanceBefore.toString())
+      // console.log('quoteBalanceBefore', quoteBalanceBefore.toString())
       await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseBalanceBefore, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
       const quoteBalanceAfter = await this.quote.balanceOf(this.bob.address)
-      const quoteTradeAmount = quoteBalanceAfter.sub(quoteBalanceBefore).mul(this.feeDenominator).div(this.feeNumerator)
+      const quoteBalanceDiff = quoteBalanceAfter.sub(quoteBalanceBefore)
+      // console.log('quoteBalanceDiff.toString()', quoteBalanceDiff.toString())
+      const quoteTradeAmount = quoteBalanceDiff.mul(this.feeDenominator).div(this.feeNumerator)
+      // console.log('quoteTradeAmount.toString()', quoteTradeAmount.toString())
       await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteTradeAmount, 0, [this.quote.address, this.base.address], this.bob.address, MaxUint256)
       // const this.baseBalanceAfter =
       // const this.
