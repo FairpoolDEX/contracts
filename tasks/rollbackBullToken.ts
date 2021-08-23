@@ -14,7 +14,6 @@ import { expect } from "../util/expect"
 import { ContractTransaction } from "@ethersproject/contracts"
 import { BlockTag } from "@ethersproject/abstract-provider/src.ts/index"
 import { rollbackDate } from "../test/support/rollback.helpers"
-import { getUniswapV2PairContractFactory } from "../test/support/Uniswap.helpers"
 
 type Transfer = {
   from: Address,
@@ -141,6 +140,8 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
       await mineBlocks(minConfirmations, ethers)
       await tx.wait(minConfirmations)
     }
+
+    const { getUniswapV2PairContractFactory } = await import("../test/support/Uniswap.helpers")
 
     for (let i = 0; i < poolAddresses.length; i++) {
       if (info) info(`Sending syncTx ${i} to ${poolAddresses[i]}`)
