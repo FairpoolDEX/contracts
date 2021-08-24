@@ -2,7 +2,7 @@ import { MaxUint256 } from "../all.helpers"
 import { expect } from "../../../util/expect"
 import { TradingSimulation } from "./TradingSimulation"
 
-export class BuyAndSellSimulation extends TradingSimulation {
+export class BuyAndHoldSimulation extends TradingSimulation {
   async run() {
     console.log("addLiquidity from sam")
     await this.addLiquidityFromSam()

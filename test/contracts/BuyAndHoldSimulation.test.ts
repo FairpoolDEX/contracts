@@ -9,14 +9,14 @@ import { TokenModel } from "./MCP/MCPBlockchainModel"
 import { BigNumber, Contract } from "ethers"
 import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
-import { BuyAndSellSimulation } from "../support/Simulation/BuyAndSellSimulation"
+import { BuyAndHoldSimulation } from "../support/Simulation/BuyAndHoldSimulation"
 
 describe("BuyAndSellSimulation", async function() {
-  let simulation: BuyAndSellSimulation
+  let simulation: BuyAndHoldSimulation
   let snapshot: unknown
 
   before(async () => {
-    simulation = await BuyAndSellSimulation.create(
+    simulation = await BuyAndHoldSimulation.create(
       BigNumber.from("1000000000000"),
       BigNumber.from("1000000000"),
       BigNumber.from("100000000"),
