@@ -1,7 +1,7 @@
 import { expect } from "../../util/expect"
 import { Context } from "mocha"
 
-describe("ColiquidityComparison", async function() {
+describe("ColiquidityAnalysis", async function() {
 
   it(`must compare coliquidity profit with long profit`, async function(this: Context) {
     // expect(getColiquidityProfit(HighVolumePump)).to.be.greaterThan(getLongProfit(HighVolumePump))

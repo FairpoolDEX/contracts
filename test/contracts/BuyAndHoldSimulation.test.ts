@@ -11,7 +11,7 @@ import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 import { BuyAndHoldSimulation } from "../support/Simulation/BuyAndHoldSimulation"
 
-describe("BuyAndSellSimulation", async function() {
+describe("BuyAndHoldSimulation", async function() {
   let simulation: BuyAndHoldSimulation
   let snapshot: unknown
 

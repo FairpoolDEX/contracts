@@ -3,11 +3,11 @@ import { TradingSimulation } from "./TradingSimulation"
 
 export class ColiquiditySimulation extends TradingSimulation {
   async run() {
-    console.log("addLiquidity from sam")
+    this.debug("addLiquidity from sam")
     await this.addLiquidityFromSam()
     await this.logBalances()
 
-    console.log("addLiquidity from alice")
+    this.debug("addLiquidity from alice")
     const baseDeposit = this.baseInitialAmount.div(this.depositRatio)
     const quoteDeposit = this.quoteInitialAmount.div(this.depositRatio)
     await this.router.connect(this.alice).addLiquidity(this.base.address, this.quote.address, baseDeposit, quoteDeposit, baseDeposit, quoteDeposit, this.alice.address, MaxUint256)
@@ -19,15 +19,15 @@ export class ColiquiditySimulation extends TradingSimulation {
     const quoteExpected = quoteBalanceOfPair.mul(pairBalanceOfAlice).div(pairTotalSupply)
     await this.logBalances()
 
-    console.log("trade from bob in cycle")
+    this.debug("trade from bob in cycle")
     await this.tradeFromBobInCycle()
     await this.logBalances()
 
-    console.log("buy from zed")
+    this.debug("buy from zed")
     await this.buyFromZed()
     await this.logBalances()
 
-    console.log("removeLiquidity from alice")
+    this.debug("removeLiquidity from alice")
     await this.pair.connect(this.alice).approve(this.router.address, MaxUint256)
     await this.router.connect(this.alice).removeLiquidity(this.base.address, this.quote.address, pairBalanceOfAlice, 0, 0, this.alice.address, MaxUint256)
     await this.logBalances()
