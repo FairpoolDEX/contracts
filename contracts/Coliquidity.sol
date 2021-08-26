@@ -9,10 +9,9 @@ import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import "hardhat/console.sol";
 
-// TODO: Use lock modifier from UniswapV2Pair from uniswap-v2-core
+// TODO: check against https://swcregistry.io/
 // TODO: Use automatic ETH <-> WETH conversion from uniswap-v2-periphery
-// FIXME: Optimize contract storage by removing filled offers, withdrawn offers, withdrawn positions? (- indexes might change)
-// FIXME: check against https://swcregistry.io/
+// TODO: Optimize contract storage by removing filled offers, withdrawn offers, withdrawn positions? (- indexes might change)
 contract Coliquidity is Ownable {
     // NOTE: Contract functions use Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
     // NOTE: Contract functions protect against reentrancy by setting protection status before calling external contracts
