@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -6,11 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "hardhat/console.sol";
 
-/* mythx-disable SWC-103 */
-/* mythx-disable SWC-116 */
-
 // TODO: Use safeTransferFrom from uniswap-v2-periphery
 // TODO: Use lock modifier from UniswapV2Pair from uniswap-v2-core
+// TODO: Use automatic ETH <-> WETH conversion from uniswap-v2-periphery
 // FIXME: check against https://swcregistry.io/
 contract MCP is Ownable {
     // NOTE: Contract functions use Uniswap-style error codes (shorthands like "WEXP", "RAMP"). The error codes should be converted to human-readable error messages in UI.
@@ -35,7 +33,6 @@ contract MCP is Ownable {
     }
 
     uint public feeDivisorMin;
-    // solhint-disable-next-line const-name-snakecase
     uint public cancellationTimeout = 6 /* hours */ * 60 /* minutes */ * 60 /* seconds */;
     Protection[] public protections;
 
@@ -172,17 +169,4 @@ contract MCP is Ownable {
         return protections.length;
     }
 
-    /* Helpful functions that allow to withdraw token or ether if user sends them to MCP contract by mistake */
-
-    function withdrawToken(address token, uint amount) public onlyOwner {
-        IERC20(token).transfer(msg.sender, amount);
-    }
-
-    function withdrawEther(uint amount) public onlyOwner {
-        require(address(this).balance >= amount, "MCP: Address: insufficient balance");
-
-        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success,) = _msgSender().call{value : amount}("");
-        require(success, "MCP: Unable to send value");
-    }
 }

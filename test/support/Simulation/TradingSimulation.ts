@@ -9,6 +9,7 @@ import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Rout
 import { flatten } from "lodash"
 import { nail } from "../../../util/string"
 import { expect } from "../../../util/expect"
+import $debug, { Debugger } from "debug"
 
 export class TradingSimulation {
   constructor(
@@ -32,6 +33,7 @@ export class TradingSimulation {
     public depositRatio: BigNumber,
     public pumpRatio: BigNumber,
     public now: Date,
+    public debug: Debugger,
     public ethers: Ethers,
   ) { }
 
@@ -90,6 +92,8 @@ export class TradingSimulation {
 
     const now = new Date(await getLatestBlockTimestamp() * 1000)
 
+    const debug = $debug("BuyAndHoldSimulation")
+
     return new this(
       owner,
       stranger,
@@ -111,6 +115,7 @@ export class TradingSimulation {
       depositRatio,
       pumpRatio,
       now,
+      debug,
       ethers,
     )
   }
@@ -123,8 +128,8 @@ export class TradingSimulation {
     const baseLiquidity = this.baseInitialAmount.div(this.liquidityRatio)
     const quoteLiquidity = this.quoteInitialAmount.div(this.liquidityRatio)
     const priceInverse = baseLiquidity.div(quoteLiquidity)
-    // console.log('baseLiquidity', this.baseLiquidity.toString())
-    // console.log('quoteLiquidity', quoteLiquidity.toString())
+    // this.debug('baseLiquidity', this.baseLiquidity.toString())
+    // this.debug('quoteLiquidity', quoteLiquidity.toString())
     await this.router.connect(this.sam).addLiquidity(this.base.address, this.quote.address, baseLiquidity, quoteLiquidity, baseLiquidity, quoteLiquidity, this.sam.address, MaxUint256)
   }
 
@@ -147,28 +152,28 @@ export class TradingSimulation {
      * quoteAmountAfter = quoteReserveAfter - quoteBalanceInterim
      */
     const { _reserve0: baseReserveBefore, _reserve1: quoteReserveBefore } = await this.pair.getReserves()
-    console.log("reserves before", baseReserveBefore.toString(), quoteReserveBefore.toString())
+    this.debug("reserves before", baseReserveBefore.toString(), quoteReserveBefore.toString())
     const ratioBefore = baseReserveBefore.div(quoteReserveBefore)
     for (let i = 0; i < 500; i++) {
-      // console.log(`trade from bob ${i}`)
+      // this.debug(`trade from bob ${i}`)
       const baseBalanceBefore = await this.base.balanceOf(this.bob.address)
       const quoteBalanceBefore = await this.quote.balanceOf(this.bob.address)
-      // console.log('baseBalanceBefore', baseBalanceBefore.toString())
-      // console.log('quoteBalanceBefore', quoteBalanceBefore.toString())
+      // this.debug('baseBalanceBefore', baseBalanceBefore.toString())
+      // this.debug('quoteBalanceBefore', quoteBalanceBefore.toString())
       await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseBalanceBefore, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
       const quoteBalanceAfter = await this.quote.balanceOf(this.bob.address)
       const quoteBalanceDiff = quoteBalanceAfter.sub(quoteBalanceBefore)
-      // console.log('quoteBalanceDiff.toString()', quoteBalanceDiff.toString())
+      // this.debug('quoteBalanceDiff.toString()', quoteBalanceDiff.toString())
       const quoteTradeAmount = quoteBalanceDiff.mul(this.feeDenominator).div(this.feeNumerator)
-      // console.log('quoteTradeAmount.toString()', quoteTradeAmount.toString())
+      // this.debug('quoteTradeAmount.toString()', quoteTradeAmount.toString())
       await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteTradeAmount, 0, [this.quote.address, this.base.address], this.bob.address, MaxUint256)
       // const this.baseBalanceAfter =
       // const this.
     }
     const { _reserve0: baseReserveAfter, _reserve1: quoteReserveAfter } = await this.pair.getReserves()
-    console.log("reserves after", baseReserveAfter.toString(), quoteReserveAfter.toString())
+    this.debug("reserves after", baseReserveAfter.toString(), quoteReserveAfter.toString())
     const ratioAfter = baseReserveAfter.div(quoteReserveAfter)
-    console.log('ratios', ratioBefore.toString(), ratioAfter.toString())
+    this.debug('ratios', ratioBefore.toString(), ratioAfter.toString())
     expect(ratioBefore).to.eq(ratioAfter)
   }
 
@@ -178,8 +183,8 @@ export class TradingSimulation {
     // expect(quotePumpIn.lt(quoteLiquidity))
     // expect(basePumpOut.lt(baseLiquidity))
     // expect(basePumpOut.gt(quotePumpIn))
-    // console.log('quotePumpIn.toString()', quotePumpIn.toString())
-    // console.log('basePumpOut.toString()', this.basePumpOut.toString())
+    // this.debug('quotePumpIn.toString()', quotePumpIn.toString())
+    // this.debug('basePumpOut.toString()', this.basePumpOut.toString())
     await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteIn, 0, [this.quote.address, this.base.address], this.zed.address, MaxUint256)
     // expect(await this.base.balanceOf(bob.address)).to.be.gt(baseInitialAmount)
     // expect(await quote.balanceOf(bob.address)).to.be.lt(quoteInitialAmount)
@@ -191,10 +196,10 @@ export class TradingSimulation {
   }
 
   async calculateProfitFromAlice(activity: string) {
-    console.log("calculateProfit from alice")
+    this.debug("calculateProfit from alice")
     const quoteFinalAmount = await this.quote.balanceOf(this.alice.address)
     const profit = quoteFinalAmount.sub(this.quoteInitialAmount)
-    console.info(nail(`
+    this.debug(nail(`
       * Alice balance before ${activity}: ${this.quoteInitialAmount.div(scale)} ETH
       * Alice balance after ${activity}: ${quoteFinalAmount.div(scale)} ETH
       * Alice profit: ${profit.div(scale)} ETH (+${profit.mul(100).div(this.quoteInitialAmount)}%)
@@ -203,7 +208,7 @@ export class TradingSimulation {
 
   async logBalances() {
     const padding = 20
-    console.dir({
+    this.debug("%O", {
       base: {
         "sam    ": (await this.base.balanceOf(this.sam.address)).toString().padStart(padding),
         "alice   ": (await this.base.balanceOf(this.alice.address)).toString().padStart(padding),

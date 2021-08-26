@@ -5,6 +5,7 @@ import { string } from "hardhat/internal/core/params/argumentTypes"
 import { MaxUint256 } from "./all.helpers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "../../util/expect"
+import { Address } from "../../util/types"
 
 export const zero = "0x0000000000000000000000000000000000000000"
 
@@ -52,7 +53,7 @@ export async function setNextBlockTimestamp(timestamp: number) {
   return ethers.provider.send("evm_setNextBlockTimestamp", [timestamp])
 }
 
-export async function expectBalances(balances: [SignerWithAddress, Contract, BigNumberish][]) {
+export async function expectBalances(balances: [{address: Address}, Contract, BigNumberish][]) {
   return Promise.all(balances.map(async ([signer, token, amount], index: number) => {
     expect(await token.balanceOf(signer.address), `index ${index}`).to.equal(amount)
   }))
