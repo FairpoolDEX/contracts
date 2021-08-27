@@ -1,6 +1,5 @@
-import chai from "chai"
+import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
-import { solidity } from "ethereum-waffle"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { toTokenAmount } from "../support/all.helpers"
 import { timeTravel } from "../support/test.helpers"
@@ -12,9 +11,6 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burn
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
-
-chai.use(solidity)
-const { expect } = chai
 
 /**
  * Events

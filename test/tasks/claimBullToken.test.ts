@@ -1,6 +1,5 @@
-import chai from "chai"
+import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
-import { solidity } from "ethereum-waffle"
 import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
 import { timeTravel } from "../support/test.helpers"
 import { BullToken } from "../../typechain"
@@ -9,9 +8,6 @@ import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullTo
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
 import { BalanceMap, Addresses } from "../../util/types"
-
-chai.use(solidity)
-const { expect } = chai
 
 describe("claimBullToken", async () => {
 
