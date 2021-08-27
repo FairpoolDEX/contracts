@@ -1,16 +1,12 @@
 import { ethers, upgrades } from "hardhat"
-import { solidity } from "ethereum-waffle"
 import { BigNumber, Contract, Wallet } from "ethers"
-import chai from "chai"
+import { expect } from "../../util/expect"
 import { toTokenAmount } from "../support/all.helpers"
 import { skipBlocks, timeTravel } from "../support/test.helpers"
 import { ShieldToken } from "../../typechain"
 
 import { SHIELD_ALLOCATIONS, shieldReleaseTime } from "../support/ShieldToken.helpers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-
-chai.use(solidity)
-const { expect } = chai
 
 describe("ShieldToken", async () => {
 

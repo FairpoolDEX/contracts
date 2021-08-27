@@ -1,11 +1,8 @@
-import chai from "chai"
-import { solidity } from "ethereum-waffle"
+import { expect } from "../util/expect"
 import { toTokenAmount } from "./support/all.helpers"
 import Decimal from "decimal.js"
 import { BigNumber } from "ethers"
 
-chai.use(solidity)
-const { expect } = chai
 
 describe("Helpers", async () => {
   it("toTokenAmount", async () => {

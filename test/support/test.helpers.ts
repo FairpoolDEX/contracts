@@ -53,10 +53,14 @@ export async function setNextBlockTimestamp(timestamp: number) {
   return ethers.provider.send("evm_setNextBlockTimestamp", [timestamp])
 }
 
-export async function expectBalances(balances: [{address: Address}, Contract, BigNumberish][]) {
+export async function expectBalances(balances: [{ address: Address }, Contract, BigNumberish][]) {
   return Promise.all(balances.map(async ([signer, token, amount], index: number) => {
     expect(await token.balanceOf(signer.address), `index ${index}`).to.equal(amount)
   }))
+}
+
+export async function expectBalance(signer: { address: Address }, token: Contract, amount: BigNumberish) {
+  return expect(await token.balanceOf(signer.address)).to.equal(amount)
 }
 
 export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
