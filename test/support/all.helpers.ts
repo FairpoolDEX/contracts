@@ -43,6 +43,10 @@ export async function mineBlocks(count: number, ethers: Ethers): Promise<void> {
   }
 }
 
+export function sum(array: BigNumber[]) {
+  return array.reduce((acc, bn) => acc.add(bn), BigNumber.from(0))
+}
+
 export const seconds = 1000
 
 export const minutes = 60 * seconds

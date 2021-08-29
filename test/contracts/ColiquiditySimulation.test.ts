@@ -10,6 +10,7 @@ import { BigNumber, Contract } from "ethers"
 import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 import { ColiquiditySimulation } from "../support/Simulation/ColiquiditySimulation"
+import $debug from "debug"
 
 describe("ColiquiditySimulation", async function() {
   let simulation: ColiquiditySimulation
@@ -24,6 +25,7 @@ describe("ColiquiditySimulation", async function() {
       BigNumber.from("5"),
       BigNumber.from("10"),
       BigNumber.from("10"),
+      $debug("ColiquiditySimulation"),
       ethers,
     )
   })

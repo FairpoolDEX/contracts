@@ -48,6 +48,7 @@ export class TradingSimulation {
     liquidityRatio: BigNumber,
     depositRatio: BigNumber,
     pumpRatio: BigNumber,
+    debug: Debugger,
     ethers: Ethers,
   ) {
     const signers = await ethers.getSigners()
@@ -91,8 +92,6 @@ export class TradingSimulation {
     await Promise.all(approvals)
 
     const now = new Date(await getLatestBlockTimestamp() * 1000)
-
-    const debug = $debug("BuyAndHoldSimulation")
 
     return new this(
       owner,
@@ -173,7 +172,7 @@ export class TradingSimulation {
     const { _reserve0: baseReserveAfter, _reserve1: quoteReserveAfter } = await this.pair.getReserves()
     this.debug("reserves after", baseReserveAfter.toString(), quoteReserveAfter.toString())
     const ratioAfter = baseReserveAfter.div(quoteReserveAfter)
-    this.debug('ratios', ratioBefore.toString(), ratioAfter.toString())
+    this.debug("ratios", ratioBefore.toString(), ratioAfter.toString())
     expect(ratioBefore).to.eq(ratioAfter)
   }
 

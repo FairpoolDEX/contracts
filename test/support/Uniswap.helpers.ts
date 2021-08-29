@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ContractFactory } from "ethers"
+import { BigNumber, BigNumberish, Contract, ContractFactory } from "ethers"
 import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
 import { Ethers } from "../../util/types"
 import UniswapV2Router02JSON from "@uniswap/v2-periphery/build/UniswapV2Router02.json"
@@ -9,6 +9,7 @@ import { UniswapV2Factory } from "../../typechain"
 
 export const uniswapFeeNumerator = BigNumber.from(3)
 export const uniswapFeeDenominator = BigNumber.from(1000)
+export const uniswapMinimumLiquidity = BigNumber.from(1000) // see MINIMUM_LIQUIDITY in UniswapV2Pair.sol
 
 export async function deployUniswapPair(factory: UniswapV2Factory, token0: Contract, token1: Contract, ethers: Ethers) {
   await factory.createPair(token0.address, token1.address)
@@ -36,4 +37,12 @@ export async function getWETH9ContractFactory(ethers: Ethers): Promise<ContractF
 
 export function toAmountAfterFee(amount: BigNumber) {
   return amount.mul(uniswapFeeDenominator.sub(uniswapFeeNumerator)).div(uniswapFeeDenominator)
+}
+
+export const getMinimumLiquidityShare = function(value: BigNumberish, liquidityAmount: BigNumber) {
+  /**
+   * Important: UniswapV2Pair burns MINIMUM_LIQUIDITY on pair creation, so liquidityAmount of the position that creates the pool is always less than expected liquidityAmount (difference is equal to MINIMUM_LIQUIDITY)
+   * That means it's technically impossible to withdraw full liquidity from the pool
+   */
+  return BigNumber.from(value).mul(liquidityAmount).div(liquidityAmount.add(uniswapMinimumLiquidity))
 }
