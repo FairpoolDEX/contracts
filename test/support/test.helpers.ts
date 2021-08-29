@@ -9,6 +9,8 @@ import { Address } from "../../util/types"
 
 export const zero = "0x0000000000000000000000000000000000000000"
 
+export const $zero = BigNumber.from(0)
+
 type timeTravelCallback = () => Promise<void>;
 
 export async function timeTravel(callback: timeTravelCallback, nextBlockTimestamp: number): Promise<void> {
@@ -81,4 +83,25 @@ export async function addLiquidity(router: Contract, token0: Contract, token1: C
     MaxUint256,
     deadline,
   )
+}
+
+export function logBn(label: string, value: unknown) {
+  if (value instanceof BigNumber) {
+    console.log(label, value.toString())
+  } else if (typeof value === "object" && value) {
+    console.log(
+      label,
+      Object.fromEntries(
+        Object.entries(value).map(([key, value]) => {
+          if (BigNumber.isBigNumber(value)) {
+            return [key, value.toString()]
+          } else {
+            return [key, value]
+          }
+        }),
+      ),
+    )
+  } else {
+    console.log(label, value)
+  }
 }

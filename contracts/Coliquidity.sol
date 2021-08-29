@@ -151,9 +151,11 @@ contract Coliquidity is Ownable {
             address(this),
             deadline
         );
+        console.log('makerAmountWithdrawn', makerAmountWithdrawn);
+        console.log('position.makerAmount', position.makerAmount);
         if (makerAmountWithdrawn > position.makerAmount) {
             uint makerFee = (makerAmountWithdrawn - position.makerAmount) * feeNumerator / feeDenominator;
-            // position.makerAmount -= makerAmountWithdrawn, but the result is less than 0, so setting it to 0
+            // should be `position.makerAmount -= makerAmountWithdrawn`, but the result is less than 0, so setting it to 0
             position.makerAmount = 0;
             if (offer.reinvest) {
                 offer.makerAmount += makerAmountWithdrawn - makerFee;
@@ -163,11 +165,15 @@ contract Coliquidity is Ownable {
             TransferHelper.safeTransfer(position.makerToken, owner(), makerFee);
         } else {
             position.makerAmount -= makerAmountWithdrawn;
-            TransferHelper.safeTransfer(position.makerToken, position.maker, makerAmountWithdrawn);
+            if (offer.reinvest) {
+                offer.makerAmount += makerAmountWithdrawn;
+            } else {
+                TransferHelper.safeTransfer(position.makerToken, position.maker, makerAmountWithdrawn);
+            }
         }
         if (takerAmountWithdrawn > position.takerAmount) {
             uint takerFee = (takerAmountWithdrawn - position.takerAmount) * feeNumerator / feeDenominator;
-            // position.takerAmount -= takerAmountWithdrawn, but the result is less than 0, so setting it to 0            position.takerAmount = 0;
+            // should be `position.takerAmount -= takerAmountWithdrawn`, but the result is less than 0, so setting it to 0            position.takerAmount = 0;
             position.takerAmount = 0;
             // reinvest is not available for the taker
             TransferHelper.safeTransfer(position.takerToken, position.taker, takerFee);
