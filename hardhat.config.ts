@@ -73,6 +73,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialDate: new Date(0).toISOString(),
+      gasPrice,
       gasMultiplier: 1,
       // forking: {
       //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
@@ -86,6 +87,8 @@ const config: HardhatUserConfig = {
       //   accounts: {
       //     mnemonic: process.env.MNEMONIC || "",
       //   },
+      gasPrice,
+      gasMultiplier: 1.2,
       timeout: 30 * 60 * 1000,
     },
     mainnet: {
