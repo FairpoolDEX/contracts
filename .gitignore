@@ -25,3 +25,5 @@ bin
 *.flat.sol
 tasks/scripts/parameters.prod.ts
 allocations.csv
+
+*.svg
