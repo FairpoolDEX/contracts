@@ -19,9 +19,7 @@ import { upgradeToken } from "./tasks/upgradeToken"
 import { date } from "./util/addParamTypes"
 import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
 import { deployMCP } from "./tasks/deployMCP"
-import { deployERC20Token } from "./tasks/deployERC20Token"
-import { TASK_VERIFY_GET_CONSTRUCTOR_ARGUMENTS } from "@nomiclabs/hardhat-etherscan/src/constants"
-import * as os from "os"
+import { deployContract } from "./tasks/deployContract"
 
 dotEnvConfig()
 
@@ -152,11 +150,12 @@ task("deployMCP", "Deploy MCP contract")
   .addParam("feeDivisorMin", "Minimal fee divisor", 100, types.int)
   .setAction(deployMCP)
 
-task("deployERC20Token", "Deploy ERC20 token")
+task("deployContract", "Deploy a contract")
   .addParam("contract", "Contract name", undefined, types.string)
+  .addOptionalParam("upgradeable", "Deploy with upgradeable proxy", false, types.boolean)
   .addOptionalParam("constructorArgsModule", "File path to a javascript module that exports the list of arguments.", undefined, types.inputFile)
   .addOptionalVariadicPositionalParam("constructorArgsParams", "Contract constructor arguments. Ignored if the --constructorArgsModule option is used.", [])
-  .setAction(deployERC20Token)
+  .setAction(deployContract)
 
 task("transferMany", "Call transferMany for allocations without lockup period")
   .addParam("token", "SHLD token contract address")

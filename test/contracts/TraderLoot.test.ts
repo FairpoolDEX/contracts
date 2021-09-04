@@ -6,11 +6,11 @@ import { ShieldToken, TraderLoot } from "../../typechain"
 import { beforeEach } from "mocha"
 import $debug from "debug"
 import { shieldReleaseTime } from "../support/ShieldToken.helpers"
-import { chestArmor, decodeBase64, maxClaimTimestamp, ownerMaxTokenId, name, style, symbol, weapons, publicMaxTokenId } from "../support/TraderLoot.helpers"
+import { chests, decodeBase64, maxClaimTimestamp, ownerMaxTokenId, name, style, symbol, weapons, publicMaxTokenId, heads, waists, feet, hands, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes } from "../support/TraderLoot.helpers"
 import { promises as fs } from "fs"
 import * as os from "os"
 
-describe("ShieldLoot", async function() {
+describe("TraderLoot", async function() {
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
   let bob: SignerWithAddress
@@ -50,7 +50,7 @@ describe("ShieldLoot", async function() {
     shieldAsSally = shieldAsOwner.connect(sally)
 
     const lootFactory = await ethers.getContractFactory("TraderLoot")
-    lootAsOwner = (await lootFactory.connect(owner).deploy(name, symbol, shield.address, publicMaxTokenId, ownerMaxTokenId, maxClaimTimestamp, style, weapons, chestArmor)) as unknown as TraderLoot
+    lootAsOwner = (await lootFactory.connect(owner).deploy(name, symbol, shield.address, publicMaxTokenId, ownerMaxTokenId, maxClaimTimestamp, style/*, weapons, chests, heads, waists, feet, hands/*, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes*/)) as unknown as TraderLoot
     loot = lootAsOwner.connect(zero)
     lootAsBob = lootAsOwner.connect(bob)
     lootAsSam = lootAsOwner.connect(sam)
@@ -124,7 +124,7 @@ describe("ShieldLoot", async function() {
 
   it("must not allow to deploy with invalid ownerMaxTokenId, publicMaxTokenId", async () => {
     const lootFactory = await ethers.getContractFactory("TraderLoot")
-    await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 0, 0, maxClaimTimestamp, style, weapons, chestArmor)).to.be.revertedWith("ownerMaxTokenId must be greater than 0")
-    await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 100, 1, maxClaimTimestamp, style, weapons, chestArmor)).to.be.revertedWith("ownerMaxTokenId must be greater or equal to publicMaxTokenId")
+    await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 0, 0, maxClaimTimestamp, style)).to.be.revertedWith("ownerMaxTokenId must be greater than 0")
+    await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 100, 1, maxClaimTimestamp, style)).to.be.revertedWith("ownerMaxTokenId must be greater or equal to publicMaxTokenId")
   })
 })
