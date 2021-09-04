@@ -18,108 +18,206 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     string style;
 
+    // Lord of the Rings
     string[] private weapons = [
-    "Insider",
-    "Market Maker",
-    "Arbitrageur",
-    "Fundamental Analyst",
-    "Technical Analyst"
+    "Gandalf",
+    "Frodo",
+    "Legolas",
+    "Arwen",
+    "Galadriel",
+    "Aragorn",
+    "Gollum",
+    "Sauron",
+    "Bilbo",
+    "Gimli",
+    "Saruman",
+    "Boromir"
     ];
 
+    // Harry Potter
     string[] private chests = [
-    "Uniswap",
-    "PancakeSwap",
-    "Binance",
-    "Bitfinex",
-    "Huobi",
-    "Kucoin",
-    "Coinbase",
-    "FTX"
+    "Harry",
+    "Hermione",
+    "Dumbledore",
+    "Voldemort",
+    "Ron",
+    "Dobby",
+    "Hagrid",
+    "Draco",
+    "Bellatrix",
+    "Sirius"
     ];
 
+    // Game of Thrones
     string[] private heads = [
-    "Spot markets",
-    "Perpetual swaps",
-    "Futures",
-    "Options"
+    "Eddard Stark",
+    "Robert Baratheon",
+    "Jaime Lannister",
+    "Catelyn Stark",
+    "Tyrion Lannister",
+    "Cersei Lannister",
+    "Daenerys Targaryen",
+    "Jorah Mormont",
+    "Jon Snow",
+    "Robb Stark",
+    "Sansa Stark",
+    "Arya Stark",
+    "Bran Stark"
     ];
 
+    // Star Wars
     string[] private waists = [
-    "MACD",
-    "RSI",
-    "OBV",
-    "Stoch RSI",
-    "Price action",
-    "Bollinger bands",
-    "Ichimoku Cloud"
+    "Darth Vader",
+    "Yoda",
+    "Obi-Wan Kenobi",
+    "Princess Leia",
+    "Chewbacca",
+    "Jabba the Hutt",
+    "Luke Skywalker",
+    "Kylo Ren",
+    "Boba Fett",
+    "Padme Amidala",
+    "Darth Maul",
+    "Jar Jar Binks",
+    "R2-D2",
+    "Han Solo",
+    "C-3PO"
     ];
 
+    // Marvel
     string[] private feet = [
-    "TradingView",
-    "DEXTools",
-    "TensorCharts",
-    "Dex.guru"
+    "Wolverine",
+    "Spider-Man",
+    "Thor",
+    "Iron Man",
+    "Hulk",
+    "Captain America",
+    "Tarzan",
+    "Punisher",
+    "Deadpool",
+    "Silver Surfer",
+    "Wonder Woman",
+    "Cyclops",
+    "Professor X",
+    "Doctor Strange"
     ];
 
+    // Matrix
     string[] private hands = [
-    "CoinMarketCap",
-    "CoinGecko",
-    "Cryptowatch",
-    "CryptoCompare",
-    "Blockfolio",
-    "CryptoPanic"
+    "Neo",
+    "Morpheus",
+    "Trinity",
+    "Agent Smith",
+    "Tank",
+    "Cypher",
+    "Dozer"
     ];
 
+    // Pirates of the Carribean
     string[] private necks = [
-    "Necklace",
-    "Amulet",
-    "Pendant"
+    "Captain Jack Sparrow",
+    "Elizabeth Swann",
+    "Will Turner",
+    "Davy Jones",
+    "Hector Barbossa",
+    "Anamaria",
+    "James Norrington",
+    "Bill Turner"
     ];
 
+    // Random
     string[] private rings = [
-    "Gold Ring",
-    "Silver Ring",
-    "Bronze Ring",
-    "Platinum Ring",
-    "Titanium Ring"
+    "Godzilla",
+    "Batman",
+    "Joker",
+    "Hannibal Lector",
+    "Terminator",
+    "Mario",
+    "Zorro"
     ];
 
-    string[] private suffixes = [
-    "of Power",
-    "of Titans",
-    "of Perfection",
-    "of Brilliance",
-    "of Enlightenment",
-    "of Protection",
-    "of Anger",
-    "of Vitriol",
-    "of the Fox",
-    "of the Twins"
+    string[] private prefixes = [
+    "Alert",
+    "Aggressive",
+    "Angry",
+    "Bloody",
+    "Charming",
+    "Combative",
+    "Cruel",
+    "Dark",
+    "Undead",
+    "Evil",
+    "Fierce",
+    "Jealous",
+    "Jittery",
+    "Nasty",
+    "Rich"
     ];
 
-    string[] private namePrefixes = [
-    "Agony", "Apocalypse", "Armageddon", "Beast", "Behemoth", "Blight", "Blood", "Bramble",
-    "Brimstone", "Brood", "Carrion", "Cataclysm", "Chimeric", "Corpse", "Corruption", "Damnation",
-    "Death", "Demon", "Dire", "Dragon", "Dread", "Doom", "Dusk", "Eagle", "Empyrean", "Fate", "Foe",
-    "Gale", "Ghoul", "Gloom", "Glyph"
-    ];
-
-    string[] private nameSuffixes = [
-    "Bane",
-    "Root",
-    "Bite",
-    "Song",
-    "Roar",
-    "Grasp",
-    "Instrument",
-    "Glow"
+    string[] private helpers = [
+    "with Vodka",
+    "wielding a Sword",
+    "drinking Beer",
+    "throwing Shurikens",
+    "firing a Bow",
+    "with a Minigun",
+    "loving his Flamethrower",
+    "handling a Pistol",
+    "making a Crossbow"
     ];
 
     string[] private rarityPrefixes = [
-    "~",
+    "+",
     "+",
     ">"
     ];
+
+    //    string[] private weapons = [
+    //    "Ethereum",
+    //    "Polygon",
+    //    "Binance Smart Chain",
+    //    "Avalanche",
+    //    "Fantom",
+    //    "Solana"
+    //    ];
+    //
+    //    string[] private chests = [
+    //    "Uniswap",
+    //    "SushiSwap",
+    //    "PancakeSwap",
+    //    "QuickSwap",
+    //    "Anyswap"
+    //    ];
+    //
+    //    string[] private heads = [
+    //    "Binance",
+    //    "Bitfinex",
+    //    "Huobi",
+    //    "Kucoin",
+    //    "Coinbase",
+    //    "FTX",
+    //    "Bithumb",
+    //    "Bybit"
+    //    ];
+    //
+    //    string[] private waists = [
+    //    "Chainlink",
+    //    "Band Protocol",
+    //    "Kylin Network",
+    //    "NEST Protocol",
+    //    "Modefi",
+    //    "Ares Protocol",
+    //    "Berry Data"
+    //    ];
+    //
+    //    string[] private feet = [
+    //    "CoinMarketCap",
+    //    "CoinGecko",
+    //    "Cryptowatch",
+    //    "CryptoCompare",
+    //    "Blockfolio",
+    //    "CryptoPanic"
+    //    ];
 
     uint256 maxClaimTimestamp;
 
@@ -161,16 +259,16 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray) internal view returns (string memory) {
         uint256 rand = random(string(abi.encodePacked(name(), keyPrefix, toString(tokenId))));
-        string memory output = sourceArray[rand % sourceArray.length];
+        string memory output = string(abi.encodePacked(prefixes[rand % prefixes.length], " ", sourceArray[rand % sourceArray.length]));
         uint256 greatness = rand % 21;
         if (greatness > 14) {
-            output = string(abi.encodePacked(output, " ", suffixes[rand % suffixes.length]));
-        }
-        if (greatness >= 19) {
-            if (greatness == 19) {
-                output = string(abi.encodePacked('"', namePrefixes[rand % namePrefixes.length], ' ', nameSuffixes[rand % nameSuffixes.length], '" ', output));
-            } else {
-                output = string(abi.encodePacked('"', namePrefixes[rand % namePrefixes.length], ' ', nameSuffixes[rand % nameSuffixes.length], '" ', output, " +1"));
+            output = string(abi.encodePacked(output, ' ', helpers[rand % helpers.length]));
+            if (greatness >= 19) {
+                if (greatness == 20) {
+                    output = string(abi.encodePacked(output, " (Dark God)"));
+                } else {
+                    output = string(abi.encodePacked(output, " (Vampire)"));
+                }
             }
         }
         if (greatness >= 19) {

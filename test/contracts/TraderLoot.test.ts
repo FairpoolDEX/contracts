@@ -119,7 +119,7 @@ describe("TraderLoot", async function() {
     const data = JSON.parse(decodeBase64(tokenURI.replace("data:application/json;base64,", "")))
     const image = decodeBase64(data.image.replace("data:image/svg+xml;base64,", ""))
     await fs.writeFile(`${os.tmpdir()}/loot.svg`, image)
-    expect(image).to.contain("Behemoth Instrument")
+    expect(image).to.contain("svg")
   })
 
   it("must not allow to deploy with invalid ownerMaxTokenId, publicMaxTokenId", async () => {
