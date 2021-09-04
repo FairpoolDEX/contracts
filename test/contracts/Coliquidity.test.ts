@@ -59,10 +59,6 @@ describe("Coliquidity", async function() {
 
   let snapshot: any
 
-  // let WETH = { address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" }
-  // let USDT = { address: "0xdac17f958d2ee523a2206206994597c13d831ec7" }
-  // let SHLD = { address: "0xd49efa7bc0d339d74f487959c573d518ba3f8437" }
-
   let baseAddress: Address
   let quoteAddress: Address
   let makerAmount: number
@@ -209,7 +205,7 @@ describe("Coliquidity", async function() {
     await expect(coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, 1)).to.be.revertedWith("EXPIRED")
   })
 
-  it.only("must allow to withdraw position with fees", async () => {
+  it("must allow to withdraw position with fees", async () => {
     await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
