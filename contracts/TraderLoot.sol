@@ -18,9 +18,44 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     string style;
 
-    string[] private weapons;
+    string[] private weapons = [
+    "Warhammer",
+    "Quarterstaff",
+    "Maul",
+    "Mace",
+    "Club",
+    "Katana",
+    "Falchion",
+    "Scimitar",
+    "Long Sword",
+    "Short Sword",
+    "Ghost Wand",
+    "Grave Wand",
+    "Bone Wand",
+    "Wand",
+    "Grimoire",
+    "Chronicle",
+    "Tome",
+    "Book"
+    ];
 
-    string[] private chests;
+    string[] private chests = [
+    "Divine Robe",
+    "Silk Robe",
+    "Linen Robe",
+    "Robe",
+    "Shirt",
+    "Demon Husk",
+    "Dragonskin Armor",
+    "Studded Leather Armor",
+    "Hard Leather Armor",
+    "Leather Armor",
+    "Holy Chestplate",
+    "Ornate Chestplate",
+    "Plate Mail",
+    "Chain Mail",
+    "Ring Mail"
+    ];
 
     string[] private heads = [
     "Ancient Helm",
@@ -311,7 +346,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return string(buffer);
     }
 
-    constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _publicMaxTokenId, uint256 _ownerMaxTokenId, uint256 _maxClaimTimestamp, string memory _style, string[] memory _weapons, string[] memory _chestArmor) ERC721(_name, _symbol) Ownable() {
+    constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _publicMaxTokenId, uint256 _ownerMaxTokenId, uint256 _maxClaimTimestamp, string memory _style) ERC721(_name, _symbol) Ownable() {
         require(_ownerMaxTokenId > 0, "ownerMaxTokenId must be greater than 0");
         require(_ownerMaxTokenId >= _publicMaxTokenId, "ownerMaxTokenId must be greater or equal to publicMaxTokenId");
         parentToken = _parentToken;
@@ -319,7 +354,5 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         ownerMaxTokenId = _ownerMaxTokenId;
         maxClaimTimestamp = _maxClaimTimestamp;
         style = _style;
-        weapons = _weapons;
-        chests = _chestArmor;
     }
 }
