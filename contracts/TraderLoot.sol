@@ -4,51 +4,23 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "hardhat/console.sol";
 import "./libraries/Base64.sol";
 
-contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
+contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
-    string[] private weapons = [
-    "Warhammer",
-    "Quarterstaff",
-    "Maul",
-    "Mace",
-    "Club",
-    "Katana",
-    "Falchion",
-    "Scimitar",
-    "Long Sword",
-    "Short Sword",
-    "Ghost Wand",
-    "Grave Wand",
-    "Bone Wand",
-    "Wand",
-    "Grimoire",
-    "Chronicle",
-    "Tome",
-    "Book"
-    ];
+    address private parentToken;
 
-    string[] private chestArmor = [
-    "Divine Robe",
-    "Silk Robe",
-    "Linen Robe",
-    "Robe",
-    "Shirt",
-    "Demon Husk",
-    "Dragonskin Armor",
-    "Studded Leather Armor",
-    "Hard Leather Armor",
-    "Leather Armor",
-    "Holy Chestplate",
-    "Ornate Chestplate",
-    "Plate Mail",
-    "Chain Mail",
-    "Ring Mail"
-    ];
+    uint256 maxTokenId;
 
-    string[] private headArmor = [
+    string style;
+
+    string[] private weapons;
+
+    string[] private chests;
+
+    string[] private heads = [
     "Ancient Helm",
     "Ornate Helm",
     "Great Helm",
@@ -66,7 +38,7 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Hood"
     ];
 
-    string[] private waistArmor = [
+    string[] private waists = [
     "Ornate Belt",
     "War Belt",
     "Plated Belt",
@@ -84,7 +56,7 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Sash"
     ];
 
-    string[] private footArmor = [
+    string[] private feet = [
     "Holy Greaves",
     "Ornate Greaves",
     "Greaves",
@@ -102,7 +74,7 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Shoes"
     ];
 
-    string[] private handArmor = [
+    string[] private hands = [
     "Holy Gauntlets",
     "Ornate Gauntlets",
     "Gauntlets",
@@ -120,7 +92,7 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Gloves"
     ];
 
-    string[] private necklaces = [
+    string[] private necks = [
     "Necklace",
     "Amulet",
     "Pendant"
@@ -185,6 +157,14 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Moon"
     ];
 
+    string[] private rarityPrefixes = [
+    "~",
+    "+",
+    "\xE2\x98\xBC"
+    ];
+
+    uint256 maxClaimTimestamp;
+
     function random(string memory input) internal pure returns (uint256) {
         return uint256(keccak256(abi.encodePacked(input)));
     }
@@ -194,27 +174,27 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function getChest(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "CHEST", chestArmor);
+        return pluck(tokenId, "CHEST", chests);
     }
 
     function getHead(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "HEAD", headArmor);
+        return pluck(tokenId, "HEAD", heads);
     }
 
     function getWaist(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "WAIST", waistArmor);
+        return pluck(tokenId, "WAIST", waists);
     }
 
     function getFoot(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "FOOT", footArmor);
+        return pluck(tokenId, "FOOT", feet);
     }
 
     function getHand(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "HAND", handArmor);
+        return pluck(tokenId, "HAND", hands);
     }
 
     function getNeck(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "NECK", necklaces);
+        return pluck(tokenId, "NECK", necks);
     }
 
     function getRing(uint256 tokenId) public view returns (string memory) {
@@ -222,7 +202,7 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray) internal view returns (string memory) {
-        uint256 rand = random(string(abi.encodePacked(keyPrefix, toString(tokenId))));
+        uint256 rand = random(string(abi.encodePacked(name(), keyPrefix, toString(tokenId))));
         string memory output = sourceArray[rand % sourceArray.length];
         uint256 greatness = rand % 21;
         if (greatness > 14) {
@@ -238,41 +218,47 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
                 output = string(abi.encodePacked('"', name[0], ' ', name[1], '" ', output, " +1"));
             }
         }
-        return output;
+        if (greatness >= 19) {
+            return string(abi.encodePacked(rarityPrefixes[2], ' ', output));
+        } else if (greatness > 14) {
+            return string(abi.encodePacked(rarityPrefixes[1], ' ', output));
+        } else {
+            return string(abi.encodePacked(rarityPrefixes[0], ' ', output));
+        }
     }
 
     function tokenURI(uint256 tokenId) override public view returns (string memory) {
         string[17] memory parts;
 
-        parts[0] = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: white; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="black" /><text x="10" y="20" class="base">';
+        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="10" y="20" class="weapon text odd">'));
 
         parts[1] = getWeapon(tokenId);
 
-        parts[2] = '</text><text x="10" y="40" class="base">';
+        parts[2] = '</text><text x="10" y="40" class="chest text even">';
 
         parts[3] = getChest(tokenId);
 
-        parts[4] = '</text><text x="10" y="60" class="base">';
+        parts[4] = '</text><text x="10" y="60" class="head text odd">';
 
         parts[5] = getHead(tokenId);
 
-        parts[6] = '</text><text x="10" y="80" class="base">';
+        parts[6] = '</text><text x="10" y="80" class="waist text even">';
 
         parts[7] = getWaist(tokenId);
 
-        parts[8] = '</text><text x="10" y="100" class="base">';
+        parts[8] = '</text><text x="10" y="100" class="foot text odd">';
 
         parts[9] = getFoot(tokenId);
 
-        parts[10] = '</text><text x="10" y="120" class="base">';
+        parts[10] = '</text><text x="10" y="120" class="hand text even">';
 
         parts[11] = getHand(tokenId);
 
-        parts[12] = '</text><text x="10" y="140" class="base">';
+        parts[12] = '</text><text x="10" y="140" class="neck text odd">';
 
         parts[13] = getNeck(tokenId);
 
-        parts[14] = '</text><text x="10" y="160" class="base">';
+        parts[14] = '</text><text x="10" y="160" class="ring text even">';
 
         parts[15] = getRing(tokenId);
 
@@ -288,12 +274,14 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function claim(uint256 tokenId) public nonReentrant {
-        require(tokenId > 0 && tokenId < 7778, "Token ID invalid");
+        require(tokenId > 0 && tokenId < 7778 && block.timestamp < maxClaimTimestamp, "Token ID invalid");
+        require(balanceOf(_msgSender()) == 0, "This address already has a token");
+        require(IERC20(parentToken).balanceOf(_msgSender()) > 0, 'Only parent token owners can claim');
         _safeMint(_msgSender(), tokenId);
     }
 
     function ownerClaim(uint256 tokenId) public nonReentrant onlyOwner {
-        require(tokenId > 7777 && tokenId < 8001, "Token ID invalid");
+        require(tokenId > 7777 && tokenId < 8001 || block.timestamp > maxClaimTimestamp, "Token ID invalid");
         _safeMint(owner(), tokenId);
     }
 
@@ -319,5 +307,12 @@ contract ShieldLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return string(buffer);
     }
 
-    constructor() ERC721("Shield Loot", "SHLDLOOT") Ownable() {}
+    constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _maxTokenId, uint256 _maxClaimTimestamp, string memory _style, string[] memory _weapons, string[] memory _chestArmor) ERC721(_name, _symbol) Ownable() {
+        parentToken = _parentToken;
+        maxTokenId = _maxTokenId;
+        maxClaimTimestamp = _maxClaimTimestamp;
+        style = _style;
+        weapons = _weapons;
+        chests = _chestArmor;
+    }
 }
