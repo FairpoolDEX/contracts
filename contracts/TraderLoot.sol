@@ -128,7 +128,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     string[] private rarityPrefixes = [
     "~",
     "+",
-    "\xE2\x98\xBC"
+    ">"
     ];
 
     uint256 maxClaimTimestamp;
