@@ -10,9 +10,11 @@ import "./libraries/Base64.sol";
 
 contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
-    address private parentToken;
+    address parentToken;
 
-    uint256 maxTokenId;
+    uint256 ownerMaxTokenId;
+
+    uint256 publicMaxTokenId;
 
     string style;
 
@@ -274,14 +276,16 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function claim(uint256 tokenId) public nonReentrant {
-        require(tokenId > 0 && tokenId < 7778 && block.timestamp < maxClaimTimestamp, "Token ID invalid");
+        require(tokenId > 0 && tokenId <= publicMaxTokenId, "Token ID invalid");
+        require(_msgSender() != owner(), "Owner can't claim");
         require(balanceOf(_msgSender()) == 0, "This address already has a token");
+        require(block.timestamp < maxClaimTimestamp, "Can't claim after maxClaimTimestamp");
         require(IERC20(parentToken).balanceOf(_msgSender()) > 0, 'Only parent token owners can claim');
         _safeMint(_msgSender(), tokenId);
     }
 
-    function ownerClaim(uint256 tokenId) public nonReentrant onlyOwner {
-        require(tokenId > 7777 && tokenId < 8001 || block.timestamp > maxClaimTimestamp, "Token ID invalid");
+    function claimForOwner(uint256 tokenId) public nonReentrant onlyOwner {
+        require(tokenId > publicMaxTokenId && tokenId <= ownerMaxTokenId || block.timestamp > maxClaimTimestamp, "Token ID invalid");
         _safeMint(owner(), tokenId);
     }
 
@@ -307,9 +311,12 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return string(buffer);
     }
 
-    constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _maxTokenId, uint256 _maxClaimTimestamp, string memory _style, string[] memory _weapons, string[] memory _chestArmor) ERC721(_name, _symbol) Ownable() {
+    constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _publicMaxTokenId, uint256 _ownerMaxTokenId, uint256 _maxClaimTimestamp, string memory _style, string[] memory _weapons, string[] memory _chestArmor) ERC721(_name, _symbol) Ownable() {
+        require(_ownerMaxTokenId > 0, "ownerMaxTokenId must be greater than 0");
+        require(_ownerMaxTokenId >= _publicMaxTokenId, "ownerMaxTokenId must be greater or equal to publicMaxTokenId");
         parentToken = _parentToken;
-        maxTokenId = _maxTokenId;
+        publicMaxTokenId = _publicMaxTokenId;
+        ownerMaxTokenId = _ownerMaxTokenId;
         maxClaimTimestamp = _maxClaimTimestamp;
         style = _style;
         weapons = _weapons;

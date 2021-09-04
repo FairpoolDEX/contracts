@@ -6,7 +6,9 @@ export const name = "Trader Loot"
 
 export const symbol = "TRADER"
 
-export const maxTokenId = 1200 // holder count
+export const publicMaxTokenId = 1200 // holder count
+
+export const ownerMaxTokenId = 1300
 
 export const maxClaimTimestamp = dateToTimestampSeconds(new Date("2021-09-12"))
 
