@@ -21,63 +21,53 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     string[] private weapons = [
     "Insider",
     "Market Maker",
+    "Arbitrageur",
     "Fundamental Analyst",
     "Technical Analyst"
     ];
 
     string[] private chests = [
-    "Divine Robe",
-    "Silk Robe",
-    "Linen Robe",
-    "Robe",
-    "Shirt",
-    "Demon Husk",
-    "Dragonskin Armor",
-    "Studded Leather Armor"
+    "Uniswap",
+    "PancakeSwap",
+    "Binance",
+    "Bitfinex",
+    "Huobi",
+    "Kucoin",
+    "Coinbase",
+    "FTX"
     ];
 
     string[] private heads = [
-    "Ancient Helm",
-    "Ornate Helm",
-    "Great Helm",
-    "Full Helm",
-    "Helm",
-    "Demon Crown",
-    "Dragon's Crown",
-    "War Cap"
+    "Spot markets",
+    "Perpetual swaps",
+    "Futures",
+    "Options"
     ];
 
     string[] private waists = [
-    "Ornate Belt",
-    "War Belt",
-    "Plated Belt",
-    "Mesh Belt",
-    "Heavy Belt",
-    "Demonhide Belt",
-    "Dragonskin Belt",
-    "Studded Leather Belt"
+    "MACD",
+    "RSI",
+    "OBV",
+    "Stoch RSI",
+    "Price action",
+    "Bollinger bands",
+    "Ichimoku Cloud"
     ];
 
     string[] private feet = [
-    "Holy Greaves",
-    "Ornate Greaves",
-    "Greaves",
-    "Chain Boots",
-    "Heavy Boots",
-    "Demonhide Boots",
-    "Dragonskin Boots",
-    "Studded Leather Boots"
+    "TradingView",
+    "DEXTools",
+    "TensorCharts",
+    "Dex.guru"
     ];
 
     string[] private hands = [
-    "Holy Gauntlets",
-    "Ornate Gauntlets",
-    "Gauntlets",
-    "Chain Gloves",
-    "Heavy Gloves",
-    "Demon's Hands",
-    "Dragonskin Gloves",
-    "Studded Leather Gloves"
+    "CoinMarketCap",
+    "CoinGecko",
+    "Cryptowatch",
+    "CryptoCompare",
+    "Blockfolio",
+    "CryptoPanic"
     ];
 
     string[] private necks = [
@@ -177,13 +167,10 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
             output = string(abi.encodePacked(output, " ", suffixes[rand % suffixes.length]));
         }
         if (greatness >= 19) {
-            string[2] memory name;
-            name[0] = namePrefixes[rand % namePrefixes.length];
-            name[1] = nameSuffixes[rand % nameSuffixes.length];
             if (greatness == 19) {
-                output = string(abi.encodePacked('"', name[0], ' ', name[1], '" ', output));
+                output = string(abi.encodePacked('"', namePrefixes[rand % namePrefixes.length], ' ', nameSuffixes[rand % nameSuffixes.length], '" ', output));
             } else {
-                output = string(abi.encodePacked('"', name[0], ' ', name[1], '" ', output, " +1"));
+                output = string(abi.encodePacked('"', namePrefixes[rand % namePrefixes.length], ' ', nameSuffixes[rand % nameSuffixes.length], '" ', output, " +1"));
             }
         }
         if (greatness >= 19) {
