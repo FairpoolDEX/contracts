@@ -9,6 +9,8 @@ import { shieldReleaseTime } from "../support/ShieldToken.helpers"
 import { chests, decodeBase64, maxClaimTimestamp, ownerMaxTokenId, name, style, symbol, weapons, publicMaxTokenId, heads, waists, feet, hands, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes } from "../support/TraderLoot.helpers"
 import { promises as fs } from "fs"
 import * as os from "os"
+import { range } from "lodash"
+import mkdirp from "mkdirp"
 
 describe("TraderLoot", async function() {
   let owner: SignerWithAddress
@@ -114,12 +116,18 @@ describe("TraderLoot", async function() {
     }, maxClaimTimestamp + 1)
   })
 
-  it("must generate loot with correct distribution", async () => {
-    const tokenURI = await loot.tokenURI(1)
-    const data = JSON.parse(decodeBase64(tokenURI.replace("data:application/json;base64,", "")))
-    const image = decodeBase64(data.image.replace("data:image/svg+xml;base64,", ""))
-    await fs.writeFile(`${os.tmpdir()}/loot.svg`, image)
-    expect(image).to.contain("svg")
+  it("must generate loot with correct distribution", async function() {
+    this.timeout(100000)
+    const tokenIds = range(1, 100)
+    const dir = `${os.tmpdir()}/loot`
+    mkdirp.sync(dir)
+    await Promise.all(tokenIds.map(async (tokenId) => {
+      const tokenURI = await loot.tokenURI(tokenId)
+      const data = JSON.parse(decodeBase64(tokenURI.replace("data:application/json;base64,", "")))
+      const image = decodeBase64(data.image.replace("data:image/svg+xml;base64,", ""))
+      await fs.writeFile(`${dir}/loot.${tokenId}.svg`, image)
+      expect(image).to.contain("svg")
+    }))
   })
 
   it("must not allow to deploy with invalid ownerMaxTokenId, publicMaxTokenId", async () => {

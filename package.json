@@ -51,6 +51,7 @@
     "hardhat-watcher": "^2.1.1",
     "lodash": "^4.17.21",
     "luxon": "^2.0.1",
+    "mkdirp": "^1.0.4",
     "neat-csv": "^6.0.1",
     "nodemon": "^2.0.7",
     "prettier": "^2.3.0",

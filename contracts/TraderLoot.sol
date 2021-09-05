@@ -36,37 +36,6 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     // Harry Potter
     string[] private chests = [
-    "Harry",
-    "Hermione",
-    "Dumbledore",
-    "Voldemort",
-    "Ron",
-    "Dobby",
-    "Hagrid",
-    "Draco",
-    "Bellatrix",
-    "Sirius"
-    ];
-
-    // Game of Thrones
-    string[] private heads = [
-    "Eddard Stark",
-    "Robert Baratheon",
-    "Jaime Lannister",
-    "Catelyn Stark",
-    "Tyrion Lannister",
-    "Cersei Lannister",
-    "Daenerys Targaryen",
-    "Jorah Mormont",
-    "Jon Snow",
-    "Robb Stark",
-    "Sansa Stark",
-    "Arya Stark",
-    "Bran Stark"
-    ];
-
-    // Star Wars
-    string[] private waists = [
     "Darth Vader",
     "Yoda",
     "Obi-Wan Kenobi",
@@ -82,6 +51,31 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "R2-D2",
     "Han Solo",
     "C-3PO"
+    ];
+
+    // Game of Thrones
+    string[] private heads = [
+    "Neo",
+    "Morpheus",
+    "Trinity",
+    "Agent Smith",
+    "Tank",
+    "Cypher",
+    "Dozer"
+    ];
+
+    // Star Wars
+    string[] private waists = [
+    "Harry",
+    "Hermione",
+    "Dumbledore",
+    "Voldemort",
+    "Ron",
+    "Dobby",
+    "Hagrid",
+    "Draco",
+    "Bellatrix",
+    "Sirius"
     ];
 
     // Marvel
@@ -104,13 +98,19 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     // Matrix
     string[] private hands = [
-    "Neo",
-    "Morpheus",
-    "Trinity",
-    "Agent Smith",
-    "Tank",
-    "Cypher",
-    "Dozer"
+    "Eddard Stark",
+    "Robert Baratheon",
+    "Jaime Lannister",
+    "Catelyn Stark",
+    "Tyrion Lannister",
+    "Cersei Lannister",
+    "Daenerys Targaryen",
+    "Jorah Mormont",
+    "Jon Snow",
+    "Robb Stark",
+    "Sansa Stark",
+    "Arya Stark",
+    "Bran Stark"
     ];
 
     // Pirates of the Carribean
@@ -155,21 +155,21 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     string[] private helpers = [
-    "with Vodka",
-    "wielding a Sword",
-    "drinking Beer",
-    "throwing Shurikens",
-    "firing a Bow",
-    "with a Minigun",
-    "loving his Flamethrower",
-    "handling a Pistol",
-    "making a Crossbow"
+    "[Vodka]",
+    "[Sword]",
+    "[Beer]",
+    "[Shuriken]",
+    "[Bow]",
+    "[Minigun]",
+    "[Flamethrower]",
+    "[Pistol]",
+    "[Crossbow]"
     ];
 
     string[] private rarityPrefixes = [
     "+",
     "+",
-    ">"
+    "+"
     ];
 
     //    string[] private weapons = [
@@ -259,59 +259,59 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray) internal view returns (string memory) {
         uint256 rand = random(string(abi.encodePacked(name(), keyPrefix, toString(tokenId))));
-        string memory output = string(abi.encodePacked(prefixes[rand % prefixes.length], " ", sourceArray[rand % sourceArray.length]));
+        string memory output = string(abi.encodePacked("+ ", prefixes[rand % prefixes.length], " ", sourceArray[rand % sourceArray.length]));
         uint256 greatness = rand % 21;
         if (greatness > 14) {
-            output = string(abi.encodePacked(output, ' ', helpers[rand % helpers.length]));
-            if (greatness >= 19) {
-                if (greatness == 20) {
-                    output = string(abi.encodePacked(output, " (Dark God)"));
-                } else {
-                    output = string(abi.encodePacked(output, " (Vampire)"));
-                }
+            if (greatness == 20) {
+                output = string(abi.encodePacked(output, '<tspan class="super rare">', " (Vampire)", '</tspan>'));
+            } else if (greatness == 19) {
+                output = string(abi.encodePacked(output, '<tspan class="rare">', " (Zombie)", '</tspan>'));
+            } else {
+//                output = string(abi.encodePacked(output, ' ', helpers[rand % helpers.length]));
             }
         }
-        if (greatness >= 19) {
-            return string(abi.encodePacked(rarityPrefixes[2], ' ', output));
-        } else if (greatness > 14) {
-            return string(abi.encodePacked(rarityPrefixes[1], ' ', output));
-        } else {
-            return string(abi.encodePacked(rarityPrefixes[0], ' ', output));
-        }
+        return output;
+        //        if (greatness >= 19) {
+        //            return string(abi.encodePacked(rarityPrefixes[2], ' ', output));
+        //        } else if (greatness > 14) {
+        //            return string(abi.encodePacked(rarityPrefixes[1], ' ', output));
+        //        } else {
+        //            return string(abi.encodePacked(rarityPrefixes[0], ' ', output));
+        //        }
     }
 
     function tokenURI(uint256 tokenId) override public view returns (string memory) {
         string[17] memory parts;
 
-        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="10" y="20" class="weapon text odd">'));
+        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="7" y="20" class="weapon text odd">'));
 
         parts[1] = getWeapon(tokenId);
 
-        parts[2] = '</text><text x="10" y="40" class="chest text even">';
+        parts[2] = '</text><text x="7" y="45" class="chest text even">';
 
         parts[3] = getChest(tokenId);
 
-        parts[4] = '</text><text x="10" y="60" class="head text odd">';
+        parts[4] = '</text><text x="7" y="70" class="head text odd">';
 
         parts[5] = getHead(tokenId);
 
-        parts[6] = '</text><text x="10" y="80" class="waist text even">';
+        parts[6] = '</text><text x="7" y="95" class="waist text even">';
 
         parts[7] = getWaist(tokenId);
 
-        parts[8] = '</text><text x="10" y="100" class="foot text odd">';
+        parts[8] = '</text><text x="7" y="120" class="foot text odd">';
 
         parts[9] = getFoot(tokenId);
 
-        parts[10] = '</text><text x="10" y="120" class="hand text even">';
+        parts[10] = '</text><text x="7" y="145" class="hand text even">';
 
         parts[11] = getHand(tokenId);
 
-        parts[12] = '</text><text x="10" y="140" class="neck text odd">';
+        parts[12] = '</text><text x="7" y="170" class="neck text odd">';
 
         parts[13] = getNeck(tokenId);
 
-        parts[14] = '</text><text x="10" y="160" class="ring text even">';
+        parts[14] = '</text><text x="7" y="195" class="ring text even">';
 
         parts[15] = getRing(tokenId);
 

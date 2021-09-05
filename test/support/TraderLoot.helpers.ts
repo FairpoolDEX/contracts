@@ -17,9 +17,10 @@ export const style = `
   
   .body { fill: #001731; }
   .text { font-family: Orbitron, serif; font-size: 14px; }
-  .weapon { font-weight: bold; }
   .text.even { fill: #01FEFF; }
   .text.odd { fill: #01FEFF; }
+  .rare { font-weight: bold; fill: yellow; }
+  .super.rare { fill: red; }
 `.replace(/\s{2,}/g, " ")
 
 export const weapons = [
