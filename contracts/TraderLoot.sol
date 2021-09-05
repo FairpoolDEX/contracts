@@ -66,16 +66,16 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     // Star Wars
     string[] private waists = [
-    "Harry",
-    "Hermione",
-    "Dumbledore",
-    "Voldemort",
-    "Ron",
+    "Harry Potter",
+    "Hermione Granger",
+    "Albus Dumbledore",
+    "Lord Voldemort",
+    "Ron Weasley",
     "Dobby",
-    "Hagrid",
-    "Draco",
-    "Bellatrix",
-    "Sirius"
+    "Rubeus Hagrid",
+    "Draco Malfoy",
+    "Bellatrix Lestrange",
+    "Sirius Black"
     ];
 
     // Marvel
@@ -125,36 +125,56 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Bill Turner"
     ];
 
-    // Random
-    string[] private rings = [
-    "Godzilla",
-    "Batman",
-    "Joker",
-    "Hannibal Lector",
-    "Terminator",
-    "Mario",
-    "Zorro"
+    // Disney
+    string[] private others = [
+    "Snow White",
+    "Minnie Mouse",
+    "Donald Duck",
+    "Mickey Mouse",
+    "Cinderella",
+    "Peter Pan",
+    "Ariel"
     ];
 
-    string[] private prefixes = [
-    "Alert",
+    string[][] private characters = [
+    weapons,
+    chests,
+    heads,
+    hands,
+    feet,
+    necks,
+    waists
+    // others not used
+    ];
+
+    string[] private adjectives = [
+    "Enraged",
     "Aggressive",
-    "Angry",
+    "Hateful",
     "Bloody",
-    "Charming",
+    "Crazy",
     "Combative",
     "Cruel",
     "Dark",
     "Undead",
     "Evil",
-    "Fierce",
-    "Jealous",
-    "Jittery",
-    "Nasty",
-    "Rich"
+    "Furious",
+    "Horrid",
+    "Mad",
+    "Heartbroken",
+    "Provoked",
+    "Revengeful",
+    "Infected",
+    "Chained",
+    "Vile",
+    "Pervert",
+    "Corrupt",
+    "Skeleton of ",
+    "Ghost of ",
+    "Soul of "
     ];
 
-    string[] private helpers = [
+    string[] private items = [
     "[Vodka]",
     "[Sword]",
     "[Beer]",
@@ -166,10 +186,29 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "[Crossbow]"
     ];
 
-    string[] private rarityPrefixes = [
-    "+",
-    "+",
-    "+"
+    string[] private bodies = [
+    "Corpse",
+    "Cadaver",
+    "Body",
+    "Remains",
+    "Carcass",
+    "Bones",
+    "Ghost",
+    "Skeleton",
+    "Flesh",
+    "Wraith",
+    "Head",
+    "Leg",
+    "Ashes",
+    "Dust",
+    "Relic",
+    "Carrion",
+    "Cinders",
+    "Residue",
+    "Soul",
+    "Fetus",
+    "Essence",
+    "Substance"
     ];
 
     //    string[] private weapons = [
@@ -254,21 +293,19 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function getRing(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "RING", rings);
+        return pluck(tokenId, "RING", others);
     }
 
     function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray) internal view returns (string memory) {
         uint256 rand = random(string(abi.encodePacked(name(), keyPrefix, toString(tokenId))));
-        string memory output = string(abi.encodePacked("+ ", prefixes[rand % prefixes.length], " ", sourceArray[rand % sourceArray.length]));
-        uint256 greatness = rand % 21;
-        if (greatness > 14) {
-            if (greatness == 20) {
-                output = string(abi.encodePacked(output, '<tspan class="super rare">', " (Vampire)", '</tspan>'));
-            } else if (greatness == 19) {
-                output = string(abi.encodePacked(output, '<tspan class="rare">', " (Zombie)", '</tspan>'));
-            } else {
-//                output = string(abi.encodePacked(output, ' ', helpers[rand % helpers.length]));
-            }
+        uint256 rank = rand % 81;
+        string memory output = sourceArray[rand % sourceArray.length];
+        if (rank == 0) {
+            output = string(abi.encodePacked("\u2020 ", ' <tspan class="rare super-rare">', 'Vampire', " ", output, '</tspan>'));
+        } else if (rank >= 1 && rank <= 3) {
+            output = string(abi.encodePacked("\u2020 ", ' <tspan class="rare">', 'Zombie', " ", output, '</tspan>'));
+        } else {
+            output = string(abi.encodePacked("\u2020 ", adjectives[rand % adjectives.length], " ", output));
         }
         return output;
         //        if (greatness >= 19) {
@@ -283,35 +320,35 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     function tokenURI(uint256 tokenId) override public view returns (string memory) {
         string[17] memory parts;
 
-        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="7" y="20" class="weapon text odd">'));
+        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="7" y="20" class="weapon text odd-text">'));
 
         parts[1] = getWeapon(tokenId);
 
-        parts[2] = '</text><text x="7" y="45" class="chest text even">';
+        parts[2] = '</text><text x="7" y="45" class="chest text even-text">';
 
         parts[3] = getChest(tokenId);
 
-        parts[4] = '</text><text x="7" y="70" class="head text odd">';
+        parts[4] = '</text><text x="7" y="70" class="head text odd-text">';
 
         parts[5] = getHead(tokenId);
 
-        parts[6] = '</text><text x="7" y="95" class="waist text even">';
+        parts[6] = '</text><text x="7" y="95" class="waist text even-text">';
 
         parts[7] = getWaist(tokenId);
 
-        parts[8] = '</text><text x="7" y="120" class="foot text odd">';
+        parts[8] = '</text><text x="7" y="120" class="foot text odd-text">';
 
         parts[9] = getFoot(tokenId);
 
-        parts[10] = '</text><text x="7" y="145" class="hand text even">';
+        parts[10] = '</text><text x="7" y="145" class="hand text even-text">';
 
         parts[11] = getHand(tokenId);
 
-        parts[12] = '</text><text x="7" y="170" class="neck text odd">';
+        parts[12] = '</text><text x="7" y="170" class="neck text odd-text">';
 
         parts[13] = getNeck(tokenId);
 
-        parts[14] = '</text><text x="7" y="195" class="ring text even">';
+        parts[14] = '</text><text x="7" y="195" class="ring text even-text">';
 
         parts[15] = getRing(tokenId);
 

@@ -117,13 +117,15 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    this.timeout(100000)
-    const tokenIds = range(1, 100)
-    const dir = `${os.tmpdir()}/loot`
+    const size = 100
+    this.timeout(size * 1000)
+    const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)
+    const tokenIds = range(1, size + 1)
     await Promise.all(tokenIds.map(async (tokenId) => {
       const tokenURI = await loot.tokenURI(tokenId)
-      const data = JSON.parse(decodeBase64(tokenURI.replace("data:application/json;base64,", "")))
+      const base64 = decodeBase64(tokenURI.replace("data:application/json;base64,", ""))
+      const data = JSON.parse(base64)
       const image = decodeBase64(data.image.replace("data:image/svg+xml;base64,", ""))
       await fs.writeFile(`${dir}/loot.${tokenId}.svg`, image)
       expect(image).to.contain("svg")

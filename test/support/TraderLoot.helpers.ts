@@ -13,14 +13,10 @@ export const ownerMaxTokenId = 1300
 export const maxClaimTimestamp = dateToTimestampSeconds(new Date("2021-09-12"))
 
 export const style = `
-  @import url("https://fonts.googleapis.com/css?family=Orbitron:700,500,600");
-  
   .body { fill: #001731; }
-  .text { font-family: Orbitron, serif; font-size: 14px; }
-  .text.even { fill: #01FEFF; }
-  .text.odd { fill: #01FEFF; }
+  .text { font-family: serif; font-size: 16px; fill: white; font-weight: bold; }
   .rare { font-weight: bold; fill: yellow; }
-  .super.rare { fill: red; }
+  .super-rare { fill: red; }
 `.replace(/\s{2,}/g, " ")
 
 export const weapons = [
