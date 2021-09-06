@@ -11,6 +11,10 @@ export const zero = "0x0000000000000000000000000000000000000000"
 
 export const $zero = BigNumber.from(0)
 
+export const $one = BigNumber.from(1)
+
+export const neg = (value: BigNumber) => $zero.sub(value)
+
 type timeTravelCallback = () => Promise<void>;
 
 export async function timeTravel(callback: timeTravelCallback, nextBlockTimestamp: number): Promise<void> {

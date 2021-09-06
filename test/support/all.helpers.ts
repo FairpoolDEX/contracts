@@ -47,6 +47,14 @@ export function sum(array: BigNumber[]) {
   return array.reduce((acc, bn) => acc.add(bn), BigNumber.from(0))
 }
 
+export function max(left: BigNumber, right: BigNumber) {
+  return left.gte(right) ? left : right
+}
+
+export function min(left: BigNumber, right: BigNumber) {
+  return left.lte(right) ? left : right
+}
+
 export const seconds = 1000
 
 export const minutes = 60 * seconds

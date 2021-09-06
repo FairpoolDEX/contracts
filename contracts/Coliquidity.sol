@@ -150,8 +150,6 @@ contract Coliquidity is Ownable {
             address(this),
             deadline
         );
-        console.log('makerAmountWithdrawn', makerAmountWithdrawn);
-        console.log('position.makerAmount', position.makerAmount);
         if (makerAmountWithdrawn > position.makerAmount) {
             uint makerFee = (makerAmountWithdrawn - position.makerAmount) * feeNumerator / feeDenominator;
             // should be `position.makerAmount -= makerAmountWithdrawn`, but the result is less than 0, so setting it to 0
@@ -192,6 +190,10 @@ contract Coliquidity is Ownable {
 
     function positionsLength() public view returns (uint) {
         return positions.length;
+    }
+
+    function offersTakerTokens(uint offerIndex) public view returns (address[] memory) {
+        return offers[offerIndex].takerTokens;
     }
 
     /* UniswapV2Library functions - had to copy because it depends on SafeMath, which depends on Solidity =0.6.6, which is lower than our Solidity version */
