@@ -39,6 +39,7 @@ describe("BuyAndHoldSimulation", async function() {
   })
 
   it(`must calculate trading profit`, async function(this: Context) {
+    if (!process.env.SIMULATE) return this.skip()
     this.timeout(300000)
     await simulation.run()
   })

@@ -39,6 +39,7 @@ describe("ColiquiditySimulation", async function() {
   })
 
   it(`must calculate coliquidity profit`, async function(this: Context) {
+    if (!process.env.SIMULATE) return this.skip()
     this.timeout(300000)
     await simulation.run()
   })
