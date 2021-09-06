@@ -39,10 +39,15 @@ export function toAmountAfterFee(amount: BigNumber) {
   return amount.mul(uniswapFeeDenominator.sub(uniswapFeeNumerator)).div(uniswapFeeDenominator)
 }
 
-export const getMinimumLiquidityShare = function(value: BigNumberish, liquidityAmount: BigNumber) {
+export const getActualLiquidityShare = function(value: BigNumberish, liquidityAmount: BigNumber, isPoolCreator: boolean) {
   /**
    * Important: UniswapV2Pair burns MINIMUM_LIQUIDITY on pair creation, so liquidityAmount of the position that creates the pool is always less than expected liquidityAmount (difference is equal to MINIMUM_LIQUIDITY)
    * That means it's technically impossible to withdraw full liquidity from the pool
    */
-  return BigNumber.from(value).mul(liquidityAmount).div(liquidityAmount.add(uniswapMinimumLiquidity))
+  if (isPoolCreator) {
+    const share = liquidityAmount.div(liquidityAmount.add(uniswapMinimumLiquidity))
+    return BigNumber.from(value).mul(share)
+  } else {
+    return BigNumber.from(value)
+  }
 }

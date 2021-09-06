@@ -117,7 +117,7 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    const size = 10
+    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 10
     this.timeout(size * 1000)
     const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)

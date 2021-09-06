@@ -3,15 +3,16 @@ import { expect } from "../../util/expect"
 import { toInteger, identity, flatten, fromPairs, zip } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { dateAdd, hours, MaxUint256, seconds, sum, toTokenAmount, years } from "../support/all.helpers"
+import { dateAdd, hours, max, MaxUint256, seconds, sum, toTokenAmount, years } from "../support/all.helpers"
 import { zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances, expectBalance, $zero, logBn } from "../support/test.helpers"
 import { Coliquidity, BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
 import { BigNumber, BigNumberish, Contract } from "ethers"
 import { beforeEach } from "mocha"
 import { Address } from "../../util/types"
-import { deployUniswapPair, getMinimumLiquidityShare, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
-import { getLiquidityAfterSell } from "../support/Coliquidity.helpers"
+import { deployUniswapPair, getActualLiquidityShare, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
+import { getFee, getLiquidityAfterSell, subtractFee } from "../support/Coliquidity.helpers"
 import $debug, { Debugger } from "debug"
+import BN from "bn.js"
 
 describe("Coliquidity", async function() {
   let owner: SignerWithAddress
@@ -48,14 +49,13 @@ describe("Coliquidity", async function() {
   let router: UniswapV2Router02
   let pair: UniswapV2Pair
 
-  const feeDivisorMin = 100
+  const feeNumerator = 1
+  const feeDenominator = 100
   const cancellationTimeout = 6 * hours / 1000
   const totalBaseAmount = 1000000000000000
   const totalQuoteAmount = 1000000000000
   const initialBaseAmount = 1000000000000
   const initialQuoteAmount = 30000000000
-
-  const getFee = (amount: number) => Math.trunc(amount / feeDivisorMin * 40)
 
   let snapshot: any
 
@@ -114,6 +114,8 @@ describe("Coliquidity", async function() {
     coliquidityAsBob = coliquidityAsOwen.connect(bob)
     coliquidityAsSam = coliquidityAsOwen.connect(sam)
     coliquidityAsSally = coliquidityAsOwen.connect(sally)
+
+    await coliquidityAsOwen.setFee(feeNumerator, feeDenominator)
 
     const approvals = flatten([bob, sam, bella, sally].map((signer) => [
       baseAsOwner.connect(signer).approve(coliquidityAsOwen.address, initialBaseAmount),
@@ -210,59 +212,50 @@ describe("Coliquidity", async function() {
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
-    const samShare = 1 / (1 + 4)
-    const sallyShare = 4 / (1 + 4)
-
+    // NOTE: Solidity getter does not return takerTokens because it's an array
+    const offerBobBefore = await coliquidity.offers(0)
+    const offerBobTakerTokensBefore = await coliquidity.offersTakerTokens(0)
     const positionSamBefore = await coliquidity.positions(0)
     const positionSallyBefore = await coliquidity.positions(1)
+    expect(Object.create(offerBobBefore)).to.deep.include({
+      makerToken: base.address,
+      maker: bob.address,
+      makerAmount: BigNumber.from(makerAmount - makerAmountDesired - 4 * makerAmountDesired),
+      taker: zero,
+      reinvest: true,
+      lockedUntil: $zero,
+    })
+    expect(offerBobTakerTokensBefore).to.have.members([quoteAddress])
+
     const liquidityTotalSupply = await pair.totalSupply()
-    logBn("positionSamBefore", positionSamBefore)
-    logBn("positionSallyBefore", positionSallyBefore)
-    expect(liquidityTotalSupply).to.equal(sum([positionSamBefore.liquidityAmount, positionSallyBefore.liquidityAmount]).add(uniswapMinimumLiquidity))
     const token0 = await pair.token0()
     const token1 = await pair.token1()
-    expect(token0).to.equal(baseAddress)
-
-    expect(token1).to.equal(quoteAddress)
     const [basePoolAmountBefore, quotePoolAmountBefore] = [makerAmountDesired + 4 * makerAmountDesired, takerAmountDesired + 4 * takerAmountDesired]
     const [reserve0Before, reserve1Before] = await pair.getReserves()
+    expect(liquidityTotalSupply).to.equal(sum([positionSamBefore.liquidityAmount, positionSallyBefore.liquidityAmount]).add(uniswapMinimumLiquidity))
+    expect(token0).to.equal(baseAddress)
+    expect(token1).to.equal(quoteAddress)
     expect(reserve0Before).to.equal(basePoolAmountBefore)
-
     expect(reserve1Before).to.equal(quotePoolAmountBefore)
 
-    await router.connect(bella).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], sally.address, MaxUint256)
+    const toSamShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSamBefore.liquidityAmount).div(liquidityTotalSupply)
+    const toSallyShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSallyBefore.liquidityAmount).div(liquidityTotalSupply)
+    const toPairShare = (value: BigNumberish) => BigNumber.from(value).mul(uniswapMinimumLiquidity).div(liquidityTotalSupply)
+    // IMPORTANT: Sam has less liquidity than he should have, because Uniswap subtracts uniswapMinimumLiquidity from his liquidity (see MINIMUM_LIQUIDITY in UniswapV2Pair.sol)
+    const totalShare = sum([toSamShare(100), toSallyShare(100)])
+    expect(totalShare).to.be.within(70, 100)
+
+    await router.connect(bella).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], bella.address, MaxUint256)
     const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn)
     const [reserve0After, reserve1After] = await pair.getReserves()
     expect(reserve0After).to.equal(basePoolAmountAfter)
     expect(reserve1After).to.equal(quotePoolAmountAfter)
-    console.log("reserve0After, reserve1After", reserve0After.toString(), reserve1After.toString())
 
     const basePoolDiff = basePoolAmountBefore - basePoolAmountAfter
     const quotePoolDiff = quotePoolAmountBefore - quotePoolAmountAfter
 
-    await coliquidityAsSally.withdrawPosition(1, positionSallyBefore.liquidityAmount, 0, 0, MaxUint256)
-    const positionSallyAfter = await coliquidity.positions(1)
-    logBn("positionSallyAfter", positionSallyAfter)
-    expect(Object.create(positionSallyAfter)).to.deep.include({
-      offerIndex: $zero,
-      maker: bob.address,
-      taker: sally.address,
-      makerToken: base.address,
-      takerToken: quote.address,
-      liquidityAmount: $zero,
-      makerAmount: $zero,
-      takerAmount: BigNumber.from(quotePoolDiff * sallyShare),
-      lockedUntil: $zero,
-    })
-
     await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
     const positionSamAfter = await coliquidity.positions(0)
-    logBn("positionSamAfter", positionSamAfter)
-
-    console.log('quotePoolDiff', quotePoolDiff)
-    console.log('quotePoolDiff * samShare', quotePoolDiff * samShare)
-
-
     expect(Object.create(positionSamAfter)).to.deep.include({
       offerIndex: $zero,
       maker: bob.address,
@@ -270,40 +263,71 @@ describe("Coliquidity", async function() {
       makerToken: base.address,
       takerToken: quote.address,
       liquidityAmount: $zero,
-      makerAmount: positionSamBefore.makerAmount.sub(getMinimumLiquidityShare(positionSamBefore.makerAmount.add(-basePoolDiff * samShare), positionSamBefore.liquidityAmount)),
-      takerAmount: positionSamBefore.takerAmount.sub(getMinimumLiquidityShare(positionSamBefore.takerAmount.add(-quotePoolDiff * samShare), positionSamBefore.liquidityAmount)),
+      makerAmount: max($zero, positionSamBefore.makerAmount.sub(toSamShare(basePoolAmountAfter))),
+      takerAmount: max($zero, positionSamBefore.takerAmount.sub(toSamShare(quotePoolAmountAfter))),
       lockedUntil: $zero,
     })
-    const offerBobAfter = await coliquidity.offers(0)
 
+    await coliquidityAsSally.withdrawPosition(1, positionSallyBefore.liquidityAmount, 0, 0, MaxUint256)
+    const positionSallyAfter = await coliquidity.positions(1)
+    expect(Object.create(positionSallyAfter)).to.deep.include({
+      offerIndex: $zero,
+      maker: bob.address,
+      taker: sally.address,
+      makerToken: base.address,
+      takerToken: quote.address,
+      liquidityAmount: $zero,
+      makerAmount: max($zero, positionSallyBefore.makerAmount.sub(toSallyShare(basePoolAmountAfter))),
+      takerAmount: max($zero, positionSallyBefore.takerAmount.sub(toSallyShare(quotePoolAmountAfter))),
+
+      // makerAmount: $zero,
+      // takerAmount: BigNumber.from(quotePoolDiff * sallyShare),
+      lockedUntil: $zero,
+    })
+
+    const offerBobAfter = await coliquidity.offers(0)
+    const offerBobTakerTokensAfter = await coliquidity.offersTakerTokens(0)
     expect(Object.create(offerBobAfter)).to.deep.include({
       makerToken: base.address,
       maker: bob.address,
-      makerAmount: BigNumber.from(makerAmount - makerAmountDesired - 4 * makerAmountDesired + getMinimumLiquidityShare(positionSamBefore.makerAmount.add(-basePoolDiff * samShare), positionSamBefore.liquidityAmount).toNumber() + positionSallyBefore.makerAmount.add(-basePoolDiff * sallyShare).toNumber()),
+      makerAmount: BigNumber.from(
+        makerAmount
+        - makerAmountDesired
+        - 4 * makerAmountDesired
+        + subtractFee(toSamShare(basePoolAmountAfter), makerAmountDesired, feeNumerator, feeDenominator).toNumber()
+        + subtractFee(toSallyShare(basePoolAmountAfter), 4 * makerAmountDesired, feeNumerator, feeDenominator).toNumber(),
+      ),
       taker: zero,
-      takerTokens: [quote.address],
       reinvest: true,
-      lockedUntil: 0,
+      lockedUntil: $zero,
     })
+    expect(offerBobTakerTokensAfter).to.have.members([quoteAddress])
     // NOTE: Bob must withdraw offer after Sam and Sally withdraw positions because he set reinvest = true, so base amounts will accumulate on the offer
 
     await coliquidityAsBob.withdrawOffer(0)
 
+    // NOTE: It looks like BigNumber truncates differently in Solidity vs in JavaScript
+    const baseAdjustment = 1
+    const quoteAdjustment = 1
+
     await expectBalances([
-        [bob, base, initialBaseAmount - makerAmount + makerAmount + baseAmountIn],
+        [bob, base, initialBaseAmount - makerAmount + offerBobAfter.makerAmount.toNumber()],
         [bob, quote, initialQuoteAmount],
         [sam, base, initialBaseAmount],
-        [sam, quote, initialQuoteAmount - takerAmountDesired + quotePoolAmountAfter * samShare],
+        [sam, quote, initialQuoteAmount - takerAmountDesired + toSamShare(quotePoolAmountAfter).toNumber()],
         [sally, base, initialBaseAmount],
-        [sally, quote, initialQuoteAmount - 4 * takerAmountDesired + quotePoolAmountAfter * sallyShare],
-        [owen, base, initialBaseAmount],
+        [sally, quote, initialQuoteAmount - 4 * takerAmountDesired + toSallyShare(quotePoolAmountAfter).toNumber()],
+        [bella, base, initialBaseAmount + basePoolDiff],
+        [bella, quote, initialQuoteAmount + quotePoolDiff],
+        [owen, base, initialBaseAmount
+        + getFee(toSamShare(basePoolAmountAfter), makerAmountDesired, feeNumerator, feeDenominator).toNumber()
+        + getFee(toSallyShare(basePoolAmountAfter), 4 * makerAmountDesired, feeNumerator, feeDenominator).toNumber(),
+        ],
         [owen, quote, initialQuoteAmount],
-        [bella, base, initialBaseAmount - baseAmountIn],
-        [bella, quote, initialQuoteAmount + (quotePoolAmountBefore - quotePoolAmountAfter)],
         [coliquidity, base, 0],
         [coliquidity, quote, 0],
-        [pair, base, 0],
-        [pair, quote, 0],
+        [pair, base, toPairShare(makerAmountDesired + 4 * makerAmountDesired - basePoolDiff).toNumber() + baseAdjustment],
+        [pair, quote, toPairShare(takerAmountDesired + 4 * takerAmountDesired - quotePoolDiff).toNumber() + quoteAdjustment],
       ],
     )
   })
@@ -331,12 +355,46 @@ describe("Coliquidity", async function() {
     await expect(coliquidityAsSam.withdrawPosition(0, 1, 1, 1, MaxUint256)).to.be.revertedWith("WPLLT")
   })
 
-  it("must transfer the tokens to maker if reinvest = false", async () => {
+  it("must not transfer the tokens to maker if reinvest = true", async () => {
+    const reinvest = true
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], reinvest, 0)
+    await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
+    await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
+    const positionSamBefore = await coliquidity.positions(0)
+    const positionSallyBefore = await coliquidity.positions(1)
+
+    await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
+    await coliquidityAsSally.withdrawPosition(1, positionSallyBefore.liquidityAmount, 0, 0, MaxUint256)
+
+    await expectBalances([
+      [bob, base, initialBaseAmount - makerAmount],
+      [bob, quote, initialQuoteAmount],
+    ])
   })
 
-  it("must allow to withdraw offer with fees", async () => {
+  it("must transfer the tokens to maker if reinvest = false", async () => {
+    const reinvest = false
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], reinvest, 0)
+    await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
+    await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
+    const positionSamBefore = await coliquidity.positions(0)
+    const positionSallyBefore = await coliquidity.positions(1)
+
+    const liquidityTotalSupply = await pair.totalSupply()
+    const toSamShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSamBefore.liquidityAmount).div(liquidityTotalSupply)
+    const toSallyShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSallyBefore.liquidityAmount).div(liquidityTotalSupply)
+
+    await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
+    await coliquidityAsSally.withdrawPosition(1, positionSallyBefore.liquidityAmount, 0, 0, MaxUint256)
+
+    const basePoolAmountAfter = makerAmountDesired + 4 * makerAmountDesired
+
+    await expectBalances([
+      [bob, base, initialBaseAmount - makerAmount + toSamShare(basePoolAmountAfter).toNumber() + toSallyShare(basePoolAmountAfter).toNumber()],
+      [bob, quote, initialQuoteAmount],
+    ])
   })
 
   it("must allow the owner to set fee", async () => {
@@ -350,6 +408,15 @@ describe("Coliquidity", async function() {
 
   it("must not allow non-owner to set fee", async () => {
     await expect(coliquidityAsBob.setFee(1, 100)).to.be.revertedWith("not the owner")
+  })
+
+  it("must calculate the fee correctly", async () => {
+    expect(getFee(10000, 10000, 1, 100)).to.equal(0)
+    expect(getFee(5000, 10000, 1, 100)).to.equal(0)
+    expect(getFee(20000, 10000, 1, 100)).to.equal(100)
+    expect(subtractFee(10000, 10000, 1, 100)).to.equal(10000)
+    expect(subtractFee(5000, 10000, 1, 100)).to.equal(5000)
+    expect(subtractFee(20000, 10000, 1, 100)).to.equal(20000 - (20000 - 10000) * 1 / 100)
   })
 
 })
