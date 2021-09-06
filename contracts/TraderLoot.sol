@@ -317,9 +317,9 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         uint256 rank = rand % 81;
         string memory output = sourceArray[rand % sourceArray.length];
         if (rank == 0) {
-            output = string(abi.encodePacked("\u2020 ", output, ' Body <tspan class="rare super-rare">(Vampire)</tspan>'));
+            output = string(abi.encodePacked("\u2020 ", '<tspan class="rare super-rare">', output, ' Body (Vampire)', '</tspan>'));
         } else if (rank >= 1 && rank <= 3) {
-            output = string(abi.encodePacked("\u2020 ", output, ' Body <tspan class="rare">(Zombie)</tspan>'));
+            output = string(abi.encodePacked("\u2020 ", '<tspan class="rare">', output, ' Corpse (Zombie)', '</tspan>'));
         } else {
             output = string(abi.encodePacked("\u2020 ", output, " ", limbs[rand % limbs.length]));
         }
