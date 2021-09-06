@@ -117,7 +117,7 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    const size = 100
+    const size = 10
     this.timeout(size * 1000)
     const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)

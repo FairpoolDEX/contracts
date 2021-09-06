@@ -174,6 +174,24 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Soul of "
     ];
 
+    string[] private limbs = [
+    "Head",
+    "Torso",
+    "Left Leg",
+    "Right Leg",
+    "Left Arm",
+    "Right Arm",
+    "Ears",
+    "Fingers",
+    "Toes",
+    "Teeth",
+    "Nails",
+    "Eyes",
+    "Hair",
+    "Abdomen",
+    "Groin"
+    ];
+
     string[] private items = [
     "[Vodka]",
     "[Sword]",
@@ -197,8 +215,6 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Skeleton",
     "Flesh",
     "Wraith",
-    "Head",
-    "Leg",
     "Ashes",
     "Dust",
     "Relic",
@@ -301,11 +317,11 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         uint256 rank = rand % 81;
         string memory output = sourceArray[rand % sourceArray.length];
         if (rank == 0) {
-            output = string(abi.encodePacked("\u2020 ", ' <tspan class="rare super-rare">', 'Vampire', " ", output, '</tspan>'));
+            output = string(abi.encodePacked("\u2020 ", output, ' Body <tspan class="rare super-rare">(Vampire)</tspan>'));
         } else if (rank >= 1 && rank <= 3) {
-            output = string(abi.encodePacked("\u2020 ", ' <tspan class="rare">', 'Zombie', " ", output, '</tspan>'));
+            output = string(abi.encodePacked("\u2020 ", output, ' Body <tspan class="rare">(Zombie)</tspan>'));
         } else {
-            output = string(abi.encodePacked("\u2020 ", adjectives[rand % adjectives.length], " ", output));
+            output = string(abi.encodePacked("\u2020 ", output, " ", limbs[rand % limbs.length]));
         }
         return output;
         //        if (greatness >= 19) {
