@@ -17,9 +17,9 @@ export const style = `
   text { font-family: serif; font-size: 16px; fill: white; font-weight: bold; }
   .header { font-size: 24px; }
   .regular { fill: white; text-decoration-color: white; text-decoration: underline; }
-  .rare { fill: #6DFF8E; text-decoration-color: yellow; text-decoration: underline; }
+  .rare { fill: yellow; text-decoration-color: yellow; text-decoration: underline; }
   .super-rare { fill: red; text-decoration-color: red; text-decoration: underline; }
-  .unique { fill: yellow; text-decoration-color: blue; text-decoration: underline; }
+  .unique { fill: #00FFFF; text-decoration-color: blue; text-decoration: underline; }
 `.replace(/\s{2,}/g, " ")
 
 export const weapons = [

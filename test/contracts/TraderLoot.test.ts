@@ -117,7 +117,7 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 20
+    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 25
     this.timeout(size * 1000)
     const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)
@@ -128,7 +128,7 @@ describe("TraderLoot", async function() {
       const base64 = decodeBase64(tokenURI.replace("data:application/json;base64,", ""))
       const data = JSON.parse(base64)
       const image = decodeBase64(data.image.replace("data:image/svg+xml;base64,", ""))
-      await fs.writeFile(`${dir}/loot.${tokenId}.svg`, image)
+      await fs.writeFile(`${dir}/${tokenId}.svg`, image)
       expect(image).to.contain("svg")
     }))
   })

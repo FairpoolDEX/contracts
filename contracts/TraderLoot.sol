@@ -231,9 +231,9 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     // Disney
     "Snow White",
-    "Minnie Mouse",
-    "Donald Duck",
     "Mickey Mouse",
+    "Donald Duck",
+    "Minnie Mouse",
     "Cinderella",
     "Peter Pan",
     "Ariel"
@@ -426,7 +426,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         } else if (tokenId % 10 == 1) {
             header = string(abi.encodePacked('<tspan class="rare">#', uint2str(tokenId), ' Zombie Captain</tspan>'));
         } else {
-            header = string(abi.encodePacked('<tspan class="regular">#', uint2str(tokenId), ' Skeleton Warrior</tspan>'));
+            header = string(abi.encodePacked('<tspan class="regular">#', uint2str(tokenId), ' Skeleton Fighter</tspan>'));
         }
 
         string[17] memory parts;
