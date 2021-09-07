@@ -284,7 +284,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Groin"
     ];
 
-    mapping(string => string) private ucharacters;
+    mapping(string => string) private lich_characters;
 
     string[] private items = [
     "[Vodka]",
@@ -408,8 +408,8 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function pluck(uint256 tokenId, string memory part, string[] memory sourceArray) internal view returns (string memory) {
         uint256 rand = random(string(abi.encodePacked(name(), part, toString(tokenId)))) % characters.length;
-        if (tokenId == ownerMaxTokenId) {
-            return string(abi.encodePacked("\u2020 ", ucharacters[part], " ", part));
+        if (tokenId == 666) {
+            return string(abi.encodePacked("\u2020 ", lich_characters[part], " ", part));
         } else {
             return string(abi.encodePacked("\u2020 ", characters[rand], " ", part));
         }
@@ -419,7 +419,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         uint256 rand = random(string(abi.encodePacked(name(), toString(tokenId))));
 
         string memory header;
-        if (tokenId == ownerMaxTokenId) {
+        if (tokenId == 666) {
             header = string(abi.encodePacked('<tspan class="unique">#', uint2str(tokenId), ' Lich King</tspan>'));
         } else if (tokenId % 100 == 1) {
             header = string(abi.encodePacked('<tspan class="super-rare">#', uint2str(tokenId), ' Vampire Lord</tspan>'));
@@ -544,13 +544,13 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         ownerMaxTokenId = _ownerMaxTokenId;
         maxClaimTimestamp = _maxClaimTimestamp;
         style = _style;
-        ucharacters["Head"] = "Voldemort";
-        ucharacters["Torso"] = "Agent Smith";
-        ucharacters["Arms"] = "C-3PO";
-        ucharacters["Legs"] = "Deadpool";
-        ucharacters["Teeth"] = "Gollum";
-        ucharacters["Nails"] = "Wolverine";
-        ucharacters["Hair"] = "Hermione Granger";
-        ucharacters["Weapon"] = "Lich King";
+        lich_characters["Head"] = "Voldemort";
+        lich_characters["Torso"] = "Agent Smith";
+        lich_characters["Arms"] = "C-3PO";
+        lich_characters["Legs"] = "Deadpool";
+        lich_characters["Teeth"] = "Gollum";
+        lich_characters["Nails"] = "Wolverine";
+        lich_characters["Hair"] = "Hermione Granger";
+        lich_characters["Weapon"] = "Lich King";
     }
 }

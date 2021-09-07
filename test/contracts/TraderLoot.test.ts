@@ -9,7 +9,7 @@ import { shieldReleaseTime } from "../support/ShieldToken.helpers"
 import { chests, decodeBase64, maxClaimTimestamp, ownerMaxTokenId, name, style, symbol, weapons, publicMaxTokenId, heads, waists, feet, hands, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes } from "../support/TraderLoot.helpers"
 import { promises as fs } from "fs"
 import * as os from "os"
-import { range } from "lodash"
+import { range, toInteger } from "lodash"
 import mkdirp from "mkdirp"
 
 describe("TraderLoot", async function() {
@@ -117,11 +117,13 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 25
+    const size = process.env.LOOT_SIZE ? toInteger(process.env.LOOT_SIZE) : 25
+    const from = process.env.LOOT_FROM ? toInteger(process.env.LOOT_FROM) : 1
+    const to = process.env.LOOT_TO ? toInteger(process.env.LOOT_TO) : size + 1
     this.timeout(size * 1000)
     const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)
-    const tokenIds = range(1, size + 1)
+    const tokenIds = range(from, to)
     await loot.connect(owner).setMaxTokenId(size, size)
     await Promise.all(tokenIds.map(async (tokenId) => {
       const tokenURI = await loot.tokenURI(tokenId)
