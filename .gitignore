@@ -26,4 +26,4 @@ bin
 tasks/scripts/parameters.prod.ts
 allocations.csv
 
-*.ignored
+*.ignored*
