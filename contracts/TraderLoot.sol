@@ -19,7 +19,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     string style;
 
     // Lord of the Rings
-    string[] private weapons = [
+    string[] private heads = [
     "Gandalf",
     "Frodo",
     "Legolas",
@@ -35,7 +35,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Harry Potter
-    string[] private chests = [
+    string[] private torsos = [
     "Darth Vader",
     "Yoda",
     "Obi-Wan Kenobi",
@@ -54,7 +54,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Game of Thrones
-    string[] private heads = [
+    string[] private arms = [
     "Neo",
     "Morpheus",
     "Trinity",
@@ -65,11 +65,11 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Star Wars
-    string[] private waists = [
+    string[] private legs = [
     "Harry Potter",
     "Hermione Granger",
     "Albus Dumbledore",
-    "Lord Voldemort",
+    "Voldemort",
     "Ron Weasley",
     "Dobby",
     "Rubeus Hagrid",
@@ -79,7 +79,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Marvel
-    string[] private feet = [
+    string[] private nails = [
     "Wolverine",
     "Spider-Man",
     "Thor",
@@ -97,7 +97,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Matrix
-    string[] private hands = [
+    string[] private teeth = [
     "Eddard Stark",
     "Robert Baratheon",
     "Jaime Lannister",
@@ -114,7 +114,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Pirates of the Carribean
-    string[] private necks = [
+    string[] private hairs = [
     "Captain Jack Sparrow",
     "Elizabeth Swann",
     "Will Turner",
@@ -126,7 +126,110 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     // Disney
-    string[] private others = [
+    string[] private weapons = [
+    "Snow White",
+    "Mickey Mouse",
+    "Donald Duck",
+    "Minnie Mouse",
+    "Cinderella",
+    "Peter Pan",
+    "Ariel"
+    ];
+
+    string[] private characters = [
+    "Gandalf",
+    "Frodo",
+    "Legolas",
+    "Arwen",
+    "Galadriel",
+    "Aragorn",
+    "Gollum",
+    "Sauron",
+    "Bilbo",
+    "Gimli",
+    "Saruman",
+    "Boromir",
+
+    // Harry Potter
+    "Darth Vader",
+    "Yoda",
+    "Obi-Wan Kenobi",
+    "Princess Leia",
+    "Chewbacca",
+    "Jabba the Hutt",
+    "Luke Skywalker",
+    "Kylo Ren",
+    "Boba Fett",
+    "Padme Amidala",
+    "Darth Maul",
+    "Jar Jar Binks",
+    "R2-D2",
+    "Han Solo",
+    "C-3PO",
+
+    // Game of Thrones
+    "Neo",
+    "Morpheus",
+    "Trinity",
+    "Agent Smith",
+    "Tank",
+    "Cypher",
+    "Dozer",
+
+    // Star Wars
+    "Harry Potter",
+    "Hermione Granger",
+    "Albus Dumbledore",
+    "Lord Voldemort",
+    "Ron Weasley",
+    "Dobby",
+    "Rubeus Hagrid",
+    "Draco Malfoy",
+    "Bellatrix Lestrange",
+    "Sirius Black",
+
+    // Marvel
+    "Wolverine",
+    "Spider-Man",
+    "Thor",
+    "Iron Man",
+    "Hulk",
+    "Captain America",
+    "Tarzan",
+    "Punisher",
+    "Deadpool",
+    "Silver Surfer",
+    "Wonder Woman",
+    "Cyclops",
+    "Professor X",
+    "Doctor Strange",
+
+    // Matrix
+    "Eddard Stark",
+    "Robert Baratheon",
+    "Jaime Lannister",
+    "Catelyn Stark",
+    "Tyrion Lannister",
+    "Cersei Lannister",
+    "Daenerys Targaryen",
+    "Jorah Mormont",
+    "Jon Snow",
+    "Robb Stark",
+    "Sansa Stark",
+    "Arya Stark",
+    "Bran Stark",
+
+    // Pirates of the Carribean
+    "Captain Jack Sparrow",
+    "Elizabeth Swann",
+    "Will Turner",
+    "Davy Jones",
+    "Hector Barbossa",
+    "Anamaria",
+    "James Norrington",
+    "Bill Turner",
+
+    // Disney
     "Snow White",
     "Minnie Mouse",
     "Donald Duck",
@@ -134,17 +237,6 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Cinderella",
     "Peter Pan",
     "Ariel"
-    ];
-
-    string[][] private characters = [
-    weapons,
-    chests,
-    heads,
-    hands,
-    feet,
-    necks,
-    waists
-    // others not used
     ];
 
     string[] private adjectives = [
@@ -191,6 +283,8 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Abdomen",
     "Groin"
     ];
+
+    mapping(string => string) private ucharacters;
 
     string[] private items = [
     "[Vodka]",
@@ -280,95 +374,96 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return uint256(keccak256(abi.encodePacked(input)));
     }
 
-    function getWeapon(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "WEAPON", weapons);
-    }
-
-    function getChest(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "CHEST", chests);
-    }
-
     function getHead(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "HEAD", heads);
+        return pluck(tokenId, "Head", heads);
     }
 
-    function getWaist(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "WAIST", waists);
+    function getTorso(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Torso", torsos);
     }
 
-    function getFoot(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "FOOT", feet);
+    function getArms(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Arms", arms);
     }
 
-    function getHand(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "HAND", hands);
+    function getLegs(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Legs", legs);
     }
 
-    function getNeck(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "NECK", necks);
+    function getNails(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Nails", nails);
     }
 
-    function getRing(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "RING", others);
+    function getTeeth(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Teeth", teeth);
     }
 
-    function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray) internal view returns (string memory) {
-        uint256 rand = random(string(abi.encodePacked(name(), keyPrefix, toString(tokenId))));
-        uint256 rank = rand % 81;
-        string memory output = sourceArray[rand % sourceArray.length];
-        if (rank == 0) {
-            output = string(abi.encodePacked("\u2020 ", '<tspan class="rare super-rare">', output, ' Body (Vampire)', '</tspan>'));
-        } else if (rank >= 1 && rank <= 3) {
-            output = string(abi.encodePacked("\u2020 ", '<tspan class="rare">', output, ' Corpse (Zombie)', '</tspan>'));
+    function getHair(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Hair", hairs);
+    }
+
+    function getWeapon(uint256 tokenId) public view returns (string memory) {
+        return pluck(tokenId, "Weapon", heads);
+    }
+
+    function pluck(uint256 tokenId, string memory part, string[] memory sourceArray) internal view returns (string memory) {
+        uint256 rand = random(string(abi.encodePacked(name(), part, toString(tokenId)))) % characters.length;
+        if (tokenId == ownerMaxTokenId) {
+            return string(abi.encodePacked("\u2020 ", ucharacters[part], " ", part));
         } else {
-            output = string(abi.encodePacked("\u2020 ", output, " ", limbs[rand % limbs.length]));
+            return string(abi.encodePacked("\u2020 ", characters[rand], " ", part));
         }
-        return output;
-        //        if (greatness >= 19) {
-        //            return string(abi.encodePacked(rarityPrefixes[2], ' ', output));
-        //        } else if (greatness > 14) {
-        //            return string(abi.encodePacked(rarityPrefixes[1], ' ', output));
-        //        } else {
-        //            return string(abi.encodePacked(rarityPrefixes[0], ' ', output));
-        //        }
     }
 
     function tokenURI(uint256 tokenId) override public view returns (string memory) {
+        uint256 rand = random(string(abi.encodePacked(name(), toString(tokenId))));
+
+        string memory header;
+        if (tokenId == ownerMaxTokenId) {
+            header = string(abi.encodePacked('<tspan class="unique">#', uint2str(tokenId), ' Lich King</tspan>'));
+        } else if (tokenId % 100 == 1) {
+            header = string(abi.encodePacked('<tspan class="super-rare">#', uint2str(tokenId), ' Vampire Lord</tspan>'));
+        } else if (tokenId % 10 == 1) {
+            header = string(abi.encodePacked('<tspan class="rare">#', uint2str(tokenId), ' Zombie Captain</tspan>'));
+        } else {
+            header = string(abi.encodePacked('<tspan class="regular">#', uint2str(tokenId), ' Skeleton Warrior</tspan>'));
+        }
+
         string[17] memory parts;
 
-        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="7" y="20" class="weapon text odd-text">'));
+        parts[0] = string(abi.encodePacked('<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>', style, '</style><rect width="100%" height="100%" class="body"/><text x="7" y="30" class="header">', header, '</text><text y="35"><tspan x="7" dy="25" class="head part odd-part">'));
 
-        parts[1] = getWeapon(tokenId);
+        parts[1] = getHead(tokenId);
 
-        parts[2] = '</text><text x="7" y="45" class="chest text even-text">';
+        parts[2] = '</tspan><tspan x="7" dy="25" class="torso part even-part">';
 
-        parts[3] = getChest(tokenId);
+        parts[3] = getTorso(tokenId);
 
-        parts[4] = '</text><text x="7" y="70" class="head text odd-text">';
+        parts[4] = '</tspan><tspan x="7" dy="25" class="arms part odd-part">';
 
-        parts[5] = getHead(tokenId);
+        parts[5] = getArms(tokenId);
 
-        parts[6] = '</text><text x="7" y="95" class="waist text even-text">';
+        parts[6] = '</tspan><tspan x="7" dy="25" class="legs part even-part">';
 
-        parts[7] = getWaist(tokenId);
+        parts[7] = getLegs(tokenId);
 
-        parts[8] = '</text><text x="7" y="120" class="foot text odd-text">';
+        parts[8] = '</tspan><tspan x="7" dy="25" class="nails part odd-part">';
 
-        parts[9] = getFoot(tokenId);
+        parts[9] = getNails(tokenId);
 
-        parts[10] = '</text><text x="7" y="145" class="hand text even-text">';
+        parts[10] = '</tspan><tspan x="7" dy="25" class="teeth part even-part">';
 
-        parts[11] = getHand(tokenId);
+        parts[11] = getTeeth(tokenId);
 
-        parts[12] = '</text><text x="7" y="170" class="neck text odd-text">';
+        parts[12] = '</tspan><tspan x="7" dy="25" class="hair part odd-part">';
 
-        parts[13] = getNeck(tokenId);
+        parts[13] = getHair(tokenId);
 
-        parts[14] = '</text><text x="7" y="195" class="ring text even-text">';
+        parts[14] = '</tspan><tspan x="7" dy="25" class="weapon part even-part">';
 
-        parts[15] = getRing(tokenId);
+        parts[15] = getWeapon(tokenId);
 
-        parts[16] = '</text></svg>';
+        parts[16] = '</tspan></text></svg>';
 
         string memory output = string(abi.encodePacked(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8]));
         output = string(abi.encodePacked(output, parts[9], parts[10], parts[11], parts[12], parts[13], parts[14], parts[15], parts[16]));
@@ -378,6 +473,27 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
 
         return output;
     }
+
+    function uint2str(uint256 _i) internal pure returns (string memory str)    {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        j = _i;
+        while (j != 0) {
+            bstr[--k] = bytes1(uint8(48 + j % 10));
+            j /= 10;
+        }
+        str = string(bstr);
+    }
+
 
     function claim(uint256 tokenId) public nonReentrant {
         require(tokenId > 0 && tokenId <= publicMaxTokenId, "Token ID invalid");
@@ -415,6 +531,11 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         return string(buffer);
     }
 
+    function setMaxTokenId(uint _publicMaxTokenId, uint _ownerMaxTokenId) public onlyOwner {
+        publicMaxTokenId = _publicMaxTokenId;
+        ownerMaxTokenId = _ownerMaxTokenId;
+    }
+
     constructor(string memory _name, string memory _symbol, address _parentToken, uint256 _publicMaxTokenId, uint256 _ownerMaxTokenId, uint256 _maxClaimTimestamp, string memory _style) ERC721(_name, _symbol) Ownable() {
         require(_ownerMaxTokenId > 0, "ownerMaxTokenId must be greater than 0");
         require(_ownerMaxTokenId >= _publicMaxTokenId, "ownerMaxTokenId must be greater or equal to publicMaxTokenId");
@@ -423,5 +544,13 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
         ownerMaxTokenId = _ownerMaxTokenId;
         maxClaimTimestamp = _maxClaimTimestamp;
         style = _style;
+        ucharacters["Head"] = "Voldemort";
+        ucharacters["Torso"] = "Agent Smith";
+        ucharacters["Arms"] = "C-3PO";
+        ucharacters["Legs"] = "Deadpool";
+        ucharacters["Teeth"] = "Gollum";
+        ucharacters["Nails"] = "Wolverine";
+        ucharacters["Hair"] = "Hermione Granger";
+        ucharacters["Weapon"] = "Lich King";
     }
 }

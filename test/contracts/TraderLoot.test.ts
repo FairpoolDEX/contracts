@@ -117,11 +117,12 @@ describe("TraderLoot", async function() {
   })
 
   it("must generate loot with correct distribution", async function() {
-    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 10
+    const size = process.env.LOOT_SIZE ? parseInt(process.env.LOOT_SIZE, 10) : 20
     this.timeout(size * 1000)
     const dir = `${os.tmpdir()}/loot.${size}`
     mkdirp.sync(dir)
     const tokenIds = range(1, size + 1)
+    await loot.connect(owner).setMaxTokenId(size, size)
     await Promise.all(tokenIds.map(async (tokenId) => {
       const tokenURI = await loot.tokenURI(tokenId)
       const base64 = decodeBase64(tokenURI.replace("data:application/json;base64,", ""))
