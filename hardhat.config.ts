@@ -36,6 +36,7 @@ GAS_PRICE=20 [hardhat command]
   process.exit(1)
 }
 const gasPrice: number = gasPriceInGwei * 1000000000
+const mnemonic = process.env.MNEMONIC || ""
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -91,23 +92,35 @@ const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       timeout: 30 * 60 * 1000,
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      gasPrice,
-      gasMultiplier: 1.2,
-      accounts: {
-        mnemonic: process.env.MNEMONIC || "",
-      },
-      timeout: 24 * 60 * 60 * 1000,
-    },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
       gasMultiplier: 1.2,
-      accounts: {
-        mnemonic: process.env.MNEMONIC || "",
-      },
+      accounts: { mnemonic },
       timeout: 2 * 60 * 1000,
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 24 * 60 * 60 * 1000,
+    },
+    bsctestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 2 * 60 * 1000,
+    },
+    bscmainnet: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 24 * 60 * 60 * 1000,
     },
   },
   etherscan: {
