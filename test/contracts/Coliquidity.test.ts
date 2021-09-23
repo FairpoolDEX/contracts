@@ -1,6 +1,6 @@
 import { DateTime } from "luxon"
 import { expect } from "../../util/expect"
-import { toInteger, identity, flatten, fromPairs, zip } from "lodash"
+import { toInteger, identity, flatten, fromPairs, zip, range } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { dateAdd, hours, max, MaxUint256, seconds, sum, toTokenAmount, years } from "../support/all.helpers"
@@ -430,6 +430,74 @@ describe("Coliquidity", async function() {
     const actualTakerTokens = await coliquidityAsSam.offersTakerTokens(0)
     expect(actualTakerTokens).to.deep.equal(expectedTakerTokens)
   })
+
+  it("must return offersByMaker", async () => {
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    const offers = await coliquidity.offersByMaker(bob.address, 1)
+    expect(offers).to.deep.equal([
+      [
+        BigNumber.from(0),
+        [
+          bob.address,
+          baseAddress,
+          BigNumber.from(makerAmount),
+          zero,
+          [quoteAddress],
+          true,
+          $zero,
+        ],
+      ],
+    ])
+  })
+
+  it("must return positionsByMaker & positionsByTaker", async () => {
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
+    const positionSam = await coliquidity.positions(0)
+    const positionsByMaker = await coliquidity.positionsByMaker(bob.address, 1)
+    expect(positionsByMaker).to.deep.equal([
+      [
+        BigNumber.from(0),
+        [
+          $zero,
+          bob.address,
+          sam.address,
+          baseAddress,
+          quoteAddress,
+          BigNumber.from(makerAmountDesired),
+          BigNumber.from(takerAmountDesired),
+          positionSam.liquidityAmount,
+          $zero,
+        ],
+      ],
+    ])
+    const positionsByTaker = await coliquidity.positionsByTaker(sam.address, 1)
+    expect(positionsByTaker).to.deep.equal([
+      [
+        BigNumber.from(0),
+        [
+          $zero,
+          bob.address,
+          sam.address,
+          baseAddress,
+          quoteAddress,
+          BigNumber.from(makerAmountDesired),
+          BigNumber.from(takerAmountDesired),
+          positionSam.liquidityAmount,
+          $zero,
+        ],
+      ],
+    ])
+  })
+
+  // it.only("must return a lot of offersByMaker", async () => {
+  //   const length = 1000
+  //   await Promise.all(range(0, length).map(i => {
+  //     coliquidityAsBob.createOffer(baseAddress, 1, zero, [quoteAddress], true, 0)
+  //   }))
+  //   const offers = await coliquidity.offersByMaker(bob.address)
+  //   expect(offers).to.have.length(length)
+  // })
 
   it("must allow the owner to set fee", async () => {
     await coliquidityAsOwen.setFee(5, 100)
