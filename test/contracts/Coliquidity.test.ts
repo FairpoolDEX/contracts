@@ -332,6 +332,28 @@ describe("Coliquidity", async function() {
     )
   })
 
+  it("must not allow to withdraw position twice", async () => {
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
+    const positionSamBefore = await coliquidity.positions(0)
+    await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
+    await expect(coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)).to.be.revertedWith("Coliquidity: WPLGL")
+  })
+
+  it("must not allow to withdraw offer twice", async () => {
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.withdrawOffer(0)
+    await expect(coliquidityAsBob.withdrawOffer(0)).to.be.revertedWith("Coliquidity: WOMAZ")
+  })
+
+  it("must allow to provide liquidity into existing pool", async () => {
+    /*
+     * Covered by "must allow to withdraw position with fees":
+     * - Sam's createPosition call deposits into a new pool
+     * - Sally's createPosition call deposits into an existing pool
+     */
+  })
+
   it("must allow to withdraw position if sender is maker or taker", async () => {
     await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
@@ -352,7 +374,12 @@ describe("Coliquidity", async function() {
   it("must not allow to withdraw position if lockedUntil is not reached", async () => {
     await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, MaxUint256)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
-    await expect(coliquidityAsSam.withdrawPosition(0, 1, 1, 1, MaxUint256)).to.be.revertedWith("WPLLT")
+    await expect(coliquidityAsSam.withdrawPosition(0, 1, 1, 1, MaxUint256)).to.be.revertedWith("Coliquidity: WPLLT")
+  })
+
+  it("must not allow to withdraw offer if lockedUntil is not reached", async () => {
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, MaxUint256)
+    await expect(coliquidityAsBob.withdrawOffer(0)).to.be.revertedWith("Coliquidity: WOLLT")
   })
 
   it("must not transfer the tokens to maker if reinvest = true", async () => {
@@ -395,6 +422,13 @@ describe("Coliquidity", async function() {
       [bob, base, initialBaseAmount - makerAmount + toSamShare(basePoolAmountAfter).toNumber() + toSallyShare(basePoolAmountAfter).toNumber()],
       [bob, quote, initialQuoteAmount],
     ])
+  })
+
+  it("must return offersTakerTokens", async () => {
+    const expectedTakerTokens = [quoteAddress]
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, expectedTakerTokens, true, 0)
+    const actualTakerTokens = await coliquidityAsSam.offersTakerTokens(0)
+    expect(actualTakerTokens).to.deep.equal(expectedTakerTokens)
   })
 
   it("must allow the owner to set fee", async () => {
