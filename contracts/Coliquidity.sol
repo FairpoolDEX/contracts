@@ -125,7 +125,11 @@ contract Coliquidity is Ownable {
     function withdrawOffer(uint offerIndex) lock public {
         Offer storage offer = offers[offerIndex];
         require(offer.maker == msg.sender, "Coliquidity: WOMES");
-        TransferHelper.safeTransfer(offer.makerToken, offer.maker, offer.makerAmount);
+        require(offer.lockedUntil <= block.timestamp, "Coliquidity: WOLLT");
+        require(offer.makerAmount > 0, "Coliquidity: WOMAZ");
+        uint makerAmount = offer.makerAmount;
+        offer.makerAmount = 0;
+        TransferHelper.safeTransfer(offer.makerToken, offer.maker, makerAmount);
         emit WithdrawOffer(msg.sender, offerIndex);
     }
 
@@ -134,10 +138,12 @@ contract Coliquidity is Ownable {
         Offer storage offer = offers[position.offerIndex];
         require(position.maker == msg.sender || position.taker == msg.sender, "Coliquidity: WPMTS");
         require(position.lockedUntil <= block.timestamp, "Coliquidity: WPLLT");
+        require(position.liquidityAmount >= liquidityAmount, "Coliquidity: WPLGL");
         // liquidity is validated within removeLiquidity call
         // makerAmountMin is validated within removeLiquidity call
         // takerAmountMin is validated within removeLiquidity call
         // deadline is validated within removeLiquidity call
+        console.log('position.liquidityAmount', position.liquidityAmount);
         position.liquidityAmount -= liquidityAmount;
         address pair = pairFor(factory, position.makerToken, position.takerToken);
         IERC20(pair).approve(router, liquidityAmount);
@@ -194,6 +200,18 @@ contract Coliquidity is Ownable {
 
     function offersTakerTokens(uint offerIndex) public view returns (address[] memory) {
         return offers[offerIndex].takerTokens;
+    }
+
+    function offersByMaker(address maker) public view returns (Offer[] memory) {
+        Offer[] memory offersByMaker = new Offer[](100);
+        uint offersByMakerIndex = 0;
+        for (uint i = 0; i < offers.length; i++) {
+            if (offers[i].maker == maker) {
+                offersByMaker[offersByMakerIndex] = offers[i];
+                offersByMakerIndex++;
+            }
+        }
+        return offersByMaker;
     }
 
     /* UniswapV2Library functions - had to copy because it depends on SafeMath, which depends on Solidity =0.6.6, which is lower than our Solidity version */
