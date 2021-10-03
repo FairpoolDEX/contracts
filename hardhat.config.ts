@@ -1,5 +1,5 @@
 import { HardhatUserConfig } from "hardhat/types"
-import { subtask, task, types } from "hardhat/config"
+import { task, types } from "hardhat/config"
 import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-etherscan"
@@ -14,28 +14,15 @@ import { transferManyShieldToken } from "./tasks/transferManyShieldToken"
 import { addAllocationsShieldToken } from "./tasks/addAllocationsShieldToken"
 import { setClaimsBullToken } from "./tasks/setClaimsBullToken"
 import { deployBullToken } from "./tasks/deployBullToken"
-import { claimBullToken, claimBullTokenTask } from "./tasks/claimBullToken"
+import { claimBullTokenTask } from "./tasks/claimBullToken"
 import { upgradeToken } from "./tasks/upgradeToken"
-import { date } from "./util/addParamTypes"
 import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
 import { deployMCP } from "./tasks/deployMCP"
 import { deployContract } from "./tasks/deployContract"
+import { maxFeePerGas as gasPrice } from "./util/gas"
 
 dotEnvConfig()
 
-const gasPriceInGwei = parseInt(process.env.GAS_PRICE || "0", 10)
-if (gasPriceInGwei) {
-  console.info(`[INFO] Setting gas price to ${gasPriceInGwei} gwei`)
-} else {
-  console.error(`
-[ERROR] GAS_PRICE environment variable must be set to the number in gwei.
-
-Example for 20 gwei:
-GAS_PRICE=20 [hardhat command]
-  `.trim())
-  process.exit(1)
-}
-const gasPrice: number = gasPriceInGwei * 1000000000
 const mnemonic = process.env.MNEMONIC || ""
 
 const config: HardhatUserConfig = {
@@ -80,6 +67,7 @@ const config: HardhatUserConfig = {
       //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       //   blockNumber: 12779553,
       // },
+      blockGasLimit: 8000000,
       accounts: {
         mnemonic: process.env.MNEMONIC || "",
       },
@@ -90,12 +78,14 @@ const config: HardhatUserConfig = {
       //   },
       gasPrice,
       gasMultiplier: 1.2,
+      blockGasLimit: 8000000,
       timeout: 30 * 60 * 1000,
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
       gasMultiplier: 1.2,
+      blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
       accounts: { mnemonic },
       timeout: 2 * 60 * 1000,
     },
@@ -103,6 +93,7 @@ const config: HardhatUserConfig = {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
       gasMultiplier: 1.2,
+      blockGasLimit: 30000000, // https://etherscan.io/blocks
       accounts: { mnemonic },
       timeout: 24 * 60 * 60 * 1000,
     },
@@ -111,6 +102,7 @@ const config: HardhatUserConfig = {
       chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
+      blockGasLimit: 30000000,
       accounts: { mnemonic },
       timeout: 2 * 60 * 1000,
     },
@@ -119,6 +111,7 @@ const config: HardhatUserConfig = {
       chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
+      blockGasLimit: 85000000,
       accounts: { mnemonic },
       timeout: 24 * 60 * 60 * 1000,
     },
