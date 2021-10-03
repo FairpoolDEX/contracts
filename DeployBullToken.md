@@ -6,7 +6,7 @@
 export NETWORK=ropsten
 export OLD_FOLDER=/tmp/old-balances && mkdir -p $OLD_FOLDER
 export NEW_FOLDER=/tmp/new-balances && mkdir -p $NEW_FOLDER
-export GAS_PRICE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken' | json result.ProposeGasPrice) && echo $GAS_PRICE
+export MAX_FEE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken' | json result.ProposeGasPrice) && echo $MAX_FEE
 ```
 
 ## Deploy token

@@ -66,3 +66,5 @@ export const days = 24 * hours
 export const months = 30 * days // nominal, not calendar
 
 export const years = 12 * months
+
+export const gwei = 1000000000

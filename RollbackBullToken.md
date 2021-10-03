@@ -3,7 +3,7 @@
 ## Set gas price
 
 ```
-export GAS_PRICE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken' | json result.ProposeGasPrice) && echo $GAS_PRICE
+export MAX_FEE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken' | json result.ProposeGasPrice) && echo $MAX_FEE
 
 # For ropsten
 export NETWORK=ropsten
