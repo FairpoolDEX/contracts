@@ -12,7 +12,7 @@ export async function deployContract(args: DeployERC20TokenTaskArguments, hre: H
     constructorArgsModule,
     constructorArgsParams,
   })
-  console.info(`[INFO] Deploying to ${network.name}`)
+  console.info(`NETWORK = ${network.name}`)
   console.info(`export ${envVarContract}_DEPLOYER=${deployer.address}`)
 
   const factory = await ethers.getContractFactory(contractName)
@@ -32,8 +32,10 @@ export async function deployContract(args: DeployERC20TokenTaskArguments, hre: H
     })
   } else {
     const contract = await factory.deploy(...constructorArgs, {
-      maxPriorityFeePerGas: BigNumber.from("2500000000"),
-      maxFeePerGas: BigNumber.from(network.config.gasPrice),
+      // TODO: Fix "transaction type not supported" when deploying to legacy chains (e.g. BSC)
+      // maxPriorityFeePerGas: BigNumber.from("2500000000"),
+      // maxFeePerGas: BigNumber.from(network.config.gasPrice),
+
       // gasLimit: 8000000,
     })
     await contract.deployed()

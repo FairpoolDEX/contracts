@@ -7,7 +7,7 @@ import { burnRateDenominator, burnRateNumerator } from "../test/support/BullToke
 export async function deployBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network } = hre
   const [deployer] = await ethers.getSigners()
-  console.info(`[INFO] Deploying to ${network.name}`)
+  console.info(`NETWORK = ${network.name}`)
   console.info(`export BULL_DEPLOYER=${deployer.address}`)
 
   const _airdropStartDate = network.name === 'mainnet' ? new Date("2021-06-04 13:00:00 UTC") : new Date()

@@ -6,7 +6,7 @@ import { shieldReleaseTime } from "../test/support/ShieldToken.helpers"
 export async function deployShieldToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network } = hre
   const [deployer] = await ethers.getSigners()
-  console.info(`[INFO] Deploying to ${network.name}`)
+  console.info(`NETWORK = ${network.name}`)
   console.log(`export SHLD_DEPLOYER=${deployer.address}`)
 
   const Token = await ethers.getContractFactory("ShieldToken")

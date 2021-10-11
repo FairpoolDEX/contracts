@@ -6,7 +6,7 @@ export async function deployMCP(args: TaskArguments, hre: HardhatRuntimeEnvironm
   const { feeDivisorMin } = args
   const { ethers, network, run } = hre
   const [deployer] = await ethers.getSigners()
-  console.info(`[INFO] Deploying to ${network.name}`)
+  console.info(`NETWORK = ${network.name}`)
   console.info(`export MCP_DEPLOYER=${deployer.address}`)
 
   const MCP = await ethers.getContractFactory("MCP")
