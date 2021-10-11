@@ -53,12 +53,9 @@ contract Coliquidity is Ownable {
     uint public feeNumerator = 1;
     uint public feeDenominator = 100;
 
-    // UniswapV2Router02: 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
-    address public immutable router;
-    // UniswapV2Factory: 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f
     // Store the factory address to save gas on external call to the router
+    address public immutable router;
     address public immutable factory;
-    // WETH: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
     address public immutable WETH;
 
     event CreateOffer(address indexed sender, uint indexed offerIndex);
@@ -212,42 +209,42 @@ contract Coliquidity is Ownable {
     }
 
     function offersByMaker(address maker, uint length) public view returns (IndexedOffer[] memory) {
-        IndexedOffer[] memory offersByMaker = new IndexedOffer[](length);
-        uint offersByMakerIndex = 0;
+        IndexedOffer[] memory _offersByMaker = new IndexedOffer[](length);
+        uint _offersByMakerIndex = 0;
         for (uint i = 0; i < offers.length; i++) {
             if (offers[i].maker == maker) {
-                offersByMaker[offersByMakerIndex] = IndexedOffer({index : i, offer : offers[i]});
-                offersByMakerIndex++;
-                if (offersByMakerIndex > length) break;
+                _offersByMaker[_offersByMakerIndex] = IndexedOffer({index : i, offer : offers[i]});
+                _offersByMakerIndex++;
+                if (_offersByMakerIndex > length) break;
             }
         }
-        return offersByMaker;
+        return _offersByMaker;
     }
 
     function positionsByMaker(address maker, uint length) public view returns (IndexedPosition[] memory) {
-        IndexedPosition[] memory positionsByMaker = new IndexedPosition[](length);
-        uint positionsByMakerIndex = 0;
+        IndexedPosition[] memory _positionsByMaker = new IndexedPosition[](length);
+        uint _positionsByMakerIndex = 0;
         for (uint i = 0; i < positions.length; i++) {
             if (positions[i].maker == maker) {
-                positionsByMaker[positionsByMakerIndex] = IndexedPosition({index : i, position : positions[i]});
-                positionsByMakerIndex++;
-                if (positionsByMakerIndex > length) break;
+                _positionsByMaker[_positionsByMakerIndex] = IndexedPosition({index : i, position : positions[i]});
+                _positionsByMakerIndex++;
+                if (_positionsByMakerIndex > length) break;
             }
         }
-        return positionsByMaker;
+        return _positionsByMaker;
     }
 
     function positionsByTaker(address taker, uint length) public view returns (IndexedPosition[] memory) {
-        IndexedPosition[] memory positionsByTaker = new IndexedPosition[](length);
-        uint positionsByTakerIndex = 0;
+        IndexedPosition[] memory _positionsByTaker = new IndexedPosition[](length);
+        uint _positionsByTakerIndex = 0;
         for (uint i = 0; i < positions.length; i++) {
             if (positions[i].taker == taker) {
-                positionsByTaker[positionsByTakerIndex] = IndexedPosition({index : i, position : positions[i]});
-                positionsByTakerIndex++;
-                if (positionsByTakerIndex > length) break;
+                _positionsByTaker[_positionsByTakerIndex] = IndexedPosition({index : i, position : positions[i]});
+                _positionsByTakerIndex++;
+                if (_positionsByTakerIndex > length) break;
             }
         }
-        return positionsByTaker;
+        return _positionsByTaker;
     }
 
     /* UniswapV2Library functions - had to copy because it depends on SafeMath, which depends on Solidity =0.6.6, which is lower than our Solidity version */
