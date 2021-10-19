@@ -19,9 +19,7 @@ export async function deployContract(args: DeployERC20TokenTaskArguments, hre: H
   let addressToVerify: string
 
   if (upgradeable) {
-    const contract = await upgrades.deployProxy(factory, constructorArgs /* TODO: set this: {
-      maxPriorityFeePerGas: BigNumber.from("2500000000"),
-    }*/)
+    const contract = await upgrades.deployProxy(factory)
     await contract.deployed()
     console.info(`export ${envVarContract}_PROXY_ADDRESS=${contract.address}`) // eslint-disable-line no-console
     const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)

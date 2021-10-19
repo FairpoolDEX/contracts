@@ -8,7 +8,7 @@ import { dateAdd, hours, seconds, toTokenAmount, years } from "../support/all.he
 import { zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances } from "../support/test.helpers"
 import { MCP, QuoteToken, BaseToken } from "../../typechain"
 import { BuyCommand } from "./MCP/commands/BuyCommand"
-import { MCPBlockchainModel, TokenModel } from "./MCP/MCPBlockchainModel"
+import { MCPBlockchainModel} from "./MCP/MCPBlockchainModel"
 import { MCPBlockchainReal } from "./MCP/MCPBlockchainReal"
 import { TestMetronome } from "../support/Metronome"
 import { BigNumber, BigNumberish } from "ethers"
@@ -16,6 +16,7 @@ import { dateToTimestampSeconds } from "hardhat/internal/util/date"
 import Base = Mocha.reporters.Base
 import { beforeEach } from "mocha"
 import { Address } from "../../util/types"
+import { TokenModel } from "../support/fast-check/TokenModel"
 
 describe("Market Crash Protection", async () => {
   let owner: SignerWithAddress

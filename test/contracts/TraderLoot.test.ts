@@ -12,7 +12,7 @@ import * as os from "os"
 import { range, toInteger } from "lodash"
 import mkdirp from "mkdirp"
 
-describe("TraderLoot", async function() {
+xdescribe("TraderLoot", async function() {
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
   let bob: SignerWithAddress

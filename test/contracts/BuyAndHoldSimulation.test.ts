@@ -5,12 +5,12 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { hours, MaxUint256, scale } from "../support/all.helpers"
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from "../support/test.helpers"
 import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
-import { TokenModel } from "./MCP/MCPBlockchainModel"
 import { BigNumber, Contract } from "ethers"
 import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 import { BuyAndHoldSimulation } from "../support/Simulation/BuyAndHoldSimulation"
 import $debug from "debug"
+import { TokenModel } from "../support/fast-check/TokenModel"
 
 describe("BuyAndHoldSimulation", async function() {
   let simulation: BuyAndHoldSimulation

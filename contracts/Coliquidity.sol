@@ -21,13 +21,18 @@ contract Coliquidity is Ownable {
         uint makerAmount;
         address taker; // address of a taker that could create a position from this offer (if zero address - anybody can create)
         address[] takerTokens; // addresses of tokens at the other side of the pool (allows to offer coliquidity for multiple token pairs)
+        uint makerDenominator;
+        uint takerDenominator;
         bool reinvest;
+        uint pausedUntil; // UNIX timestamp
         uint lockedUntil; // UNIX timestamp
     }
 
-    struct IndexedOffer {
-        uint index;
-        Offer offer;
+    struct Contribution {
+        uint offerIndex;
+        address taker;
+        address takerToken;
+        uint takerAmount;
     }
 
     struct Position {
@@ -42,13 +47,26 @@ contract Coliquidity is Ownable {
         uint lockedUntil; // UNIX timestamp
     }
 
+    Offer[] public offers;
+    Contribution[] public contributions;
+    Position[] public positions;
+
+    mapping(uint => uint[]) contributionIndexesByOfferIndex;
+
+    struct IndexedOffer {
+        uint index;
+        Offer offer;
+    }
+
+    struct IndexedContribution {
+        uint index;
+        Contribution contribution;
+    }
+
     struct IndexedPosition {
         uint index;
         Position position;
     }
-
-    Offer[] public offers;
-    Position[] public positions;
 
     uint public feeNumerator = 1;
     uint public feeDenominator = 100;
@@ -60,7 +78,9 @@ contract Coliquidity is Ownable {
 
     event CreateOffer(address indexed sender, uint indexed offerIndex);
     event CreatePosition(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
+    event CreateContribution(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
     event WithdrawOffer(address indexed sender, uint indexed offerIndex);
+    event WithdrawContribution(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
     event WithdrawPosition(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
 
     uint private unlocked = 1;
@@ -89,17 +109,76 @@ contract Coliquidity is Ownable {
         feeDenominator = _feeDenominator;
     }
 
-    function createOffer(address makerToken, uint makerAmount, address taker, address[] calldata takerTokens, bool reinvest, uint lockedUntil) lock public {
+    function createOffer(address makerToken, uint makerAmount, address taker, address[] calldata takerTokens, uint takerOfferIndex, uint makerDenominator, uint takerDenominator, bool reinvest, uint pausedUntil, uint lockedUntil) lock public {
         require(makerToken != address(0), "Coliquidity: COTNZ");
         require(makerAmount > 0, "Coliquidity: COAGZ");
         require(takerTokens.length > 0, "Coliquidity: COPLG");
         require(lockedUntil == 0 || lockedUntil > block.timestamp, "Coliquidity: COLBT");
+        if (makerDenominator != 0) makerAmount = roundBy(makerAmount, makerDenominator);
         // allow taker address to be zero (anybody can take the offer)
         TransferHelper.safeTransferFrom(makerToken, msg.sender, address(this), makerAmount);
         offers.push(
-            Offer({maker : msg.sender, makerToken : makerToken, makerAmount : makerAmount, taker : taker, takerTokens : takerTokens, reinvest : reinvest, lockedUntil : lockedUntil})
+            Offer({maker : msg.sender, makerToken : makerToken, makerAmount : makerAmount, taker : taker, takerTokens : takerTokens, takerOfferIndex : takerOfferIndex, makerDenominator : makerDenominator, takerDenominator : takerDenominator, reinvest : reinvest, pausedUntil : pausedUntil, lockedUntil : lockedUntil})
         );
         emit CreateOffer(msg.sender, offers.length - 1);
+    }
+
+    function createContribution(uint offerIndex, address takerToken, uint takerAmount) lock public {
+        Offer storage offer = offers[offerIndex];
+        require(offer.maker != address(0));
+        // require that offer exists
+        require(offer.taker == address(0) || offer.taker == msg.sender, "Coliquidity: CCAGD");
+        require(takerToken != address(0), "Coliquidity: CCTNZ");
+        require(takerAmount > 0, "Coliquidity: CCTGZ");
+        TransferHelper.safeTransferFrom(takerToken, msg.sender, address(this), takerAmount);
+        contributions.push(
+            Contribution({offerIndex : offerIndex, taker : msg.sender, takerToken : takerToken, takerAmount : takerAmount})
+        );
+        contributionIndexesByOfferIndex[offerIndex].push(contributions.length - 1);
+        emit CreateContribution(msg.sender, offerIndex, contributions.length - 1);
+    }
+
+    function withdrawContribution(uint contributionIndex) lock public {
+        Contribution storage contribution = contributions[contributionIndex];
+        require(contribution.taker == msg.sender, "Coliquidity: WCMES");
+        require(contribution.takerAmount > 0, "Coliquidity: WCMAZ");
+        uint takerAmount = contribution.takerAmount;
+        contribution.takerAmount = 0;
+        TransferHelper.safeTransfer(contribution.takerToken, contribution.taker, takerAmount);
+        emit WithdrawContribution(msg.sender, contribution.offerIndex, contributionIndex);
+    }
+
+    function openPool(uint offerIndex, address takerToken, uint deadline) lock public {
+        Offer storage offer = offers[offerIndex];
+        require(offer.maker == msg.sender, "Coliquidity: OPOMS");
+        require(offer.pausedUntil == 0 || offer.pausedUntil <= block.timestamp, "Coliquidity: OPOPT");
+        uint[] storage contributionIndexes = contributionIndexesByOfferIndex[offerIndex];
+        uint takerAmountSum;
+        for (uint i = 0; i < contributionIndexes.length; i++) {
+            Contribution storage contribution = contributions[contributionIndexes[i]];
+            if (contribution.takerToken != takerToken) continue;
+            takerAmountSum += contributions[contributionIndexes[i]].takerAmount;
+        }
+        takerAmountSum = roundBy(takerAmountSum, offer.takerDenominator);
+        uint takerAmountMax = offer.makerAmount * offer.takerDenominator / offer.makerDenominator;
+        uint takerAmountDesired = Math.min(takerAmountSum, takerAmountMax);
+        uint makerAmountMax = takerAmountDesired * offer.makerDenominator / offer.takerDenominator;
+        uint makerAmountDesired = Math.min(offer.makerAmount, makerAmountMax);
+        (uint makerAmountDeposited, uint takerAmountDeposited, uint liquidityAmountReceived) = depositToPool(offer.makerToken, takerToken, makerAmountDesired, takerAmountDesired, makerAmountDesired, takerAmountDesired, deadline);
+        offer.makerAmount -= makerAmountDeposited;
+        for (uint i = 0; i < contributionIndexes.length; i++) {
+            Contribution storage contribution = contributions[contributionIndexes[i]];
+            if (contribution.takerToken != takerToken) continue;
+            uint takerAmountDiff = Math.min(takerAmountDeposited, contribution.takerAmount);
+            uint makerAmountDiff =
+            contribution.takerAmount -= takerAmountDiff;
+            takerAmountDeposited -= takerAmountDiff;
+            positions.push(
+                Position({offerIndex : offerIndex, maker : offer.maker, taker : contribution.taker, makerToken : offer.makerToken, takerToken : contribution.takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDiff, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
+            );
+            emit CreatePosition(contribution.taker, offerIndex, positions.length - 1);
+            if (takerAmountDeposited == 0) break;
+        }
     }
 
     function createPosition(uint offerIndex, address takerToken, uint makerAmountDesired, uint takerAmountDesired, uint makerAmountMin, uint takerAmountMin, uint deadline) lock public {
@@ -108,11 +187,22 @@ contract Coliquidity is Ownable {
         // NOTE: _*Amount* are validated within addLiquidity call by UniswapV2Library
         // NOTE: _deadline is validated within addLiquidity call by ensure modifier
         require(offer.taker == address(0) || offer.taker == msg.sender, "Coliquidity: CPAGD");
+        require(offer.pausedUntil == 0 || offer.pausedUntil <= block.timestamp, "Coliquidity: CPOPT");
         TransferHelper.safeTransferFrom(takerToken, msg.sender, address(this), takerAmountDesired);
-        IERC20(offer.makerToken).approve(router, makerAmountDesired);
+        (uint makerAmountDeposited, uint takerAmountDeposited, uint liquidityAmountReceived) = depositToPool(offer.makerToken, takerToken, makerAmountDesired, takerAmountDesired, makerAmountMin, takerAmountMin, deadline);
+        offer.makerAmount -= makerAmountDeposited;
+        TransferHelper.safeTransfer(takerToken, msg.sender, takerAmountDesired - takerAmountDeposited);
+        positions.push(
+            Position({offerIndex : offerIndex, maker : offer.maker, taker : msg.sender, makerToken : offer.makerToken, takerToken : takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDeposited, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
+        );
+        emit CreatePosition(msg.sender, offerIndex, positions.length - 1);
+    }
+
+    function depositToPool(address makerToken, address takerToken, uint makerAmountDesired, uint takerAmountDesired, uint makerAmountMin, uint takerAmountMin, uint deadline) internal returns (uint makerAmountDeposited, uint takerAmountDeposited, uint liquidityAmountReceived) {
+        IERC20(makerToken).approve(router, makerAmountDesired);
         IERC20(takerToken).approve(router, takerAmountDesired);
-        (uint makerAmountDeposited, uint takerAmountDeposited, uint liquidityAmountReceived) = IUniswapV2Router02(router).addLiquidity(
-            offer.makerToken,
+        return IUniswapV2Router02(router).addLiquidity(
+            makerToken,
             takerToken,
             makerAmountDesired,
             takerAmountDesired,
@@ -121,12 +211,6 @@ contract Coliquidity is Ownable {
             address(this),
             deadline
         );
-        offer.makerAmount -= makerAmountDeposited;
-        TransferHelper.safeTransfer(takerToken, msg.sender, takerAmountDesired - takerAmountDeposited);
-        positions.push(
-            Position({offerIndex : offerIndex, maker : offer.maker, taker : msg.sender, makerToken : offer.makerToken, takerToken : takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDeposited, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
-        );
-        emit CreatePosition(msg.sender, offerIndex, positions.length - 1);
     }
 
     function withdrawOffer(uint offerIndex) lock public {
@@ -265,5 +349,11 @@ contract Coliquidity is Ownable {
                 keccak256(abi.encodePacked(token0, token1)),
                 hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
             )))));
+    }
+
+    // ensures numerator is evenly divisible by denominator
+    // may decrease numerator
+    function roundBy(uint numerator, uint denominator) internal pure returns (uint numeratorEven) {
+        return numerator / denominator * denominator;
     }
 }

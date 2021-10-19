@@ -6,17 +6,20 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn clean && yarn compile",
-    "clean": "MAX_FEE=20 hardhat clean --show-stack-traces",
-    "compile": "MAX_FEE=20 hardhat compile --show-stack-traces",
-    "fork": "MAX_FEE=20 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY",
+    "clean": "FEES=20:1 hardhat clean --show-stack-traces",
+    "compile": "FEES=20:1 hardhat compile --show-stack-traces",
+    "fork": "FEES=20:1 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY",
     "lint": "solhint contracts/*.sol && eslint .",
     "lint:markdown": "markdownlint --ignore node_modules **/*.md",
     "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
-    "test": "MAX_FEE=20 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test",
-    "test:watch": "nodemon -x 'MAX_FEE=20 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test'",
-    "coverage": "MAX_FEE=20 yarn build && MAX_FEE=20 hardhat coverage --temp artifacts",
-    "flatten": "MAX_FEE=20 hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
+    "test": "FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test",
+    "test:watch": "nodemon -x 'FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test'",
+    "coverage": "FEES=20:1 yarn build && FEES=20:1 hardhat coverage --temp artifacts",
+    "flatten": "FEES=20:1 hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
     "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol"
+  },
+  "engines": {
+    "node": "=12.22.1"
   },
   "dependencies": {
     "@ethersproject/hardware-wallets": "^5.4.0",
