@@ -239,33 +239,6 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     "Ariel"
     ];
 
-    string[] private adjectives = [
-    "Enraged",
-    "Aggressive",
-    "Hateful",
-    "Bloody",
-    "Crazy",
-    "Combative",
-    "Cruel",
-    "Dark",
-    "Undead",
-    "Evil",
-    "Furious",
-    "Horrid",
-    "Mad",
-    "Heartbroken",
-    "Provoked",
-    "Revengeful",
-    "Infected",
-    "Chained",
-    "Vile",
-    "Pervert",
-    "Corrupt",
-    "Skeleton of ",
-    "Ghost of ",
-    "Soul of "
-    ];
-
     string[] private limbs = [
     "Head",
     "Torso",
@@ -285,41 +258,6 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     ];
 
     mapping(string => string) private lich_characters;
-
-    string[] private items = [
-    "[Vodka]",
-    "[Sword]",
-    "[Beer]",
-    "[Shuriken]",
-    "[Bow]",
-    "[Minigun]",
-    "[Flamethrower]",
-    "[Pistol]",
-    "[Crossbow]"
-    ];
-
-    string[] private bodies = [
-    "Corpse",
-    "Cadaver",
-    "Body",
-    "Remains",
-    "Carcass",
-    "Bones",
-    "Ghost",
-    "Skeleton",
-    "Flesh",
-    "Wraith",
-    "Ashes",
-    "Dust",
-    "Relic",
-    "Carrion",
-    "Cinders",
-    "Residue",
-    "Soul",
-    "Fetus",
-    "Essence",
-    "Substance"
-    ];
 
     //    string[] private weapons = [
     //    "Ethereum",
@@ -350,7 +288,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     //    ];
     //
     //    string[] private waists = [
-    //    "Chainlink",
+    //    "contracts/TraderLoot.sol:500Chainlink",
     //    "Band Protocol",
     //    "Kylin Network",
     //    "NEST Protocol",

@@ -1,18 +1,21 @@
-import { DateTime } from "luxon"
 import { expect } from "../../util/expect"
-import { toInteger, identity, flatten, fromPairs, zip, range } from "lodash"
+import { flatten } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { dateAdd, hours, max, MaxUint256, seconds, sum, toTokenAmount, years } from "../support/all.helpers"
-import { zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances, expectBalance, $zero, logBn } from "../support/test.helpers"
-import { Coliquidity, BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
+import { dateAdd, hours, max, MaxUint256, sum } from "../support/all.helpers"
+import { $zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from "../support/test.helpers"
+import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
 import { BigNumber, BigNumberish, Contract } from "ethers"
 import { beforeEach } from "mocha"
 import { Address } from "../../util/types"
-import { deployUniswapPair, getActualLiquidityShare, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
+import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
 import { getFee, getLiquidityAfterSell, subtractFee } from "../support/Coliquidity.helpers"
-import $debug, { Debugger } from "debug"
-import BN from "bn.js"
+import $debug from "debug"
+import { assert, asyncModelRun, asyncProperty, bigUintN, boolean, commands, constant, constantFrom, context, date, nat, oneof, record } from "fast-check"
+import { TestMetronome } from "../support/Metronome"
+import { ColiquidityBlockchainModel, ColiquidityBlockchainReal } from "./Coliquidity/ColiquidityCommand"
+import { amount } from "../support/fast-check.helpers"
+import { CreateOfferCommand } from "./Coliquidity/commands/CreateOfferCommand"
 
 describe("Coliquidity", async function() {
   let owner: SignerWithAddress
@@ -520,5 +523,58 @@ describe("Coliquidity", async function() {
     expect(subtractFee(5000, 10000, 1, 100)).to.equal(5000)
     expect(subtractFee(20000, 10000, 1, 100)).to.equal(20000 - (20000 - 10000) * 1 / 100)
   })
+
+  xit("must launch Marnotaur token", async () => {
+    const expirationDateMin = now
+    const expirationDateMax = dateAdd(now, { years: 5 })
+    const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
+    const expirationDateMaxPost = dateAdd(expirationDateMax, { seconds: +1 })
+    const metronome = new TestMetronome(now)
+    await assert(
+      asyncProperty(commands(getMarnotaurCommandArbitraries(), { maxCommands: 50 }), context(), async (cmds, ctx) => {
+        ctx.log("Running cmds")
+        const snapshot = await ethers.provider.send("evm_snapshot", [])
+        try {
+          await asyncModelRun(getMarnotaurSetup, cmds)
+        } finally {
+          await ethers.provider.send("evm_revert", [snapshot])
+        }
+      }),
+    )
+  })
+
+  function getMarnotaurSetup(): { model: ColiquidityBlockchainModel, real: ColiquidityBlockchainReal } {
+    return {
+      model: { tokens: [] },
+      real: { tokens: [] },
+    }
+  }
+
+  function getMarnotaurCommandArbitraries() {
+    return [
+      record({
+        maker: constantFrom(bob.address),
+        makerToken: constantFrom(base.address),
+        makerAmount: amount(initialBaseAmount),
+        taker: constantFrom(zero, sam.address, sally.address),
+        takerToken: constantFrom(quote.address),
+        reinvest: boolean(),
+        lockedUntil: oneof({}, constantFrom(0), nat()),
+      }).map((r) => new CreateOfferCommand(
+        r.maker,
+        r.makerToken,
+        r.makerAmount,
+        r.taker,
+        [r.takerToken],
+        r.reinvest,
+        r.lockedUntil,
+      )),
+
+      // constant(new SellCommand()),
+      // constant(new UseCommand()),
+      // constant(new CancelCommand()),
+      // constant(new WithdrawCommand()),
+    ]
+  }
 
 })

@@ -1,7 +1,7 @@
-import { Address, Amount, Price, Timestamp } from "../../../util/types"
-import { BigNumber } from "ethers"
+import { Address, Amount, Price } from "../../../util/types"
 import { expect } from "../../../util/expect"
 import { Metronome } from "../../support/Metronome"
+import { TokenModel } from "../../support/fast-check/TokenModel"
 
 export class MCPBlockchainModel {
   public mcp: MCPModel = {
@@ -29,12 +29,6 @@ export class MCPBlockchainModel {
 export interface MCPModel {
   protections: Protection[]
 }
-
-export interface TokenModel {
-  balanceByAddress: BalanceByAddress
-}
-
-export type BalanceByAddress = { [address: string]: BigNumber }
 
 export interface Protection {
   buyer: Address;

@@ -87,14 +87,11 @@ function rewriteAddress(address: Address) {
   return rewriteAddressMap[address] || address
 }
 
-export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, hre: HardhatRuntimeEnvironment, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
-  const { network } = hre
-  const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
-  const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
-  if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  const gasPrice = network.config.gasPrice
-  if (typeof gasPrice !== "number") throw new Error()
-  expect(gasPrice).to.be.greaterThan(10 * gwei)
+export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
+  // const { network } = hre
+  // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
+  // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
+  // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   for (const _address in expectations.balances) {
     const address = _address.toLowerCase()
@@ -150,6 +147,6 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
   console.info(`Setting claims`)
-  await setClaims(token, balances, expectations, hre, dry, console.info.bind(console))
+  await setClaims(token, balances, expectations, dry, console.info.bind(console))
   if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }

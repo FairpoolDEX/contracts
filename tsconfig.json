@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "resolveJsonModule": true,
-    "lib": ["es2019", "es2020.bigint", "es2020.string", "es2020.symbol.wellknown"]
+    "lib": ["es2019", "es2020.bigint", "es2020.string", "es2020.symbol.wellknown", "es2020.promise"]
   },
   "include": [
     "./util",
