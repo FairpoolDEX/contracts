@@ -1,24 +1,28 @@
 import { BigNumber, ethers } from "ethers"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
 
-export type Address = string;
+export type Address = string
 
-export type Addresses = Address[];
+export type Addresses = Address[]
 
-export type Amount = BigNumber
+export type AmountNum = number
 
-export type Price = BigNumber;
+export type PriceNum = number
 
-export type Timestamp = number;
+export type AmountBN = BigNumber
 
-export type BalanceMap = { [index: string]: Amount }
+export type PriceBN = BigNumber
 
-export type Ethers = typeof ethers & HardhatEthersHelpers;
+export type Timestamp = number
+
+export type BalanceMap = { [index: string]: AmountBN }
+
+export type Ethers = typeof ethers & HardhatEthersHelpers
 
 export interface Allocation {
-  [address: string]: string;
+  [address: string]: string
 }
 
 export interface Allocations {
-  [id: string]: Allocation;
+  [id: string]: Allocation
 }

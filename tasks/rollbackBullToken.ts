@@ -8,7 +8,7 @@ import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
 import { fromTokenAmount, mineBlocks, toTokenAmount } from "../test/support/all.helpers"
-import { Address, Addresses, Amount, BalanceMap, Ethers } from "../util/types"
+import { Address, Addresses, AmountBN, BalanceMap, Ethers } from "../util/types"
 import { BigNumber, Contract, utils } from "ethers"
 import { expect } from "../util/expect"
 import { ContractTransaction } from "@ethersproject/contracts"
@@ -185,7 +185,7 @@ export async function expectBalancesAreEqual(token: Contract, from: BlockTag, to
   expect(balancesBeforeAirdrop).to.deep.equal(balancesAfterRollback)
 }
 
-async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresses: Addresses): Promise<Amount[]> {
+async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresses: Addresses): Promise<AmountBN[]> {
   return Promise.all(holderAddresses.map((address) => token.balanceOf(address, { blockTag })))
 }
 
@@ -224,4 +224,3 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   await rollbackBullToken(token, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
   if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }
-

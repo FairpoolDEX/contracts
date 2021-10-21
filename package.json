@@ -8,6 +8,7 @@
     "build": "yarn clean && yarn compile",
     "clean": "FEES=20:1 hardhat clean --show-stack-traces",
     "compile": "FEES=20:1 hardhat compile --show-stack-traces",
+    "typecheck": "tsc --noEmit",
     "fork": "FEES=20:1 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY",
     "lint": "solhint contracts/*.sol && eslint .",
     "lint:markdown": "markdownlint --ignore node_modules **/*.md",

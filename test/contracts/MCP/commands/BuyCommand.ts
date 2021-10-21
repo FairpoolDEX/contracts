@@ -1,5 +1,5 @@
 import fc from "fast-check"
-import { Address, Amount, Price, Timestamp } from "../../../../util/types"
+import { Address, AmountBN, PriceBN, Timestamp } from "../../../../util/types"
 import { MCPBlockchainModel } from "../MCPBlockchainModel"
 import { MCPBlockchainReal } from "../MCPBlockchainReal"
 import { dateToTimestampSeconds } from "hardhat/internal/util/date"
@@ -7,7 +7,7 @@ import { MCPCommand } from "../MCPCommand"
 import { expect } from "../../../../util/expect"
 
 export class BuyCommand extends MCPCommand implements fc.AsyncCommand<MCPBlockchainModel, MCPBlockchainReal> {
-  constructor(readonly buyer: Address, readonly seller: Address, readonly guaranteedAmount: Amount, readonly guaranteedPrice: Price, readonly expirationDate: Date, readonly protectionPrice: Price) {
+  constructor(readonly buyer: Address, readonly seller: Address, readonly guaranteedAmount: AmountBN, readonly guaranteedPrice: PriceBN, readonly expirationDate: Date, readonly protectionPrice: PriceBN) {
     super()
   }
 

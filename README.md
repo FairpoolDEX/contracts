@@ -2,11 +2,15 @@
 
 ## Setup
 
-    # Install NVM: https://github.com/nvm-sh/nvm#installing-and-updating
-    nvm install $(cat .nvmrc)
-    nvm use # loads version from .nvmrc
-    yarn install
-    yarn build
+```shell
+# Install NVM: https://github.com/nvm-sh/nvm#installing-and-updating
+# Install yarn v1: https://classic.yarnpkg.com/en/docs/install
+# Add .nvmrc autoload to ~/.bashrc (optional, recommended): https://gist.github.com/DenisGorbachev/0c321443d9fe684b6d2a9de785420a6a    
+nvm install $(cat .nvmrc)
+nvm use # loads version from .nvmrc
+yarn install
+yarn build
+```
 
 ## Tasks
 
