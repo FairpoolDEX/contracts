@@ -16,7 +16,7 @@ import { dateToTimestampSeconds } from "hardhat/internal/util/date"
 import Base = Mocha.reporters.Base
 import { beforeEach } from "mocha"
 import { Address } from "../../util/types"
-import { TokenModel } from "../support/fast-check/TokenModel"
+import { TokenModel } from "../support/fast-check/models/TokenModel"
 
 describe("Market Crash Protection", async () => {
   let owner: SignerWithAddress

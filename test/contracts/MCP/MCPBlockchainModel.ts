@@ -1,7 +1,7 @@
-import { Address, Amount, Price } from "../../../util/types"
+import { Address, AmountBN, PriceBN } from "../../../util/types"
 import { expect } from "../../../util/expect"
 import { Metronome } from "../../support/Metronome"
-import { TokenModel } from "../../support/fast-check/TokenModel"
+import { TokenModel } from "../../support/fast-check/models/TokenModel"
 
 export class MCPBlockchainModel {
   public mcp: MCPModel = {
@@ -10,7 +10,7 @@ export class MCPBlockchainModel {
 
   constructor(public m: Metronome, public base: TokenModel, public quote: TokenModel) {}
 
-  async buy(buyer: Address, seller: Address, guaranteedAmount: Amount, guaranteedPrice: Price, expirationDate: Date, protectionPrice: Price) {
+  async buy(buyer: Address, seller: Address, guaranteedAmount: AmountBN, guaranteedPrice: PriceBN, expirationDate: Date, protectionPrice: PriceBN) {
     const creationDate = this.m.date()
     expect(expirationDate).gt(creationDate)
     this.mcp.protections.push({
@@ -33,10 +33,10 @@ export interface MCPModel {
 export interface Protection {
   buyer: Address;
   seller: Address;
-  guaranteedAmount: Amount;
-  guaranteedPrice: Price;
+  guaranteedAmount: AmountBN;
+  guaranteedPrice: PriceBN;
   expirationDate: Date;
-  protectionPrice: Price;
+  protectionPrice: PriceBN;
   creationDate: Date;
   status: Status;
 }

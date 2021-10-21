@@ -1,4 +1,4 @@
-import { Address, Amount } from "../../../util/types"
+import { Address, AmountNum } from "../../../../util/types"
 
 export interface TokenModel {
   address: Address
@@ -6,6 +6,6 @@ export interface TokenModel {
 }
 
 export interface BalanceModel {
-  owner: Address
-  amount: Amount
+  address: Address
+  amount: AmountNum
 }

@@ -1,8 +1,8 @@
 import { expect } from "../../util/expect"
-import { flatten } from "lodash"
+import { cloneDeep, flatten } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { dateAdd, hours, max, MaxUint256, sum } from "../support/all.helpers"
+import { dateAdd, days, hours, max, MaxUint256, sum } from "../support/all.helpers"
 import { $zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from "../support/test.helpers"
 import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
 import { BigNumber, BigNumberish, Contract } from "ethers"
@@ -11,11 +11,12 @@ import { Address } from "../../util/types"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
 import { getFee, getLiquidityAfterSell, subtractFee } from "../support/Coliquidity.helpers"
 import $debug from "debug"
-import { assert, asyncModelRun, asyncProperty, bigUintN, boolean, commands, constant, constantFrom, context, date, nat, oneof, record } from "fast-check"
+import { assert, asyncModelRun, asyncProperty, boolean, commands, constantFrom, context, nat, oneof, record } from "fast-check"
 import { TestMetronome } from "../support/Metronome"
-import { ColiquidityBlockchainModel, ColiquidityBlockchainReal } from "./Coliquidity/ColiquidityCommand"
-import { amount } from "../support/fast-check.helpers"
+import { ColiquidityModel, ColiquidityReal } from "./Coliquidity/ColiquidityCommand"
+import { amountNum } from "../support/fast-check.helpers"
 import { CreateOfferCommand } from "./Coliquidity/commands/CreateOfferCommand"
+import { BalanceModel } from "../support/fast-check/models/TokenModel"
 
 describe("Coliquidity", async function() {
   let owner: SignerWithAddress
@@ -32,6 +33,7 @@ describe("Coliquidity", async function() {
   let baseAsBob: BaseToken
   let baseAsSam: BaseToken
   let baseAsSally: BaseToken
+  let baseBalances: BalanceModel[]
 
   let quote: BaseToken
   let quoteAsOwner: QuoteToken
@@ -39,6 +41,7 @@ describe("Coliquidity", async function() {
   let quoteAsBob: QuoteToken
   let quoteAsSam: QuoteToken
   let quoteAsSally: BaseToken
+  let quoteBalances: BalanceModel[]
 
   let coliquidity: Coliquidity
   let coliquidityAsOwen: Coliquidity
@@ -81,6 +84,9 @@ describe("Coliquidity", async function() {
     const baseAmounts = signers.map(() => initialBaseAmount)
     const quoteRecipients = signers.map((s) => s.address)
     const quoteAmounts = signers.map(() => initialQuoteAmount)
+
+    baseBalances = signers.map((s, i): BalanceModel => ({ address: baseRecipients[i], amount: baseAmounts[i] }))
+    quoteBalances = signers.map((s, i): BalanceModel => ({ address: quoteRecipients[i], amount: quoteAmounts[i] }))
 
     const baseTokenFactory = await ethers.getContractFactory("BaseToken")
     baseAsOwner = (await upgrades.deployProxy(baseTokenFactory, [totalBaseAmount, baseRecipients, baseAmounts])) as unknown as BaseToken
@@ -151,7 +157,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must allow to create an offer", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await expectBalances([
       [bob, base, initialBaseAmount - makerAmount],
       [bob, quote, initialQuoteAmount],
@@ -169,14 +175,14 @@ describe("Coliquidity", async function() {
   })
 
   it("must not allow to create an offer with invalid data", async () => {
-    await expect(coliquidityAsBob.createOffer(zero, makerAmount, zero, [quoteAddress], true, 0)).to.be.revertedWith("Coliquidity: COTNZ")
-    await expect(coliquidityAsBob.createOffer(baseAddress, 0, zero, [quoteAddress], true, 0)).to.be.revertedWith("Coliquidity: COAGZ")
-    await expect(coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [], true, 0)).to.be.revertedWith("Coliquidity: COPLG")
-    await expect(coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 1)).to.be.revertedWith("Coliquidity: COLBT")
+    await expect(coliquidityAsBob.createOffer(zero, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)).to.be.revertedWith("Coliquidity: COTNZ")
+    await expect(coliquidityAsBob.createOffer(baseAddress, 0, zero, [quoteAddress], 0, 0, true, 0, 0)).to.be.revertedWith("Coliquidity: COAGZ")
+    await expect(coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [], 0, 0, true, 0, 0)).to.be.revertedWith("Coliquidity: COPLG")
+    await expect(coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 1)).to.be.revertedWith("Coliquidity: COLBT")
   })
 
   it("must allow to create multiple positions", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 2 * makerAmountDesired, 2 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
@@ -200,7 +206,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must not allow to create a position with invalid data", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, sam.address, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, sam.address, [quoteAddress], 0, 0, true, 0, 0)
     await expect(coliquidityAsSally.createPosition(offerIndex, quoteAddress, 2 * makerAmountDesired, 2 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)).to.be.revertedWith("CPAGD")
     await expect(coliquidityAsSam.createPosition(offerIndex, baseAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)).to.be.revertedWith("IDENTICAL_ADDRESSES")
     await expect(coliquidityAsSam.createPosition(offerIndex, quoteAddress, 0, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)).to.be.revertedWith("ds-math-sub-underflow")
@@ -211,7 +217,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must allow to withdraw position with fees", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
@@ -336,7 +342,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must not allow to withdraw position twice", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     const positionSamBefore = await coliquidity.positions(0)
     await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
@@ -344,7 +350,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must not allow to withdraw offer twice", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsBob.withdrawOffer(0)
     await expect(coliquidityAsBob.withdrawOffer(0)).to.be.revertedWith("Coliquidity: WOMAZ")
   })
@@ -358,7 +364,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must allow to withdraw position if sender is maker or taker", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 2 * makerAmountDesired, 2 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
@@ -369,25 +375,25 @@ describe("Coliquidity", async function() {
   })
 
   it("must not allow to withdraw position if sender is not maker or taker", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await expect(coliquidityAsSally.withdrawPosition(0, 1, 1, 1, MaxUint256)).to.be.revertedWith("WPMTS")
   })
 
   it("must not allow to withdraw position if lockedUntil is not reached", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, MaxUint256)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, MaxUint256)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await expect(coliquidityAsSam.withdrawPosition(0, 1, 1, 1, MaxUint256)).to.be.revertedWith("Coliquidity: WPLLT")
   })
 
   it("must not allow to withdraw offer if lockedUntil is not reached", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, MaxUint256)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, MaxUint256)
     await expect(coliquidityAsBob.withdrawOffer(0)).to.be.revertedWith("Coliquidity: WOLLT")
   })
 
   it("must not transfer the tokens to maker if reinvest = true", async () => {
     const reinvest = true
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], reinvest, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, reinvest, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
@@ -405,7 +411,7 @@ describe("Coliquidity", async function() {
 
   it("must transfer the tokens to maker if reinvest = false", async () => {
     const reinvest = false
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], reinvest, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, reinvest, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     await coliquidityAsSally.createPosition(offerIndex, quoteAddress, 4 * makerAmountDesired, 4 * takerAmountDesired, 2 * makerAmountDesired * 0.99, 2 * takerAmountDesired * 0.99, MaxUint256)
 
@@ -429,13 +435,13 @@ describe("Coliquidity", async function() {
 
   it("must return offersTakerTokens", async () => {
     const expectedTakerTokens = [quoteAddress]
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, expectedTakerTokens, true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, expectedTakerTokens, 0, 0, true, 0, 0)
     const actualTakerTokens = await coliquidityAsSam.offersTakerTokens(0)
     expect(actualTakerTokens).to.deep.equal(expectedTakerTokens)
   })
 
   it("must return offersByMaker", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     const offers = await coliquidity.offersByMaker(bob.address, 1)
     expect(offers).to.deep.equal([
       [
@@ -454,7 +460,7 @@ describe("Coliquidity", async function() {
   })
 
   it("must return positionsByMaker & positionsByTaker", async () => {
-    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], true, 0)
+    await coliquidityAsBob.createOffer(baseAddress, makerAmount, zero, [quoteAddress], 0, 0, true, 0, 0)
     await coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, takerAmountDesired, makerAmountDesired * 0.99, takerAmountDesired * 0.99, MaxUint256)
     const positionSam = await coliquidity.positions(0)
     const positionsByMaker = await coliquidity.positionsByMaker(bob.address, 1)
@@ -496,7 +502,7 @@ describe("Coliquidity", async function() {
   // it.only("must return a lot of offersByMaker", async () => {
   //   const length = 1000
   //   await Promise.all(range(0, length).map(i => {
-  //     coliquidityAsBob.createOffer(baseAddress, 1, zero, [quoteAddress], true, 0)
+  //     coliquidityAsBob.createOffer(baseAddress, 1, zero, [quoteAddress], 0, 0, true, 0, 0)
   //   }))
   //   const offers = await coliquidity.offersByMaker(bob.address)
   //   expect(offers).to.have.length(length)
@@ -524,7 +530,29 @@ describe("Coliquidity", async function() {
     expect(subtractFee(20000, 10000, 1, 100)).to.equal(20000 - (20000 - 10000) * 1 / 100)
   })
 
-  xit("must launch Marnotaur token", async () => {
+  xit("must launch Marnotaur token (static version)", async () => {
+    const cmds = [
+      new CreateOfferCommand(
+        bob.address,
+        base.address,
+        makerAmount,
+        zero,
+        [quote.address],
+        0,
+        0,
+        true,
+        0,
+        now.getTime() + 30 * days,
+      ),
+      // N * new CreateContributionCommand()
+      // CreatePoolCommand()
+      // K * TradeCommand()
+      // ReachDesiredStateCommand(),
+    ]
+    await asyncModelRun(getTestPair, cmds)
+  })
+
+  xit("must launch Marnotaur token (dynamic version)", async () => {
     const expirationDateMin = now
     const expirationDateMax = dateAdd(now, { years: 5 })
     const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
@@ -535,7 +563,7 @@ describe("Coliquidity", async function() {
         ctx.log("Running cmds")
         const snapshot = await ethers.provider.send("evm_snapshot", [])
         try {
-          await asyncModelRun(getMarnotaurSetup, cmds)
+          await asyncModelRun(getTestPair, cmds)
         } finally {
           await ethers.provider.send("evm_revert", [snapshot])
         }
@@ -543,10 +571,31 @@ describe("Coliquidity", async function() {
     )
   })
 
-  function getMarnotaurSetup(): { model: ColiquidityBlockchainModel, real: ColiquidityBlockchainReal } {
+  function getTestPair(): { model: ColiquidityModel, real: ColiquidityReal } {
     return {
-      model: { tokens: [] },
-      real: { tokens: [] },
+      model: {
+        coliquidity: {
+          offers: [],
+        },
+        tokens: [
+          {
+            address: base.address,
+            balances: baseBalances,
+          },
+          {
+            address: quote.address,
+            balances: quoteBalances,
+          },
+        ],
+      },
+      real: {
+        coliquidity,
+        tokens: [
+          base,
+          quote,
+        ],
+      },
+      // real uses the addresses, but doesn't use the values
     }
   }
 
@@ -555,10 +604,13 @@ describe("Coliquidity", async function() {
       record({
         maker: constantFrom(bob.address),
         makerToken: constantFrom(base.address),
-        makerAmount: amount(initialBaseAmount),
+        makerAmount: amountNum(initialBaseAmount),
         taker: constantFrom(zero, sam.address, sally.address),
         takerToken: constantFrom(quote.address),
+        makerDenominator: constantFrom(0),
+        takerDenominator: constantFrom(0),
         reinvest: boolean(),
+        pausedUntil: oneof({}, constantFrom(0), nat()),
         lockedUntil: oneof({}, constantFrom(0), nat()),
       }).map((r) => new CreateOfferCommand(
         r.maker,
@@ -566,7 +618,10 @@ describe("Coliquidity", async function() {
         r.makerAmount,
         r.taker,
         [r.takerToken],
+        r.makerDenominator,
+        r.takerDenominator,
         r.reinvest,
+        r.pausedUntil,
         r.lockedUntil,
       )),
 

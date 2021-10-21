@@ -1,17 +1,40 @@
-import { expect } from "../../../util/expect"
-import { ContractTransaction } from "@ethersproject/contracts"
-import { BlockchainCommand } from "../../support/fast-check/BlockchainCommand"
-import { TokenModel } from "../../support/fast-check/TokenModel"
-import { TokenReal } from "../../support/fast-check/TokenReal"
+import { BlockchainCommand } from "../../support/fast-check/commands/BlockchainCommand"
+import { BlockchainModel} from "../../support/fast-check/models/BlockchainModel"
+import { Address, AmountNum, Timestamp } from "../../../util/types"
+import { Coliquidity } from "../../../typechain"
+import { BlockchainReal } from "../../support/fast-check/models/BlockchainReal"
 
-export abstract class ColiquidityCommand extends BlockchainCommand {
+export abstract class ColiquidityCommand<Result> extends BlockchainCommand<ColiquidityModel, ColiquidityReal, Result> {
+  constructor() {
+    super()
+  }
+}
+
+export interface ColiquidityModel extends BlockchainModel, ColiquidityBase {
+  coliquidity: {
+    offers: OfferModel[]
+  }
+}
+
+export interface ColiquidityReal extends BlockchainReal, ColiquidityBase {
+  coliquidity: Coliquidity
+}
+
+export interface ColiquidityBase {
 
 }
 
-export interface ColiquidityBlockchainModel {
-  tokens: TokenModel[]
+export interface OfferModel {
+  maker: Address,
+  makerToken: Address,
+  makerAmount: AmountNum,
+  taker: Address,
+  takerTokens: Address[],
+  makerDenominator: AmountNum,
+  takerDenominator: AmountNum,
+  reinvest: boolean,
+  pausedUntil: Timestamp,
+  lockedUntil: Timestamp,
 }
 
-export interface ColiquidityBlockchainReal {
-  tokens: TokenReal[]
-}
+export type OfferIndex = number

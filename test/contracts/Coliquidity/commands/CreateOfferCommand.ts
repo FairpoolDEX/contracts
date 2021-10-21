@@ -1,36 +1,48 @@
-import { Address, Amount, Price, Timestamp } from "../../../../util/types"
-import { dateToTimestampSeconds } from "hardhat/internal/util/date"
-import { ColiquidityBlockchainModel, ColiquidityBlockchainReal, ColiquidityCommand } from "../ColiquidityCommand"
-import { expect } from "../../../../util/expect"
+import { Address, AmountNum, Timestamp } from "../../../../util/types"
+import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from "../ColiquidityCommand"
 import { AsyncCommand } from "fast-check"
 
-export class CreateOfferCommand extends ColiquidityCommand implements AsyncCommand<ColiquidityBlockchainModel, ColiquidityBlockchainReal, true> {
+export class CreateOfferCommand extends ColiquidityCommand<OfferIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(
     readonly maker: Address,
     readonly makerToken: Address,
-    readonly makerAmount: Amount,
+    readonly makerAmount: AmountNum,
     readonly taker: Address,
     readonly takerTokens: Address[],
+    readonly makerDenominator: AmountNum,
+    readonly takerDenominator: AmountNum,
     readonly reinvest: boolean,
+    readonly pausedUntil: Timestamp,
     readonly lockedUntil: Timestamp,
   ) {
     super()
   }
 
-  async check(model: ColiquidityBlockchainModel) {
-    const balance = await this.getBalanceAmount(this.maker, this.makerToken, model)
-    return balance.gte(this.makerAmount)
+  async check(model: ColiquidityModel) {
+    const balance = await this.getModelBalanceAmount(model, this.makerToken, this.maker)
+    return balance >= this.makerAmount
   }
 
-  async run(model: ColiquidityBlockchainModel, real: ColiquidityBlockchainReal) {
-    await this.expectTxes(this.runModel(model), this.runReal(real))
+  async runModel(model: ColiquidityModel) {
+    model.coliquidity.offers.push({
+      maker: this.maker,
+      makerToken: this.makerToken,
+      makerAmount: this.makerAmount,
+      taker: this.taker,
+      takerTokens: this.takerTokens,
+      makerDenominator: this.makerDenominator,
+      takerDenominator: this.takerDenominator,
+      reinvest: this.reinvest,
+      pausedUntil: this.pausedUntil,
+      lockedUntil: this.lockedUntil,
+    })
+    const offerIndex = model.coliquidity.offers.length - 1
+    return offerIndex
   }
 
-  async runModel(model: ColiquidityBlockchainModel) {
-
-  }
-
-  async runReal(real: ColiquidityBlockchainReal) {
-
+  async runReal(real: ColiquidityReal) {
+    await real.coliquidity.connect(this.maker).createOffer(this.makerToken, this.makerAmount, this.taker, this.takerTokens, this.makerDenominator, this.takerDenominator, this.reinvest, this.pausedUntil, this.lockedUntil)
+    const offerIndex = (await real.coliquidity.offersLength()).toNumber() - 1
+    return offerIndex
   }
 }

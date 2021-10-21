@@ -10,7 +10,7 @@ import { beforeEach, Context } from "mocha"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 import { BuyAndHoldSimulation } from "../support/Simulation/BuyAndHoldSimulation"
 import $debug from "debug"
-import { TokenModel } from "../support/fast-check/TokenModel"
+import { TokenModel } from "../support/fast-check/models/TokenModel"
 
 describe("BuyAndHoldSimulation", async function() {
   let simulation: BuyAndHoldSimulation
