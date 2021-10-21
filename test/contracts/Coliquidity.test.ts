@@ -17,8 +17,10 @@ import { ColiquidityModel, ColiquidityReal } from "./Coliquidity/ColiquidityComm
 import { amountNum } from "../support/fast-check.helpers"
 import { CreateOfferCommand } from "./Coliquidity/commands/CreateOfferCommand"
 import { BalanceModel } from "../support/fast-check/models/TokenModel"
+import { CreateContributionCommand } from "./Coliquidity/commands/CreateContributionCommand"
 
 describe("Coliquidity", async function() {
+  let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
   let owen: SignerWithAddress // MCP contract owner
@@ -74,12 +76,15 @@ describe("Coliquidity", async function() {
   let offerIndex: number
   let positionIndex: number
 
+  let samTakerAmount: number
+  let sallyTakerAmount: number
+
   let baseAmountIn: number
 
   const debug = $debug(this.title)
 
   before(async () => {
-    const signers = [owner, stranger, owen, bob, sam, bella, sally] = await ethers.getSigners()
+    signers = [owner, stranger, owen, bob, sam, bella, sally] = await ethers.getSigners()
     const baseRecipients = signers.map((s) => s.address)
     const baseAmounts = signers.map(() => initialBaseAmount)
     const quoteRecipients = signers.map((s) => s.address)
@@ -144,6 +149,9 @@ describe("Coliquidity", async function() {
     takerAmountDesired = 500
     offerIndex = 0
     positionIndex = 0
+
+    samTakerAmount = takerAmount
+    sallyTakerAmount = 2 * takerAmount
 
     baseAmountIn = 2000
   })
@@ -530,7 +538,7 @@ describe("Coliquidity", async function() {
     expect(subtractFee(20000, 10000, 1, 100)).to.equal(20000 - (20000 - 10000) * 1 / 100)
   })
 
-  xit("must launch Marnotaur token (static version)", async () => {
+  it.only("must launch Marnotaur token (static version)", async () => {
     const cmds = [
       new CreateOfferCommand(
         bob.address,
@@ -544,7 +552,18 @@ describe("Coliquidity", async function() {
         0,
         now.getTime() + 30 * days,
       ),
-      // N * new CreateContributionCommand()
+      new CreateContributionCommand(
+        sam.address,
+        0,
+        quote.address,
+        samTakerAmount,
+      ),
+      new CreateContributionCommand(
+        sally.address,
+        0,
+        quote.address,
+        sallyTakerAmount,
+      ),
       // CreatePoolCommand()
       // K * TradeCommand()
       // ReachDesiredStateCommand(),
@@ -576,6 +595,7 @@ describe("Coliquidity", async function() {
       model: {
         coliquidity: {
           offers: [],
+          contributions: [],
         },
         tokens: [
           {
@@ -594,6 +614,7 @@ describe("Coliquidity", async function() {
           base,
           quote,
         ],
+        signers,
       },
       // real uses the addresses, but doesn't use the values
     }

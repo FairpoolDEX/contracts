@@ -1,6 +1,7 @@
 import { Address, AmountNum, Timestamp } from "../../../../util/types"
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from "../ColiquidityCommand"
 import { AsyncCommand } from "fast-check"
+import { demand } from "../../../../util/demand"
 
 export class CreateOfferCommand extends ColiquidityCommand<OfferIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(
@@ -41,8 +42,10 @@ export class CreateOfferCommand extends ColiquidityCommand<OfferIndex> implement
   }
 
   async runReal(real: ColiquidityReal) {
-    await real.coliquidity.connect(this.maker).createOffer(this.makerToken, this.makerAmount, this.taker, this.takerTokens, this.makerDenominator, this.takerDenominator, this.reinvest, this.pausedUntil, this.lockedUntil)
-    const offerIndex = (await real.coliquidity.offersLength()).toNumber() - 1
+    const coliquidityMaker = real.coliquidity.connect(this.getMakerSigner(real))
+    await coliquidityMaker.createOffer(this.makerToken, this.makerAmount, this.taker, this.takerTokens, this.makerDenominator, this.takerDenominator, this.reinvest, this.pausedUntil, this.lockedUntil)
+    const offerIndex = (await coliquidityMaker.offersLength()).toNumber() - 1
     return offerIndex
   }
+
 }
