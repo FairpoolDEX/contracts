@@ -292,6 +292,10 @@ contract Coliquidity is Ownable {
         return offers.length;
     }
 
+    function contributionsLength() public view returns (uint) {
+        return contributions.length;
+    }
+
     function positionsLength() public view returns (uint) {
         return positions.length;
     }

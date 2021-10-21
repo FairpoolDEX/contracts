@@ -3,6 +3,6 @@ export function task(message?: string) {
 }
 
 // better to move the constant into a separate function & throw task() within that function body
-export function stub<T>(value: T | undefined): T | undefined {
+export function stub<T>(value: T): T {
   return value
 }

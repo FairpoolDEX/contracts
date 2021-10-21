@@ -1,7 +1,7 @@
 import { expect } from "../../../../util/expect"
 import { Address } from "../../../../util/types"
 import { strict as assert } from "assert"
-import { BlockchainModel} from "../models/BlockchainModel"
+import { BlockchainModel } from "../models/BlockchainModel"
 import { BlockchainReal } from "../models/BlockchainReal"
 import { task } from "../../../../util/task"
 
@@ -28,7 +28,8 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
         expect(modelResult.reason).to.equal(realResult.reason)
       }
     } catch (e) {
-      e.message += modelResult
+      if (modelResult.status === "rejected") e.message += " " + modelResult.reason
+      if (realResult.status === "rejected") e.message += " " + realResult.reason
       console.error("modelResult", modelResult)
       console.error("realResult", realResult)
       throw e
@@ -61,6 +62,6 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
   }
 
   async getRealOutgoingTransferAmountSum(real: Real, tokenAddress: Address, userAddresses: Address[]) {
-    throw task('Use events')
+    throw task("Use events")
   }
 }
