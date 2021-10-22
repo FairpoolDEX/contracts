@@ -1,4 +1,4 @@
-import { Address, AmountNum, Timestamp } from "../../../../util/types"
+import { Address, AmountNum, AmountNumPair, Timestamp } from "../../../../util/types"
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from "../ColiquidityCommand"
 import { AsyncCommand } from "fast-check"
 import { task } from "../../../../util/task"
@@ -7,14 +7,15 @@ import { TokenReal } from "../../../support/fast-check/models/TokenReal"
 import { BalanceModel, TokenModel } from "../../../support/fast-check/models/TokenModel"
 import { sum } from "lodash"
 import { UniswapV2Pair } from "../../../../typechain"
-import { OfferCreatedEvent, PairCreatedEvent } from "../models/Events"
+import { OfferCreated } from "../models/Events"
+import { PairCreated } from "../../Uniswap/models/Events"
 
 export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   readonly users: Address[] = []
 
   constructor(
-    readonly base: Address,
-    readonly quote: Address,
+    readonly makerToken: Address,
+    readonly takerToken: Address,
     readonly maker: Address,
     readonly takers: Address[],
   ) {
@@ -27,36 +28,22 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
   }
 
   async runModel(model: ColiquidityModel) {
-    throw task("Add expects from runReal")
-
+    await this.expectModelPairToBeCorrect(model)
+    await this.expectModelMakerToMakeMoney(model)
+    await this.expectModelTakersToMakeMoney(model)
+    await this.expectModelColiquidityToBeCorrect(model)
     return this.getModelFees(model)
   }
 
   async runReal(real: ColiquidityReal) {
-    await this.expectRealPairToExist(real)
-    // await this.expectInvestorsToMakeMoney()
-    // await this.expectProjectToLoseTokens()
-    expect(await this.getRealOutgoingTransferAmountSum(real, this.base, this.takers)).to.equal(0)
-    expect(await this.getRealOutgoingTransferAmountSum(real, this.quote, [this.maker])).to.equal(0)
-    if (await this.getRealVolumeIn(real, this.quote) >= await this.getRealVolumeOut(real, this.quote)) {
-      expect(await this.getRealInvestorProfit(real, this.takers)).to.be.greaterThan(0)
-    } else {
-      expect(await this.getRealInvestorProfit(real, this.takers)).to.be.lessThanOrEqual(0)
-    }
-    expect(await this.getRealColiquidityTokenBalances(real)).to.deep.equal([])
-
-    /**
-     * Use events!
-     * Ensure there is no such command in the chain
-     * Theoretically it's OK for project to deposit their own bag of quote token
-     * Expect there was no such cmd in cmds
-     * [-] Expect the balance didn't change (could be achieved via transfers)
-     */
-
+    await this.expectRealPairToBeCorrect(real)
+    await this.expectRealMakerToMakeMoney(real)
+    await this.expectRealTakersToMakeMoney(real)
+    await this.expectRealColiquidityToBeCorrect(real)
     return this.getRealFees(real)
   }
 
-  async getRealInvestorProfit(real: ColiquidityReal, takers: Address[]): Promise<AmountNum> {
+  async getRealProfit(real: ColiquidityReal, takers: Address[]): Promise<AmountNum> {
     throw task()
   }
 
@@ -80,9 +67,13 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
     throw task()
   }
 
-  async getRealColiquidityTokenBalances(real: ColiquidityReal) {
-    const models = await Promise.all(real.tokens.map(token => this.toTokenModel(token, [real.coliquidity.address])))
-    return models.filter(m => sum(m.balances.map(b => b.amount)) !== 0)
+  async getRealTokenModelsWithNonZeroBalances(real: ColiquidityReal, addresses: Address[]) {
+    const tokenModels = await Promise.all(real.tokens.map(token => this.toTokenModel(token, addresses)))
+    return tokenModels.filter(
+      m => sum(
+        m.balances.filter(b => addresses.includes(b.address)).map(b => b.amount),
+      ) !== 0,
+    )
   }
 
   async toTokenModel(token: TokenReal, addresses: Address[]): Promise<TokenModel> {
@@ -95,22 +86,11 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
     }
   }
 
-  async getRealPair(real: ColiquidityReal, base: Address, quote: Address): Promise<UniswapV2Pair> {
-    throw task()
-  }
+  async expectModelPairToBeCorrect(model: ColiquidityModel) {
+    const pair = await this.getModelPair(model, this.makerToken, this.takerToken)
 
-  async expectRealPairToExist(real: ColiquidityReal) {
-    const pair = await this.getRealPair(real, this.base, this.quote)
-    if (!pair) throw new Error(`Expected pair to exist`)
-    /**
-     * TODO
-     *
-     * Get offer getter
-     * - Get from event
-     * - Store on real on create + Get from real
-     */
     const OfferCreated = await this.getRealOfferCreatedEvent(real, 0)
-    const PairCreated = await this.getRealPairCreatedEvent(real, this.base, this.quote)
+    const PairCreated = await this.getRealPairCreatedEvent(real, this.makerToken, this.takerToken)
     const initialMakerAmount = OfferCreated.makerAmount
     const initialTakerAmount = initialMakerAmount * OfferCreated.takerDenominator / OfferCreated.makerDenominator
     const initialK = initialMakerAmount * initialTakerAmount
@@ -121,23 +101,74 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
     expect(await this.getRealPoolCurrentK(real, pair)).to.deep.equal(currentKExpected)
   }
 
-  async getRealOfferCreatedEvent(real: ColiquidityReal, offerIndex: OfferIndex): Promise<OfferCreatedEvent> {
+  async expectRealPairToBeCorrect(real: ColiquidityReal) {
+    const pair = await this.getRealPair(real, this.makerToken, this.takerToken)
+    const OfferCreated = await this.getRealOfferCreatedEvent(real, 0)
+    const PairCreated = await this.getRealPairCreatedEvent(real, this.makerToken, this.takerToken)
+    const initialMakerAmount = OfferCreated.makerAmount
+    const initialTakerAmount = initialMakerAmount * OfferCreated.takerDenominator / OfferCreated.makerDenominator
+    const initialK = initialMakerAmount * initialTakerAmount
+    const currentKExpected = initialK
+    expect(PairCreated.timestamp).to.be.gte(OfferCreated.pausedUntil)
+    expect(await this.getRealPoolCreationDenominators(real, pair)).to.deep.equal([OfferCreated.makerDenominator, OfferCreated.takerDenominator])
+    expect(await this.getRealPoolInitialLiquidity(real, pair)).to.deep.equal([initialMakerAmount, initialTakerAmount])
+    expect(await this.getRealPoolCurrentK(real, pair)).to.deep.equal(currentKExpected)
+  }
+
+  async getRealOfferCreatedEvent(real: ColiquidityReal, offerIndex: OfferIndex): Promise<OfferCreated> {
     throw task()
   }
 
-  async getRealPairCreatedEvent(real: ColiquidityReal, base: Address, quote: Address): Promise<PairCreatedEvent> {
+  async getRealPairCreatedEvent(real: ColiquidityReal, base: Address, quote: Address): Promise<PairCreated> {
     throw task()
   }
 
-  private async getRealPoolCreationDenominators(real: ColiquidityReal, pair: UniswapV2Pair) {
-
+  private async getRealPoolCreationDenominators(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNumPair> {
+    throw task()
   }
 
-  private async getRealPoolInitialLiquidity(real: ColiquidityReal, pair: UniswapV2Pair) {
-
+  private async getRealPoolInitialLiquidity(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNumPair> {
+    throw task()
   }
 
-  private async getRealPoolCurrentK(real: ColiquidityReal, pair: UniswapV2Pair) {
+  private async getRealPoolCurrentK(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNum> {
+    throw task()
+  }
 
+  private async expectModelMakerToMakeMoney(model: ColiquidityModel) {
+    throw task()
+  }
+
+  private async expectRealMakerToMakeMoney(real: ColiquidityReal) {
+    await this.expectRealUsersNotToSpendTokens(real, this.takerToken, [this.maker])
+  }
+
+  private async expectModelTakersToMakeMoney(model: ColiquidityModel) {
+    throw task()
+  }
+
+  private async expectRealTakersToMakeMoney(real: ColiquidityReal) {
+    await this.expectRealUsersNotToSpendTokens(real, this.makerToken, this.takers)
+    if (await this.getRealVolumeIn(real, this.takerToken) >= await this.getRealVolumeOut(real, this.takerToken)) {
+      expect(await this.getRealProfit(real, this.takers)).to.be.greaterThan(0)
+    } else {
+      expect(await this.getRealProfit(real, this.takers)).to.be.lessThanOrEqual(0)
+    }
+  }
+
+  async expectRealUsersNotToSpendTokens(real: ColiquidityReal, tokenAddress: string, userAddresses: string[]) {
+    expect(await this.getRealOutgoingTransferAmountSum(real, tokenAddress, userAddresses)).to.equal(0)
+  }
+
+  private async expectModelColiquidityToBeCorrect(model: ColiquidityModel) {
+    throw task()
+  }
+
+  private async expectRealColiquidityToBeCorrect(real: ColiquidityReal) {
+    await this.expectRealColiquidityNotToHoldTokens(real)
+  }
+
+  async expectRealColiquidityNotToHoldTokens(real: ColiquidityReal) {
+    expect(await this.getRealTokenModelsWithNonZeroBalances(real, [real.coliquidity.address])).to.deep.equal([])
   }
 }

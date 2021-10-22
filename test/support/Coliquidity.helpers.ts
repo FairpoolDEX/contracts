@@ -23,14 +23,14 @@ export function getDeposits(wethLiquidity: number, usdtLiquidity: number, wethPo
   }
 }
 
-export function getLiquidityAfterSell(wethLiquidity: number, usdtLiquidity: number, wethVolume: number) {
+export function getLiquidityAfterSell(wethLiquidity: number, usdtLiquidity: number, wethVolume: number): [number, number] {
   return [
     wethLiquidity + wethVolume,
     usdtLiquidity + getUsdtVolume(wethLiquidity, usdtLiquidity, wethVolume),
   ]
 }
 
-export function getLiquidityAfterBuy(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number) {
+export function getLiquidityAfterBuy(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number): [number, number] {
   return [
     wethLiquidity + getWethVolume(wethLiquidity, usdtLiquidity, usdtVolume),
     usdtLiquidity + usdtVolume,

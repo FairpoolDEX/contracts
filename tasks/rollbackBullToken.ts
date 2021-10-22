@@ -1,19 +1,15 @@
-import os from "os"
 import fs from "fs"
-import { chain, map, min, max, sortBy } from "lodash"
-import type { ethers } from "ethers"
+import { map, max, min, sortBy } from "lodash"
+import { BigNumber, Contract } from "ethers"
 import neatcsv from "neat-csv"
-import dotenv from "dotenv"
-import Etherscan from "etherscan-api"
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
-import { fromTokenAmount, mineBlocks, toTokenAmount } from "../test/support/all.helpers"
-import { Address, Addresses, AmountBN, BalanceMap, Ethers } from "../util/types"
-import { BigNumber, Contract, utils } from "ethers"
+import { mineBlocks, toTokenAmount } from "../test/support/all.helpers"
+import { Address, AmountBN, Ethers } from "../util/types"
 import { expect } from "../util/expect"
 import { ContractTransaction } from "@ethersproject/contracts"
 import { BlockTag } from "@ethersproject/abstract-provider/src.ts/index"
 import { rollbackDate } from "../test/support/rollback.helpers"
+import { TransferTopic } from "../util/topics"
 
 type Transfer = {
   from: Address,
@@ -41,7 +37,6 @@ interface EtherscanTransfer {
 }
 
 export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag): Promise<Array<Transfer>> {
-  const TransferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" // ERC-20 Transfer event topic
   const transfersRaw = await token.queryFilter({ topics: [TransferTopic] }, from, to)
   return transfersRaw.map((e) => {
     if (!e.args) throw new Error()
@@ -80,7 +75,7 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
   }
 }
 
-export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Addresses, holderAddresses: Addresses, expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
+export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
   const blockNumbers = map(transfers, "blockNumber")
   expect(min(blockNumbers)).greaterThan(from)
@@ -179,13 +174,13 @@ export async function expectBalancesMatchExpectations(token: Contract, expectati
   }
 }
 
-export async function expectBalancesAreEqual(token: Contract, from: BlockTag, to: BlockTag, holderAddresses: Addresses) {
+export async function expectBalancesAreEqual(token: Contract, from: BlockTag, to: BlockTag, holderAddresses: Address[]) {
   const balancesBeforeAirdrop = await getBalancesAt(token, from, holderAddresses)
   const balancesAfterRollback = await getBalancesAt(token, to, holderAddresses)
   expect(balancesBeforeAirdrop).to.deep.equal(balancesAfterRollback)
 }
 
-async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresses: Addresses): Promise<AmountBN[]> {
+async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresses: Address[]): Promise<AmountBN[]> {
   return Promise.all(holderAddresses.map((address) => token.balanceOf(address, { blockTag })))
 }
 
@@ -195,9 +190,9 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
-  const poolAddresses: Addresses = poolAddressesString.split(",")
+  const poolAddresses: Address[] = poolAddressesString.split(",")
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
-  const holderAddresses: Addresses = (await neatcsv(holderAddressesFile)).map((row) => row["HolderAddress"])
+  const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row["HolderAddress"])
   const expectations: ExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
   const provider = ethers.provider
   // console.log('provider', provider)

@@ -1,7 +1,6 @@
 import { Address, AmountNum, Timestamp } from "../../../../util/types"
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, ContributionIndex, OfferIndex } from "../ColiquidityCommand"
 import { AsyncCommand } from "fast-check"
-import { stub } from "../../../../util/task"
 import { demand } from "../../../../util/demand"
 
 export class CreateContributionCommand extends ColiquidityCommand<ContributionIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {

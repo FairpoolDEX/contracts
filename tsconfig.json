@@ -17,8 +17,5 @@
     "./types",
     "./typechain"
   ],
-  "exclude": [
-    "./node_modules"
-  ],
   "files": ["./hardhat.config.ts"]
 }

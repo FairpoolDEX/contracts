@@ -91,7 +91,7 @@ export class TradingSimulation {
     ]))
     await Promise.all(approvals)
 
-    const now = new Date(await getLatestBlockTimestamp() * 1000)
+    const now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
 
     return new this(
       owner,
