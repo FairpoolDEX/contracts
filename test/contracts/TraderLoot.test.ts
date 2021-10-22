@@ -1,7 +1,7 @@
 import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp, timeTravel, zero } from "../support/test.helpers"
+import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp, timeTravel, $zero } from "../support/test.helpers"
 import { ShieldToken, TraderLoot } from "../../typechain"
 import { beforeEach } from "mocha"
 import $debug from "debug"
@@ -45,7 +45,7 @@ xdescribe("TraderLoot", async function() {
     const shieldTokenFactory = await ethers.getContractFactory("ShieldToken")
     shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [shieldReleaseTime])) as unknown as ShieldToken
     await shieldAsOwner.deployed()
-    shield = shieldAsOwner.connect(zero)
+    shield = shieldAsOwner.connect($zero)
     shieldAsStranger = shieldAsOwner.connect(stranger)
     shieldAsBob = shieldAsOwner.connect(bob)
     shieldAsSam = shieldAsOwner.connect(sam)
@@ -53,7 +53,7 @@ xdescribe("TraderLoot", async function() {
 
     const lootFactory = await ethers.getContractFactory("TraderLoot")
     lootAsOwner = (await lootFactory.connect(owner).deploy(name, symbol, shield.address, publicMaxTokenId, ownerMaxTokenId, maxClaimTimestamp, style/*, weapons, chests, heads, waists, feet, hands/*, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes*/)) as unknown as TraderLoot
-    loot = lootAsOwner.connect(zero)
+    loot = lootAsOwner.connect($zero)
     lootAsBob = lootAsOwner.connect(bob)
     lootAsSam = lootAsOwner.connect(sam)
     lootAsSally = lootAsOwner.connect(sally)

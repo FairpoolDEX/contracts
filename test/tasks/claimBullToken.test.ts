@@ -1,7 +1,7 @@
 import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
 import { toTokenAmount } from "../support/all.helpers"
-import { $zero, timeTravel } from "../support/test.helpers"
+import { zero, timeTravel } from "../support/test.helpers"
 import { BullToken } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"

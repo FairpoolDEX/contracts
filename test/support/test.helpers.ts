@@ -7,15 +7,15 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "../../util/expect"
 import { Address, Ethers } from "../../util/types"
 
-export const zero = "0x0000000000000000000000000000000000000000"
+export const $zero = "0x0000000000000000000000000000000000000000"
 
-export const $zero = BigNumber.from(0)
+export const zero = BigNumber.from(0)
 
-export const $one = BigNumber.from(1)
+export const one = BigNumber.from(1)
 
-export const $ten = BigNumber.from(10)
+export const ten = BigNumber.from(10)
 
-export const neg = (value: BigNumber) => $zero.sub(value)
+export const neg = (value: BigNumber) => zero.sub(value)
 
 type timeTravelCallback = () => Promise<void>;
 

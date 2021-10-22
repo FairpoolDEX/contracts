@@ -5,7 +5,7 @@ import { toInteger, identity, flatten, fromPairs, zip } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { dateAdd, hours, seconds, toTokenAmount, years } from "../support/all.helpers"
-import { zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances } from "../support/test.helpers"
+import { $zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances } from "../support/test.helpers"
 import { MCP, QuoteToken, BaseToken } from "../../typechain"
 import { BuyCommand } from "./MCP/commands/BuyCommand"
 import { TestMetronome } from "../support/Metronome"
@@ -83,7 +83,7 @@ describe("Market Crash Protection", async () => {
     const baseTokenFactory = await ethers.getContractFactory("BaseToken")
     baseAsOwner = (await upgrades.deployProxy(baseTokenFactory, [totalBaseAmount, baseRecipients, baseAmounts])) as unknown as BaseToken
     await baseAsOwner.deployed()
-    base = baseAsOwner.connect(zero)
+    base = baseAsOwner.connect($zero)
     baseAsStranger = baseAsOwner.connect(stranger)
     baseAsBob = baseAsOwner.connect(bob)
     baseAsSam = baseAsOwner.connect(sam)
@@ -91,14 +91,14 @@ describe("Market Crash Protection", async () => {
     const quoteTokenFactory = await ethers.getContractFactory("QuoteToken")
     quoteAsOwner = (await upgrades.deployProxy(quoteTokenFactory, [totalQuoteAmount, quoteRecipients, quoteAmounts])) as unknown as QuoteToken
     await quoteAsOwner.deployed()
-    quote = quoteAsOwner.connect(zero)
+    quote = quoteAsOwner.connect($zero)
     quoteAsStranger = quoteAsOwner.connect(stranger)
     quoteAsBob = quoteAsOwner.connect(bob)
     quoteAsSam = quoteAsOwner.connect(sam)
 
     const mcpFactory = await ethers.getContractFactory("MCP")
     mcpAsMark = (await mcpFactory.connect(mark).deploy(feeDivisorMin)) as unknown as MCP
-    mcp = mcpAsMark.connect(zero)
+    mcp = mcpAsMark.connect($zero)
     mcpAsBob = mcpAsMark.connect(bob)
     mcpAsSam = mcpAsMark.connect(sam)
 
