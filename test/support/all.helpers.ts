@@ -20,6 +20,8 @@ export const toTokenAmountString = (value: string | number): string => toTokenAm
 
 export const MaxUint256 = BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 
+export const MaxSafeInt = 0x1fffffffffffff - 1
+
 export const scale = BigNumber.from(10).pow(18)
 
 export function dateAdd(date: Date, duration: DurationInput) {

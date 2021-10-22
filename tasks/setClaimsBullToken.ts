@@ -87,7 +87,7 @@ function rewriteAddress(address: Address) {
   return rewriteAddressMap[address] || address
 }
 
-export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
+export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, chunkSize = 325, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
@@ -98,7 +98,7 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
     expect(balances[address] || BigNumber.from("0"), `Address: ${address}`).to.equal(expectations.balances[_address])
   }
   const balancesArr = shuffle(Object.entries(balances))
-  const balancesArrChunks = chunk(balancesArr, 400)
+  const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalSHLDAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
   let totalBULLAmount = BigNumber.from(0)
   log && log("CUR", totalSHLDAmount.toString())
@@ -147,6 +147,6 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const Token = await hre.ethers.getContractFactory("BullToken")
   const token = await Token.attach(tokenAddress)
   console.info(`Setting claims`)
-  await setClaims(token, balances, expectations, dry, console.info.bind(console))
+  await setClaims(token, balances, expectations, 400, dry, console.info.bind(console))
   if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
 }

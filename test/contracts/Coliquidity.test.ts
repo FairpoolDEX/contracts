@@ -2,7 +2,7 @@ import { expect } from "../../util/expect"
 import { cloneDeep, flatten } from "lodash"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { dateAdd, days, hours, max, MaxUint256, sum } from "../support/all.helpers"
+import { dateAdd, days, hours, max, MaxUint256, MaxSafeInt, sum } from "../support/all.helpers"
 import { $zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from "../support/test.helpers"
 import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
 import { BigNumber, BigNumberish, Contract } from "ethers"
@@ -18,16 +18,20 @@ import { amountNum } from "../support/fast-check.helpers"
 import { CreateOfferCommand } from "./Coliquidity/commands/CreateOfferCommand"
 import { BalanceModel } from "../support/fast-check/models/TokenModel"
 import { CreateContributionCommand } from "./Coliquidity/commands/CreateContributionCommand"
+import { CreatePairCommand } from "./Coliquidity/commands/CreatePairCommand"
+import { SwapCommand } from "./Coliquidity/commands/SwapCommand"
+import { ReachDesiredStateCommand } from "./Coliquidity/commands/ReachDesiredStateCommand"
 
 describe("Coliquidity", async function() {
   let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
-  let owen: SignerWithAddress // MCP contract owner
-  let bob: SignerWithAddress // buyer
-  let sam: SignerWithAddress // seller
-  let bella: SignerWithAddress // buyer
-  let sally: SignerWithAddress // seller
+  let owen: SignerWithAddress // owner
+  let bob: SignerWithAddress // maker
+  let sam: SignerWithAddress // taker
+  let sally: SignerWithAddress // taker
+  let ted: SignerWithAddress // trader
+  let tara: SignerWithAddress // trader
 
   let base: BaseToken
   let baseAsOwner: BaseToken
@@ -65,7 +69,7 @@ describe("Coliquidity", async function() {
   const initialBaseAmount = 1000000000000
   const initialQuoteAmount = 30000000000
 
-  let snapshot: any
+  let snapshot: unknown
 
   let baseAddress: Address
   let quoteAddress: Address
@@ -84,7 +88,7 @@ describe("Coliquidity", async function() {
   const debug = $debug(this.title)
 
   before(async () => {
-    signers = [owner, stranger, owen, bob, sam, bella, sally] = await ethers.getSigners()
+    signers = [owner, stranger, owen, bob, sam, ted, sally, tara] = await ethers.getSigners()
     const baseRecipients = signers.map((s) => s.address)
     const baseAmounts = signers.map(() => initialBaseAmount)
     const quoteRecipients = signers.map((s) => s.address)
@@ -131,7 +135,7 @@ describe("Coliquidity", async function() {
 
     await coliquidityAsOwen.setFee(feeNumerator, feeDenominator)
 
-    const approvals = flatten([bob, sam, bella, sally].map((signer) => [
+    const approvals = flatten(signers.map((signer) => [
       baseAsOwner.connect(signer).approve(coliquidityAsOwen.address, initialBaseAmount),
       quoteAsOwner.connect(signer).approve(coliquidityAsOwen.address, initialQuoteAmount),
       baseAsOwner.connect(signer).approve(router.address, initialBaseAmount),
@@ -139,7 +143,7 @@ describe("Coliquidity", async function() {
     ]))
     await Promise.all(approvals)
 
-    now = new Date(await getLatestBlockTimestamp() * 1000)
+    now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
 
     baseAddress = base.address
     quoteAddress = quote.address
@@ -262,7 +266,7 @@ describe("Coliquidity", async function() {
     const totalShare = sum([toSamShare(100), toSallyShare(100)])
     expect(totalShare).to.be.within(70, 100)
 
-    await router.connect(bella).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], bella.address, MaxUint256)
+    await router.connect(ted).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], ted.address, MaxUint256)
     const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn)
     const [reserve0After, reserve1After] = await pair.getReserves()
     expect(reserve0After).to.equal(basePoolAmountAfter)
@@ -334,8 +338,8 @@ describe("Coliquidity", async function() {
         [sam, quote, initialQuoteAmount - takerAmountDesired + toSamShare(quotePoolAmountAfter).toNumber()],
         [sally, base, initialBaseAmount],
         [sally, quote, initialQuoteAmount - 4 * takerAmountDesired + toSallyShare(quotePoolAmountAfter).toNumber()],
-        [bella, base, initialBaseAmount + basePoolDiff],
-        [bella, quote, initialQuoteAmount + quotePoolDiff],
+        [ted, base, initialBaseAmount + basePoolDiff],
+        [ted, quote, initialQuoteAmount + quotePoolDiff],
         [owen, base, initialBaseAmount
         + getFee(toSamShare(basePoolAmountAfter), makerAmountDesired, feeNumerator, feeDenominator).toNumber()
         + getFee(toSallyShare(basePoolAmountAfter), 4 * makerAmountDesired, feeNumerator, feeDenominator).toNumber(),
@@ -460,7 +464,10 @@ describe("Coliquidity", async function() {
           BigNumber.from(makerAmount),
           zero,
           [quoteAddress],
+          $zero,
+          $zero,
           true,
+          $zero,
           $zero,
         ],
       ],
@@ -538,7 +545,7 @@ describe("Coliquidity", async function() {
     expect(subtractFee(20000, 10000, 1, 100)).to.equal(20000 - (20000 - 10000) * 1 / 100)
   })
 
-  it.only("must launch Marnotaur token (static version)", async () => {
+  xit("must launch Marnotaur token (static version)", async () => {
     const cmds = [
       new CreateOfferCommand(
         bob.address,
@@ -546,8 +553,8 @@ describe("Coliquidity", async function() {
         makerAmount,
         zero,
         [quote.address],
-        0,
-        0,
+        500,
+        1,
         true,
         0,
         now.getTime() + 30 * days,
@@ -564,9 +571,30 @@ describe("Coliquidity", async function() {
         quote.address,
         sallyTakerAmount,
       ),
-      // CreatePoolCommand()
-      // K * TradeCommand()
-      // ReachDesiredStateCommand(),
+      new CreatePairCommand(
+        bob.address,
+        0,
+        quote.address,
+        MaxSafeInt,
+      ),
+      new SwapCommand(
+        ted.address,
+        quote.address,
+        base.address,
+        15000,
+      ),
+      new SwapCommand(
+        tara.address,
+        quote.address,
+        base.address,
+        2000,
+      ),
+      new ReachDesiredStateCommand(
+        base.address,
+        quote.address,
+        bob.address,
+        [sam.address, sally.address],
+      ),
     ]
     await asyncModelRun(getTestPair, cmds)
   })
@@ -607,8 +635,12 @@ describe("Coliquidity", async function() {
             balances: quoteBalances,
           },
         ],
+        pairs: [],
       },
       real: {
+        ethers,
+        factory,
+        router,
         coliquidity,
         tokens: [
           base,

@@ -85,12 +85,12 @@ contract Coliquidity is Ownable {
     address public immutable factory;
     address public immutable WETH;
 
-    event CreateOffer(address indexed sender, uint indexed offerIndex);
-    event CreatePosition(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
-    event CreateContribution(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
-    event WithdrawOffer(address indexed sender, uint indexed offerIndex);
-    event WithdrawContribution(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
-    event WithdrawPosition(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
+    event OfferCreated(address indexed sender, uint indexed offerIndex);
+    event PositionCreated(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
+    event ContributionCreated(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
+    event OfferWithdrawn(address indexed sender, uint indexed offerIndex);
+    event ContributionWithdrawn(address indexed sender, uint indexed offerIndex, uint indexed contributionIndex);
+    event PositionWithdrawn(address indexed sender, uint indexed offerIndex, uint indexed positionIndex);
 
     uint private unlocked = 1;
     modifier lock() {
@@ -129,7 +129,7 @@ contract Coliquidity is Ownable {
         offers.push(
             Offer({maker : msg.sender, makerToken : makerToken, makerAmount : makerAmount, taker : taker, takerTokens : takerTokens, makerDenominator : makerDenominator, takerDenominator : takerDenominator, reinvest : reinvest, pausedUntil : pausedUntil, lockedUntil : lockedUntil})
         );
-        emit CreateOffer(msg.sender, offers.length - 1);
+        emit OfferCreated(msg.sender, offers.length - 1);
     }
 
     function createContribution(uint offerIndex, address takerToken, uint takerAmount) lock public {
@@ -144,7 +144,7 @@ contract Coliquidity is Ownable {
             Contribution({offerIndex : offerIndex, taker : msg.sender, takerToken : takerToken, takerAmount : takerAmount})
         );
         contributionIndexesByOfferIndex[offerIndex].push(contributions.length - 1);
-        emit CreateContribution(msg.sender, offerIndex, contributions.length - 1);
+        emit ContributionCreated(msg.sender, offerIndex, contributions.length - 1);
     }
 
     function withdrawContribution(uint contributionIndex) lock public {
@@ -154,10 +154,10 @@ contract Coliquidity is Ownable {
         uint takerAmount = contribution.takerAmount;
         contribution.takerAmount = 0;
         TransferHelper.safeTransfer(contribution.takerToken, contribution.taker, takerAmount);
-        emit WithdrawContribution(msg.sender, contribution.offerIndex, contributionIndex);
+        emit ContributionWithdrawn(msg.sender, contribution.offerIndex, contributionIndex);
     }
 
-    function openPool(uint offerIndex, address takerToken, uint deadline) lock public {
+    function createPair(uint offerIndex, address takerToken, uint deadline) lock public {
         Offer storage offer = offers[offerIndex];
         require(offer.maker == msg.sender, "Coliquidity: OPOMS");
         require(offer.pausedUntil == 0 || offer.pausedUntil <= block.timestamp, "Coliquidity: OPOPT");
@@ -184,7 +184,7 @@ contract Coliquidity is Ownable {
             positions.push(
                 Position({offerIndex : offerIndex, maker : offer.maker, taker : contribution.taker, makerToken : offer.makerToken, takerToken : contribution.takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDiff, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
             );
-            emit CreatePosition(contribution.taker, offerIndex, positions.length - 1);
+            emit PositionCreated(contribution.taker, offerIndex, positions.length - 1);
             if (takerAmountDeposited == 0) break;
         }
     }
@@ -203,7 +203,7 @@ contract Coliquidity is Ownable {
         positions.push(
             Position({offerIndex : offerIndex, maker : offer.maker, taker : msg.sender, makerToken : offer.makerToken, takerToken : takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDeposited, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
         );
-        emit CreatePosition(msg.sender, offerIndex, positions.length - 1);
+        emit PositionCreated(msg.sender, offerIndex, positions.length - 1);
     }
 
     function depositToPool(address makerToken, address takerToken, uint makerAmountDesired, uint takerAmountDesired, uint makerAmountMin, uint takerAmountMin, uint deadline) internal returns (uint makerAmountDeposited, uint takerAmountDeposited, uint liquidityAmountReceived) {
@@ -229,7 +229,7 @@ contract Coliquidity is Ownable {
         uint makerAmount = offer.makerAmount;
         offer.makerAmount = 0;
         TransferHelper.safeTransfer(offer.makerToken, offer.maker, makerAmount);
-        emit WithdrawOffer(msg.sender, offerIndex);
+        emit OfferWithdrawn(msg.sender, offerIndex);
     }
 
     function withdrawPosition(uint positionIndex, uint liquidityAmount, uint makerAmountMin, uint takerAmountMin, uint deadline) lock public {
@@ -283,7 +283,7 @@ contract Coliquidity is Ownable {
             position.takerAmount -= takerAmountWithdrawn;
             TransferHelper.safeTransfer(position.takerToken, position.taker, takerAmountWithdrawn);
         }
-        emit WithdrawPosition(msg.sender, position.offerIndex, positionIndex);
+        emit PositionWithdrawn(msg.sender, position.offerIndex, positionIndex);
     }
 
     /* Views */

@@ -8,8 +8,6 @@ import { dateAdd, hours, seconds, toTokenAmount, years } from "../support/all.he
 import { zero, getLatestBlockTimestamp, setNextBlockTimestamp, timeTravel, getSnapshot, revertToSnapshot, expectBalances } from "../support/test.helpers"
 import { MCP, QuoteToken, BaseToken } from "../../typechain"
 import { BuyCommand } from "./MCP/commands/BuyCommand"
-import { MCPBlockchainModel} from "./MCP/MCPBlockchainModel"
-import { MCPBlockchainReal } from "./MCP/MCPBlockchainReal"
 import { TestMetronome } from "../support/Metronome"
 import { BigNumber, BigNumberish } from "ethers"
 import { dateToTimestampSeconds } from "hardhat/internal/util/date"
@@ -58,7 +56,7 @@ describe("Market Crash Protection", async () => {
 
   const getFee = (amount: number) => Math.trunc(amount / feeDivisorMin * 40)
 
-  let snapshot: any
+  let snapshot: unknown
 
   // let WETH = { address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" }
   // let USDT = { address: "0xdac17f958d2ee523a2206206994597c13d831ec7" }
@@ -81,8 +79,6 @@ describe("Market Crash Protection", async () => {
     const baseAmounts = signers.map(() => initialBaseAmount)
     const quoteRecipients = signers.map((s) => s.address)
     const quoteAmounts = signers.map(() => initialQuoteAmount)
-    baseTokenModel = { balanceByAddress: fromPairs(zip(baseRecipients, baseAmounts)) }
-    quoteTokenModel = { balanceByAddress: fromPairs(zip(quoteRecipients, quoteAmounts)) }
 
     const baseTokenFactory = await ethers.getContractFactory("BaseToken")
     baseAsOwner = (await upgrades.deployProxy(baseTokenFactory, [totalBaseAmount, baseRecipients, baseAmounts])) as unknown as BaseToken
@@ -112,7 +108,7 @@ describe("Market Crash Protection", async () => {
     ]))
     await Promise.all(approvals)
 
-    now = new Date(await getLatestBlockTimestamp() * 1000)
+    now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
 
     baseAddress = base.address
     quoteAddress = quote.address
@@ -343,7 +339,7 @@ describe("Market Crash Protection", async () => {
 
       it(`must allow to withdraw after use without waiting for expiration ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
-        await expect(getLatestBlockTimestamp()).to.eventually.be.lessThan(expirationDate)
+        await expect(getLatestBlockTimestamp(ethers)).to.eventually.be.lessThan(expirationDate)
         await mcpAsSam.withdraw(protectionIndex)
         await expectBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0) - guaranteedAmount],
@@ -426,48 +422,48 @@ describe("Market Crash Protection", async () => {
   // TODO: must not allow to buy/sell protection for toxic tokens that don't transfer the full amount (e.g. Salmonella)
   // TODO: should allow automatic ETH -> WETH conversion like on Uniswap
 
-  xit("must pass fast-check", async () => {
-    const expirationDateMin = now
-    const expirationDateMax = dateAdd(now, { years: 5 })
-    const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
-    const expirationDateMaxPost = dateAdd(expirationDateMax, { seconds: +1 })
-    const allCommands = [
-      record({
-        buyer: constantFrom(bob.address, bella.address),
-        seller: constantFrom(zero, sam.address, sally.address),
-        guaranteedAmount: bigUintN(256).map((n) => BigNumber.from(n)),
-        guaranteedPrice: bigUintN(256).map((n) => BigNumber.from(n)),
-        expirationDate: oneof({ depthFactor: 0.9 }, date({ min: expirationDateMin, max: expirationDateMax }), constant(expirationDateMinPre), constant(expirationDateMaxPost)),
-        protectionPrice: bigUintN(256).map((n) => BigNumber.from(n)),
-      }).map((r) => new BuyCommand(
-        r.buyer,
-        r.seller,
-        r.guaranteedAmount,
-        r.guaranteedPrice,
-        r.expirationDate,
-        r.protectionPrice,
-      )),
-
-      // constant(new SellCommand()),
-      // constant(new UseCommand()),
-      // constant(new CancelCommand()),
-      // constant(new WithdrawCommand()),
-    ]
-    await assert(
-      asyncProperty(commands(allCommands, { maxCommands: 10 }), context(), async (cmds, ctx) => {
-        ctx.log("Running cmds")
-        const snapshot = await ethers.provider.send("evm_snapshot", [])
-        try {
-          const metronome = new TestMetronome(now)
-          const setup = () => ({
-            model: new MCPBlockchainModel(metronome, baseTokenModel, quoteTokenModel),
-            real: new MCPBlockchainReal(mcpAsMark, baseAsOwner, quoteAsOwner),
-          })
-          await asyncModelRun(setup, cmds)
-        } finally {
-          await ethers.provider.send("evm_revert", [snapshot])
-        }
-      }),
-    )
-  })
+  // xit("must pass fast-check", async () => {
+  //   const expirationDateMin = now
+  //   const expirationDateMax = dateAdd(now, { years: 5 })
+  //   const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
+  //   const expirationDateMaxPost = dateAdd(expirationDateMax, { seconds: +1 })
+  //   const allCommands = [
+  //     record({
+  //       buyer: constantFrom(bob.address, bella.address),
+  //       seller: constantFrom(zero, sam.address, sally.address),
+  //       guaranteedAmount: bigUintN(256).map((n) => BigNumber.from(n)),
+  //       guaranteedPrice: bigUintN(256).map((n) => BigNumber.from(n)),
+  //       expirationDate: oneof({ depthFactor: 0.9 }, date({ min: expirationDateMin, max: expirationDateMax }), constant(expirationDateMinPre), constant(expirationDateMaxPost)),
+  //       protectionPrice: bigUintN(256).map((n) => BigNumber.from(n)),
+  //     }).map((r) => new BuyCommand(
+  //       r.buyer,
+  //       r.seller,
+  //       r.guaranteedAmount,
+  //       r.guaranteedPrice,
+  //       r.expirationDate,
+  //       r.protectionPrice,
+  //     )),
+  //
+  //     // constant(new SellCommand()),
+  //     // constant(new UseCommand()),
+  //     // constant(new CancelCommand()),
+  //     // constant(new WithdrawCommand()),
+  //   ]
+  //   await assert(
+  //     asyncProperty(commands(allCommands, { maxCommands: 10 }), context(), async (cmds, ctx) => {
+  //       ctx.log("Running cmds")
+  //       const snapshot = await ethers.provider.send("evm_snapshot", [])
+  //       try {
+  //         const metronome = new TestMetronome(now)
+  //         const setup = () => ({
+  //           model: new MCPBlockchainModel(metronome, baseTokenModel, quoteTokenModel),
+  //           real: new MCPBlockchainReal(mcpAsMark, baseAsOwner, quoteAsOwner),
+  //         })
+  //         await asyncModelRun(setup, cmds)
+  //       } finally {
+  //         await ethers.provider.send("evm_revert", [snapshot])
+  //       }
+  //     }),
+  //   )
+  // })
 })

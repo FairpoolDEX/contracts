@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
-import { Addresses, BalanceMap } from "../../util/types"
+import { Address, BalanceMap } from "../../util/types"
 import { Contract, ContractFactory } from "ethers"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../support/Uniswap.helpers"
 
@@ -17,7 +17,7 @@ xdescribe("rollbackBullToken", async () => {
   let bullTokenWithOwner: BullToken, bullTokenWithStranger: BullToken, bullTokenWithAlice: BullToken, bullTokenWithBob: BullToken, bullTokenWithSam: BullToken
 
   let balances: BalanceMap
-  let addresses: Addresses
+  let addresses: Address[]
   let expectations: SetClaimsExpectationsMap
 
   const defaultAmount = toTokenAmount("10000")

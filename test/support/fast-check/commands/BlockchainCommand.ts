@@ -3,7 +3,7 @@ import { Address } from "../../../../util/types"
 import { strict as assert } from "assert"
 import { BlockchainModel } from "../models/BlockchainModel"
 import { BlockchainReal } from "../models/BlockchainReal"
-import { task } from "../../../../util/task"
+import { ImplementationError, task } from "../../../../util/task"
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> {
   toString(): string {
@@ -23,15 +23,16 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
     try {
       expect(modelResult.status).to.equal(realResult.status)
       if (modelResult.status === "fulfilled" && realResult.status === "fulfilled") {
-        expect(modelResult.value).to.equal(realResult.value)
+        expect(modelResult.value).to.deep.equal(realResult.value)
       } else if (modelResult.status === "rejected" && realResult.status === "rejected") {
-        expect(modelResult.reason).to.equal(realResult.reason)
+        expect(modelResult.reason.toString()).to.equal(realResult.reason.toString())
+        if (modelResult.reason instanceof ImplementationError || realResult.reason instanceof ImplementationError) {
+          throw new Error('Unexpected ImplementationError')
+        }
       }
     } catch (e) {
-      if (modelResult.status === "rejected") e.message += " " + modelResult.reason
-      if (realResult.status === "rejected") e.message += " " + realResult.reason
-      console.error("modelResult", modelResult)
-      console.error("realResult", realResult)
+      if (modelResult.status === "rejected") e.message += "\n\nModel " + modelResult.reason.stack
+      if (realResult.status === "rejected") e.message += "\n\nReal " + realResult.reason.stack
       throw e
     }
   }

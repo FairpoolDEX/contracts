@@ -5,13 +5,15 @@ import { string } from "hardhat/internal/core/params/argumentTypes"
 import { MaxUint256 } from "./all.helpers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "../../util/expect"
-import { Address } from "../../util/types"
+import { Address, Ethers } from "../../util/types"
 
 export const zero = "0x0000000000000000000000000000000000000000"
 
 export const $zero = BigNumber.from(0)
 
 export const $one = BigNumber.from(1)
+
+export const $ten = BigNumber.from(10)
 
 export const neg = (value: BigNumber) => $zero.sub(value)
 
@@ -39,12 +41,12 @@ export async function skipBlocks(amount: number): Promise<void> {
   /* eslint-enable no-await-in-loop */
 }
 
-export async function getLatestBlock() {
+export async function getLatestBlock(ethers: Ethers) {
   return ethers.provider.getBlock("latest")
 }
 
-export async function getLatestBlockTimestamp() {
-  return (await getLatestBlock()).timestamp
+export async function getLatestBlockTimestamp(ethers: Ethers) {
+  return (await getLatestBlock(ethers)).timestamp
 }
 
 export async function getSnapshot(params: any[] = []) {

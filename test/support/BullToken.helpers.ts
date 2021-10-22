@@ -1,9 +1,9 @@
 import { BigNumber } from "ethers"
-import { days, toTokenAmount, toTokenAmountString } from "./all.helpers"
+import { days, toTokenAmountString } from "./all.helpers"
 import fs from "fs"
 import { parseAllBalancesCSV, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { parseAddresses } from "../../tasks/claimBullToken"
-import { Addresses, BalanceMap } from "../../util/types"
+import { Address, BalanceMap } from "../../util/types"
 import { shieldMaxSupplyTokenAmount } from "./ShieldToken.helpers"
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
@@ -68,8 +68,7 @@ export async function getBogusBalances(): Promise<BalanceMap> {
   return parseAllBalancesCSV([tooLongFormatCSV], [], [], [])
 }
 
-export async function getTestAddresses(): Promise<Addresses> {
+export async function getTestAddresses(): Promise<Address[]> {
   const testAddressesBuffer = fs.readFileSync(`${__dirname}/../fixtures/addresses.csv`)
   return parseAddresses(testAddressesBuffer)
 }
-

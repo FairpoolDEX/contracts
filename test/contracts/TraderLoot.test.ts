@@ -60,7 +60,7 @@ xdescribe("TraderLoot", async function() {
 
     await shield.connect(owner).transfer(bob.address, 100)
 
-    now = new Date(await getLatestBlockTimestamp() * 1000)
+    now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
   })
 
   beforeEach(async () => {

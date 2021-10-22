@@ -3,11 +3,11 @@ import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
 
 export type Address = string
 
-export type Addresses = Address[]
-
 export type AmountNum = number
 
 export type PriceNum = number
+
+export type AmountNumPair = [AmountNum, AmountNum]
 
 export type AmountBN = BigNumber
 

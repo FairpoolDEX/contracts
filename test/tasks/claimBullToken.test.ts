@@ -1,13 +1,13 @@
 import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
-import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
-import { timeTravel } from "../support/test.helpers"
+import { toTokenAmount } from "../support/all.helpers"
+import { $zero, timeTravel } from "../support/test.helpers"
 import { BullToken } from "../../typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from "../support/BullToken.helpers"
 import { claimBullToken } from "../../tasks/claimBullToken"
-import { BalanceMap, Addresses } from "../../util/types"
+import { Address, BalanceMap } from "../../util/types"
 
 describe("claimBullToken", async () => {
 
@@ -21,7 +21,7 @@ describe("claimBullToken", async () => {
   let bullTokenWithStranger: BullToken
 
   let balances: BalanceMap
-  let addresses: Addresses
+  let addresses: Address[]
   let expectations: SetClaimsExpectationsMap
 
   const defaultAmount = toTokenAmount(10)
