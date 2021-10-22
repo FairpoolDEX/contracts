@@ -1,7 +1,7 @@
 import { expect } from "../../util/expect"
 import { ethers, upgrades } from "hardhat"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp, timeTravel, zero } from "../support/test.helpers"
+import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp, timeTravel, $zero } from "../support/test.helpers"
 import { GenericToken, ShieldToken, TraderLoot, WETH9 } from "../../typechain"
 import { beforeEach } from "mocha"
 import $debug from "debug"

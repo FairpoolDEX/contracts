@@ -4,7 +4,7 @@ import { BigNumber, Contract } from "ethers"
 import { Ethers } from "../../../util/types"
 import { MaxUint256, scale } from "../all.helpers"
 import { upgrades } from "hardhat"
-import { getLatestBlockTimestamp, zero } from "../test.helpers"
+import { getLatestBlockTimestamp, $zero } from "../test.helpers"
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../Uniswap.helpers"
 import { flatten } from "lodash"
 import { nail } from "../../../util/string"
@@ -67,11 +67,11 @@ export class TradingSimulation {
     // quoteTokenModel = { balanceByAddress: fromPairs(zip(quoteRecipients, quoteAmounts)) }
 
     const baseTokenFactory = await ethers.getContractFactory("BaseToken")
-    const base = (await upgrades.deployProxy(baseTokenFactory, [baseTotalAmount, baseRecipients, baseAmounts])).connect(zero) as unknown as BaseToken
+    const base = (await upgrades.deployProxy(baseTokenFactory, [baseTotalAmount, baseRecipients, baseAmounts])).connect($zero) as unknown as BaseToken
     await base.deployed()
 
     const quoteTokenFactory = await ethers.getContractFactory("QuoteToken")
-    const quote = (await upgrades.deployProxy(quoteTokenFactory, [quoteTotalAmount, quoteRecipients, quoteAmounts])).connect(zero) as unknown as QuoteToken
+    const quote = (await upgrades.deployProxy(quoteTokenFactory, [quoteTotalAmount, quoteRecipients, quoteAmounts])).connect($zero) as unknown as QuoteToken
     await quote.deployed()
 
     const wethContractFactory = await getWETH9ContractFactory(ethers)

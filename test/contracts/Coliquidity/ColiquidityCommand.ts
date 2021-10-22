@@ -5,7 +5,7 @@ import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from 
 import { BlockchainReal } from "../../support/fast-check/models/BlockchainReal"
 import { demand } from "../../../util/demand"
 import { expect } from "../../../util/expect"
-import { zero } from "../../support/test.helpers"
+import { $zero } from "../../support/test.helpers"
 
 export abstract class ColiquidityCommand<Result> extends BlockchainCommand<ColiquidityModel, ColiquidityReal, Result> {
   readonly maker?: Address
@@ -39,7 +39,7 @@ export abstract class ColiquidityCommand<Result> extends BlockchainCommand<Coliq
 
   async getRealPair(real: ColiquidityReal, token0: string, token1: string) {
     const pairAddress = await real.factory.getPair(token0, token1)
-    expect(pairAddress).to.not.equal(zero)
+    expect(pairAddress).to.not.equal($zero)
     const pair = await real.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair
     return pair
   }

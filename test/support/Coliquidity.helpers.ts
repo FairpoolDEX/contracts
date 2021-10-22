@@ -1,6 +1,6 @@
 import { expect } from "../../util/expect"
 import { BigNumber, BigNumberish } from "ethers"
-import { $zero } from "./test.helpers"
+import { zero } from "./test.helpers"
 import { max } from "./all.helpers"
 
 export const fee = 0.003 // equal to 0.3%
@@ -71,7 +71,7 @@ export function getWethVolumeForStablePrice(wethLiquidity: number, usdtLiquidity
 export function getFee(amountWithdrawn: BigNumberish, amountDeposited: BigNumberish, feeNumerator: BigNumberish, feeDenominator: BigNumberish) {
   const $amountWithdrawn = BigNumber.from(amountWithdrawn)
   const $amountDeposited = BigNumber.from(amountDeposited)
-  return max($zero, $amountWithdrawn.sub($amountDeposited).mul(feeNumerator).div(feeDenominator))
+  return max(zero, $amountWithdrawn.sub($amountDeposited).mul(feeNumerator).div(feeDenominator))
 }
 
 export function subtractFee(amountWithdrawn: BigNumberish, amountDeposited: BigNumberish, feeNumerator: BigNumberish, feeDenominator: BigNumberish) {
