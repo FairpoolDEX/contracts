@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import "hardhat/console.sol";
 
@@ -243,7 +244,9 @@ contract Coliquidity is Ownable {
         // takerAmountMin is validated within removeLiquidity call
         // deadline is validated within removeLiquidity call
         position.liquidityAmount -= liquidityAmount;
-        address pair = pairFor(factory, position.makerToken, position.takerToken);
+        (address token0, address token1) = sortTokens(position.makerToken, position.takerToken);
+        address pair = IUniswapV2Factory(factory).getPair(token0, token1);
+//        address pair = pairFor(factory, position.makerToken, position.takerToken);
         IERC20(pair).approve(router, liquidityAmount);
         (uint makerAmountWithdrawn, uint takerAmountWithdrawn) = IUniswapV2Router02(router).removeLiquidity(
             position.makerToken,
@@ -351,17 +354,17 @@ contract Coliquidity is Ownable {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), 'UniswapV2Library: ZERO_ADDRESS');
     }
-
-    // calculates the CREATE2 address for a pair without making any external calls
-    function pairFor(address _factory, address tokenA, address tokenB) internal pure returns (address pair) {
-        (address token0, address token1) = sortTokens(tokenA, tokenB);
-        pair = address(uint160(uint(keccak256(abi.encodePacked(
-                hex'ff',
-                _factory,
-                keccak256(abi.encodePacked(token0, token1)),
-                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
-            )))));
-    }
+//
+//    // calculates the CREATE2 address for a pair without making any external calls
+//    function pairFor(address _factory, address tokenA, address tokenB) internal pure returns (address pair) {
+//        (address token0, address token1) = sortTokens(tokenA, tokenB);
+//        pair = address(uint160(uint(keccak256(abi.encodePacked(
+//                hex'ff',
+//                _factory,
+//                keccak256(abi.encodePacked(token0, token1)),
+//                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+//            )))));
+//    }
 
     // ensures numerator is evenly divisible by denominator
     // may decrease numerator
