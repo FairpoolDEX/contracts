@@ -280,7 +280,7 @@ contract Coliquidity is Ownable {
             // should be `position.takerAmount -= takerAmountWithdrawn`, but the result is less than 0, so setting it to 0            position.takerAmount = 0;
             position.takerAmount = 0;
             // reinvest is not available for the taker
-            TransferHelper.safeTransfer(position.takerToken, position.taker, takerFee);
+            TransferHelper.safeTransfer(position.takerToken, position.taker, takerAmountWithdrawn - takerFee);
             TransferHelper.safeTransfer(position.takerToken, owner(), takerFee);
         } else {
             position.takerAmount -= takerAmountWithdrawn;
