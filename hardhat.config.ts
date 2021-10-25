@@ -25,6 +25,8 @@ dotEnvConfig()
 
 const mnemonic = process.env.MNEMONIC || ""
 
+const etherscanApikey = process.env.ETHERSCAN_API_KEY
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
@@ -117,7 +119,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: etherscanApikey,
   },
   watcher: {
     run: {
