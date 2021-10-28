@@ -24,7 +24,7 @@ export abstract class ColiquidityCommand<Result> extends BlockchainCommand<Coliq
   }
 
   getSigner(real: ColiquidityReal, address: string) {
-    return demand(real.signers.find(s => s.address === address))
+    return demand(real.signers.find(s => s. === address))
   }
 
   async getModelPair(model: ColiquidityModel, token0: Address, token1: Address) {
@@ -38,7 +38,7 @@ export abstract class ColiquidityCommand<Result> extends BlockchainCommand<Coliq
   }
 
   async getRealPair(real: ColiquidityReal, token0: string, token1: string) {
-    const pairAddress = await real.factory.getPair(token0, token1)
+    const pair = await real.factory.getPair(token0, token1)
     expect(pairAddress).to.not.equal($zero)
     const pair = await real.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair
     return pair
@@ -82,6 +82,18 @@ export interface ContributionModel {
   offerIndex: OfferIndex
   takerToken: Address
   takerAmount: AmountNum
+}
+
+export interface PositionModel {
+  offerIndex: OfferIndex
+  maker: Address
+  taker: Address
+  makerToken: Address // SHLD, BULL, LINK, ...
+  takerToken: Address // USDT, WETH, WBTC, ...
+  makerAmount: AmountNum // needed to calculate the fee
+  takerAmount: AmountNum // needed to calculate the fee
+  liquidityAmount: AmountNum
+  lockedUntil: Timestamp // UNIX timestamp
 }
 
 export interface PairModel {
