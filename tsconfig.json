@@ -8,6 +8,10 @@
     "resolveJsonModule": true,
     "lib": ["es2019", "es2020.bigint", "es2020.string", "es2020.symbol.wellknown", "es2020.promise"]
   },
+  "files": [
+    "./hardhat.config.ts",
+    "./typechain/hardhat.d.ts"
+  ],
   "include": [
     "./util",
     "./tasks/scripts",
@@ -15,7 +19,9 @@
     "./test",
     "./tasks",
     "./types",
-    "./typechain"
   ],
-  "files": ["./hardhat.config.ts"]
+  "exclude": [
+    "node_modules",
+    "typechain"
+  ]
 }

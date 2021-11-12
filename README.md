@@ -16,31 +16,43 @@ yarn build
 
 Build the project
 
-    yarn build
+```shell
+yarn build
+```
 
 Run tests
 
-    yarn test
+```shell
+yarn test
+```
 
 Watch tests
 
-    yarn test:watch
+```shell
+yarn test:watch
+```
 
 Fork mainnet
 
-    set -o allexport; source .env; set +o allexport # Export .env vars
-    yarn fork
-    # switch to another console
-    export NETWORK=localhost # set NETWORK to local fork
-    hardhat deployBullToken --network $NETWORK # or any other command with --network $NETWORK
+```shell
+set -o allexport; source .env; set +o allexport # Export .env vars
+yarn fork
+# switch to another console
+export NETWORK=localhost # set NETWORK to local fork
+hardhat deployBullToken --network $NETWORK # or any other command with --network $NETWORK
+```
 
 Lint code
 
-    yarn lint
+```shell
+yarn lint
+```
 
 Generate coverage
 
-    yarn coverage
+```shell
+yarn coverage
+```
 
 ## License
 
