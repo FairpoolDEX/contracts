@@ -8,16 +8,15 @@
 
 Ropsten:
 
-```
+```bash
 export NETWORK=ropsten
 export SHLD_PROXY_ADDRESS=
 export BULL_PROXY_ADDRESS=0xe14F083364F970d528Ea03c2cA71c7Dce45B719F
 ```
 
-
 Mainnet:
 
-```
+```bash
 export NETWORK=mainnet
 export SHLD_PROXY_ADDRESS=0xd49efa7bc0d339d74f487959c573d518ba3f8437
 export BULL_PROXY_ADDRESS=0x1Bb022aB668085C6417B7d7007b0fbD53bACc383

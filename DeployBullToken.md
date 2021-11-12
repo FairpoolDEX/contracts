@@ -2,7 +2,7 @@
 
 ## Export environment variables
 
-```
+```bash
 export NETWORK=ropsten
 export OLD_FOLDER=/tmp/old-balances && mkdir -p $OLD_FOLDER
 export NEW_FOLDER=/tmp/new-balances && mkdir -p $NEW_FOLDER
@@ -11,29 +11,29 @@ export MAX_FEE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action
 
 ## Deploy token
 
-```
+```bash
 hardhat deployBullToken --network $NETWORK
 ```
 
-## Export environment variables
+## Export environment variables again
 
 (see output from the previous command)
 
 ## Verify on Etherscan
 
-```
+```bash
 hardhat verify --network $NETWORK $BULL_IMPLEMENTATION_ADDRESS
 ```
 
 ## Set claims
 
-```
+```bash
 hardhat setClaims --token $BULL_PROXY_ADDRESS --prevfolder $OLD_FOLDER --nextfolder $NEW_FOLDER --network $NETWORK --dry true
 ```
 
 ## Attach to token in the console
 
-```
+```bash
 hardhat console --network $NETWORK
 ```
 

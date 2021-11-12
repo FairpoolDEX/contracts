@@ -2,7 +2,7 @@
 
 ## Set gas price
 
-```
+```bash
 export MAX_FEE=$(curl -sS 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken' | json result.ProposeGasPrice) && echo $MAX_FEE
 
 # For ropsten
@@ -20,14 +20,13 @@ export TO_BLOCK_NUMBER = 12772565
 
 ## Set claimer
 
-```
+```bash
 export CLAIMER=0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D
 ```
 
-
 ## Download addresses file
 
-```
+```bash
 export CLAIMS=/tmp/claims.csv
 ```
 

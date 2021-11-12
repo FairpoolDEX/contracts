@@ -13,6 +13,18 @@ export function getLiquidityAfterDeposit(wethLiquidity: number, usdtLiquidity: n
   ]
 }
 
+/**
+ * Requirements:
+ * - wethLiquidity = wethLiquidityBeforeDeposit + wethDeposit
+ * - usdtLiquidity = usdtLiquidityBeforeDeposit + usdtDeposit
+ */
+export function getLiquidityPoolShare(wethLiquidity: number, usdtLiquidity: number, wethDeposit: number, usdtDeposit: number) {
+  const wethPoolShare = wethDeposit / wethLiquidity
+  const usdtPoolShare = usdtDeposit / usdtLiquidity
+  expect(wethPoolShare).to.be.closeTo(usdtPoolShare, 0.01) // using closeTo because of FP arithmetic errors
+  return wethPoolShare
+}
+
 export function getDeposits(wethLiquidity: number, usdtLiquidity: number, wethPortfolio: number, usdtPortfolio: number) {
   const priceOfLiquidity = usdtLiquidity / wethLiquidity
   const priceOfPortfolio = usdtPortfolio / wethPortfolio

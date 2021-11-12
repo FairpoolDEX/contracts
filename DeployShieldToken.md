@@ -17,7 +17,7 @@
 
 Example output:
 
-```shell script
+```bash
 Compiling 1 file with 0.8.4
 Compilation finished successfully
 Creating Typechain artifacts in directory typechain for target ethers-v5

@@ -60,7 +60,7 @@ Market Crash Protection is a smart contract that allows traders to buy protectio
         1. Trader sell [base tokens](#base-token) for [quote tokens](#quote-token) via [MCP contract](#market-crash-protection-contract).
         1. Liquidity provider withdraws [base tokens](#base-token) from MCP contract.
 
-[Trader](#trader) can cancel his order & get his money back after certain timeout (by default: 6 hours), but only if the [liquidity provider](#liquidity-provider) doesn't sell protection before the trader cancels. 
+[Trader](#trader) can cancel his order & get his money back after certain timeout (by default: 6 hours), but only if the [liquidity provider](#liquidity-provider) doesn't sell protection before the trader cancels.
 
 Trader can't sell [base tokens](#base-token) after the expiration date.
 
