@@ -1,9 +1,6 @@
 import { expect } from "../../util/expect"
-import { BigNumber, BigNumberish } from "ethers"
-import { zero } from "./test.helpers"
-import { max } from "./all.helpers"
 
-export const fee = 0.003 // equal to 0.3%
+export const UniswapFee = 0.003 // equal to 0.3%
 
 export function getLiquidityAfterDeposit(wethLiquidity: number, usdtLiquidity: number, wethPortfolio: number, usdtPortfolio: number) {
   const [wethDeposit, usdtDeposit] = getDeposits(wethLiquidity, usdtLiquidity, wethPortfolio, usdtPortfolio)
@@ -35,31 +32,31 @@ export function getDeposits(wethLiquidity: number, usdtLiquidity: number, wethPo
   }
 }
 
-export function getLiquidityAfterSell(wethLiquidity: number, usdtLiquidity: number, wethVolume: number): [number, number] {
+export function getLiquidityAfterSell(wethLiquidity: number, usdtLiquidity: number, wethVolume: number, fee: number): [number, number] {
   return [
     wethLiquidity + wethVolume,
-    usdtLiquidity + getUsdtVolume(wethLiquidity, usdtLiquidity, wethVolume),
+    usdtLiquidity + getUsdtVolume(wethLiquidity, usdtLiquidity, wethVolume, fee),
   ]
 }
 
-export function getLiquidityAfterBuy(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number): [number, number] {
+export function getLiquidityAfterBuy(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number): [number, number] {
   return [
-    wethLiquidity + getWethVolume(wethLiquidity, usdtLiquidity, usdtVolume),
+    wethLiquidity + getWethVolume(wethLiquidity, usdtLiquidity, usdtVolume, fee),
     usdtLiquidity + usdtVolume,
   ]
 }
 
-export function getWethVolume(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number) {
+export function getWethVolume(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number) {
   // using inverted argument order to calculate volume for base currency (WETH)
-  return getVolume(usdtLiquidity, wethLiquidity, usdtVolume)
+  return getVolume(usdtLiquidity, wethLiquidity, usdtVolume, fee)
 }
 
-export function getUsdtVolume(wethLiquidity: number, usdtLiquidity: number, wethVolume: number) {
+export function getUsdtVolume(wethLiquidity: number, usdtLiquidity: number, wethVolume: number, fee: number) {
   // using normal argument order to calculate volume for quote currency (USDT)
-  return getVolume(wethLiquidity, usdtLiquidity, wethVolume)
+  return getVolume(wethLiquidity, usdtLiquidity, wethVolume, fee)
 }
 
-export function getVolume(x: number, y: number, dx: number) {
+export function getVolume(x: number, y: number, dx: number, fee: number) {
   // Uniswap formula:
   // (x * y) = k
   // (x + dx) * (y + dy) = k
@@ -73,20 +70,9 @@ export function getVolume(x: number, y: number, dx: number) {
   return Math.trunc((x * y) / (x + $dx) - y)
 }
 
-export function getWethVolumeForStablePrice(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number) {
-  const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidity, usdtLiquidity, usdtVolume)
+export function getWethVolumeForStablePrice(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number) {
+  const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidity, usdtLiquidity, usdtVolume, fee)
   const wethBalanceDiff = wethLiquidity - wethLiquidityAfterBuy
   expect(wethBalanceDiff).to.be.greaterThan(0)
-  return wethBalanceDiff / fee
-}
-
-export function getFee(amountWithdrawn: BigNumberish, amountDeposited: BigNumberish, feeNumerator: BigNumberish, feeDenominator: BigNumberish) {
-  const $amountWithdrawn = BigNumber.from(amountWithdrawn)
-  const $amountDeposited = BigNumber.from(amountDeposited)
-  return max(zero, $amountWithdrawn.sub($amountDeposited).mul(feeNumerator).div(feeDenominator))
-}
-
-export function subtractFee(amountWithdrawn: BigNumberish, amountDeposited: BigNumberish, feeNumerator: BigNumberish, feeDenominator: BigNumberish) {
-  const $fee = getFee(amountWithdrawn, amountDeposited, feeNumerator, feeDenominator)
-  return BigNumber.from(amountWithdrawn).sub($fee)
+  return wethBalanceDiff / UniswapFee
 }

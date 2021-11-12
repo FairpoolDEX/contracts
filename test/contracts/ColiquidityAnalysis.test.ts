@@ -1,5 +1,5 @@
 import { Context } from "mocha"
-import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getWethVolumeForStablePrice } from "../support/Coliquidity.helpers"
+import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getWethVolumeForStablePrice, UniswapFee } from "../support/Coliquidity.generic.helpers"
 import { expect } from "../../util/expect"
 
 describe("ColiquidityAnalysis", async function() {
@@ -22,6 +22,7 @@ describe("ColiquidityAnalysis", async function() {
 
 export type Scenario = {
   // WETH-USDT pair: https://v2.info.uniswap.org/pair/0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852
+  fee: number
   wethLiquidity: number
   usdtLiquidity: number
   wethVolume: number
@@ -32,6 +33,7 @@ export type Scenario = {
 }
 
 export const Default: Scenario = {
+  fee: UniswapFee,
   wethLiquidity: 25000,
   usdtLiquidity: 100000000,
   wethVolume: 0,
@@ -42,7 +44,7 @@ export const Default: Scenario = {
 }
 
 export const HighVolumeRange: Scenario = Object.assign({}, Default, {
-  wethVolume: getWethVolumeForStablePrice(Default.wethLiquidity, Default.usdtLiquidity, 500 * Default.usdtLiquidity),
+  wethVolume: getWethVolumeForStablePrice(Default.wethLiquidity, Default.usdtLiquidity, 500 * Default.usdtLiquidity, Default.fee),
   usdtVolume: 500 * Default.usdtLiquidity,
   priceIsStable: true,
 })
@@ -64,8 +66,8 @@ export async function getColiquidityProfit(scenario: Scenario) {
   const [wethLiquidityAfterDeposit, usdtLiquidityAfterDeposit] = getLiquidityAfterDeposit(wethLiquidityAfterStart, usdtLiquidityAfterStart, scenario.wethLiquidity, scenario.usdtLiquidity)
   const [priceAfterStart, priceAfterDeposit] = [usdtLiquidityAfterStart / wethLiquidityAfterStart, usdtLiquidityAfterDeposit / wethLiquidityAfterDeposit]
   expect(priceAfterStart).to.equal(priceAfterDeposit)
-  const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidityAfterStart, usdtLiquidityAfterStart, scenario.usdtVolume)
-  const [wethLiquidityAfterSell, usdtLiquidityAfterSell] = getLiquidityAfterSell(wethLiquidityAfterBuy, usdtLiquidityAfterBuy, scenario.wethVolume)
+  const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidityAfterStart, usdtLiquidityAfterStart, scenario.usdtVolume, scenario.fee)
+  const [wethLiquidityAfterSell, usdtLiquidityAfterSell] = getLiquidityAfterSell(wethLiquidityAfterBuy, usdtLiquidityAfterBuy, scenario.wethVolume, scenario.fee)
   if (scenario.priceIsStable) {
     const [priceAfterStart, priceAfterSell] = [usdtLiquidityAfterStart / wethLiquidityAfterStart, usdtLiquidityAfterSell / wethLiquidityAfterSell]
     expect(priceAfterStart).to.equal(priceAfterSell)
