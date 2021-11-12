@@ -24,7 +24,7 @@ export abstract class ColiquidityCommand<Result> extends BlockchainCommand<Coliq
   }
 
   getSigner(real: ColiquidityReal, address: string) {
-    return demand(real.signers.find(s => s. === address))
+    return demand(real.signers.find(s => s.address === address))
   }
 
   async getModelPair(model: ColiquidityModel, token0: Address, token1: Address) {
@@ -38,7 +38,7 @@ export abstract class ColiquidityCommand<Result> extends BlockchainCommand<Coliq
   }
 
   async getRealPair(real: ColiquidityReal, token0: string, token1: string) {
-    const pair = await real.factory.getPair(token0, token1)
+    const pairAddress = await real.factory.getPair(token0, token1)
     expect(pairAddress).to.not.equal($zero)
     const pair = await real.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair
     return pair
