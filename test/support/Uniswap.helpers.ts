@@ -1,12 +1,9 @@
 import { BigNumber, BigNumberish, Contract, ContractFactory } from "ethers"
-import UniswapV2PairJSON from "@uniswap/v2-core/build/UniswapV2Pair.json"
 import { Ethers } from "../../util/types"
-import UniswapV2Router02JSON from "@uniswap/v2-periphery/build/UniswapV2Router02.json"
 import UniswapV2FactoryJSON from "@uniswap/v2-core/build/UniswapV2Factory.json"
-import WETH9JSON from "@uniswap/v2-periphery/build/WETH9.json"
-import { ethers } from "hardhat"
 import { UniswapV2Factory } from "../../typechain"
 
+export const uniswapFeeNumber = 0.003 // equal to 0.3%
 export const uniswapFeeNumerator = BigNumber.from(3)
 export const uniswapFeeDenominator = BigNumber.from(1000)
 export const uniswapMinimumLiquidity = BigNumber.from(1000) // see MINIMUM_LIQUIDITY in UniswapV2Pair.sol

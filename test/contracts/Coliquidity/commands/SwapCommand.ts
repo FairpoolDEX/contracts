@@ -3,7 +3,8 @@ import { ColiquidityCommand, ColiquidityModel, ColiquidityReal } from "../Coliqu
 import { AsyncCommand } from "fast-check"
 import { MaxUint256 } from "../../../support/all.helpers"
 import { getLatestBlock } from "../../../support/test.helpers"
-import { getLiquidityAfterBuy, getLiquidityAfterSell, UniswapFee } from "../../../support/Coliquidity.generic.helpers"
+import { getLiquidityAfterBuy, getLiquidityAfterSell} from "../../../support/Coliquidity.generic.helpers"
+import { uniswapFeeNumber } from "../../../support/Uniswap.helpers"
 
 export class SwapCommand extends ColiquidityCommand<unknown> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(
@@ -23,7 +24,7 @@ export class SwapCommand extends ColiquidityCommand<unknown> implements AsyncCom
     const pair = await this.getModelPair(model, this.fromToken, this.toToken)
     const getLiquidityAfterSwap = pair.tokens[0] === this.fromToken ? getLiquidityAfterSell : getLiquidityAfterBuy
     // TODO: Replace UniswapFee with dynamic fee parameter
-    pair.reserves = getLiquidityAfterSwap(pair.reserves[0], pair.reserves[1], this.fromAmountDiff, UniswapFee)
+    pair.reserves = getLiquidityAfterSwap(pair.reserves[0], pair.reserves[1], this.fromAmountDiff, uniswapFeeNumber)
     return pair.reserves
   }
 

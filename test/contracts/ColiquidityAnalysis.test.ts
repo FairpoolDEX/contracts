@@ -1,6 +1,7 @@
 import { Context } from "mocha"
-import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getWethVolumeForStablePrice, UniswapFee } from "../support/Coliquidity.generic.helpers"
+import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getWethVolumeForStablePrice} from "../support/Coliquidity.generic.helpers"
 import { expect } from "../../util/expect"
+import { uniswapFeeNumber } from "../support/Uniswap.helpers"
 
 describe("ColiquidityAnalysis", async function() {
 
@@ -33,7 +34,7 @@ export type Scenario = {
 }
 
 export const Default: Scenario = {
-  fee: UniswapFee,
+  fee: uniswapFeeNumber,
   wethLiquidity: 25000,
   usdtLiquidity: 100000000,
   wethVolume: 0,
