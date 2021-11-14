@@ -8,8 +8,8 @@ import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, Un
 import { BigNumber, BigNumberish, Contract } from "ethers"
 import { beforeEach } from "mocha"
 import { Address } from "../../util/types"
-import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
-import { getLiquidityAfterSell, UniswapFee } from "../support/Coliquidity.generic.helpers"
+import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapFeeNumber, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
+import { getLiquidityAfterSell} from "../support/Coliquidity.generic.helpers"
 import $debug from "debug"
 import { assert, asyncModelRun, asyncProperty, boolean, commands, constantFrom, context, nat, oneof, record } from "fast-check"
 import { TestMetronome } from "../support/Metronome"
@@ -268,7 +268,7 @@ describe("Coliquidity", async function() {
     expect(totalShare).to.be.within(70, 100)
 
     await router.connect(ted).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], ted.address, MaxUint256)
-    const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn, UniswapFee)
+    const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn, uniswapFeeNumber)
     const [reserve0After, reserve1After] = await pair.getReserves()
     expect(reserve0After).to.equal(basePoolAmountAfter)
     expect(reserve1After).to.equal(quotePoolAmountAfter)

@@ -1,7 +1,5 @@
 import { expect } from "../../util/expect"
 
-export const UniswapFee = 0.003 // equal to 0.3%
-
 export function getLiquidityAfterDeposit(wethLiquidity: number, usdtLiquidity: number, wethPortfolio: number, usdtPortfolio: number) {
   const [wethDeposit, usdtDeposit] = getDeposits(wethLiquidity, usdtLiquidity, wethPortfolio, usdtPortfolio)
   return [
@@ -74,5 +72,5 @@ export function getWethVolumeForStablePrice(wethLiquidity: number, usdtLiquidity
   const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidity, usdtLiquidity, usdtVolume, fee)
   const wethBalanceDiff = wethLiquidity - wethLiquidityAfterBuy
   expect(wethBalanceDiff).to.be.greaterThan(0)
-  return wethBalanceDiff / UniswapFee
+  return wethBalanceDiff / fee
 }
