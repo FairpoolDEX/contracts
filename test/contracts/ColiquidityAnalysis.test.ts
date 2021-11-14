@@ -1,5 +1,5 @@
 import { Context } from "mocha"
-import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getWethVolumeForStablePrice} from "../support/Coliquidity.generic.helpers"
+import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getBaseVolumeForStablePrice} from "../support/Coliquidity.generic.helpers"
 import { expect } from "../../util/expect"
 import { uniswapFeeNumber } from "../support/Uniswap.helpers"
 
@@ -45,7 +45,7 @@ export const Default: Scenario = {
 }
 
 export const HighVolumeRange: Scenario = Object.assign({}, Default, {
-  wethVolume: getWethVolumeForStablePrice(Default.wethLiquidity, Default.usdtLiquidity, 500 * Default.usdtLiquidity, Default.fee),
+  wethVolume: getBaseVolumeForStablePrice(Default.wethLiquidity, Default.usdtLiquidity, 500 * Default.usdtLiquidity, Default.fee),
   usdtVolume: 500 * Default.usdtLiquidity,
   priceIsStable: true,
 })
