@@ -1,57 +1,55 @@
-import { expect } from "../../util/expect"
-
-export function getLiquidityAfterDeposit(wethLiquidity: number, usdtLiquidity: number, wethPortfolio: number, usdtPortfolio: number) {
-  const [wethDeposit, usdtDeposit] = getDeposits(wethLiquidity, usdtLiquidity, wethPortfolio, usdtPortfolio)
+export function getLiquidityAfterDeposit(baseLiquidity: number, quoteLiquidity: number, basePortfolio: number, quotePortfolio: number) {
+  const [baseDeposit, quoteDeposit] = getDeposits(baseLiquidity, quoteLiquidity, basePortfolio, quotePortfolio)
   return [
-    wethLiquidity + wethDeposit,
-    usdtLiquidity + usdtDeposit,
+    baseLiquidity + baseDeposit,
+    quoteLiquidity + quoteDeposit,
   ]
 }
 
 /**
  * Requirements:
- * - wethLiquidity = wethLiquidityBeforeDeposit + wethDeposit
- * - usdtLiquidity = usdtLiquidityBeforeDeposit + usdtDeposit
+ * - baseLiquidity = baseLiquidityBeforeDeposit + baseDeposit
+ * - quoteLiquidity = quoteLiquidityBeforeDeposit + quoteDeposit
  */
-export function getLiquidityPoolShare(wethLiquidity: number, usdtLiquidity: number, wethDeposit: number, usdtDeposit: number) {
-  const wethPoolShare = wethDeposit / wethLiquidity
-  const usdtPoolShare = usdtDeposit / usdtLiquidity
-  expect(wethPoolShare).to.be.closeTo(usdtPoolShare, 0.01) // using closeTo because of FP arithmetic errors
-  return wethPoolShare
+export function getLiquidityPoolShare(baseLiquidity: number, quoteLiquidity: number, baseDeposit: number, quoteDeposit: number) {
+  const basePoolShare = baseDeposit / baseLiquidity
+  const quotePoolShare = quoteDeposit / quoteLiquidity
+  if (Math.abs(basePoolShare - quotePoolShare) > 0.01) throw new Error('basePoolShare and quotePoolShare must equivalent up to FP arithmetic error')
+  return basePoolShare
 }
 
-export function getDeposits(wethLiquidity: number, usdtLiquidity: number, wethPortfolio: number, usdtPortfolio: number) {
-  const priceOfLiquidity = usdtLiquidity / wethLiquidity
-  const priceOfPortfolio = usdtPortfolio / wethPortfolio
+export function getDeposits(baseLiquidity: number, quoteLiquidity: number, basePortfolio: number, quotePortfolio: number) {
+  const priceOfLiquidity = quoteLiquidity / baseLiquidity
+  const priceOfPortfolio = quotePortfolio / basePortfolio
   if (priceOfPortfolio > priceOfLiquidity) {
-    return [wethPortfolio, wethPortfolio / priceOfLiquidity]
+    return [basePortfolio, basePortfolio / priceOfLiquidity]
   } else {
-    return [usdtPortfolio / priceOfLiquidity, usdtPortfolio]
+    return [quotePortfolio / priceOfLiquidity, quotePortfolio]
   }
 }
 
-export function getLiquidityAfterSell(wethLiquidity: number, usdtLiquidity: number, wethVolume: number, fee: number): [number, number] {
+export function getLiquidityAfterSell(baseLiquidity: number, quoteLiquidity: number, baseVolume: number, fee: number): [number, number] {
   return [
-    wethLiquidity + wethVolume,
-    usdtLiquidity + getUsdtVolume(wethLiquidity, usdtLiquidity, wethVolume, fee),
+    baseLiquidity + baseVolume,
+    quoteLiquidity + getQuoteVolume(baseLiquidity, quoteLiquidity, baseVolume, fee),
   ]
 }
 
-export function getLiquidityAfterBuy(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number): [number, number] {
+export function getLiquidityAfterBuy(baseLiquidity: number, quoteLiquidity: number, quoteVolume: number, fee: number): [number, number] {
   return [
-    wethLiquidity + getWethVolume(wethLiquidity, usdtLiquidity, usdtVolume, fee),
-    usdtLiquidity + usdtVolume,
+    baseLiquidity + getBaseVolume(baseLiquidity, quoteLiquidity, quoteVolume, fee),
+    quoteLiquidity + quoteVolume,
   ]
 }
 
-export function getWethVolume(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number) {
-  // using inverted argument order to calculate volume for base currency (WETH)
-  return getVolume(usdtLiquidity, wethLiquidity, usdtVolume, fee)
+export function getBaseVolume(baseLiquidity: number, quoteLiquidity: number, quoteVolume: number, fee: number) {
+  // using inverted argument order to calculate volume for base currency (BASE)
+  return getVolume(quoteLiquidity, baseLiquidity, quoteVolume, fee)
 }
 
-export function getUsdtVolume(wethLiquidity: number, usdtLiquidity: number, wethVolume: number, fee: number) {
-  // using normal argument order to calculate volume for quote currency (USDT)
-  return getVolume(wethLiquidity, usdtLiquidity, wethVolume, fee)
+export function getQuoteVolume(baseLiquidity: number, quoteLiquidity: number, baseVolume: number, fee: number) {
+  // using normal argument order to calculate volume for quote currency (QUOTE)
+  return getVolume(baseLiquidity, quoteLiquidity, baseVolume, fee)
 }
 
 export function getVolume(x: number, y: number, dx: number, fee: number) {
@@ -61,16 +59,16 @@ export function getVolume(x: number, y: number, dx: number, fee: number) {
   // (x + dx) * (y + dy) = (x * y)
   // (y + dy) = (x * y) / (x + dx)
   // dy = (x * y) / (x + dx) - y
-  expect(x).to.be.greaterThan(0)
-  expect(y).to.be.greaterThan(0)
-  expect(dx).to.be.greaterThan(0)
+  if (x <= 0) throw new Error('x must be greater than 0')
+  if (y <= 0) throw new Error('y must be greater than 0')
+  if (dx <= 0) throw new Error('dx must be greater than 0')
   const $dx = dx - dx * fee
   return Math.trunc((x * y) / (x + $dx) - y)
 }
 
-export function getWethVolumeForStablePrice(wethLiquidity: number, usdtLiquidity: number, usdtVolume: number, fee: number) {
-  const [wethLiquidityAfterBuy, usdtLiquidityAfterBuy] = getLiquidityAfterBuy(wethLiquidity, usdtLiquidity, usdtVolume, fee)
-  const wethBalanceDiff = wethLiquidity - wethLiquidityAfterBuy
-  expect(wethBalanceDiff).to.be.greaterThan(0)
-  return wethBalanceDiff / fee
+export function getBaseVolumeForStablePrice(baseLiquidity: number, quoteLiquidity: number, quoteVolume: number, fee: number) {
+  const [baseLiquidityAfterBuy, quoteLiquidityAfterBuy] = getLiquidityAfterBuy(baseLiquidity, quoteLiquidity, quoteVolume, fee)
+  const baseBalanceDiff = baseLiquidity - baseLiquidityAfterBuy
+  if (baseBalanceDiff <= 0) throw new Error('baseBalanceDiff must be greater than 0')
+  return baseBalanceDiff / fee
 }
