@@ -1,3 +1,3 @@
-import { router, factory, WETH } from "../../test/support/PancakeSwap.helpers.bsctestnet"
+import { router, factory, wrapper } from "../../test/support/PancakeSwap.helpers.bsctestnet"
 
-export default [router, factory, WETH]
+export default [router, factory, wrapper]
