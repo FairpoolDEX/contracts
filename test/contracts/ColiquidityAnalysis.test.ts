@@ -13,12 +13,6 @@ describe("ColiquidityAnalysis", async function() {
   it(`must compare coliquidity profit with regular liquidity provisioning profit`, async function(this: Context) {
 
   })
-
-  it('must check getLiquidityPoolShare', function() {
-    expect(getLiquidityPoolShare(80, 100000, 2, 2500)).to.equal(0.025)
-    expect(getLiquidityPoolShare(34, 52, 0.5, 0.764705882)).to.equal(0.014705882352941176)
-    expect(() => getLiquidityPoolShare(80, 100000, 10, 2500)).to.throw()
-  })
 })
 
 export type Scenario = {

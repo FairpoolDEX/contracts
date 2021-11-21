@@ -83,6 +83,14 @@ const config: HardhatUserConfig = {
       blockGasLimit: 8000000,
       timeout: 30 * 60 * 1000,
     },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      gasPrice,
+      gasMultiplier: 1.2,
+      blockGasLimit: 30000000, // https://etherscan.io/blocks
+      accounts: { mnemonic },
+      timeout: 24 * 60 * 60 * 1000,
+    },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
       gasPrice,
@@ -91,11 +99,12 @@ const config: HardhatUserConfig = {
       accounts: { mnemonic },
       timeout: 2 * 60 * 1000,
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+    bscmainnet: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 30000000, // https://etherscan.io/blocks
+      blockGasLimit: 85000000,
       accounts: { mnemonic },
       timeout: 24 * 60 * 60 * 1000,
     },
@@ -108,14 +117,23 @@ const config: HardhatUserConfig = {
       accounts: { mnemonic },
       timeout: 2 * 60 * 1000,
     },
-    bscmainnet: {
-      url: "https://bsc-dataseed.binance.org/",
-      chainId: 56,
+    avaxmainnet: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 85000000,
+      blockGasLimit: 8000000,
       accounts: { mnemonic },
       timeout: 24 * 60 * 60 * 1000,
+    },
+    avaxtestnet: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      gasPrice,
+      gasMultiplier: 1.2,
+      blockGasLimit: 8000000,
+      accounts: { mnemonic },
+      timeout: 2 * 60 * 1000,
     },
   },
   etherscan: {
