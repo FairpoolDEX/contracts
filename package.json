@@ -22,7 +22,7 @@
     "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol"
   },
   "engines": {
-    "node": "=12.22.1"
+    "node": "^16.13.0"
   },
   "dependencies": {
     "@ethersproject/hardware-wallets": "^5.4.0",
