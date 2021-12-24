@@ -1,17 +1,15 @@
-import neatcsv from "neat-csv"
-import fs from "fs"
-import { strict as assert } from "assert"
-import { map, fromPairs, shuffle, trimEnd } from "lodash"
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { utils, BigNumber } from "ethers"
-import { Readable as ReadableStream } from "stream"
-import { chunk, gwei, toTokenAmount } from "../test/support/all.helpers"
-import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../test/support/BullToken.helpers"
-import { Address, BalanceMap } from "../util/types"
-import { expect } from "../util/expect"
-import { shieldMaxSupply, shieldMaxSupplyTokenAmount } from "../test/support/ShieldToken.helpers"
-import { maxSupply as bullMaxSupply } from "../test/support/BullToken.helpers"
-import { maxFeePerGas, maxPriorityFeePerGas } from "../util/gas"
+import neatcsv from 'neat-csv'
+import fs from 'fs'
+import { strict as assert } from 'assert'
+import { map, shuffle, trimEnd } from 'lodash'
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { BigNumber, utils } from 'ethers'
+import { Readable as ReadableStream } from 'stream'
+import { chunk } from '../test/support/all.helpers'
+import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
+import { Address, BalanceMap } from '../util/types'
+import { expect } from '../util/expect'
+import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 
 export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>, retroDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
   const balances: BalanceMap = {}
@@ -129,7 +127,7 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
 }
 
 export interface SetClaimsExpectationsMap {
-  balances: { [address: string]: string },
+  balances: { [address: string]: BigNumber },
   totalSHLDAmount: { min: BigNumber, max: BigNumber },
   totalBULLAmount: { min: BigNumber, max: BigNumber },
 }
@@ -140,7 +138,7 @@ export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntim
   const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
   const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
   const blacklistfolderFiles = fs.readdirSync(blacklistfolder).map((filename) => fs.readFileSync(`${blacklistfolder}/${filename}`))
-  const expectations: SetClaimsExpectationsMap = (await import(expectationsPath)).default
+  const expectations: SetClaimsExpectationsMap = (await import(expectationsPath)).expectations
   console.info(`Parsing balances`)
   const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
   console.info(`Attaching to contract ${tokenAddress}`)

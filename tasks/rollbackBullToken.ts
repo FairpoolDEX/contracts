@@ -23,7 +23,7 @@ type FlaggedTransfer = Transfer & {
 
 type FlaggedTransferType = "move" | "buy" | "sell"
 
-interface ExpectationsMap {
+export interface RollbackBullTokenExpectationsMap {
   transfers: EtherscanTransfer[]
   buys: { length: number }
   sells: { length: number }
@@ -75,7 +75,7 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
   }
 }
 
-export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: ExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
+export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
   const blockNumbers = map(transfers, "blockNumber")
   expect(min(blockNumbers)).greaterThan(from)
@@ -167,7 +167,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
   }
 }
 
-export async function expectBalancesMatchExpectations(token: Contract, expectations: ExpectationsMap) {
+export async function expectBalancesMatchExpectations(token: Contract, expectations: RollbackBullTokenExpectationsMap) {
   for (const address in expectations.balances) {
     const actualBalance = await token.balanceOf(address)
     expect(actualBalance).to.equal(toTokenAmount(expectations.balances[address]))
@@ -193,7 +193,7 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const poolAddresses: Address[] = poolAddressesString.split(",")
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
   const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row["HolderAddress"])
-  const expectations: ExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
+  const expectations: RollbackBullTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
   const provider = ethers.provider
   // console.log('provider', provider)
   // console.log('ethers.provider', ethers.provider)

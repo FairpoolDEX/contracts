@@ -1,7 +1,7 @@
-import { BigNumber, BigNumberish, Contract, ContractFactory } from "ethers"
-import { Ethers } from "../../util/types"
-import UniswapV2FactoryJSON from "@uniswap/v2-core/build/UniswapV2Factory.json"
-import { UniswapV2Factory } from "../../typechain"
+import { BigNumber, BigNumberish, Contract, ContractFactory } from 'ethers'
+import { Address, Ethers } from '../../util/types'
+import UniswapV2FactoryJSON from '@uniswap/v2-core/build/UniswapV2Factory.json'
+import { UniswapV2Factory } from '../../typechain'
 
 export const uniswapFeeNumber = 0.003 // equal to 0.3%
 export const uniswapFeeNumerator = BigNumber.from(3)
@@ -47,4 +47,8 @@ export const getActualLiquidityShare = function(value: BigNumberish, liquidityAm
   } else {
     return BigNumber.from(value)
   }
+}
+
+export function getOrderedArray<V>(baseAddress: Address, quoteAddress: Address, baseValue: V, quoteValue: V): [V, V] {
+  return baseAddress < quoteAddress ? [baseValue, quoteValue] : [quoteValue, baseValue]
 }
