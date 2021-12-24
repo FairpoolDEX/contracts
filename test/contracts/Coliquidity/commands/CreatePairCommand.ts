@@ -1,8 +1,8 @@
-import { Address, AmountNum, Timestamp } from "../../../../util/types"
-import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, PoolIndex, OfferIndex } from "../ColiquidityCommand"
-import { AsyncCommand } from "fast-check"
-import { demand } from "../../../../util/demand"
-import { sortBy } from "lodash"
+import { Address, AmountNum, Timestamp } from '../../../../util/types'
+import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex, PoolIndex } from '../ColiquidityCommand'
+import { AsyncCommand } from 'fast-check'
+import { demand } from '../../../../util/demand'
+import { getOrderedArray } from '../../../support/Uniswap.helpers'
 
 export class CreatePairCommand extends ColiquidityCommand<PoolIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(
@@ -24,8 +24,8 @@ export class CreatePairCommand extends ColiquidityCommand<PoolIndex> implements 
     const { makerToken, makerAmount, makerDenominator, takerDenominator } = offer
     const { takerToken } = this
     const takerAmount = makerAmount * takerDenominator / makerDenominator
-    const tokens: [Address, Address] = makerToken < takerToken ? [makerToken, takerToken] : [takerToken, makerToken]
-    const reserves: [AmountNum, AmountNum] = makerToken < takerToken ? [makerAmount, takerAmount] : [takerAmount, makerAmount]
+    const tokens: [Address, Address] = getOrderedArray(makerToken, takerToken, makerToken, takerToken)
+    const reserves: [AmountNum, AmountNum] = getOrderedArray(makerToken, takerToken, makerAmount, takerAmount)
     model.pairs.push({
       tokens,
       reserves,

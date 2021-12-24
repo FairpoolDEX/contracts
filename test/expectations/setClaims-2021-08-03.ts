@@ -1,9 +1,10 @@
-import { Decimal } from "decimal.js"
-import { toTokenAmount } from "../support/all.helpers"
-import { shieldMaxSupplyTokenAmount } from "../support/ShieldToken.helpers"
-import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from "../support/BullToken.helpers"
+import { Decimal } from 'decimal.js'
+import { toTokenAmount } from '../support/all.helpers'
+import { shieldMaxSupplyTokenAmount } from '../support/ShieldToken.helpers'
+import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../support/BullToken.helpers'
+import { SetClaimsExpectationsMap } from '../../tasks/setClaimsBullToken'
 
-export default {
+export const expectations: SetClaimsExpectationsMap = {
   balances: {
     "0xc77aab3c6d7dab46248f3cc3033c856171878bd5": toTokenAmount("0"), // locked liquidity
     "0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a": toTokenAmount("0"), // NFTrade pool

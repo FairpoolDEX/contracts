@@ -1,27 +1,27 @@
-import { expect } from "../../util/expect"
-import { cloneDeep, flatten } from "lodash"
-import { ethers, upgrades } from "hardhat"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { dateAdd, days, hours, max, MaxUint256, MaxSafeInt, sum } from "../support/all.helpers"
-import { zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, $zero } from "../support/test.helpers"
-import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../typechain"
-import { BigNumber, BigNumberish, Contract } from "ethers"
-import { beforeEach } from "mocha"
-import { Address } from "../../util/types"
-import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapFeeNumber, uniswapMinimumLiquidity } from "../support/Uniswap.helpers"
-import { getLiquidityAfterSell} from "../support/Coliquidity.generic.helpers"
-import $debug from "debug"
-import { assert, asyncModelRun, asyncProperty, boolean, commands, constantFrom, context, nat, oneof, record } from "fast-check"
-import { TestMetronome } from "../support/Metronome"
-import { ColiquidityModel, ColiquidityReal } from "./Coliquidity/ColiquidityCommand"
-import { amountNum } from "../support/fast-check.helpers"
-import { CreateOfferCommand } from "./Coliquidity/commands/CreateOfferCommand"
-import { BalanceModel } from "../support/fast-check/models/TokenModel"
-import { CreateContributionCommand } from "./Coliquidity/commands/CreateContributionCommand"
-import { CreatePairCommand } from "./Coliquidity/commands/CreatePairCommand"
-import { SwapCommand } from "./Coliquidity/commands/SwapCommand"
-import { ReachDesiredStateCommand } from "./Coliquidity/commands/ReachDesiredStateCommand"
-import { getFee, subtractFee } from "../support/Coliquidity.calculation.helpers"
+import { expect } from '../../util/expect'
+import { flatten } from 'lodash'
+import { ethers, upgrades } from 'hardhat'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { dateAdd, days, hours, max, MaxSafeInt, MaxUint256, sum } from '../support/all.helpers'
+import { $zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from '../support/test.helpers'
+import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../typechain'
+import { BigNumber, BigNumberish, Contract } from 'ethers'
+import { beforeEach } from 'mocha'
+import { Address } from '../../util/types'
+import { deployUniswapPair, getOrderedArray, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapFeeNumber, uniswapMinimumLiquidity } from '../support/Uniswap.helpers'
+import { getLiquidityAfterSell } from '../support/Coliquidity.generic.helpers'
+import $debug from 'debug'
+import { assert, asyncModelRun, asyncProperty, boolean, commands, constantFrom, context, nat, oneof, record } from 'fast-check'
+import { TestMetronome } from '../support/Metronome'
+import { ColiquidityModel, ColiquidityReal } from './Coliquidity/ColiquidityCommand'
+import { amountNum } from '../support/fast-check.helpers'
+import { CreateOfferCommand } from './Coliquidity/commands/CreateOfferCommand'
+import { BalanceModel } from '../support/fast-check/models/TokenModel'
+import { CreateContributionCommand } from './Coliquidity/commands/CreateContributionCommand'
+import { CreatePairCommand } from './Coliquidity/commands/CreatePairCommand'
+import { SwapCommand } from './Coliquidity/commands/SwapCommand'
+import { ReachDesiredStateCommand } from './Coliquidity/commands/ReachDesiredStateCommand'
+import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
 
 describe("Coliquidity", async function() {
   let signers: SignerWithAddress[]
@@ -255,10 +255,9 @@ describe("Coliquidity", async function() {
     const [basePoolAmountBefore, quotePoolAmountBefore] = [makerAmountDesired + 4 * makerAmountDesired, takerAmountDesired + 4 * takerAmountDesired]
     const [reserve0Before, reserve1Before] = await pair.getReserves()
     expect(liquidityTotalSupply).to.equal(sum([positionSamBefore.liquidityAmount, positionSallyBefore.liquidityAmount]).add(uniswapMinimumLiquidity))
-    expect(token0).to.equal(baseAddress)
-    expect(token1).to.equal(quoteAddress)
-    expect(reserve0Before).to.equal(basePoolAmountBefore)
-    expect(reserve1Before).to.equal(quotePoolAmountBefore)
+    // NOTE: UniswapLibrary applies alphabetic sort to [token0, token1], so it may be inverted relative to [baseAddress, quoteAddress]
+    expect([token0, token1]).to.equal(getOrderedArray(baseAddress, quoteAddress, baseAddress, quoteAddress))
+    expect([reserve0Before, reserve1Before]).to.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountBefore, quotePoolAmountBefore))
 
     const toSamShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSamBefore.liquidityAmount).div(liquidityTotalSupply)
     const toSallyShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSallyBefore.liquidityAmount).div(liquidityTotalSupply)
@@ -270,8 +269,7 @@ describe("Coliquidity", async function() {
     await router.connect(ted).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], ted.address, MaxUint256)
     const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn, uniswapFeeNumber)
     const [reserve0After, reserve1After] = await pair.getReserves()
-    expect(reserve0After).to.equal(basePoolAmountAfter)
-    expect(reserve1After).to.equal(quotePoolAmountAfter)
+    expect([reserve0After, reserve1After]).to.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountAfter, quotePoolAmountAfter))
 
     const basePoolDiff = basePoolAmountBefore - basePoolAmountAfter
     const quotePoolDiff = quotePoolAmountBefore - quotePoolAmountAfter
@@ -601,6 +599,20 @@ describe("Coliquidity", async function() {
   })
 
   xit("must launch Marnotaur token (dynamic version)", async () => {
+    /**
+     * Events
+     *
+     * - Project deposits a bag of base token
+     * - Investor deposits a bag of quote token
+     * - Project withdraws remaining tokens
+     * - Investor withdraws remaining tokens
+     *   - Possible to make a partial deposit
+     *   - Or return immediately
+     * - Project opens a pool
+     * - Project withdraws liquidity
+     * - Investor withdraws liquidity
+     * - Investor provides liquidity after the pool is launched
+     */
     const expirationDateMin = now
     const expirationDateMax = dateAdd(now, { years: 5 })
     const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
