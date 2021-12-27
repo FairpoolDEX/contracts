@@ -1,17 +1,22 @@
-import { BigNumber } from "ethers"
-import { toTokenAmount } from "./all.helpers"
+import { toTokenAmount } from './all.helpers'
+import { Deployment } from '../../util/deployment'
+import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
 
-export const shieldReleaseTime: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
+export const releaseTime: number = Math.floor(new Date("2022.01.01 13:00:00 UTC").getTime() / 1000)
 
-export const shieldMaxSupply = 969163000
+export const maxSupply = 969163000
 
-export const shieldMaxSupplyTokenAmount = toTokenAmount(shieldMaxSupply)
+export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
-// it's a test only allocations with a random addresses!
+export const deployments: Deployment[] = [
+  {
+    network: "mainnet",
+    address: "0xd49EFA7BC0D339D74f487959C573d518BA3F8437",
+  },
+]
 
 // @note: All values is set without decimals
-
-export const SHIELD_ALLOCATIONS: { [index: string]: { [index: string]: number } } = {
+export const allocationsForTest: { [index: string]: { [index: string]: number } } = {
 
 // Seed:	Locked for 1 month, 5% on first release, then equal parts of 12% over total of 9 months
   "0": {
@@ -65,3 +70,8 @@ export const SHIELD_ALLOCATIONS: { [index: string]: { [index: string]: number } 
 //     '0x1337': 42,
 //   },
 }
+
+export const shieldRewriteAddressMap: RewriteAddressMap = getRewriteAddressMap([
+  ['0xc77aab3c6d7dab46248f3cc3033c856171878bd5', '0x7dcbefb3b9a12b58af8759e0eb8df05656db911d'], // locked liquidity
+  ['0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a', '0x0000000000000000000000000000000000000000'], // NFTrade pool
+])

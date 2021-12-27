@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 
 // eslint-disable-file no-console
 
-export async function deployMCP(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function deployMCPTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { feeDivisorMin } = args
   const { ethers, network, run } = hre
   const [deployer] = await ethers.getSigners()

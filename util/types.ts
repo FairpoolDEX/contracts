@@ -1,5 +1,5 @@
-import { BigNumber, ethers } from "ethers"
-import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types"
+import { BigNumber, ethers } from 'ethers'
+import { HardhatEthersHelpers } from '@nomiclabs/hardhat-ethers/types'
 
 export type Address = string
 
@@ -14,8 +14,6 @@ export type AmountBN = BigNumber
 export type PriceBN = BigNumber
 
 export type Timestamp = number
-
-export type BalanceMap = { [index: string]: AmountBN }
 
 export type Ethers = typeof ethers & HardhatEthersHelpers
 

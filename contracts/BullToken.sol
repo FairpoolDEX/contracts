@@ -17,7 +17,6 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     uint public maxSupply;
     uint public burnRateNumerator;
     uint public burnRateDenominator;
-    bool public rollbackManyDisabled;
 
     function initialize(uint _airdropStartTimestamp, uint _airdropClaimDuration, uint _airdropStageDuration, uint _burnRateNumerator, uint _burnRateDenominator) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
@@ -56,7 +55,6 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         for (uint i = 0; i < addresses.length; i++) {
             _claim(addresses[i]);
         }
-        // This function allows to process addresses which don't have any $BULL to claim
     }
 
     function _claim(address _address) internal returns (bool) {
@@ -89,26 +87,6 @@ contract BullToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
             super._transfer(msg.sender, recipient, amount);
         }
-    }
-
-    function rollbackMany(address[] calldata burnAddresses, address[] calldata mintAddresses, uint[] calldata amounts) public onlyOwner {
-        // WARN: this function doesn't refund fee-on-transfer, because it was not active during latest airdrop
-        require(rollbackManyDisabled == false, "rollbackMany is disabled");
-        require(burnAddresses.length == amounts.length, "Wrong array length (burnAddresses, amounts)");
-        require(mintAddresses.length == amounts.length, "Wrong array length (mintAddresses, amounts)");
-
-        bool _paused = paused();
-        if (_paused) _unpause();
-        for (uint i = 0; i < amounts.length; i++) {
-            if (burnAddresses[i] != address(0)) _burn(burnAddresses[i], amounts[i]);
-            if (mintAddresses[i] != address(0)) _mint(mintAddresses[i], amounts[i]);
-        }
-        if (_paused) _pause();
-    }
-
-    function finishRollbackMany() public onlyOwner {
-        rollbackManyDisabled = true;
-        if (paused()) _unpause();
     }
 
     function _mint(address account, uint amount) internal virtual override {

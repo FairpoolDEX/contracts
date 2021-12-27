@@ -1,13 +1,12 @@
-import { expect } from "../../util/expect"
-import { ethers, upgrades } from "hardhat"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { toTokenAmount } from "../support/all.helpers"
-import { timeTravel } from "../support/test.helpers"
-import { ShieldToken } from "../../typechain"
-import { BullToken } from "../../typechain"
+import { expect } from '../../util/expect'
+import { ethers, upgrades } from 'hardhat'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { toTokenAmount } from '../support/all.helpers'
+import { timeTravel } from '../support/test.helpers'
+import { BullToken, ShieldToken } from '../../typechain'
 
-import { SHIELD_ALLOCATIONS, shieldReleaseTime } from "../support/ShieldToken.helpers"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateNumerator, burnRateDenominator, claims, getClaims } from "../support/BullToken.helpers"
+import { allocationsForTest, releaseTime } from '../support/ShieldToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
@@ -45,7 +44,7 @@ describe("BullToken", async () => {
     ownerAddress = await owner.getAddress()
 
     const shieldTokenFactory = await ethers.getContractFactory("ShieldToken")
-    shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [shieldReleaseTime])) as unknown as ShieldToken
+    shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTime])) as unknown as ShieldToken
     await shieldTokenWithOwner.deployed()
     shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)
 
@@ -55,7 +54,7 @@ describe("BullToken", async () => {
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
     // add allocations
-    for (const [vestingTypeIndex, allocation] of Object.entries(SHIELD_ALLOCATIONS)) {
+    for (const [vestingTypeIndex, allocation] of Object.entries(allocationsForTest)) {
       const addresses = Object.keys(allocation)
       const amounts = Object.values(allocation)
 
@@ -146,46 +145,46 @@ describe("BullToken", async () => {
     }, airdropStartTimestamp)
   })
 
-  it("should allow the owner to rollback BULL token balances", async () => {
-    const sentAmount = toTokenAmount("150")
-    const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
-    const feeAmount = sentAmount.sub(recvAmount)
-
-    await bullTokenWithOwner.setClaims(claimers, amounts)
-    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-
-    await timeTravel(async () => {
-      const ownerAmount1 = await bullTokenWithOwner.balanceOf(ownerAddress)
-      await bullTokenWithStranger.claim()
-      await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
-      const ownerAmount2 = await bullTokenWithOwner.balanceOf(ownerAddress)
-      expect(ownerAmount2).to.equal(ownerAmount1.add(recvAmount))
-      const burnAddresses = [ownerAddress, "0x0000000000000000000000000000000000000000"]
-      const mintAddresses = [strangerAddress, strangerAddress]
-      const amounts = [recvAmount, feeAmount]
-      await bullTokenWithOwner.rollbackMany(burnAddresses, mintAddresses, amounts)
-      expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(0)
-      expect(await bullTokenWithOwner.balanceOf(strangerAddress)).to.equal(strangerAmount)
-    }, airdropStartTimestamp)
-  })
-
-  it("should not allow the non-owner to rollback BULL token balances", async () => {
-    await timeTravel(async () => {
-      expect(bullTokenWithStranger.rollbackMany([ownerAddress], [strangerAddress], [toTokenAmount("100")])).to.be.revertedWith("caller is not the owner")
-    }, airdropStartTimestamp)
-  })
-
-  it("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
-    await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-
-    await timeTravel(async () => {
-      await bullTokenWithStranger.claim()
-
-      await bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])
-      await bullTokenWithOwner.finishRollbackMany()
-      await expect(bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])).to.be.revertedWith("rollbackMany is disabled")
-    }, airdropStartTimestamp)
-  })
+  // it("should allow the owner to rollback BULL token balances", async () => {
+  //   const sentAmount = toTokenAmount("150")
+  //   const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
+  //   const feeAmount = sentAmount.sub(recvAmount)
+  //
+  //   await bullTokenWithOwner.setClaims(claimers, amounts)
+  //   await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
+  //
+  //   await timeTravel(async () => {
+  //     const ownerAmount1 = await bullTokenWithOwner.balanceOf(ownerAddress)
+  //     await bullTokenWithStranger.claim()
+  //     await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
+  //     const ownerAmount2 = await bullTokenWithOwner.balanceOf(ownerAddress)
+  //     expect(ownerAmount2).to.equal(ownerAmount1.add(recvAmount))
+  //     const burnAddresses = [ownerAddress, "0x0000000000000000000000000000000000000000"]
+  //     const mintAddresses = [strangerAddress, strangerAddress]
+  //     const amounts = [recvAmount, feeAmount]
+  //     await bullTokenWithOwner.rollbackMany(burnAddresses, mintAddresses, amounts)
+  //     expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(0)
+  //     expect(await bullTokenWithOwner.balanceOf(strangerAddress)).to.equal(strangerAmount)
+  //   }, airdropStartTimestamp)
+  // })
+  //
+  // it("should not allow the non-owner to rollback BULL token balances", async () => {
+  //   await timeTravel(async () => {
+  //     expect(bullTokenWithStranger.rollbackMany([ownerAddress], [strangerAddress], [toTokenAmount("100")])).to.be.revertedWith("caller is not the owner")
+  //   }, airdropStartTimestamp)
+  // })
+  //
+  // it("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
+  //   await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
+  //
+  //   await timeTravel(async () => {
+  //     await bullTokenWithStranger.claim()
+  //
+  //     await bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])
+  //     await bullTokenWithOwner.finishRollbackMany()
+  //     await expect(bullTokenWithOwner.rollbackMany([strangerAddress], [ownerAddress], [toTokenAmount("100")])).to.be.revertedWith("rollbackMany is disabled")
+  //   }, airdropStartTimestamp)
+  // })
 
   // The following tests are superseded by manual snapshotting
   // should not allow the user to claim more BULL tokens than SHLD tokens

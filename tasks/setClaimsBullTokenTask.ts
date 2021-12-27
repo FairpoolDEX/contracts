@@ -1,17 +1,23 @@
-import neatcsv from 'neat-csv'
 import fs from 'fs'
-import { strict as assert } from 'assert'
-import { map, shuffle, trimEnd } from 'lodash'
+import { map, shuffle } from 'lodash'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { BigNumber, utils } from 'ethers'
+import { BigNumber } from 'ethers'
 import { Readable as ReadableStream } from 'stream'
 import { chunk } from '../test/support/all.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
-import { Address, BalanceMap } from '../util/types'
 import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
+import { BalanceMap, parseBalancesCSV } from '../util/balance'
+import { CSVData } from '../util/csv'
+import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
+import { rewriteBalanceMap } from '../util/address'
+import { Logger } from '../util/log'
 
-export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | ReadableStream>, oldDatas: Array<string | Buffer | ReadableStream>, retroDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
+export async function parseShieldBalancesCSV(data: CSVData) {
+  return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
+}
+
+export async function parseAllBalancesCSV(newDatas: Array<CSVData>, oldDatas: Array<string | Buffer | ReadableStream>, retroDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
   const balances: BalanceMap = {}
   // const address = '0xf5396ed020a765e561f4f176b1e1d622fb6d4154'.toLowerCase()
   for (let i = 0; i < newDatas.length; i++) {
@@ -52,40 +58,7 @@ export async function parseAllBalancesCSV(newDatas: Array<string | Buffer | Read
   return balances
 }
 
-export async function parseBalancesCSV(data: string | Buffer | ReadableStream): Promise<BalanceMap> {
-  const balances: BalanceMap = {}
-  const rows = await neatcsv(data)
-  for (let i = 0; i < rows.length; i++) {
-    const addressRaw = rows[i]["HolderAddress"]
-    const amountRaw = rows[i]["Balance"]
-    const addressParsed = rewriteAddress(addressRaw.toLowerCase())
-    const amountParsed = utils.parseUnits(amountRaw, 18)
-    assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), "0"), trimEnd(amountRaw, "0"), "Can't parse balance")
-    balances[addressParsed] = amountParsed
-  }
-  return balances
-}
-
-type RewriteAddressMap = { [address: string]: Address }
-
-const rewriteAddressMap: RewriteAddressMap = addressToLowerCase({
-  "0xc77aab3c6d7dab46248f3cc3033c856171878bd5": "0x7dcbefb3b9a12b58af8759e0eb8df05656db911d", // locked liquidity
-  "0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a": "0x0000000000000000000000000000000000000000", // NFTrade pool
-})
-
-function addressToLowerCase(rewriteAddressMap: RewriteAddressMap): RewriteAddressMap {
-  const result: RewriteAddressMap = {}
-  for (const key in rewriteAddressMap) {
-    result[key.toLowerCase()] = rewriteAddressMap[key]
-  }
-  return result
-}
-
-function rewriteAddress(address: Address) {
-  return rewriteAddressMap[address] || address
-}
-
-export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, chunkSize = 325, dry = false, log: ((...msgs: any[]) => void) | undefined = undefined): Promise<void> {
+export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, chunkSize = 325, dry = false, log?: Logger): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
@@ -132,7 +105,7 @@ export interface SetClaimsExpectationsMap {
   totalBULLAmount: { min: BigNumber, max: BigNumber },
 }
 
-export async function setClaimsBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function setClaimsBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { token: tokenAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, dry } = args
   const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
   const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))

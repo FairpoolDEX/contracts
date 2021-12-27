@@ -1,25 +1,26 @@
-import { HardhatUserConfig } from "hardhat/types"
-import { task, types } from "hardhat/config"
-import "@nomiclabs/hardhat-ethers"
-import "@nomiclabs/hardhat-waffle"
-import "@nomiclabs/hardhat-etherscan"
-import "@typechain/hardhat"
-import "hardhat-watcher"
-import "solidity-coverage"
-import "@openzeppelin/hardhat-upgrades"
-import "hardhat-dependency-compiler"
-import { config as dotEnvConfig } from "dotenv"
-import { deployShieldToken } from "./tasks/deployShieldToken"
-import { transferManyShieldToken } from "./tasks/transferManyShieldToken"
-import { addAllocationsShieldToken } from "./tasks/addAllocationsShieldToken"
-import { setClaimsBullToken } from "./tasks/setClaimsBullToken"
-import { deployBullToken } from "./tasks/deployBullToken"
-import { claimBullTokenTask } from "./tasks/claimBullToken"
-import { upgradeToken } from "./tasks/upgradeToken"
-import { rollbackBullTokenTask } from "./tasks/rollbackBullToken"
-import { deployMCP } from "./tasks/deployMCP"
-import { deployContract } from "./tasks/deployContract"
-import { maxFeePerGas as gasPrice } from "./util/gas"
+import { HardhatUserConfig } from 'hardhat/types'
+import { task, types } from 'hardhat/config'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
+import '@nomiclabs/hardhat-etherscan'
+import '@typechain/hardhat'
+import 'hardhat-watcher'
+import 'solidity-coverage'
+import '@openzeppelin/hardhat-upgrades'
+import 'hardhat-dependency-compiler'
+import { config as dotEnvConfig } from 'dotenv'
+import { deployShieldTokenTask } from './tasks/deployShieldTokenTask'
+import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
+import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
+import { setClaimsBullTokenTask } from './tasks/setClaimsBullTokenTask'
+import { deployBullTokenTask } from './tasks/deployBullTokenTask'
+import { claimBullTokenTask } from './tasks/claimBullTokenTask'
+import { upgradeTokenTask } from './tasks/upgradeTokenTask'
+import { rollbackBullTokenTask } from './tasks/rollbackBullToken'
+import { deployMCPTask } from './tasks/deployMCPTask'
+import { deployContractTask } from './tasks/deployContractTask'
+import { maxFeePerGas as gasPrice } from './util/gas'
+import { transferManyTask } from './tasks/transferManyTask'
 
 dotEnvConfig()
 
@@ -170,32 +171,32 @@ const config: HardhatUserConfig = {
 }
 
 task("deployShieldToken", "Deploy ShieldToken contract")
-  .setAction(deployShieldToken)
+  .setAction(deployShieldTokenTask)
 
 task("deployBullToken", "Deploy BullToken contract")
-  .setAction(deployBullToken)
+  .setAction(deployBullTokenTask)
 
 task("deployMCP", "Deploy MCP contract")
   .addParam("feeDivisorMin", "Minimal fee divisor", 100, types.int)
-  .setAction(deployMCP)
+  .setAction(deployMCPTask)
 
 task("deployContract", "Deploy a contract")
   .addParam("contract", "Contract name", undefined, types.string)
   .addOptionalParam("upgradeable", "Deploy with upgradeable proxy", false, types.boolean)
   .addOptionalParam("constructorArgsModule", "File path to a javascript module that exports the list of arguments.", undefined, types.inputFile)
   .addOptionalVariadicPositionalParam("constructorArgsParams", "Contract constructor arguments. Ignored if the --constructorArgsModule option is used.", [])
-  .setAction(deployContract)
+  .setAction(deployContractTask)
 
-task("transferMany", "Call transferMany for allocations without lockup period")
+task("transferManyShieldToken", "Call transferManyShield for allocations without lockup period")
   .addParam("token", "SHLD token contract address")
   .addParam("allocations", "JSON with allocations")
   .addParam("chunk", "Number of recipients in one chunk. Default value is 100.", 100, types.int)
-  .setAction(transferManyShieldToken)
+  .setAction(transferManyShieldTokenTask)
 
 task("addAllocations", "Call addAllocations() for allocations with lockup period")
   .addParam("token", "SHLD token contract address")
   .addParam("allocations", "JSON with allocations")
-  .setAction(addAllocationsShieldToken)
+  .setAction(addAllocationsShieldTokenTask)
 
 task("setClaims", "Call setClaims() on BULL token contract")
   .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
@@ -205,7 +206,7 @@ task("setClaims", "Call setClaims() on BULL token contract")
   .addParam("retrofolder", "Folder with CSV files containing next SHLD balances (mult by 1)", "", types.string)
   .addParam("blacklistfolder", "Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)", "", types.string)
   .addParam("expectations", "JSON file with test expectations")
-  .setAction(setClaimsBullToken)
+  .setAction(setClaimsBullTokenTask)
 
 task("claim", "Call claim() on BULL token contract")
   .addParam("token", "BULL token contract address")
@@ -226,6 +227,13 @@ task("rollback", "Change the balances of BullToken back to certain date")
 task("upgradeToken", "Upgrade a token contract")
   .addParam("name", "Contract name")
   .addParam("address", "Contract proxy address")
-  .setAction(upgradeToken)
+  .setAction(upgradeTokenTask)
+
+task("transferMany", "Upgrade a token contract")
+  .addParam("contract", "Contract name")
+  .addParam("address", "Contract address")
+  .addParam("balances", "File with balances (download from blockchain explorer)")
+  .addParam("expectations", "JSON file with test expectations")
+  .setAction(transferManyTask)
 
 export default config
