@@ -1,10 +1,9 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core"
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
+import { getImplementationAddress } from '@openzeppelin/upgrades-core'
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 
-import { airdropClaimDuration, airdropStageDuration } from "../test/support/BullToken.helpers"
-import { burnRateDenominator, burnRateNumerator } from "../test/support/BullToken.helpers"
+import { airdropClaimDuration, airdropStageDuration, burnRateDenominator, burnRateNumerator } from '../test/support/BullToken.helpers'
 
-export async function deployBullToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function deployBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network } = hre
   const [deployer] = await ethers.getSigners()
   console.info(`NETWORK = ${network.name}`)

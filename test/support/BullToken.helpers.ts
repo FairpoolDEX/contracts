@@ -1,10 +1,12 @@
-import { BigNumber } from "ethers"
-import { days, toTokenAmountString } from "./all.helpers"
-import fs from "fs"
-import { parseAllBalancesCSV, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
-import { parseAddresses } from "../../tasks/claimBullToken"
-import { Address, BalanceMap } from "../../util/types"
-import { shieldMaxSupplyTokenAmount } from "./ShieldToken.helpers"
+import { BigNumber } from 'ethers'
+import { days, toTokenAmountString } from './all.helpers'
+import fs from 'fs'
+import { parseAllBalancesCSV, SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { parseAddresses } from '../../tasks/claimBullTokenTask'
+import { Address } from '../../util/types'
+import { maxSupplyTokenAmount } from './ShieldToken.helpers'
+import { Deployment } from '../../util/deployment'
+import { BalanceMap } from '../../util/balance'
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -24,7 +26,12 @@ export const burnRateDenominator = 1000
 
 export const maxSupply = 969163000 * airdropRate
 
-export const deployedAddress = "0x1bb022ab668085c6417b7d7007b0fbd53bacc383"
+export const deployments: Deployment[] = [
+  {
+    network: "mainnet",
+    address: "0x1bb022ab668085c6417b7d7007b0fbd53bacc383",
+  },
+]
 
 export function fromShieldToBull(bn: BigNumber): BigNumber {
   return bn.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate)
@@ -55,7 +62,7 @@ export async function getTestBalances(): Promise<BalanceMap> {
 }
 
 export async function getTestExpectations(): Promise<SetClaimsExpectationsMap> {
-  const totalSHLDAmountMax = shieldMaxSupplyTokenAmount.mul(2) // it's OK to multiply by 2, because extra claims from prevoius period would make the totalSHLDAmount go over shieldMaxSupplyTokenAmount
+  const totalSHLDAmountMax = maxSupplyTokenAmount.mul(2) // it's OK to multiply by 2, because extra claims from prevoius period would make the totalSHLDAmount go over shieldMaxSupplyTokenAmount
   return {
     balances: {},
     totalSHLDAmount: { min: BigNumber.from(0), max: totalSHLDAmountMax },

@@ -1,9 +1,9 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core"
-import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { upperCase } from "lodash"
-import { withFeeData } from "../util/networks"
+import { getImplementationAddress } from '@openzeppelin/upgrades-core'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { upperCase } from 'lodash'
+import { withFeeData } from '../util/network'
 
-export async function deployContract(args: DeployERC20TokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function deployContractTask(args: DeployERC20TokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network, run } = hre
   const { contract: contractName, upgradeable, constructorArgsModule, constructorArgsParams } = args
   const [deployer] = await ethers.getSigners()

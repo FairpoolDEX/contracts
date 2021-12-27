@@ -1,8 +1,8 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { shieldMaxSupplyTokenAmount } from '../support/ShieldToken.helpers'
+import { maxSupplyTokenAmount } from '../support/ShieldToken.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../support/BullToken.helpers'
-import { SetClaimsExpectationsMap } from '../../tasks/setClaimsBullToken'
+import { SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
 
 export const expectations: SetClaimsExpectationsMap = {
   balances: {
@@ -43,11 +43,11 @@ export const expectations: SetClaimsExpectationsMap = {
     ),
   },
   totalSHLDAmount: {
-    min: shieldMaxSupplyTokenAmount.mul(3),
-    max: shieldMaxSupplyTokenAmount.mul(5),
+    min: maxSupplyTokenAmount.mul(3),
+    max: maxSupplyTokenAmount.mul(5),
   },
   totalBULLAmount: {
-    min: shieldMaxSupplyTokenAmount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator),
-    max: shieldMaxSupplyTokenAmount.mul(airdropRate),
+    min: maxSupplyTokenAmount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator),
+    max: maxSupplyTokenAmount.mul(airdropRate),
   },
 }

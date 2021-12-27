@@ -1,14 +1,13 @@
-import { ethers, upgrades } from "hardhat"
-import { toTokenAmount, fromTokenAmount } from "../support/all.helpers"
-import { timeTravel, hh } from "../support/test.helpers"
-import { ShieldToken } from "../../typechain"
-import { BullToken } from "../../typechain"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { setClaims, SetClaimsExpectationsMap } from "../../tasks/setClaimsBullToken"
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, maxSupply, fromShieldToBull, getTestBalances, getBogusBalances, getTestExpectations } from "../support/BullToken.helpers"
-import { BigNumber } from "ethers"
-import { expect } from "../../util/expect"
-import { BalanceMap } from "../../util/types"
+import { ethers, upgrades } from 'hardhat'
+import { toTokenAmount } from '../support/all.helpers'
+import { timeTravel } from '../support/test.helpers'
+import { BullToken } from '../../typechain'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalances, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
+import { BigNumber } from 'ethers'
+import { expect } from '../../util/expect'
+import { BalanceMap } from '../../util/balance'
 
 describe("setClaimsBullToken", async () => {
 

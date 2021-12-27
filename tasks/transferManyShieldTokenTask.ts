@@ -1,13 +1,13 @@
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { Allocations } from "../util/types"
-import { chunk } from "../test/support/all.helpers"
-import { BigNumber } from "ethers"
-import { expect } from "../util/expect"
-import { shieldMaxSupplyTokenAmount } from "../test/support/ShieldToken.helpers"
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { Allocations } from '../util/types'
+import { chunk } from '../test/support/all.helpers'
+import { BigNumber } from 'ethers'
+import { expect } from '../util/expect'
+import { maxSupplyTokenAmount } from '../test/support/ShieldToken.helpers'
 
 // NOTE: Amounts should be with decimals (with a dot)
 
-export async function transferManyShieldToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function transferManyShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const allocations: Allocations = (await import(args.allocations)).default
   const address = args.token
 
@@ -19,7 +19,7 @@ export async function transferManyShieldToken(args: TaskArguments, hre: HardhatR
   const recipients = Object.keys(allocation)
   const amounts = Object.values(allocation).map(i => hre.ethers.utils.parseUnits(i, "18"))
   const totalAmounts = amounts.reduce((acc, amount) => acc.add(amount), BigNumber.from(0))
-  expect(totalAmounts.lt(shieldMaxSupplyTokenAmount)).to.be.true
+  expect(totalAmounts.lt(maxSupplyTokenAmount)).to.be.true
 
   console.log(`Calling transferMany with ${recipients.length} recipients and chunk size ${args.chunk}:`)
 

@@ -1,9 +1,9 @@
-import { expect } from "../../../../util/expect"
-import { Address } from "../../../../util/types"
-import { strict as assert } from "assert"
-import { BlockchainModel } from "../models/BlockchainModel"
-import { BlockchainReal } from "../models/BlockchainReal"
-import { ImplementationError, task } from "../../../../util/task"
+import { expect } from '../../../../util/expect'
+import { Address } from '../../../../util/types'
+import { strict as assert } from 'assert'
+import { BlockchainModel } from '../models/BlockchainModel'
+import { BlockchainReal } from '../models/BlockchainReal'
+import { impl, ImplementationError } from '../../../../util/todo'
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> {
   toString(): string {
@@ -63,6 +63,6 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
   }
 
   async getRealOutgoingTransferAmountSum(real: Real, tokenAddress: Address, userAddresses: Address[]) {
-    throw task("Use events")
+    throw impl("Use events")
   }
 }

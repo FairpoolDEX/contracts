@@ -1,14 +1,14 @@
-import { Address, AmountNum, AmountNumPair, Timestamp } from "../../../../util/types"
-import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from "../ColiquidityCommand"
-import { AsyncCommand } from "fast-check"
-import { task } from "../../../../util/task"
-import { expect } from "../../../../util/expect"
-import { TokenReal } from "../../../support/fast-check/models/TokenReal"
-import { BalanceModel, TokenModel } from "../../../support/fast-check/models/TokenModel"
-import { sum } from "lodash"
-import { UniswapV2Pair } from "../../../../typechain"
-import { OfferCreated } from "../models/Events"
-import { PairCreated } from "../../Uniswap/models/Events"
+import { Address, AmountNum, AmountNumPair, Timestamp } from '../../../../util/types'
+import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from '../ColiquidityCommand'
+import { AsyncCommand } from 'fast-check'
+import { expect } from '../../../../util/expect'
+import { TokenReal } from '../../../support/fast-check/models/TokenReal'
+import { BalanceModel, TokenModel } from '../../../support/fast-check/models/TokenModel'
+import { sum } from 'lodash'
+import { UniswapV2Pair } from '../../../../typechain'
+import { OfferCreated } from '../models/Events'
+import { PairCreated } from '../../Uniswap/models/Events'
+import { impl } from '../../../../util/todo'
 
 export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   readonly users: Address[] = []
@@ -44,27 +44,27 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
   }
 
   async getRealProfit(real: ColiquidityReal, takers: Address[]): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   async getRealVolumeOut(real: ColiquidityReal, tokenAddress: Address): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   async getRealVolumeIn(real: ColiquidityReal, tokenAddress: Address): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   async getModelFees(model: ColiquidityModel): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   async getRealFees(real: ColiquidityReal): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   async getRealPoolCreationTimestamp(real: ColiquidityReal, base: Address, quote: Address): Promise<Timestamp> {
-    throw task()
+    throw impl()
   }
 
   async getRealTokenModelsWithNonZeroBalances(real: ColiquidityReal, addresses: Address[]) {
@@ -116,27 +116,27 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
   }
 
   async getRealOfferCreatedEvent(real: ColiquidityReal, offerIndex: OfferIndex): Promise<OfferCreated> {
-    throw task()
+    throw impl()
   }
 
   async getRealPairCreatedEvent(real: ColiquidityReal, base: Address, quote: Address): Promise<PairCreated> {
-    throw task()
+    throw impl()
   }
 
   private async getRealPoolCreationDenominators(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNumPair> {
-    throw task()
+    throw impl()
   }
 
   private async getRealPoolInitialLiquidity(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNumPair> {
-    throw task()
+    throw impl()
   }
 
   private async getRealPoolCurrentK(real: ColiquidityReal, pair: UniswapV2Pair): Promise<AmountNum> {
-    throw task()
+    throw impl()
   }
 
   private async expectModelMakerToMakeMoney(model: ColiquidityModel) {
-    throw task()
+    throw impl()
   }
 
   private async expectRealMakerToMakeMoney(real: ColiquidityReal) {
@@ -144,7 +144,7 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
   }
 
   private async expectModelTakersToMakeMoney(model: ColiquidityModel) {
-    throw task()
+    throw impl()
   }
 
   private async expectRealTakersToMakeMoney(real: ColiquidityReal) {
@@ -161,7 +161,7 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
   }
 
   private async expectModelColiquidityToBeCorrect(model: ColiquidityModel) {
-    throw task()
+    throw impl()
   }
 
   private async expectRealColiquidityToBeCorrect(real: ColiquidityReal) {

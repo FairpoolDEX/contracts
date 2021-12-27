@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import { getImplementationAddress } from "@openzeppelin/upgrades-core"
-import * as ethers from "ethers"
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { getImplementationAddress } from '@openzeppelin/upgrades-core'
+import * as ethers from 'ethers'
 
-export async function upgradeToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function upgradeTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { name, address } = args
   const { ethers, upgrades } = hre
   // const [deployer] = await ethers.getSigners()

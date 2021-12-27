@@ -12,8 +12,10 @@ export async function migrateTokenTask(args: TaskArguments, hre: HardhatRuntimeE
   const { ethers, network } = hre
   console.info(`Migrating: ${fromContract} at ${fromAddress} -> ${toContract}`)
 
-  // TODO: it must migrate BULL before SHLD
-  // TODO: it must migrate BULL
+  // TODO: it must support BULL migration
+  // TODO: it must support SHLD migration
+
+  //  before SHLD
   // TODO: it must remove claim-related code
   // TODO: it must remove rollback-related code
   // TODO: it must distribute the remaining claims

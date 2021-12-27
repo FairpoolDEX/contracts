@@ -1,16 +1,16 @@
-import { expect } from "../../util/expect"
-import { ethers, upgrades } from "hardhat"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp, timeTravel, $zero } from "../support/test.helpers"
-import { ShieldToken, TraderLoot } from "../../typechain"
-import { beforeEach } from "mocha"
-import $debug from "debug"
-import { shieldReleaseTime } from "../support/ShieldToken.helpers"
-import { chests, decodeBase64, maxClaimTimestamp, ownerMaxTokenId, name, style, symbol, weapons, publicMaxTokenId, heads, waists, feet, hands, necks, rings, suffixes, namePrefixes, nameSuffixes, rarityPrefixes } from "../support/TraderLoot.helpers"
-import { promises as fs } from "fs"
-import * as os from "os"
-import { range, toInteger } from "lodash"
-import mkdirp from "mkdirp"
+import { expect } from '../../util/expect'
+import { ethers, upgrades } from 'hardhat'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { $zero, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
+import { ShieldToken, TraderLoot } from '../../typechain'
+import { beforeEach } from 'mocha'
+import $debug from 'debug'
+import { releaseTime } from '../support/ShieldToken.helpers'
+import { decodeBase64, maxClaimTimestamp, name, ownerMaxTokenId, publicMaxTokenId, style, symbol } from '../support/TraderLoot.helpers'
+import { promises as fs } from 'fs'
+import * as os from 'os'
+import { range, toInteger } from 'lodash'
+import mkdirp from 'mkdirp'
 
 xdescribe("TraderLoot", async function() {
   let owner: SignerWithAddress
@@ -43,7 +43,7 @@ xdescribe("TraderLoot", async function() {
     const signers = [owner, stranger, bob, sam, bella, sally] = await ethers.getSigners()
 
     const shieldTokenFactory = await ethers.getContractFactory("ShieldToken")
-    shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [shieldReleaseTime])) as unknown as ShieldToken
+    shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTime])) as unknown as ShieldToken
     await shieldAsOwner.deployed()
     shield = shieldAsOwner.connect($zero)
     shieldAsStranger = shieldAsOwner.connect(stranger)

@@ -1,16 +1,16 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core"
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
+import { getImplementationAddress } from '@openzeppelin/upgrades-core'
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 
-import { shieldReleaseTime } from "../test/support/ShieldToken.helpers"
+import { releaseTime } from '../test/support/ShieldToken.helpers'
 
-export async function deployShieldToken(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function deployShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network } = hre
   const [deployer] = await ethers.getSigners()
   console.info(`NETWORK = ${network.name}`)
   console.log(`export SHLD_DEPLOYER=${deployer.address}`)
 
   const Token = await ethers.getContractFactory("ShieldToken")
-  const token = await upgrades.deployProxy(Token, [shieldReleaseTime])
+  const token = await upgrades.deployProxy(Token, [releaseTime])
   await token.deployed()
   console.log(`export SHLD_PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console
 

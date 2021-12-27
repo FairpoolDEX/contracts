@@ -1,9 +1,11 @@
-import { Overrides } from "ethers"
-import { maxFeePerGas, maxPriorityFeePerGas } from "./gas"
-import { BigNumber } from "@ethersproject/bignumber"
+import { Overrides } from 'ethers'
+import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
+import { BigNumber } from '@ethersproject/bignumber'
+
+export type NetworkName = 'mainnet' | 'ropsten' | 'bsctestnet' | 'bscmainnet' | 'avaxtestnet' | 'avaxmainnet'
 
 export interface NetworkInfo {
-  name: string
+  name: NetworkName
 }
 
 // Copied from @ethersproject/abstract-provider because it had type errors
