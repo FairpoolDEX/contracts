@@ -29,10 +29,10 @@ export async function migrateTokenTask(args: TaskArguments, hre: HardhatRuntimeE
   // TODO: it must distribute COLI to addresses who are staking in NFTrade smart contract
   // TODO: it must maintain the vesting
 
-  const $fromToken = await ethers.getContractFactory("BullToken")
+  const $fromToken = await ethers.getContractFactory('BullToken')
   const fromToken = await $fromToken.attach(fromAddress)
   const expectations: MigrateTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
 
   // await rollbackBullToken(fromToken, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
-  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }

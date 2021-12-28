@@ -9,7 +9,7 @@ export async function deployShieldTokenTask(args: TaskArguments, hre: HardhatRun
   console.info(`NETWORK = ${network.name}`)
   console.log(`export SHLD_DEPLOYER=${deployer.address}`)
 
-  const Token = await ethers.getContractFactory("ShieldToken")
+  const Token = await ethers.getContractFactory('ShieldToken')
   const token = await upgrades.deployProxy(Token, [releaseTime])
   await token.deployed()
   console.log(`export SHLD_PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console

@@ -9,7 +9,7 @@ export async function upgradeTokenTask(args: TaskArguments, hre: HardhatRuntimeE
   const Token = await ethers.getContractFactory(name) as ethers.ContractFactory
   const token = await upgrades.upgradeProxy(address, Token)
   console.log(`${name} upgraded`)
-  console.log(`Don't forget to verify the implementation contract!`)
+  console.log('Don\'t forget to verify the implementation contract!')
 
   const prefix = name.replace('Token', '').toUpperCase()
   const implementationAddress = await getImplementationAddress(ethers.provider, token.address)

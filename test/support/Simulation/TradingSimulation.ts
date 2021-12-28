@@ -1,15 +1,15 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from "../../../typechain"
-import { BigNumber, Contract } from "ethers"
-import { Ethers } from "../../../util/types"
-import { MaxUint256, scale } from "../all.helpers"
-import { upgrades } from "hardhat"
-import { getLatestBlockTimestamp, $zero } from "../test.helpers"
-import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from "../Uniswap.helpers"
-import { flatten } from "lodash"
-import { nail } from "../../../util/string"
-import { expect } from "../../../util/expect"
-import $debug, { Debugger } from "debug"
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../../typechain'
+import { BigNumber, Contract } from 'ethers'
+import { Ethers } from '../../../util/types'
+import { MaxUint256, scale } from '../all.helpers'
+import { upgrades } from 'hardhat'
+import { getLatestBlockTimestamp, $zero } from '../test.helpers'
+import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../Uniswap.helpers'
+import { flatten } from 'lodash'
+import { nail } from '../../../util/string'
+import { expect } from '../../../util/expect'
+import $debug, { Debugger } from 'debug'
 
 export class TradingSimulation {
   constructor(
@@ -66,11 +66,11 @@ export class TradingSimulation {
     // baseTokenModel = { balanceByAddress: fromPairs(zip(baseRecipients, baseAmounts)) }
     // quoteTokenModel = { balanceByAddress: fromPairs(zip(quoteRecipients, quoteAmounts)) }
 
-    const baseTokenFactory = await ethers.getContractFactory("BaseToken")
+    const baseTokenFactory = await ethers.getContractFactory('BaseToken')
     const base = (await upgrades.deployProxy(baseTokenFactory, [baseTotalAmount, baseRecipients, baseAmounts])).connect($zero) as unknown as BaseToken
     await base.deployed()
 
-    const quoteTokenFactory = await ethers.getContractFactory("QuoteToken")
+    const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')
     const quote = (await upgrades.deployProxy(quoteTokenFactory, [quoteTotalAmount, quoteRecipients, quoteAmounts])).connect($zero) as unknown as QuoteToken
     await quote.deployed()
 
@@ -151,7 +151,7 @@ export class TradingSimulation {
      * quoteAmountAfter = quoteReserveAfter - quoteBalanceInterim
      */
     const { _reserve0: baseReserveBefore, _reserve1: quoteReserveBefore } = await this.pair.getReserves()
-    this.debug("reserves before", baseReserveBefore.toString(), quoteReserveBefore.toString())
+    this.debug('reserves before', baseReserveBefore.toString(), quoteReserveBefore.toString())
     const ratioBefore = baseReserveBefore.div(quoteReserveBefore)
     for (let i = 0; i < 500; i++) {
       // this.debug(`trade from bob ${i}`)
@@ -170,9 +170,9 @@ export class TradingSimulation {
       // const this.
     }
     const { _reserve0: baseReserveAfter, _reserve1: quoteReserveAfter } = await this.pair.getReserves()
-    this.debug("reserves after", baseReserveAfter.toString(), quoteReserveAfter.toString())
+    this.debug('reserves after', baseReserveAfter.toString(), quoteReserveAfter.toString())
     const ratioAfter = baseReserveAfter.div(quoteReserveAfter)
-    this.debug("ratios", ratioBefore.toString(), ratioAfter.toString())
+    this.debug('ratios', ratioBefore.toString(), ratioAfter.toString())
     expect(ratioBefore).to.eq(ratioAfter)
   }
 
@@ -195,7 +195,7 @@ export class TradingSimulation {
   }
 
   async calculateProfitFromAlice(activity: string) {
-    this.debug("calculateProfit from alice")
+    this.debug('calculateProfit from alice')
     const quoteFinalAmount = await this.quote.balanceOf(this.alice.address)
     const profit = quoteFinalAmount.sub(this.quoteInitialAmount)
     this.debug(nail(`
@@ -207,18 +207,18 @@ export class TradingSimulation {
 
   async logBalances() {
     const padding = 20
-    this.debug("%O", {
+    this.debug('%O', {
       base: {
-        "sam    ": (await this.base.balanceOf(this.sam.address)).toString().padStart(padding),
-        "alice   ": (await this.base.balanceOf(this.alice.address)).toString().padStart(padding),
-        "bob    ": (await this.base.balanceOf(this.bob.address)).toString().padStart(padding),
-        "zed    ": (await this.base.balanceOf(this.zed.address)).toString().padStart(padding),
+        'sam    ': (await this.base.balanceOf(this.sam.address)).toString().padStart(padding),
+        'alice   ': (await this.base.balanceOf(this.alice.address)).toString().padStart(padding),
+        'bob    ': (await this.base.balanceOf(this.bob.address)).toString().padStart(padding),
+        'zed    ': (await this.base.balanceOf(this.zed.address)).toString().padStart(padding),
       },
       quote: {
-        "sam    ": (await this.quote.balanceOf(this.sam.address)).toString().padStart(padding),
-        "alice   ": (await this.quote.balanceOf(this.alice.address)).toString().padStart(padding),
-        "bob    ": (await this.quote.balanceOf(this.bob.address)).toString().padStart(padding),
-        "zed    ": (await this.quote.balanceOf(this.zed.address)).toString().padStart(padding),
+        'sam    ': (await this.quote.balanceOf(this.sam.address)).toString().padStart(padding),
+        'alice   ': (await this.quote.balanceOf(this.alice.address)).toString().padStart(padding),
+        'bob    ': (await this.quote.balanceOf(this.bob.address)).toString().padStart(padding),
+        'zed    ': (await this.quote.balanceOf(this.zed.address)).toString().padStart(padding),
       },
     }, { compact: false })
   }

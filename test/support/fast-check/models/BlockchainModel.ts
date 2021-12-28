@@ -1,4 +1,4 @@
-import { TokenModel } from "./TokenModel"
+import { TokenModel } from './TokenModel'
 
 export interface BlockchainModel {
   tokens: TokenModel[]

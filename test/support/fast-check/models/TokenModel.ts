@@ -1,4 +1,4 @@
-import { Address, AmountNum } from "../../../../util/types"
+import { Address, AmountNum } from '../../../../util/types'
 
 export interface TokenModel {
   address: Address

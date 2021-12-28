@@ -10,7 +10,7 @@ import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { Address } from '../../util/types'
 import { BalanceMap } from '../../util/balance'
 
-describe("claimBullToken", async () => {
+describe('claimBullToken', async () => {
 
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
@@ -39,7 +39,7 @@ describe("claimBullToken", async () => {
     strangerAddress = await stranger.getAddress()
     ownerAddress = await owner.getAddress()
 
-    const bullTokenFactory = await ethers.getContractFactory("BullToken")
+    const bullTokenFactory = await ethers.getContractFactory('BullToken')
     bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
@@ -53,7 +53,7 @@ describe("claimBullToken", async () => {
     await setClaims(bullTokenWithOwner, balances, expectations)
   })
 
-  it("should allow to claim the tokens", async () => {
+  it('should allow to claim the tokens', async () => {
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)
       for (let i = 0; i < addresses.length; i++) {

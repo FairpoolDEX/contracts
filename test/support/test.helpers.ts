@@ -1,13 +1,13 @@
-import { ethers } from "hardhat"
-import execa from "execa"
-import { BigNumber, BigNumberish, Contract } from "ethers"
-import { string } from "hardhat/internal/core/params/argumentTypes"
-import { MaxUint256 } from "./all.helpers"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { expect } from "../../util/expect"
-import { Address, Ethers } from "../../util/types"
+import { ethers } from 'hardhat'
+import execa from 'execa'
+import { BigNumber, BigNumberish, Contract } from 'ethers'
+import { string } from 'hardhat/internal/core/params/argumentTypes'
+import { MaxUint256 } from './all.helpers'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { expect } from '../../util/expect'
+import { Address, Ethers } from '../../util/types'
 
-export const $zero = "0x0000000000000000000000000000000000000000"
+export const $zero = '0x0000000000000000000000000000000000000000'
 
 export const zero = BigNumber.from(0)
 
@@ -25,7 +25,7 @@ export async function timeTravel(callback: timeTravelCallback, nextBlockTimestam
   // set new block timestamp
   await setNextBlockTimestamp(nextBlockTimestamp)
   // mine new block to really shift time
-  await ethers.provider.send("evm_mine", [])
+  await ethers.provider.send('evm_mine', [])
   await callback().finally(async () => {
     // revert snapshot and come back in time to start point
     // mine new block to really shift time
@@ -36,13 +36,13 @@ export async function timeTravel(callback: timeTravelCallback, nextBlockTimestam
 export async function skipBlocks(amount: number): Promise<void> {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < amount; i += 1) {
-    await ethers.provider.send("evm_mine", [])
+    await ethers.provider.send('evm_mine', [])
   }
   /* eslint-enable no-await-in-loop */
 }
 
 export async function getLatestBlock(ethers: Ethers) {
-  return ethers.provider.getBlock("latest")
+  return ethers.provider.getBlock('latest')
 }
 
 export async function getLatestBlockTimestamp(ethers: Ethers) {
@@ -50,15 +50,15 @@ export async function getLatestBlockTimestamp(ethers: Ethers) {
 }
 
 export async function getSnapshot(params: any[] = []) {
-  return ethers.provider.send("evm_snapshot", params)
+  return ethers.provider.send('evm_snapshot', params)
 }
 
 export async function revertToSnapshot(params: any[] = []) {
-  return ethers.provider.send("evm_revert", params)
+  return ethers.provider.send('evm_revert', params)
 }
 
 export async function setNextBlockTimestamp(timestamp: number) {
-  return ethers.provider.send("evm_setNextBlockTimestamp", [timestamp])
+  return ethers.provider.send('evm_setNextBlockTimestamp', [timestamp])
 }
 
 export async function expectBalances(balances: [{ address: Address }, Contract, BigNumberish][]) {
@@ -71,7 +71,7 @@ export async function expectBalance(signer: { address: Address }, token: Contrac
   return expect(await token.balanceOf(signer.address)).to.equal(amount)
 }
 
-export const hh = function(args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
+export const hh = function (args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
   return execa(`${__dirname}/../../node_modules/.bin/hardhat`, args, options)
 }
 
@@ -94,7 +94,7 @@ export async function addLiquidity(router: Contract, token0: Contract, token1: C
 export function logBn(label: string, value: unknown) {
   if (value instanceof BigNumber) {
     console.log(label, value.toString())
-  } else if (typeof value === "object" && value) {
+  } else if (typeof value === 'object' && value) {
     console.log(
       label,
       Object.fromEntries(

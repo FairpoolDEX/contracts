@@ -1,4 +1,6 @@
 **/node_modules/
 **/coverage/
 **/build/
+**/artifacts/
+**/cache/
 csv_parser.js

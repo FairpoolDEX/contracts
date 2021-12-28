@@ -6,7 +6,7 @@ export interface Metronome {
 }
 
 export class TestMetronome implements Metronome {
-  constructor(protected _now = new Date("2020-02-01T00:00:00Z")) {}
+  constructor(protected _now = new Date('2020-02-01T00:00:00Z')) {}
 
   date() {
     return this._now
@@ -45,4 +45,4 @@ export class ProdMetronome implements Metronome {
   }
 }
 
-export const metronome = process.env.NODE_ENV === "development" ? new TestMetronome() : new ProdMetronome()
+export const metronome = process.env.NODE_ENV === 'development' ? new TestMetronome() : new ProdMetronome()

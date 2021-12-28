@@ -1,8 +1,8 @@
-import { BigNumber, utils } from "ethers"
-import { Ethers } from "../../util/types"
-import { DateTime } from "luxon"
-import { DurationInput } from "luxon/src/duration"
-import Decimal from "decimal.js"
+import { BigNumber, utils } from 'ethers'
+import { Ethers } from '../../util/types'
+import { DateTime } from 'luxon'
+import { DurationInput } from 'luxon/src/duration'
+import Decimal from 'decimal.js'
 
 export const toTokenAmount = (value: BigNumber | Decimal | string | number): BigNumber => {
   if (value instanceof Decimal) {
@@ -10,15 +10,15 @@ export const toTokenAmount = (value: BigNumber | Decimal | string | number): Big
   } else if (value instanceof BigNumber) {
     return value.mul(scale)
   } else {
-    return utils.parseUnits(typeof value === "number" ? value.toFixed(18) : value, "18")
+    return utils.parseUnits(typeof value === 'number' ? value.toFixed(18) : value, '18')
   }
 }
 
-export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.formatUnits(value, "18"))
+export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.formatUnits(value, '18'))
 
 export const toTokenAmountString = (value: string | number): string => toTokenAmount(value).toString()
 
-export const MaxUint256 = BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+export const MaxUint256 = BigNumber.from('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 export const MaxSafeInt = 0x1fffffffffffff - 1
 
@@ -40,7 +40,7 @@ export async function mineBlocks(count: number, ethers: Ethers): Promise<void> {
   const network = await ethers.provider.getNetwork()
   if (network.chainId === 31337) {
     while (count--) {
-      await ethers.provider.send("evm_mine", [])
+      await ethers.provider.send('evm_mine', [])
     }
   }
 }

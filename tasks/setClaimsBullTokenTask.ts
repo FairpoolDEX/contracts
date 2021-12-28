@@ -66,14 +66,14 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   for (const _address in expectations.balances) {
     const address = _address.toLowerCase()
-    expect(balances[address] || BigNumber.from("0"), `Address: ${address}`).to.equal(expectations.balances[_address])
+    expect(balances[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
   }
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalSHLDAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
   let totalBULLAmount = BigNumber.from(0)
-  log && log("CUR", totalSHLDAmount.toString())
-  log && log("MAX", expectations.totalSHLDAmount.max.toString())
+  log && log('CUR', totalSHLDAmount.toString())
+  log && log('MAX', expectations.totalSHLDAmount.max.toString())
   expect(totalSHLDAmount.gt(expectations.totalSHLDAmount.min)).to.be.true
   expect(totalSHLDAmount.lt(expectations.totalSHLDAmount.max)).to.be.true
   // const transactions = []
@@ -90,11 +90,11 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
       log && log(`TX Hash: ${tx.hash}`)
     }
   }
-  log && log("totalBULLAmount", totalBULLAmount.toString())
-  log && log("BCUR", "1490403967926689867814673435496")
-  log && log("BADD", totalBULLAmount.toString())
-  log && log("BMIN", expectations.totalBULLAmount.min.toString())
-  log && log("BMAX", expectations.totalBULLAmount.max.toString())
+  log && log('totalBULLAmount', totalBULLAmount.toString())
+  log && log('BCUR', '1490403967926689867814673435496')
+  log && log('BADD', totalBULLAmount.toString())
+  log && log('BMIN', expectations.totalBULLAmount.min.toString())
+  log && log('BMAX', expectations.totalBULLAmount.max.toString())
   expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
   expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
 }
@@ -112,12 +112,12 @@ export async function setClaimsBullTokenTask(args: TaskArguments, hre: HardhatRu
   const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
   const blacklistfolderFiles = fs.readdirSync(blacklistfolder).map((filename) => fs.readFileSync(`${blacklistfolder}/${filename}`))
   const expectations: SetClaimsExpectationsMap = (await import(expectationsPath)).expectations
-  console.info(`Parsing balances`)
+  console.info('Parsing balances')
   const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
   console.info(`Attaching to contract ${tokenAddress}`)
-  const Token = await hre.ethers.getContractFactory("BullToken")
+  const Token = await hre.ethers.getContractFactory('BullToken')
   const token = await Token.attach(tokenAddress)
-  console.info(`Setting claims`)
+  console.info('Setting claims')
   await setClaims(token, balances, expectations, 400, dry, console.info.bind(console))
-  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
