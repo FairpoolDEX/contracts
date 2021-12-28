@@ -15,11 +15,10 @@ export interface FeeData {
   gasPrice: null | BigNumber;
 }
 
-export async function withFeeData(feeData: FeeData, overrides: Overrides) {
+export async function withFeeData(feeData: FeeData, overrides: Overrides = {}) {
   if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-    Object.assign(overrides, { maxFeePerGas, maxPriorityFeePerGas })
+    return Object.assign({}, { maxFeePerGas, maxPriorityFeePerGas }, overrides)
   } else {
-    Object.assign(overrides, { gasPrice: maxFeePerGas })
+    return Object.assign({}, { gasPrice: maxFeePerGas }, overrides)
   }
-  return overrides
 }
