@@ -30,11 +30,7 @@ export interface RollbackBullTokenExpectationsMap {
   balances: { [address: string]: string }
 }
 
-interface EtherscanTransfer {
-  address: string,
-  blockNumber: string
-  // ... more fields available
-}
+export type EtherscanTransfer = unknown // Event
 
 export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag): Promise<Array<Transfer>> {
   const transfersRaw = await token.queryFilter({ topics: [TransferTopic] }, from, to)
@@ -193,7 +189,7 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const poolAddresses: Address[] = poolAddressesString.split(',')
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
   const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row['HolderAddress'])
-  const expectations: RollbackBullTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
+  const expectations: RollbackBullTokenExpectationsMap = (await import(`${process.cwd()}/${expectationsPath}`)).expectations
   const provider = ethers.provider
   // console.log('provider', provider)
   // console.log('ethers.provider', ethers.provider)
