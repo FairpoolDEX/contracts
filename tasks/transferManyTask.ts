@@ -7,16 +7,17 @@ import { chunk } from '../test/support/all.helpers'
 import { expect } from '../util/expect'
 import { map } from 'lodash'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
-import { getGasLimit, maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
+import { getGasLimit } from '../util/gas'
 import { network } from 'hardhat'
-import { NetworkName } from '../util/network'
+import { NetworkName, withFeeData } from '../util/network'
+import { FeeData } from '@ethersproject/abstract-provider'
 
 export interface TransferManyExpectationsMap {
   balances: { [address: string]: BigNumber },
   totalAmount: BigNumber,
 }
 
-export async function transferMany(contract: any, balances: BalanceMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, dry = false, log?: Logger): Promise<void> {
+export async function transferMany(contract: any, balances: BalanceMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, feeData: FeeData, dry = false, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
@@ -30,7 +31,8 @@ export async function transferMany(contract: any, balances: BalanceMap, expectat
     const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     // totalBULLAmount = amounts.reduce((acc, amount) => acc.add(amount), totalBULLAmount)
     if (!dry) {
-      const tx = await contract.transferMany(addresses, amounts, { gasLimit: getGasLimit(network), maxFeePerGas, maxPriorityFeePerGas })
+      console.log('getGasLimit(network)', getGasLimit(network))
+      const tx = await contract.transferMany(addresses, amounts, withFeeData(feeData, { gasLimit: getGasLimit(network) }))
       log && log(`TX Hash: ${tx.hash}`)
     }
   }
@@ -46,7 +48,9 @@ interface TransferManyTaskArguments extends TaskArguments {
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contract: contractName, address: contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
-  const { network } = hre
+  const { network, ethers } = hre
+  const [deployer] = await ethers.getSigners()
+  const feeData = await deployer.getFeeData()
   const balancesCSV = fs.readFileSync(balancesPath)
   const expectations: TransferManyExpectationsMap = (await import(expectationsPath)).expectations
   console.info('Parsing balances')
@@ -55,6 +59,6 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const ContractFactory = await hre.ethers.getContractFactory(contractName)
   const contract = await ContractFactory.attach(contractAddress)
   console.info('Calling transferMany')
-  await transferMany(contract, balances, expectations, 400, network.name as NetworkName, dry, console.info.bind(console))
+  await transferMany(contract, balances, expectations, 400, network.name as NetworkName, feeData, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }

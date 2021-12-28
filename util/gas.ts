@@ -17,6 +17,7 @@ export const maxPriorityFeePerGas = demandIntegerEnvVar('MAX_PRIORITY_FEE', 'gwe
 assert(maxFeePerGas >= maxPriorityFeePerGas)
 
 export function getGasLimit(network: NetworkName) {
+  console.log('network', network)
   switch (network) {
     case 'bscmainnet':
     case 'bsctestnet':
