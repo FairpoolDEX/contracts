@@ -8,8 +8,8 @@ export async function deployContractTask(args: DeployERC20TokenTaskArguments, hr
   const { contract: contractName, upgradeable, constructorArgsModule, constructorArgsParams } = args
   const [deployer] = await ethers.getSigners()
   const feeData = await deployer.getFeeData()
-  const envVarContract = upperCase(contractName).replace(/\s/g, "_")
-  const constructorArgs: unknown[] = await run("verify:get-constructor-arguments", {
+  const envVarContract = upperCase(contractName).replace(/\s/g, '_')
+  const constructorArgs: unknown[] = await run('verify:get-constructor-arguments', {
     constructorArgsModule,
     constructorArgsParams,
   })
@@ -25,7 +25,7 @@ export async function deployContractTask(args: DeployERC20TokenTaskArguments, hr
     console.info(`export ${envVarContract}_PROXY_ADDRESS=${contract.address}`) // eslint-disable-line no-console
     const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
     console.info(`export ${envVarContract}_IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
-    await run("verify", {
+    await run('verify', {
       address: implementationAddress,
       // constructorArgs* not needed since the implementation contract constructor has zero arguments
     })
@@ -39,7 +39,7 @@ export async function deployContractTask(args: DeployERC20TokenTaskArguments, hr
     }))
     await contract.deployed()
     console.info(`export ${envVarContract}_ADDRESS=${contract.address}`) // eslint-disable-line no-console
-    await run("verify", {
+    await run('verify', {
       address: contract.address,
       constructorArgs: constructorArgsModule,
       constructorArgsParams,

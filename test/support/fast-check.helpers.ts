@@ -1,5 +1,5 @@
-import { bigUintN, nat } from "fast-check"
-import { BigNumber } from "ethers"
+import { bigUintN, nat } from 'fast-check'
+import { BigNumber } from 'ethers'
 
 export function amountNum(max?: number) {
   return nat({ max })

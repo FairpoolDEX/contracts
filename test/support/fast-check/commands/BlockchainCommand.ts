@@ -22,17 +22,17 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
     const [modelResult, realResult] = await Promise.allSettled([modelTxPromise, realTxPromise])
     try {
       expect(modelResult.status).to.equal(realResult.status)
-      if (modelResult.status === "fulfilled" && realResult.status === "fulfilled") {
+      if (modelResult.status === 'fulfilled' && realResult.status === 'fulfilled') {
         expect(modelResult.value).to.deep.equal(realResult.value)
-      } else if (modelResult.status === "rejected" && realResult.status === "rejected") {
+      } else if (modelResult.status === 'rejected' && realResult.status === 'rejected') {
         expect(modelResult.reason.toString()).to.equal(realResult.reason.toString())
         if (modelResult.reason instanceof ImplementationError || realResult.reason instanceof ImplementationError) {
           throw new Error('Unexpected ImplementationError')
         }
       }
     } catch (e) {
-      if (modelResult.status === "rejected") e.message += "\n\nModel " + modelResult.reason.stack
-      if (realResult.status === "rejected") e.message += "\n\nReal " + realResult.reason.stack
+      if (modelResult.status === 'rejected') e.message += '\n\nModel ' + modelResult.reason.stack
+      if (realResult.status === 'rejected') e.message += '\n\nReal ' + realResult.reason.stack
       throw e
     }
   }
@@ -63,6 +63,6 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
   }
 
   async getRealOutgoingTransferAmountSum(real: Real, tokenAddress: Address, userAddresses: Address[]) {
-    throw impl("Use events")
+    throw impl('Use events')
   }
 }

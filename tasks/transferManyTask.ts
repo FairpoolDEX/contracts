@@ -49,12 +49,12 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const { network } = hre
   const balancesCSV = fs.readFileSync(balancesPath)
   const expectations: TransferManyExpectationsMap = (await import(expectationsPath)).expectations
-  console.info(`Parsing balances`)
+  console.info('Parsing balances')
   const balances = await parseBalancesCSV(balancesCSV)
   console.info(`Attaching to ${contractName} contract at ${contractAddress}`)
   const ContractFactory = await hre.ethers.getContractFactory(contractName)
   const contract = await ContractFactory.attach(contractAddress)
-  console.info(`Calling transferMany`)
+  console.info('Calling transferMany')
   await transferMany(contract, balances, expectations, 400, network.name as NetworkName, dry, console.info.bind(console))
-  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }

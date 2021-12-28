@@ -28,8 +28,8 @@ export const maxSupply = 969163000 * airdropRate
 
 export const deployments: Deployment[] = [
   {
-    network: "mainnet",
-    address: "0x1bb022ab668085c6417b7d7007b0fbd53bacc383",
+    network: 'mainnet',
+    address: '0x1bb022ab668085c6417b7d7007b0fbd53bacc383',
   },
 ]
 
@@ -40,9 +40,9 @@ export function fromShieldToBull(bn: BigNumber): BigNumber {
 type Claims = { [index: string]: string }
 
 export const claims: Claims = {
-  "0xC30C915dE5FC456F00BaFea00b8fF2a24b3b384d": toTokenAmountString("100"),
-  "0x77BD3E7f5b353834EB93CF8076e2500BD2ADBff1": toTokenAmountString("20"),
-  "0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5": toTokenAmountString("400"),
+  '0xC30C915dE5FC456F00BaFea00b8fF2a24b3b384d': toTokenAmountString('100'),
+  '0x77BD3E7f5b353834EB93CF8076e2500BD2ADBff1': toTokenAmountString('20'),
+  '0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5': toTokenAmountString('400'),
 }
 
 export async function getClaims(token: any, claimers: string[]): Promise<Claims> {

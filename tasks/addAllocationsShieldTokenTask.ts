@@ -7,7 +7,7 @@ export async function addAllocationsShieldTokenTask(args: TaskArguments, hre: Ha
 
   console.log(`Attaching to contract ${address}...`)
 
-  const Token = await hre.ethers.getContractFactory("ShieldToken")
+  const Token = await hre.ethers.getContractFactory('ShieldToken')
   const token = await Token.attach(address)
 
   for (const [vestingTypeIndex, allocation] of Object.entries(allocations)) {

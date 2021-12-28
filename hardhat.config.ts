@@ -24,16 +24,16 @@ import { transferManyTask } from './tasks/transferManyTask'
 
 dotEnvConfig()
 
-const mnemonic = process.env.MNEMONIC || ""
+const mnemonic = process.env.MNEMONIC || ''
 
 const etherscanApikey = process.env.ETHERSCAN_API_KEY
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: 'hardhat',
   solidity: {
     compilers: [
       {
-        version: "0.8.4",
+        version: '0.8.4',
         settings: {
           optimizer: {
             enabled: true,
@@ -42,7 +42,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        version: "0.5.16",
+        version: '0.5.16',
         settings: {
           optimizer: {
             enabled: true,
@@ -51,7 +51,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        version: "0.6.6",
+        version: '0.6.6',
         settings: {
           optimizer: {
             enabled: true,
@@ -72,7 +72,7 @@ const config: HardhatUserConfig = {
       // },
       blockGasLimit: 8000000,
       accounts: {
-        mnemonic: process.env.MNEMONIC || "",
+        mnemonic: process.env.MNEMONIC || '',
       },
     },
     localhost: {
@@ -101,7 +101,7 @@ const config: HardhatUserConfig = {
       timeout: 2 * 60 * 1000,
     },
     bscmainnet: {
-      url: "https://bsc-dataseed.binance.org/",
+      url: 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
@@ -110,7 +110,7 @@ const config: HardhatUserConfig = {
       timeout: 24 * 60 * 60 * 1000,
     },
     bsctestnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
@@ -119,7 +119,7 @@ const config: HardhatUserConfig = {
       timeout: 2 * 60 * 1000,
     },
     avaxmainnet: {
-      url: "https://api.avax.network/ext/bc/C/rpc",
+      url: 'https://api.avax.network/ext/bc/C/rpc',
       chainId: 43114,
       gasPrice,
       gasMultiplier: 1.2,
@@ -128,7 +128,7 @@ const config: HardhatUserConfig = {
       timeout: 24 * 60 * 60 * 1000,
     },
     avaxtestnet: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      url: 'https://api.avax-test.network/ext/bc/C/rpc',
       chainId: 43113,
       gasPrice,
       gasMultiplier: 1.2,
@@ -143,24 +143,24 @@ const config: HardhatUserConfig = {
   watcher: {
     run: {
       tasks: [
-        "clean",
-        { command: "compile", params: { quiet: true } },
-        { command: "test", params: { noCompile: true, testFiles: ["testfile.ts"] } },
+        'clean',
+        { command: 'compile', params: { quiet: true } },
+        { command: 'test', params: { noCompile: true, testFiles: ['testfile.ts'] } },
       ],
     },
   },
   typechain: {
     externalArtifacts: [
-      "node_modules/@uniswap/v2-core/build/!(Combined-Json).json",
-      "node_modules/@uniswap/v2-periphery/build/!(Combined-Json).json",
+      'node_modules/@uniswap/v2-core/build/!(Combined-Json).json',
+      'node_modules/@uniswap/v2-periphery/build/!(Combined-Json).json',
     ],
   },
   dependencyCompiler: {
     paths: [
-      "@uniswap/v2-core/contracts/UniswapV2Pair.sol",
-      "@uniswap/v2-core/contracts/UniswapV2Factory.sol",
-      "@uniswap/v2-periphery/contracts/UniswapV2Router02.sol",
-      "@uniswap/v2-periphery/contracts/test/WETH9.sol",
+      '@uniswap/v2-core/contracts/UniswapV2Pair.sol',
+      '@uniswap/v2-core/contracts/UniswapV2Factory.sol',
+      '@uniswap/v2-periphery/contracts/UniswapV2Router02.sol',
+      '@uniswap/v2-periphery/contracts/test/WETH9.sol',
     ],
     // path: `${os.tmpdir()}/hardhat-dependency-compiler`,
   },
@@ -170,70 +170,70 @@ const config: HardhatUserConfig = {
   // },
 }
 
-task("deployShieldToken", "Deploy ShieldToken contract")
+task('deployShieldToken', 'Deploy ShieldToken contract')
   .setAction(deployShieldTokenTask)
 
-task("deployBullToken", "Deploy BullToken contract")
+task('deployBullToken', 'Deploy BullToken contract')
   .setAction(deployBullTokenTask)
 
-task("deployMCP", "Deploy MCP contract")
-  .addParam("feeDivisorMin", "Minimal fee divisor", 100, types.int)
+task('deployMCP', 'Deploy MCP contract')
+  .addParam('feeDivisorMin', 'Minimal fee divisor', 100, types.int)
   .setAction(deployMCPTask)
 
-task("deployContract", "Deploy a contract")
-  .addParam("contract", "Contract name", undefined, types.string)
-  .addOptionalParam("upgradeable", "Deploy with upgradeable proxy", false, types.boolean)
-  .addOptionalParam("constructorArgsModule", "File path to a javascript module that exports the list of arguments.", undefined, types.inputFile)
-  .addOptionalVariadicPositionalParam("constructorArgsParams", "Contract constructor arguments. Ignored if the --constructorArgsModule option is used.", [])
+task('deployContract', 'Deploy a contract')
+  .addParam('contract', 'Contract name', undefined, types.string)
+  .addOptionalParam('upgradeable', 'Deploy with upgradeable proxy', false, types.boolean)
+  .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
+  .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
   .setAction(deployContractTask)
 
-task("transferManyShieldToken", "Call transferManyShield for allocations without lockup period")
-  .addParam("token", "SHLD token contract address")
-  .addParam("allocations", "JSON with allocations")
-  .addParam("chunk", "Number of recipients in one chunk. Default value is 100.", 100, types.int)
+task('transferManyShieldToken', 'Call transferManyShield for allocations without lockup period')
+  .addParam('token', 'SHLD token contract address')
+  .addParam('allocations', 'JSON with allocations')
+  .addParam('chunk', 'Number of recipients in one chunk. Default value is 100.', 100, types.int)
   .setAction(transferManyShieldTokenTask)
 
-task("addAllocations", "Call addAllocations() for allocations with lockup period")
-  .addParam("token", "SHLD token contract address")
-  .addParam("allocations", "JSON with allocations")
+task('addAllocations', 'Call addAllocations() for allocations with lockup period')
+  .addParam('token', 'SHLD token contract address')
+  .addParam('allocations', 'JSON with allocations')
   .setAction(addAllocationsShieldTokenTask)
 
-task("setClaims", "Call setClaims() on BULL token contract")
-  .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
-  .addParam("token", "BULL token contract address", "", types.string)
-  .addParam("nextfolder", "Folder with CSV files containing next SHLD balances (mult by 3)", "", types.string)
-  .addParam("prevfolder", "Folder with CSV files containing prev SHLD balances (to set their claims to 0 if they don't hold SHLD anymore)", "", types.string)
-  .addParam("retrofolder", "Folder with CSV files containing next SHLD balances (mult by 1)", "", types.string)
-  .addParam("blacklistfolder", "Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)", "", types.string)
-  .addParam("expectations", "JSON file with test expectations")
+task('setClaims', 'Call setClaims() on BULL token contract')
+  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
+  .addParam('token', 'BULL token contract address', '', types.string)
+  .addParam('nextfolder', 'Folder with CSV files containing next SHLD balances (mult by 3)', '', types.string)
+  .addParam('prevfolder', 'Folder with CSV files containing prev SHLD balances (to set their claims to 0 if they don\'t hold SHLD anymore)', '', types.string)
+  .addParam('retrofolder', 'Folder with CSV files containing next SHLD balances (mult by 1)', '', types.string)
+  .addParam('blacklistfolder', 'Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)', '', types.string)
+  .addParam('expectations', 'JSON file with test expectations')
   .setAction(setClaimsBullTokenTask)
 
-task("claim", "Call claim() on BULL token contract")
-  .addParam("token", "BULL token contract address")
-  .addParam("claimer", "Claim transaction sender address")
-  .addParam("claims", "CSV file with addresses")
+task('claim', 'Call claim() on BULL token contract')
+  .addParam('token', 'BULL token contract address')
+  .addParam('claimer', 'Claim transaction sender address')
+  .addParam('claims', 'CSV file with addresses')
   .setAction(claimBullTokenTask)
 
-task("rollback", "Change the balances of BullToken back to certain date")
-  .addParam("dry", "Dry-run: display planned actions but don't execute them", false, types.boolean, true)
-  .addParam("token", "BULL token contract address")
-  .addParam("from", "From block number", undefined, types.int, false)
-  .addParam("to", "To block number", undefined, types.int, false)
-  .addParam("pools", "BULL token Uniswap pools addresses (comma-separated)")
-  .addParam("holders", "CSV file with token holder addresses")
-  .addParam("expectations", "JSON file with test expectations")
+task('rollback', 'Change the balances of BullToken back to certain date')
+  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
+  .addParam('token', 'BULL token contract address')
+  .addParam('from', 'From block number', undefined, types.int, false)
+  .addParam('to', 'To block number', undefined, types.int, false)
+  .addParam('pools', 'BULL token Uniswap pools addresses (comma-separated)')
+  .addParam('holders', 'CSV file with token holder addresses')
+  .addParam('expectations', 'JSON file with test expectations')
   .setAction(rollbackBullTokenTask)
 
-task("upgradeToken", "Upgrade a token contract")
-  .addParam("name", "Contract name")
-  .addParam("address", "Contract proxy address")
+task('upgradeToken', 'Upgrade a token contract')
+  .addParam('name', 'Contract name')
+  .addParam('address', 'Contract proxy address')
   .setAction(upgradeTokenTask)
 
-task("transferMany", "Upgrade a token contract")
-  .addParam("contract", "Contract name")
-  .addParam("address", "Contract address")
-  .addParam("balances", "File with balances (download from blockchain explorer)")
-  .addParam("expectations", "JSON file with test expectations")
+task('transferMany', 'Upgrade a token contract')
+  .addParam('contract', 'Contract name')
+  .addParam('address', 'Contract address')
+  .addParam('balances', 'File with balances (download from blockchain explorer)')
+  .addParam('expectations', 'JSON file with test expectations')
   .setAction(transferManyTask)
 
 export default config

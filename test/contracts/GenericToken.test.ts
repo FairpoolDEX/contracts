@@ -6,7 +6,7 @@ import { GenericToken } from '../../typechain'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
 
-describe("GenericToken", async function() {
+describe('GenericToken', async function () {
   let owner: SignerWithAddress
   let bob: SignerWithAddress
   let sam: SignerWithAddress
@@ -24,9 +24,8 @@ describe("GenericToken", async function() {
   before(async () => {
     const signers = [owner, bob, sam, bella, sally] = await ethers.getSigners()
 
-
-    const genericFactory = await ethers.getContractFactory("GenericToken")
-    generic = await genericFactory.deploy("Generic", "GEN", 1000000, [], []) as GenericToken
+    const genericFactory = await ethers.getContractFactory('GenericToken')
+    generic = await genericFactory.deploy('Generic', 'GEN', 1000000, [], []) as GenericToken
 
     now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
   })
@@ -39,7 +38,7 @@ describe("GenericToken", async function() {
     await revertToSnapshot([snapshot])
   })
 
-  it("must allow to transfer", async () => {
+  it('must allow to transfer', async () => {
     const balanceExpected = 100
     await generic.connect(owner).transfer(bob.address, balanceExpected)
     const balanceActual = await generic.balanceOf(bob.address)

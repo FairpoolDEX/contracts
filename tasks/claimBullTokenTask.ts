@@ -1,19 +1,19 @@
-import fs from "fs"
-import { strict as assert } from "assert"
-import { uniq } from "lodash"
-import neatcsv from "neat-csv"
-import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types"
-import type { Address, Ethers } from "../util/types"
-import { Contract } from "ethers"
+import fs from 'fs'
+import { strict as assert } from 'assert'
+import { uniq } from 'lodash'
+import neatcsv from 'neat-csv'
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import type { Address, Ethers } from '../util/types'
+import { Contract } from 'ethers'
 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {
   const rows = await neatcsv(data)
-  return uniq(rows.map((row) => row["Address"].toLowerCase()))
+  return uniq(rows.map((row) => row['Address'].toLowerCase()))
 }
 
 export async function claimBullToken(token: Contract, addresses: Address[], ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
   if (addresses.length > 300) {
-    throw new Error(`Can't claim if addresses array is longer than 300 elements`)
+    throw new Error('Can\'t claim if addresses array is longer than 300 elements')
   }
   const tx = await token.claimMany(addresses)
   info && info(`[INFO] TX hash: ${tx.hash}`)
@@ -28,8 +28,8 @@ export async function claimBullTokenTask(args: TaskArguments, hre: HardhatRuntim
   console.info(`[INFO] Reading addresses from ${claimsPath}`)
   const addresses = await parseAddresses(fs.readFileSync(claimsPath))
   console.info(`[INFO] Attaching to contract ${tokenAddress}`)
-  const Token = await ethers.getContractFactory("BullToken")
+  const Token = await ethers.getContractFactory('BullToken')
   const token = await Token.attach(tokenAddress)
-  console.info(`[INFO] Claiming $BULL`)
+  console.info('[INFO] Claiming $BULL')
   await claimBullToken(token, addresses, ethers, console.info.bind(console))
 }

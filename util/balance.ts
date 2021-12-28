@@ -1,9 +1,10 @@
+import { strict as assert } from 'assert'
 import { expect } from './expect'
 import { AmountBN } from './types'
 import neatcsv from 'neat-csv'
 import { CSVData } from './csv'
-import { toTokenAmount } from '../test/support/all.helpers'
-import Decimal from 'decimal.js'
+import { trimEnd } from 'lodash'
+import { utils } from 'ethers'
 
 export type BalanceMap = { [index: string]: AmountBN }
 
@@ -15,7 +16,8 @@ export async function parseBalancesCSV(data: CSVData): Promise<BalanceMap> {
     const amountRaw = rows[i]['Balance']
     console.log('[addressRaw, amountRaw]', [addressRaw, amountRaw])
     const addressParsed = addressRaw.toLowerCase()
-    const amountParsed = toTokenAmount(new Decimal(amountRaw))
+    const amountParsed = utils.parseUnits(amountRaw, 18)
+    assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), '0'), trimEnd(amountRaw, '0'), 'Can\'t parse balance')
     balances[addressParsed] = amountParsed
   }
   return balances

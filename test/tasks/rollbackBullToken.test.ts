@@ -11,7 +11,7 @@ import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
 import { BalanceMap } from '../../util/balance'
 
-xdescribe("rollbackBullToken", async () => {
+xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory
 
   let owner: SignerWithAddress, stranger: SignerWithAddress, alice: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress
@@ -21,7 +21,7 @@ xdescribe("rollbackBullToken", async () => {
   let addresses: Address[]
   let expectations: SetClaimsExpectationsMap
 
-  const defaultAmount = toTokenAmount("10000")
+  const defaultAmount = toTokenAmount('10000')
 
   const airdropFirstTimestamp = airdropStartTimestamp
   const airdropSecondTimestamp = airdropStartTimestamp + airdropStageDuration
@@ -40,7 +40,7 @@ xdescribe("rollbackBullToken", async () => {
   beforeEach(async () => {
     [owner, stranger, alice, bob, sam] = await ethers.getSigners()
 
-    bullTokenFactory = await ethers.getContractFactory("BullToken")
+    bullTokenFactory = await ethers.getContractFactory('BullToken')
     bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger) as BullToken
@@ -56,7 +56,7 @@ xdescribe("rollbackBullToken", async () => {
     }
     await setClaims(bullTokenWithOwner, balances, expectations)
 
-    const quoteTokenFactory = await ethers.getContractFactory("QuoteToken")
+    const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken
 
     const wethContractFactory = await getWETH9ContractFactory(ethers)
@@ -71,16 +71,16 @@ xdescribe("rollbackBullToken", async () => {
 
   // https://www.dextools.io/app/uniswap/pair-explorer/0x59b8c20ca527ff18e2515b68f28939d6dd3e867b
   // https://etherscan.io/address/0x1bb022ab668085c6417b7d7007b0fbd53bacc383
-  it("should download marked transfers", async () => {
+  it('should download marked transfers', async () => {
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)
       await claimBullToken(bullTokenWithAlice, addresses, ethers)
       const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, ethers)
 
-      await bullTokenWithStranger.transfer(alice.address, toTokenAmount("10"))
-      await bullTokenWithAlice.transfer(stranger.address, toTokenAmount("5"))
+      await bullTokenWithStranger.transfer(alice.address, toTokenAmount('10'))
+      await bullTokenWithAlice.transfer(stranger.address, toTokenAmount('5'))
 
-      await addLiquidity(uniswapV2Router, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, toTokenAmount("10000000"), toTokenAmount("20000"), owner.address)
+      await addLiquidity(uniswapV2Router, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, toTokenAmount('10000000'), toTokenAmount('20000'), owner.address)
 
       // const { moves, buys, sells } = await getTransferSet(deployedAddress)
       //
@@ -95,7 +95,7 @@ xdescribe("rollbackBullToken", async () => {
     }, airdropFirstTimestamp)
   })
 
-  it("should allow to claim the tokens", async () => {
+  it('should allow to claim the tokens', async () => {
     // TODO: Sells and buys should only be reflected on the next airdrop
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)

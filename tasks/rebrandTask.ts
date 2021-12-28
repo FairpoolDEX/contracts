@@ -27,7 +27,7 @@ async function migrateShieldToken() {
 export async function rebrandTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { dry } = args
   const { ethers, network } = hre
-  console.info(`Rebranding`)
+  console.info('Rebranding')
 
   await migrateBullToken()
   await migrateShieldToken()

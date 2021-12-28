@@ -1,5 +1,5 @@
 export function demandIntegerEnvVar(name: string, unit: string) {
-  const value = parseInt(process.env[name] || "0", 10)
+  const value = parseInt(process.env[name] || '0', 10)
   if (value) {
     console.info(`${name} = ${value} ${unit}`)
   } else {

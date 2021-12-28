@@ -9,9 +9,9 @@ export async function deployMCPTask(args: TaskArguments, hre: HardhatRuntimeEnvi
   console.info(`NETWORK = ${network.name}`)
   console.info(`export MCP_DEPLOYER=${deployer.address}`)
 
-  const MCP = await ethers.getContractFactory("MCP")
+  const MCP = await ethers.getContractFactory('MCP')
   const mcp = await MCP.deploy(feeDivisorMin)
-  console.log(`MCP deployed`)
+  console.log('MCP deployed')
   console.log(`export MCP_ADDRESS=${mcp.address}`)
 
   console.info('Run this command to verify the contract:')

@@ -1,1 +1,1 @@
-export default [/* feeDivisorMin = */ 100]
+export default [100]

@@ -21,7 +21,7 @@ type FlaggedTransfer = Transfer & {
   type: FlaggedTransferType
 }
 
-type FlaggedTransferType = "move" | "buy" | "sell"
+type FlaggedTransferType = 'move' | 'buy' | 'sell'
 
 export interface RollbackBullTokenExpectationsMap {
   transfers: EtherscanTransfer[]
@@ -56,12 +56,12 @@ export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag
 
 export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: Address[]): Promise<Array<FlaggedTransfer>> {
   return transfers.map((t) => {
-    let type: FlaggedTransferType = "move"
+    let type: FlaggedTransferType = 'move'
     if (poolAddresses.includes(t.from)) {
-      type = "buy"
+      type = 'buy'
     }
     if (poolAddresses.includes(t.to)) {
-      type = "sell"
+      type = 'sell'
     }
     return Object.assign({}, t, { type })
   })
@@ -69,24 +69,24 @@ export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: 
 
 export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[]): Promise<{ moves: FlaggedTransfer[], buys: FlaggedTransfer[], sells: FlaggedTransfer[] }> {
   return {
-    moves: flaggedTransfers.filter((ft) => ft.type === "move"),
-    buys: flaggedTransfers.filter((ft) => ft.type === "buy"),
-    sells: flaggedTransfers.filter((ft) => ft.type === "sell"),
+    moves: flaggedTransfers.filter((ft) => ft.type === 'move'),
+    buys: flaggedTransfers.filter((ft) => ft.type === 'buy'),
+    sells: flaggedTransfers.filter((ft) => ft.type === 'sell'),
   }
 }
 
 export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
   const transfers = await getTransfers(token, from, to)
-  const blockNumbers = map(transfers, "blockNumber")
+  const blockNumbers = map(transfers, 'blockNumber')
   expect(min(blockNumbers)).greaterThan(from)
   expect(max(blockNumbers)).lessThan(to)
   expect(blockNumbers).to.deep.equal(sortBy(blockNumbers))
   expect(transfers.length).to.equal(expectations.transfers.length)
   const transfersR = transfers.slice(0).reverse()
   const transfersRF = await getFlaggedTransfers(transfersR, poolAddresses)
-  const moves = transfersRF.filter(t => t.type === "move")
-  const buys = transfersRF.filter(t => t.type === "buy")
-  const sells = transfersRF.filter(t => t.type === "sell")
+  const moves = transfersRF.filter(t => t.type === 'move')
+  const buys = transfersRF.filter(t => t.type === 'buy')
+  const sells = transfersRF.filter(t => t.type === 'sell')
   const buyers = buys.map(t => t.to)
   const sellers = sells.map(t => t.from)
   expect(moves.length).greaterThan(0)
@@ -136,7 +136,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
       await tx.wait(minConfirmations)
     }
 
-    const { getUniswapV2PairContractFactory } = await import("../test/support/Uniswap.helpers")
+    const { getUniswapV2PairContractFactory } = await import('../test/support/Uniswap.helpers')
 
     for (let i = 0; i < poolAddresses.length; i++) {
       if (info) info(`Sending syncTx ${i} to ${poolAddresses[i]}`)
@@ -148,11 +148,11 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
       await tx.wait(minConfirmations)
     }
 
-    if (info) info(`Checking expectations`)
+    if (info) info('Checking expectations')
     await expectBalancesMatchExpectations(token, expectations)
-    await expectBalancesAreEqual(token, from, "latest", holderAddresses)
+    await expectBalancesAreEqual(token, from, 'latest', holderAddresses)
 
-    if (info) info(`Sending disableRollbackManyTx`)
+    if (info) info('Sending disableRollbackManyTx')
     const finishRollbackManyTx = await token.finishRollbackMany()
     if (info) info(`Awaiting finishRollbackManyTx: ${finishRollbackManyTx.hash}`)
     await mineBlocks(minConfirmations, ethers)
@@ -188,11 +188,11 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const { token: tokenAddress, from, to, pools: poolAddressesString, holders: holderAddressesPath, expectations: expectationsPath, dry } = args
   const { ethers, network } = hre
   console.info(`Attaching to contract ${tokenAddress}`)
-  const Token = await ethers.getContractFactory("BullToken")
+  const Token = await ethers.getContractFactory('BullToken')
   const token = await Token.attach(tokenAddress)
-  const poolAddresses: Address[] = poolAddressesString.split(",")
+  const poolAddresses: Address[] = poolAddressesString.split(',')
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
-  const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row["HolderAddress"])
+  const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row['HolderAddress'])
   const expectations: RollbackBullTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
   const provider = ethers.provider
   // console.log('provider', provider)
@@ -204,9 +204,9 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
 
   const net = await ethers.provider.getNetwork()
   if (net.chainId === 31337) {
-    const snapshot = await ethers.provider.send("evm_snapshot", [])
-    process.on("SIGINT", async function() {
-      await ethers.provider.send("evm_revert", [snapshot])
+    const snapshot = await ethers.provider.send('evm_snapshot', [])
+    process.on('SIGINT', async function () {
+      await ethers.provider.send('evm_revert', [snapshot])
     })
   }
 
@@ -215,7 +215,7 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   // balance.then(function(balanceData) {
   //   console.log(balanceData)
   // })
-  console.info(`Rolling back the token`)
+  console.info('Rolling back the token')
   await rollbackBullToken(token, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
-  if (dry) console.info(`Dry run completed, no transactions were sent. Remove the '--dry true' flag to send transactions.`)
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
