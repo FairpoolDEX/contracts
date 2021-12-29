@@ -100,6 +100,7 @@ function getWhitespaceRuleNames() {
     'switch-colon-spacing',
     'template-tag-spacing',
     'import/newline-after-import',
+    '@typescript-eslint/type-annotation-spacing',
   ]
 
 }

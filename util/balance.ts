@@ -10,7 +10,10 @@ import { Address } from './address'
 
 export type BalanceMap = { [index: string]: AmountBN }
 
-export type BalanceEntry = [Address, AmountBN]
+export interface BalanceBN {
+  address: Address
+  amount: AmountBN
+}
 
 export async function parseBalancesCSV(data: CSVData): Promise<BalanceMap> {
   const balances: BalanceMap = {}
@@ -36,14 +39,10 @@ export function padAmount(amountRaw: string, decimals = 18) {
   return `${whole}.${fraction.padEnd(decimals, '0')}`
 }
 
-export function getBalanceAmount(balance: BalanceEntry): AmountBN {
-  return balance[1]
+export function sumBalances(balances: BalanceBN[]) {
+  return sumBigNumbers(balances.map(b => b.amount))
 }
 
-export function getBalanceAddress(balance: BalanceEntry): Address {
-  return balance[0]
-}
-
-export function sumBalances(balances: BalanceEntry[]) {
-  return sumBigNumbers(balances.map(getBalanceAmount))
+export function getBalancesFromMap(balanceMap: BalanceMap): BalanceBN[] {
+  return Object.entries(balanceMap).map(([address, amount]) => ({ address, amount }))
 }
