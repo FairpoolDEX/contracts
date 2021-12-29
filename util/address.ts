@@ -1,11 +1,10 @@
 import { BalanceMap } from './balance'
-
-export type Address = string
+import { Address, normalizeAddress } from '../models/Address'
 
 export type RewriteAddressMap = Array<[Address, Address]>
 
 export function getRewriteAddressMap(raw: RewriteAddressMap): RewriteAddressMap {
-  return raw.map(([from, to]) => [from.toLowerCase(), to.toLowerCase()])
+  return raw.map(([from, to]) => [normalizeAddress(from), normalizeAddress(to)])
 }
 
 export function rewriteAddress(rewrites: RewriteAddressMap, address: Address) {

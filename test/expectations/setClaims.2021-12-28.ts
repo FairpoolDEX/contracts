@@ -6,7 +6,7 @@ import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { BalanceMap } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { merge } from 'lodash'
-import { CryptStylo, deployer, winooze } from '../support/address'
+import { CryptStylo, deployer, winooze } from '../../data/allAddresses'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalanceMap = {
   [deployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),

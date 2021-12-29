@@ -9,15 +9,29 @@ import { map } from 'lodash'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { getGasLimit } from '../util/gas'
 import { network } from 'hardhat'
-import { NetworkName, withFeeData } from '../util/network'
+import { withFeeData } from '../util/network'
 import { FeeData } from '@ethersproject/abstract-provider'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
-import { Address } from '../util/address'
+import { Address } from '../models/Address'
+import { NetworkName, NetworkNameSchema } from '../models/Network'
 
-export interface TransferManyExpectationsMap {
-  balances: { [address: string]: BigNumber },
-  totalAmount: BigNumber,
+export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
+  const { network, ethers } = hre
+  const [deployer] = await ethers.getSigners()
+  const feeData = await deployer.getFeeData()
+  const balancesCSV = fs.readFileSync(balancesPath)
+  const expectations: TransferManyExpectationsMap = await importExpectations(expectationsPath)
+  console.info('Parsing balances')
+  const balances = await parseBalancesCSV(balancesCSV)
+  console.info(`Attaching to ${contractName} contract at ${contractAddress}`)
+  const ContractFactory = await hre.ethers.getContractFactory(contractName)
+  const contract = await ContractFactory.attach(contractAddress)
+  console.info('Calling transferMany')
+  const networkName = NetworkNameSchema.parse(network.name)
+  await transferMany(contract, balances, expectations, 400, networkName, feeData, dry, console.info.bind(console))
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
 export async function transferMany(contract: any, balances: BalanceMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, feeData: FeeData, dry = false, log?: Logger): Promise<void> {
@@ -50,19 +64,7 @@ interface TransferManyTaskArguments extends TaskArguments {
   contractAddress: Address
 }
 
-export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
-  const { network, ethers } = hre
-  const [deployer] = await ethers.getSigners()
-  const feeData = await deployer.getFeeData()
-  const balancesCSV = fs.readFileSync(balancesPath)
-  const expectations: TransferManyExpectationsMap = await importExpectations(expectationsPath)
-  console.info('Parsing balances')
-  const balances = await parseBalancesCSV(balancesCSV)
-  console.info(`Attaching to ${contractName} contract at ${contractAddress}`)
-  const ContractFactory = await hre.ethers.getContractFactory(contractName)
-  const contract = await ContractFactory.attach(contractAddress)
-  console.info('Calling transferMany')
-  await transferMany(contract, balances, expectations, 400, network.name as NetworkName, feeData, dry, console.info.bind(console))
-  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+export interface TransferManyExpectationsMap {
+  balances: { [address: string]: BigNumber },
+  totalAmount: BigNumber,
 }

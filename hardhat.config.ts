@@ -1,4 +1,3 @@
-import { HardhatUserConfig } from 'hardhat/types'
 import { task, types } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
@@ -8,7 +7,6 @@ import 'hardhat-watcher'
 import 'solidity-coverage'
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-dependency-compiler'
-import { config as dotEnvConfig } from 'dotenv'
 import { deployShieldTokenTask } from './tasks/deployShieldTokenTask'
 import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
@@ -19,16 +17,12 @@ import { upgradeTokenTask } from './tasks/upgradeTokenTask'
 import { rollbackBullTokenTask } from './tasks/rollbackBullToken'
 import { deployMCPTask } from './tasks/deployMCPTask'
 import { deployContractTask } from './tasks/deployContractTask'
-import { maxFeePerGas as gasPrice } from './util/gas'
 import { transferManyTask } from './tasks/transferManyTask'
+import { HardhatUserConfig } from 'hardhat/types'
+import { maxFeePerGas as gasPrice } from './util/gas'
+import { mnemonic } from './util/config'
 
-dotEnvConfig()
-
-const mnemonic = process.env.MNEMONIC || ''
-
-const etherscanApikey = process.env.ETHERSCAN_API_KEY
-
-const config: HardhatUserConfig = {
+export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   solidity: {
     compilers: [
@@ -138,7 +132,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: etherscanApikey,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   watcher: {
     run: {
@@ -169,6 +163,8 @@ const config: HardhatUserConfig = {
   //   sources: "+(./contracts)",
   // },
 }
+
+export default config
 
 task('deployShieldToken', 'Deploy ShieldToken contract')
   .setAction(deployShieldTokenTask)
@@ -238,5 +234,3 @@ task('transferMany', 'Upgrade a token contract')
   .addParam('balances', 'File with balances (download from blockchain explorer)')
   .addParam('expectations', 'JSON file with test expectations')
   .setAction(transferManyTask)
-
-export default config

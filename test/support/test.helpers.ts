@@ -1,14 +1,10 @@
 import { ethers } from 'hardhat'
 import execa from 'execa'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
-import { string } from 'hardhat/internal/core/params/argumentTypes'
 import { MaxUint256 } from './all.helpers'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from '../../util/expect'
 import { Ethers } from '../../util/types'
-import { Address } from '../../util/address'
-
-export const $zero = '0x0000000000000000000000000000000000000000'
+import { Address } from '../../models/Address'
 
 export const zero = BigNumber.from(0)
 

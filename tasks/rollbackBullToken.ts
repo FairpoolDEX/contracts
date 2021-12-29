@@ -10,8 +10,8 @@ import { ContractTransaction } from '@ethersproject/contracts'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { rollbackDate } from '../test/support/rollback.helpers'
 import { TransferTopic } from '../util/topic'
-import { Address } from '../util/address'
 import { importExpectations } from '../util/expectation'
+import { Address } from '../models/Address'
 
 type Transfer = {
   from: Address,

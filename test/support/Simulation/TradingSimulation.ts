@@ -4,12 +4,13 @@ import { BigNumber, Contract } from 'ethers'
 import { Ethers } from '../../../util/types'
 import { MaxUint256, scale } from '../all.helpers'
 import { upgrades } from 'hardhat'
-import { getLatestBlockTimestamp, $zero } from '../test.helpers'
+import { getLatestBlockTimestamp } from '../test.helpers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../Uniswap.helpers'
 import { flatten } from 'lodash'
 import { nail } from '../../../util/string'
 import { expect } from '../../../util/expect'
-import $debug, { Debugger } from 'debug'
+import { Debugger } from 'debug'
+import { $zero } from '../../../data/allAddresses'
 
 export class TradingSimulation {
   constructor(

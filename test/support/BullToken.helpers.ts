@@ -6,7 +6,7 @@ import { parseAddresses } from '../../tasks/claimBullTokenTask'
 import { maxSupplyTokenAmount } from './ShieldToken.helpers'
 import { Deployment } from '../../util/deployment'
 import { BalanceMap } from '../../util/balance'
-import { Address } from '../../util/address'
+import { Address } from '../../models/Address'
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 

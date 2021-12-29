@@ -4,7 +4,7 @@ import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { MCPCommand } from '../MCPCommand'
 import { expect } from '../../../../util/expect'
 import { MCPModel, MCPReal } from '../MCPBlockchainModel'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export abstract class BuyCommand extends MCPCommand<unknown> implements fc.AsyncCommand<MCPModel, MCPReal> {
   protected constructor(readonly buyer: Address, readonly seller: Address, readonly guaranteedAmount: AmountBN, readonly guaranteedPrice: PriceBN, readonly expirationDate: Date, readonly protectionPrice: PriceBN) {

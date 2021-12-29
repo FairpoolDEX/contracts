@@ -9,7 +9,7 @@ import { UniswapV2Pair } from '../../../../typechain'
 import { OfferCreated } from '../models/Events'
 import { PairCreated } from '../../Uniswap/models/Events'
 import { impl } from '../../../../util/todo'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   readonly users: Address[] = []
