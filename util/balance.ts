@@ -6,7 +6,7 @@ import { CSVData } from './csv'
 import { trimEnd } from 'lodash'
 import { utils } from 'ethers'
 import { sumBigNumbers } from './bignumber'
-import { Address } from './address'
+import { Address, AddressSchema } from '../models/Address'
 
 export type BalanceMap = { [index: string]: AmountBN }
 
@@ -22,7 +22,7 @@ export async function parseBalancesCSV(data: CSVData): Promise<BalanceMap> {
     const addressRaw = rows[i]['HolderAddress']
     const amountRaw = rows[i]['Balance']
     // console.log('[addressRaw, amountRaw]', [addressRaw, amountRaw])
-    const addressParsed = addressRaw.toLowerCase()
+    const addressParsed = AddressSchema.parse(addressRaw)
     const amountParsed = utils.parseUnits(amountRaw, 18)
     assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), '0'), trimEnd(amountRaw, '0'), 'Can\'t parse balance')
     balances[addressParsed] = amountParsed

@@ -2,7 +2,7 @@ import { AmountNum, Timestamp } from '../../../../util/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, ContributionIndex, OfferIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { demand } from '../../../../util/demand'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export class CreateContributionCommand extends ColiquidityCommand<ContributionIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(

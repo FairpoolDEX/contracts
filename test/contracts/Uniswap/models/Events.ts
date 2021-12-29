@@ -1,6 +1,6 @@
 // Emitted by UniswapV2Factory
 import { AmountNum, Timestamp } from '../../../../util/types'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export interface PairCreated {
   timestamp: Timestamp

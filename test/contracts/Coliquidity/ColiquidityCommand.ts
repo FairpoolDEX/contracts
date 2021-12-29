@@ -5,8 +5,8 @@ import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from 
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
 import { demand } from '../../../util/demand'
 import { expect } from '../../../util/expect'
-import { $zero } from '../../support/test.helpers'
-import { Address } from '../../../util/address'
+import { Address } from '../../../models/Address'
+import { $zero } from '../../../data/allAddresses'
 
 export abstract class ColiquidityCommand<Result> extends BlockchainCommand<ColiquidityModel, ColiquidityReal, Result> {
   readonly maker?: Address

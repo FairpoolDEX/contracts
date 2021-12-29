@@ -1,7 +1,7 @@
 import { expect } from '../../util/expect'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { $zero, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
+import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
 import { ShieldToken, TraderLoot } from '../../typechain'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
@@ -11,6 +11,7 @@ import { promises as fs } from 'fs'
 import * as os from 'os'
 import { range, toInteger } from 'lodash'
 import mkdirp from 'mkdirp'
+import { $zero } from '../../data/allAddresses'
 
 xdescribe('TraderLoot', async function () {
   let owner: SignerWithAddress

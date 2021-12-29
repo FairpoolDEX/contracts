@@ -5,7 +5,7 @@ import { TokenModel } from '../../support/fast-check/models/TokenModel'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
 import { MCP } from '../../../typechain'
-import { Address } from '../../../util/address'
+import { Address } from '../../../models/Address'
 
 // export class MCPBlockchainModel {
 //   public mcp: MCPModel = {

@@ -8,7 +8,7 @@ import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from '../support/BullToken.helpers'
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { BalanceMap } from '../../util/balance'
-import { Address } from '../../util/address'
+import { Address } from '../../models/Address'
 
 describe('claimBullToken', async () => {
 

@@ -9,7 +9,7 @@ import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
 import { BalanceMap } from '../../util/balance'
-import { Address } from '../../util/address'
+import { Address } from '../../models/Address'
 
 xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory

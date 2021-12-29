@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { shuffle } from 'lodash'
-import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
 import { chunk } from '../test/support/all.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
@@ -8,8 +8,6 @@ import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 import { BalanceBN, BalanceMap, getBalancesFromMap, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
-import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
-import { Address, rewriteBalanceMap } from '../util/address'
 import { Logger } from '../util/log'
 import { sumBigNumbers } from '../util/bignumber'
 import { ContractName } from '../util/contract'
@@ -17,10 +15,38 @@ import { importExpectations } from '../util/expectation'
 import { impl } from '../util/todo'
 import { AddressTypeSchema } from '../models/AddressInfo'
 import { getAddressType } from '../data/allAddressInfos'
-import { RunId } from '../util/run'
+import { rebrandDummyRunId, RunId } from '../util/run'
+import { NetworkName, NetworkNameSchema } from '../models/Network'
+import { Address } from '../models/Address'
+import { ShieldTaskArguments } from '../util/task'
+import { $zero } from '../data/allAddresses'
+
+export interface RunnerContext {
+  runId: RunId
+  deployerAddress: Address
+  networkName: NetworkName
+  dry: boolean
+  log: Logger
+}
+
+export async function getRunnerContext(args: ShieldTaskArguments, hre: HardhatRuntimeEnvironment): Promise<RunnerContext> {
+  const { runId, dry } = args
+  const { network, ethers } = hre
+  const networkName = NetworkNameSchema.parse(network.name)
+  const [deployer] = await ethers.getSigners()
+  return {
+    runId,
+    networkName,
+    deployerAddress: deployer.address,
+    dry,
+    log: console.info.bind(console),
+  }
+}
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, runId, dry } = args
+  const { ethers } = hre
+  const context = await getRunnerContext(args, hre)
   const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
   const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
   const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
@@ -29,27 +55,27 @@ export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRu
   console.info('Parsing balances')
   const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
   console.info(`Attaching to contract ${contractAddress}`)
-  const Token = await hre.ethers.getContractFactory(contractName)
+  const Token = await ethers.getContractFactory(contractName)
   const token = await Token.attach(contractAddress)
   console.info('Setting claims')
-  await setClaims(token, balances, expectations, runId, 400, dry, console.info.bind(console))
+  await setClaims(token, balances, expectations, runId, 400, context)
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
-export async function setClaims(token: any, balanceMap: BalanceMap, expectations: SetClaimsExpectationsMap, runId: RunId, chunkSize = 325, dry = false, log?: Logger): Promise<void> {
+export async function setClaims(token: any, balanceMap: BalanceMap, expectations: SetClaimsExpectationsMap, runId: RunId, chunkSize = 325, context: RunnerContext): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
+  const { dry, log } = context
   for (const _address in expectations.balances) {
     const address = _address.toLowerCase()
     expect(balanceMap[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
   }
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
-  const balances = optimizeForGasRefund(unwrapSmartContractBalances(runId, getBalancesFromMap(balanceMap)))
+  const balances = optimizeForGasRefund(unwrapSmartContractBalances(context, getBalancesFromMap(balanceMap)))
   const balancesChunks = chunk(balances, chunkSize)
   const addresses = balances.map(b => b.address)
-  expect(await hasSmartContractAddress(addresses)).to.equal(expectations.hasSmartContractAddress)
   const totalSHLDAmount = sumBalances(balances)
   let totalBULLAmount = BigNumber.from(0)
   log && log('CUR', totalSHLDAmount.toString())
@@ -79,9 +105,9 @@ export async function setClaims(token: any, balanceMap: BalanceMap, expectations
   expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
 }
 
-export async function parseShieldBalancesCSV(data: CSVData) {
-  return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
-}
+// export async function parseShieldBalancesCSV(data: CSVData) {
+//   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
+// }
 
 export async function parseAllBalancesCSV(nextDatas: CSVData[], prevDatas: CSVData[], retroDatas: CSVData[], blacklistDatas: CSVData[]): Promise<BalanceMap> {
   const balances: BalanceMap = {}
@@ -124,8 +150,11 @@ export async function parseAllBalancesCSV(nextDatas: CSVData[], prevDatas: CSVDa
   return balances
 }
 
-async function hasSmartContractAddress(addresses: Address[]): Promise<boolean> {
-  throw impl(`
+export function optimizeForGasRefund(balances: BalanceBN[]) {
+  return shuffle(balances)
+}
+
+/** NOTES
   * Some smart contracts are multisigs, so the user can, technically, move the tokens
     * But those smart contracts don't exist on another network
     * Allow manual claims?
@@ -133,26 +162,23 @@ async function hasSmartContractAddress(addresses: Address[]): Promise<boolean> {
   * Some smart contracts are "lockers"
     * Liquidity pools
     * NFTrade staking contract
-  
   * Implement a function from locker smart contract address to locked user balances?
-  `)
-}
-
-export function optimizeForGasRefund(balances: BalanceBN[]) {
-  return shuffle(balances)
-}
-
-function unwrapSmartContractBalances(runId: RunId, balances: BalanceBN[]): BalanceBN[] {
+ */
+function unwrapSmartContractBalances(context: RunnerContext, balances: BalanceBN[]): BalanceBN[] {
   const newBalances: BalanceBN[] = []
-  return balances.reduce(unwrapSmartContractBalance.bind(null, runId), newBalances)
+  return balances.reduce((newBalances: BalanceBN[], balance: BalanceBN) => newBalances.concat(unwrapSmartContractBalance(context, balance)), newBalances)
 }
 
-function unwrapSmartContractBalance(runId: RunId, newBalances: BalanceBN[], balance: BalanceBN): BalanceBN[] {
-  const type = getAddressType(balance.address)
+function unwrapSmartContractBalance(context: RunnerContext, balance: BalanceBN): BalanceBN {
+  const { runId, deployerAddress, networkName } = context
+  const type = getAddressType(networkName, balance.address)
   switch (type) {
     case AddressTypeSchema.enum.Human:
-      newBalances.push(balance)
-      return newBalances
+      return balance
+    case AddressTypeSchema.enum.TeamFinanceLiquidityLocker:
+      return { ...balance, address: deployerAddress }
+    case AddressTypeSchema.enum.NFTrade:
+      return runId === rebrandDummyRunId ? { ...balance, address: $zero } : balance
     default:
       throw impl()
   }
@@ -162,10 +188,9 @@ export interface SetClaimsExpectationsMap {
   balances: { [address: string]: BigNumber },
   totalSHLDAmount: { min: BigNumber, max: BigNumber },
   totalBULLAmount: { min: BigNumber, max: BigNumber },
-  hasSmartContractAddress: boolean
 }
 
-interface SetClaimsTaskArguments extends TaskArguments {
+interface SetClaimsTaskArguments extends ShieldTaskArguments {
   contractName: ContractName
   contractAddress: Address
   nextfolder: string
@@ -173,5 +198,4 @@ interface SetClaimsTaskArguments extends TaskArguments {
   retrofolder: string
   blacklistfolder: string
   expectations: string
-  runId: RunId
 }

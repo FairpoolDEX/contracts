@@ -1,8 +1,7 @@
 import { Overrides } from 'ethers'
 import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
-
-export type NetworkName = 'mainnet' | 'ropsten' | 'bsctestnet' | 'bscmainnet' | 'avaxtestnet' | 'avaxmainnet'
+import { NetworkName } from '../models/Network'
 
 export interface NetworkInfo {
   name: NetworkName

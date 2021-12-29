@@ -5,7 +5,7 @@ import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import type { Ethers } from '../util/types'
 import { Contract } from 'ethers'
-import { Address } from '../util/address'
+import { Address } from '../models/Address'
 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {
   const rows = await neatcsv(data)

@@ -1,8 +1,9 @@
-import { AddressInfo, AddressInfoSchema, AddressType, getAddressInfoUid } from '../models/AddressInfo'
+import { AddressInfo, AddressInfoSchema, AddressType, getAddressInfoUid, toAddressInfoUid } from '../models/AddressInfo'
 import { getInserter } from '../util/zod'
-import { Address } from '../util/address'
 import { ensure } from '../util/ensure'
 import allAddressInfosJSON from './raw/allAddressInfos.json'
+import { NetworkName } from '../models/Network'
+import { Address } from '../models/Address'
 
 export const allAddressInfos: AddressInfo[] = []
 
@@ -10,8 +11,8 @@ export const addAddressInfo = getInserter('AddressInfo', AddressInfoSchema, getA
 
 const _ = (allAddressInfosJSON as unknown as AddressInfo[]).forEach(info => addAddressInfo(info))
 
-export const allAddressInfosByAddress: Record<string, AddressInfo> = Object.fromEntries(allAddressInfos.map(info => [info.address, info]))
+export const allAddressInfosByUid: Record<string, AddressInfo> = Object.fromEntries(allAddressInfos.map(info => [getAddressInfoUid(info), info]))
 
-export function getAddressType(address: Address): AddressType {
-  return ensure(allAddressInfosByAddress[address]).type
+export function getAddressType(networkName: NetworkName, address: Address): AddressType {
+  return ensure(allAddressInfosByUid[toAddressInfoUid(networkName, address)]).type
 }

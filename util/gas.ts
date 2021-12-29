@@ -1,8 +1,8 @@
 import { demandIntegerEnvVar } from './env'
 import { gwei } from '../test/support/all.helpers'
 import { strict as assert } from 'assert'
-import { NetworkName } from './network'
 import { impl } from './todo'
+import { NetworkName } from '../models/Network'
 
 if (process.env.FEES) {
   const fees = process.env.FEES.split(':')
@@ -17,7 +17,6 @@ export const maxPriorityFeePerGas = demandIntegerEnvVar('MAX_PRIORITY_FEE', 'gwe
 assert(maxFeePerGas >= maxPriorityFeePerGas)
 
 export function getGasLimit(network: NetworkName) {
-  console.log('network', network)
   switch (network) {
     case 'bscmainnet':
     case 'bsctestnet':

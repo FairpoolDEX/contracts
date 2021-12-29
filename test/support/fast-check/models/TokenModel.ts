@@ -1,5 +1,5 @@
 import { AmountNum } from '../../../../util/types'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export interface TokenModel {
   address: Address

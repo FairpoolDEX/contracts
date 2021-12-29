@@ -3,7 +3,7 @@ import { strict as assert } from 'assert'
 import { BlockchainModel } from '../models/BlockchainModel'
 import { BlockchainReal } from '../models/BlockchainReal'
 import { impl, ImplementationError } from '../../../../util/todo'
-import { Address } from '../../../../util/address'
+import { Address } from '../../../../models/Address'
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> {
   toString(): string {
