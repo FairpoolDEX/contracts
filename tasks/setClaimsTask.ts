@@ -8,45 +8,23 @@ import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 import { BalanceBN, BalanceMap, getBalancesFromMap, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
-import { Logger } from '../util/log'
 import { sumBigNumbers } from '../util/bignumber'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
 import { impl } from '../util/todo'
 import { AddressTypeSchema } from '../models/AddressInfo'
 import { getAddressType } from '../data/allAddressInfos'
-import { rebrandDummyRunId, RunId } from '../util/run'
-import { NetworkName, NetworkNameSchema } from '../models/Network'
+import { rebrandDummyRunId } from '../util/run'
 import { Address } from '../models/Address'
-import { ShieldTaskArguments } from '../util/task'
 import { $zero } from '../data/allAddresses'
-
-export interface RunnerContext {
-  runId: RunId
-  deployerAddress: Address
-  networkName: NetworkName
-  dry: boolean
-  log: Logger
-}
-
-export async function getRunnerContext(args: ShieldTaskArguments, hre: HardhatRuntimeEnvironment): Promise<RunnerContext> {
-  const { runId, dry } = args
-  const { network, ethers } = hre
-  const networkName = NetworkNameSchema.parse(network.name)
-  const [deployer] = await ethers.getSigners()
-  return {
-    runId,
-    networkName,
-    deployerAddress: deployer.address,
-    dry,
-    log: console.info.bind(console),
-  }
-}
+import { getChunkableContext, getRunnableContext, isTest, RunnableContext } from '../util/context'
+import { Chunkable } from '../util/chunkable'
+import { RunnableTaskArguments } from '../util/task'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, runId, dry } = args
+  const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, dry } = args
   const { ethers } = hre
-  const context = await getRunnerContext(args, hre)
+  const context = await getSetClaimsContext(args, hre)
   const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
   const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
   const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
@@ -58,16 +36,16 @@ export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRu
   const Token = await ethers.getContractFactory(contractName)
   const token = await Token.attach(contractAddress)
   console.info('Setting claims')
-  await setClaims(token, balances, expectations, runId, 400, context)
+  await setClaims(token, balances, expectations, context)
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
-export async function setClaims(token: any, balanceMap: BalanceMap, expectations: SetClaimsExpectationsMap, runId: RunId, chunkSize = 325, context: RunnerContext): Promise<void> {
+export async function setClaims(token: any, balanceMap: BalanceMap, expectations: SetClaimsExpectationsMap, context: SetClaimsContext): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  const { dry, log } = context
+  const { chunkSize, dry, log } = context
   for (const _address in expectations.balances) {
     const address = _address.toLowerCase()
     expect(balanceMap[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
@@ -78,31 +56,38 @@ export async function setClaims(token: any, balanceMap: BalanceMap, expectations
   const addresses = balances.map(b => b.address)
   const totalSHLDAmount = sumBalances(balances)
   let totalBULLAmount = BigNumber.from(0)
-  log && log('CUR', totalSHLDAmount.toString())
-  log && log('MAX', expectations.totalSHLDAmount.max.toString())
+  log('CUR', totalSHLDAmount.toString())
+  log('MAX', expectations.totalSHLDAmount.max.toString())
   expect(totalSHLDAmount.gt(expectations.totalSHLDAmount.min)).to.be.true
   expect(totalSHLDAmount.lt(expectations.totalSHLDAmount.max)).to.be.true
   // const transactions = []
   for (let i = 0; i < balancesChunks.length; i++) {
     const $balances = balancesChunks[i]
     const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
-    log && log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
-    // log && log(fromPairs(entriesForDisplay))
+    log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
+    // log(fromPairs(entriesForDisplay))
     const addresses = $balances.map(b => b.address)
     const amounts = $balances.map(b => b.amount).map(amount => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     totalBULLAmount = totalBULLAmount.add(sumBigNumbers(amounts))
     if (!dry) {
       const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
-      log && log(`TX Hash: ${tx.hash}`)
+      log(`TX Hash: ${tx.hash}`)
     }
   }
-  log && log('totalBULLAmount', totalBULLAmount.toString())
-  log && log('BCUR', '1490403967926689867814673435496')
-  log && log('BADD', totalBULLAmount.toString())
-  log && log('BMIN', expectations.totalBULLAmount.min.toString())
-  log && log('BMAX', expectations.totalBULLAmount.max.toString())
+  log('totalBULLAmount', totalBULLAmount.toString())
+  log('BCUR', '1490403967926689867814673435496')
+  log('BADD', totalBULLAmount.toString())
+  log('BMIN', expectations.totalBULLAmount.min.toString())
+  log('BMAX', expectations.totalBULLAmount.max.toString())
   expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
   expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
+}
+
+export async function getSetClaimsContext(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<SetClaimsContext> {
+  return {
+    ...await getRunnableContext(args, hre),
+    ...await getChunkableContext(args, hre),
+  }
 }
 
 // export async function parseShieldBalancesCSV(data: CSVData) {
@@ -164,12 +149,13 @@ export function optimizeForGasRefund(balances: BalanceBN[]) {
     * NFTrade staking contract
   * Implement a function from locker smart contract address to locked user balances?
  */
-function unwrapSmartContractBalances(context: RunnerContext, balances: BalanceBN[]): BalanceBN[] {
+function unwrapSmartContractBalances(context: RunnableContext, balances: BalanceBN[]): BalanceBN[] {
+  if (isTest(context)) return balances
   const newBalances: BalanceBN[] = []
   return balances.reduce((newBalances: BalanceBN[], balance: BalanceBN) => newBalances.concat(unwrapSmartContractBalance(context, balance)), newBalances)
 }
 
-function unwrapSmartContractBalance(context: RunnerContext, balance: BalanceBN): BalanceBN {
+function unwrapSmartContractBalance(context: RunnableContext, balance: BalanceBN): BalanceBN {
   const { runId, deployerAddress, networkName } = context
   const type = getAddressType(networkName, balance.address)
   switch (type) {
@@ -190,7 +176,7 @@ export interface SetClaimsExpectationsMap {
   totalBULLAmount: { min: BigNumber, max: BigNumber },
 }
 
-interface SetClaimsTaskArguments extends ShieldTaskArguments {
+interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable {
   contractName: ContractName
   contractAddress: Address
   nextfolder: string
@@ -199,3 +185,5 @@ interface SetClaimsTaskArguments extends ShieldTaskArguments {
   blacklistfolder: string
   expectations: string
 }
+
+export interface SetClaimsContext extends RunnableContext, Chunkable {}

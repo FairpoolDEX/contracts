@@ -9,6 +9,7 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burn
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { BalanceMap } from '../../util/balance'
 import { Address } from '../../models/Address'
+import { testSetClaimsContext } from '../support/context'
 
 describe('claimBullToken', async () => {
 
@@ -50,7 +51,7 @@ describe('claimBullToken', async () => {
     for (let i = 0; i < addresses.length; i++) {
       balances[addresses[i]] = defaultAmount
     }
-    await setClaims(bullTokenWithOwner, balances, expectations)
+    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
   })
 
   it('should allow to claim the tokens', async () => {
