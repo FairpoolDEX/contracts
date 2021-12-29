@@ -4,12 +4,14 @@ import { BigNumber, Contract } from 'ethers'
 import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { mineBlocks, toTokenAmount } from '../test/support/all.helpers'
-import { Address, AmountBN, Ethers } from '../util/types'
+import { AmountBN, Ethers } from '../util/types'
 import { expect } from '../util/expect'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { rollbackDate } from '../test/support/rollback.helpers'
 import { TransferTopic } from '../util/topic'
+import { Address } from '../util/address'
+import { importExpectations } from '../util/expectation'
 
 type Transfer = {
   from: Address,
@@ -189,7 +191,7 @@ export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRun
   const poolAddresses: Address[] = poolAddressesString.split(',')
   const holderAddressesFile = fs.readFileSync(holderAddressesPath)
   const holderAddresses: Address[] = (await neatcsv(holderAddressesFile)).map((row) => row['HolderAddress'])
-  const expectations: RollbackBullTokenExpectationsMap = (await import(`${process.cwd()}/${expectationsPath}`)).expectations
+  const expectations: RollbackBullTokenExpectationsMap = await importExpectations(expectationsPath)
   const provider = ethers.provider
   // console.log('provider', provider)
   // console.log('ethers.provider', ethers.provider)

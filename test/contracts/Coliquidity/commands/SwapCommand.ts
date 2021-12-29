@@ -1,10 +1,11 @@
-import { Address, AmountNum } from '../../../../util/types'
+import { AmountNum } from '../../../../util/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { MaxUint256 } from '../../../support/all.helpers'
 import { getLatestBlock } from '../../../support/test.helpers'
 import { getLiquidityAfterBuy, getLiquidityAfterSell } from '../../../support/Coliquidity.generic.helpers'
 import { uniswapFeeNumber } from '../../../support/Uniswap.helpers'
+import { Address } from '../../../../util/address'
 
 export class SwapCommand extends ColiquidityCommand<unknown> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(

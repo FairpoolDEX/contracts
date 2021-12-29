@@ -9,9 +9,11 @@ import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 import { BalanceMap, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
 import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
-import { rewriteBalanceMap } from '../util/address'
+import { Address, rewriteBalanceMap } from '../util/address'
 import { Logger } from '../util/log'
 import { sumBigNumbers } from '../util/bignumber'
+import { ContractName } from '../util/contract'
+import { importExpectations } from '../util/expectation'
 
 export async function parseShieldBalancesCSV(data: CSVData) {
   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
@@ -105,18 +107,23 @@ export interface SetClaimsExpectationsMap {
   totalBULLAmount: { min: BigNumber, max: BigNumber },
 }
 
-export async function setClaimsBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { token: tokenAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, dry } = args
+interface SetClaimsTaskArguments extends TaskArguments {
+  contractName: ContractName
+  contractAddress: Address
+}
+
+export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, dry } = args
   const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
   const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
   const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
   const blacklistfolderFiles = fs.readdirSync(blacklistfolder).map((filename) => fs.readFileSync(`${blacklistfolder}/${filename}`))
-  const expectations: SetClaimsExpectationsMap = (await import(expectationsPath)).expectations
+  const expectations: SetClaimsExpectationsMap = await importExpectations(expectationsPath)
   console.info('Parsing balances')
   const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
-  console.info(`Attaching to contract ${tokenAddress}`)
-  const Token = await hre.ethers.getContractFactory('BullToken')
-  const token = await Token.attach(tokenAddress)
+  console.info(`Attaching to contract ${contractAddress}`)
+  const Token = await hre.ethers.getContractFactory(contractName)
+  const token = await Token.attach(contractAddress)
   console.info('Setting claims')
   await setClaims(token, balances, expectations, 400, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')

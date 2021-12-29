@@ -1,8 +1,6 @@
 import { BigNumber, ethers } from 'ethers'
 import { HardhatEthersHelpers } from '@nomiclabs/hardhat-ethers/types'
 
-export type Address = string
-
 export type AmountNum = number
 
 export type PriceNum = number

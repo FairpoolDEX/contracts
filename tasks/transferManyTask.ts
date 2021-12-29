@@ -11,6 +11,8 @@ import { getGasLimit } from '../util/gas'
 import { network } from 'hardhat'
 import { NetworkName, withFeeData } from '../util/network'
 import { FeeData } from '@ethersproject/abstract-provider'
+import { ContractName } from '../util/contract'
+import { importExpectations } from '../util/expectation'
 
 export interface TransferManyExpectationsMap {
   balances: { [address: string]: BigNumber },
@@ -43,7 +45,7 @@ export async function transferMany(contract: any, balances: BalanceMap, expectat
 }
 
 interface TransferManyTaskArguments extends TaskArguments {
-  contract: 'BullToken' | 'ShieldToken'
+  contract: ContractName
 }
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
@@ -52,7 +54,7 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const [deployer] = await ethers.getSigners()
   const feeData = await deployer.getFeeData()
   const balancesCSV = fs.readFileSync(balancesPath)
-  const expectations: TransferManyExpectationsMap = (await import(expectationsPath)).expectations
+  const expectations: TransferManyExpectationsMap = await importExpectations(expectationsPath)
   console.info('Parsing balances')
   const balances = await parseBalancesCSV(balancesCSV)
   console.info(`Attaching to ${contractName} contract at ${contractAddress}`)

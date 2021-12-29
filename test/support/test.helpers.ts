@@ -5,7 +5,8 @@ import { string } from 'hardhat/internal/core/params/argumentTypes'
 import { MaxUint256 } from './all.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from '../../util/expect'
-import { Address, Ethers } from '../../util/types'
+import { Ethers } from '../../util/types'
+import { Address } from '../../util/address'
 
 export const $zero = '0x0000000000000000000000000000000000000000'
 

@@ -13,8 +13,8 @@ import { BigNumber, BigNumberish } from 'ethers'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import Base = Mocha.reporters.Base
 import { beforeEach } from 'mocha'
-import { Address } from '../../util/types'
 import { TokenModel } from '../support/fast-check/models/TokenModel'
+import { Address } from '../../util/address'
 
 describe('Market Crash Protection', async () => {
   let owner: SignerWithAddress

@@ -1,9 +1,9 @@
 import { expect } from '../../../../util/expect'
-import { Address } from '../../../../util/types'
 import { strict as assert } from 'assert'
 import { BlockchainModel } from '../models/BlockchainModel'
 import { BlockchainReal } from '../models/BlockchainReal'
 import { impl, ImplementationError } from '../../../../util/todo'
+import { Address } from '../../../../util/address'
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> {
   toString(): string {

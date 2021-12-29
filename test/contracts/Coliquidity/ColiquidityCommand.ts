@@ -1,11 +1,12 @@
 import { BlockchainCommand } from '../../support/fast-check/commands/BlockchainCommand'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
-import { Address, AmountNum, Ethers, Timestamp } from '../../../util/types'
+import { AmountNum, Ethers, Timestamp } from '../../../util/types'
 import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../../../typechain'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
 import { demand } from '../../../util/demand'
 import { expect } from '../../../util/expect'
 import { $zero } from '../../support/test.helpers'
+import { Address } from '../../../util/address'
 
 export abstract class ColiquidityCommand<Result> extends BlockchainCommand<ColiquidityModel, ColiquidityReal, Result> {
   readonly maker?: Address

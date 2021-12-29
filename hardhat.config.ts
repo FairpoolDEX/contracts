@@ -12,7 +12,7 @@ import { config as dotEnvConfig } from 'dotenv'
 import { deployShieldTokenTask } from './tasks/deployShieldTokenTask'
 import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
-import { setClaimsBullTokenTask } from './tasks/setClaimsBullTokenTask'
+import { setClaimsTask } from './tasks/setClaimsTask'
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
 import { claimBullTokenTask } from './tasks/claimBullTokenTask'
 import { upgradeTokenTask } from './tasks/upgradeTokenTask'
@@ -200,13 +200,14 @@ task('addAllocations', 'Call addAllocations() for allocations with lockup period
 
 task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
-  .addParam('token', 'BULL token contract address', '', types.string)
+  .addParam('contractName', 'Contract name', '', types.string)
+  .addParam('contractAddress', 'Contract address', '', types.string)
   .addParam('nextfolder', 'Folder with CSV files containing next SHLD balances (mult by 3)', '', types.string)
   .addParam('prevfolder', 'Folder with CSV files containing prev SHLD balances (to set their claims to 0 if they don\'t hold SHLD anymore)', '', types.string)
   .addParam('retrofolder', 'Folder with CSV files containing next SHLD balances (mult by 1)', '', types.string)
   .addParam('blacklistfolder', 'Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)', '', types.string)
   .addParam('expectations', 'JSON file with test expectations')
-  .setAction(setClaimsBullTokenTask)
+  .setAction(setClaimsTask)
 
 task('claim', 'Call claim() on BULL token contract')
   .addParam('token', 'BULL token contract address')
