@@ -1,12 +1,12 @@
 import fs from 'fs'
-import { map, shuffle } from 'lodash'
+import { shuffle } from 'lodash'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { BigNumber } from 'ethers'
 import { chunk } from '../test/support/all.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalanceMap, getBalanceAddress, parseBalancesCSV, sumBalances } from '../util/balance'
+import { BalanceBN, BalanceMap, getBalancesFromMap, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
 import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
 import { Address, rewriteBalanceMap } from '../util/address'
@@ -15,6 +15,69 @@ import { sumBigNumbers } from '../util/bignumber'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
 import { impl } from '../util/todo'
+import { AddressTypeSchema } from '../models/AddressInfo'
+import { getAddressType } from '../data/allAddressInfos'
+import { RunId } from '../util/run'
+
+export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, runId, dry } = args
+  const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
+  const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
+  const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
+  const blacklistfolderFiles = fs.readdirSync(blacklistfolder).map((filename) => fs.readFileSync(`${blacklistfolder}/${filename}`))
+  const expectations: SetClaimsExpectationsMap = await importExpectations(expectationsPath)
+  console.info('Parsing balances')
+  const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
+  console.info(`Attaching to contract ${contractAddress}`)
+  const Token = await hre.ethers.getContractFactory(contractName)
+  const token = await Token.attach(contractAddress)
+  console.info('Setting claims')
+  await setClaims(token, balances, expectations, runId, 400, dry, console.info.bind(console))
+  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+}
+
+export async function setClaims(token: any, balanceMap: BalanceMap, expectations: SetClaimsExpectationsMap, runId: RunId, chunkSize = 325, dry = false, log?: Logger): Promise<void> {
+  // const { network } = hre
+  // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
+  // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
+  // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
+  for (const _address in expectations.balances) {
+    const address = _address.toLowerCase()
+    expect(balanceMap[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
+  }
+  // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
+  const balances = optimizeForGasRefund(unwrapSmartContractBalances(runId, getBalancesFromMap(balanceMap)))
+  const balancesChunks = chunk(balances, chunkSize)
+  const addresses = balances.map(b => b.address)
+  expect(await hasSmartContractAddress(addresses)).to.equal(expectations.hasSmartContractAddress)
+  const totalSHLDAmount = sumBalances(balances)
+  let totalBULLAmount = BigNumber.from(0)
+  log && log('CUR', totalSHLDAmount.toString())
+  log && log('MAX', expectations.totalSHLDAmount.max.toString())
+  expect(totalSHLDAmount.gt(expectations.totalSHLDAmount.min)).to.be.true
+  expect(totalSHLDAmount.lt(expectations.totalSHLDAmount.max)).to.be.true
+  // const transactions = []
+  for (let i = 0; i < balancesChunks.length; i++) {
+    const $balances = balancesChunks[i]
+    const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
+    log && log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
+    // log && log(fromPairs(entriesForDisplay))
+    const addresses = $balances.map(b => b.address)
+    const amounts = $balances.map(b => b.amount).map(amount => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
+    totalBULLAmount = totalBULLAmount.add(sumBigNumbers(amounts))
+    if (!dry) {
+      const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
+      log && log(`TX Hash: ${tx.hash}`)
+    }
+  }
+  log && log('totalBULLAmount', totalBULLAmount.toString())
+  log && log('BCUR', '1490403967926689867814673435496')
+  log && log('BADD', totalBULLAmount.toString())
+  log && log('BMIN', expectations.totalBULLAmount.min.toString())
+  log && log('BMAX', expectations.totalBULLAmount.max.toString())
+  expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
+  expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
+}
 
 export async function parseShieldBalancesCSV(data: CSVData) {
   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
@@ -75,47 +138,24 @@ async function hasSmartContractAddress(addresses: Address[]): Promise<boolean> {
   `)
 }
 
-export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, chunkSize = 325, dry = false, log?: Logger): Promise<void> {
-  // const { network } = hre
-  // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
-  // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
-  // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
-  for (const _address in expectations.balances) {
-    const address = _address.toLowerCase()
-    expect(balances[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
+export function optimizeForGasRefund(balances: BalanceBN[]) {
+  return shuffle(balances)
+}
+
+function unwrapSmartContractBalances(runId: RunId, balances: BalanceBN[]): BalanceBN[] {
+  const newBalances: BalanceBN[] = []
+  return balances.reduce(unwrapSmartContractBalance.bind(null, runId), newBalances)
+}
+
+function unwrapSmartContractBalance(runId: RunId, newBalances: BalanceBN[], balance: BalanceBN): BalanceBN[] {
+  const type = getAddressType(balance.address)
+  switch (type) {
+    case AddressTypeSchema.enum.Human:
+      newBalances.push(balance)
+      return newBalances
+    default:
+      throw impl()
   }
-  const balancesArr = shuffle(Object.entries(balances))
-  const balancesArrChunks = chunk(balancesArr, chunkSize)
-  const addresses = balancesArr.map(getBalanceAddress)
-  expect(await hasSmartContractAddress(addresses)).to.equal(expectations.hasSmartContractAddress)
-  const totalSHLDAmount = sumBalances(balancesArr)
-  let totalBULLAmount = BigNumber.from(0)
-  log && log('CUR', totalSHLDAmount.toString())
-  log && log('MAX', expectations.totalSHLDAmount.max.toString())
-  expect(totalSHLDAmount.gt(expectations.totalSHLDAmount.min)).to.be.true
-  expect(totalSHLDAmount.lt(expectations.totalSHLDAmount.max)).to.be.true
-  // const transactions = []
-  for (let i = 0; i < balancesArrChunks.length; i++) {
-    const entries = balancesArrChunks[i]
-    const entriesForDisplay = balancesArrChunks[i].map(([address, amount]) => [address, amount.toString()])
-    log && log(`Chunk ${i + 1} / ${balancesArrChunks.length}:`)
-    // log && log(fromPairs(entriesForDisplay))
-    const addresses = map(entries, 0)
-    const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
-    totalBULLAmount = totalBULLAmount.add(sumBigNumbers(amounts))
-    if (!dry) {
-      const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
-      log && log(`TX Hash: ${tx.hash}`)
-    }
-  }
-  log && log('totalBULLAmount', totalBULLAmount.toString())
-  log && log('BCUR', '1490403967926689867814673435496')
-  log && log('BADD', totalBULLAmount.toString())
-  log && log('BMIN', expectations.totalBULLAmount.min.toString())
-  log && log('BMAX', expectations.totalBULLAmount.max.toString())
-  expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
-  expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
 }
 
 export interface SetClaimsExpectationsMap {
@@ -128,21 +168,10 @@ export interface SetClaimsExpectationsMap {
 interface SetClaimsTaskArguments extends TaskArguments {
   contractName: ContractName
   contractAddress: Address
-}
-
-export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { contractName, contractAddress, nextfolder, prevfolder, retrofolder, blacklistfolder, expectations: expectationsPath, dry } = args
-  const nextfolderFiles = fs.readdirSync(nextfolder).map((filename) => fs.readFileSync(`${nextfolder}/${filename}`))
-  const prevfolderFiles = fs.readdirSync(prevfolder).map((filename) => fs.readFileSync(`${prevfolder}/${filename}`))
-  const retrofolderFiles = fs.readdirSync(retrofolder).map((filename) => fs.readFileSync(`${retrofolder}/${filename}`))
-  const blacklistfolderFiles = fs.readdirSync(blacklistfolder).map((filename) => fs.readFileSync(`${blacklistfolder}/${filename}`))
-  const expectations: SetClaimsExpectationsMap = await importExpectations(expectationsPath)
-  console.info('Parsing balances')
-  const balances = await parseAllBalancesCSV(nextfolderFiles, prevfolderFiles, retrofolderFiles, blacklistfolderFiles)
-  console.info(`Attaching to contract ${contractAddress}`)
-  const Token = await hre.ethers.getContractFactory(contractName)
-  const token = await Token.attach(contractAddress)
-  console.info('Setting claims')
-  await setClaims(token, balances, expectations, 400, dry, console.info.bind(console))
-  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+  nextfolder: string
+  prevfolder: string
+  retrofolder: string
+  blacklistfolder: string
+  expectations: string
+  runId: RunId
 }

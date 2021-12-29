@@ -207,6 +207,7 @@ task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('retrofolder', 'Folder with CSV files containing next SHLD balances (mult by 1)', '', types.string)
   .addParam('blacklistfolder', 'Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)', '', types.string)
   .addParam('expectations', 'JSON file with test expectations')
+  .addParam('runId', 'Run ID (should be unique for each actual run)', undefined, types.string)
   .setAction(setClaimsTask)
 
 task('claim', 'Call claim() on BULL token contract')
