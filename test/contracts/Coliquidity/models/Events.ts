@@ -1,5 +1,6 @@
 import { OfferIndex } from '../ColiquidityCommand'
-import { Address, AmountNum, Timestamp } from '../../../../util/types'
+import { AmountNum, Timestamp } from '../../../../util/types'
+import { Address } from '../../../../util/address'
 
 export interface OfferCreated {
   timestamp: Timestamp

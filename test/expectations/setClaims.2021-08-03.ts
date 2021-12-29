@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
 import { maxSupplyTokenAmount } from '../support/ShieldToken.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../support/BullToken.helpers'
-import { SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { deployer } from '../support/address'
 
 export const expectations: SetClaimsExpectationsMap = {

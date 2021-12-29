@@ -1,12 +1,12 @@
 import { BigNumber } from 'ethers'
 import { days, toTokenAmountString } from './all.helpers'
 import fs from 'fs'
-import { parseAllBalancesCSV, SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { parseAllBalancesCSV, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
-import { Address } from '../../util/types'
 import { maxSupplyTokenAmount } from './ShieldToken.helpers'
 import { Deployment } from '../../util/deployment'
 import { BalanceMap } from '../../util/balance'
+import { Address } from '../../util/address'
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 

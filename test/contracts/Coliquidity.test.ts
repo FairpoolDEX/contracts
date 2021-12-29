@@ -7,7 +7,6 @@ import { $zero, expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSn
 import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../typechain'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { beforeEach } from 'mocha'
-import { Address } from '../../util/types'
 import { deployUniswapPair, getOrderedArray, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory, uniswapFeeNumber, uniswapMinimumLiquidity } from '../support/Uniswap.helpers'
 import { getLiquidityAfterSell } from '../support/Coliquidity.generic.helpers'
 import $debug from 'debug'
@@ -22,6 +21,7 @@ import { CreatePairCommand } from './Coliquidity/commands/CreatePairCommand'
 import { SwapCommand } from './Coliquidity/commands/SwapCommand'
 import { ReachDesiredStateCommand } from './Coliquidity/commands/ReachDesiredStateCommand'
 import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
+import { Address } from '../../util/address'
 
 describe('Coliquidity', async function () {
   let signers: SignerWithAddress[]

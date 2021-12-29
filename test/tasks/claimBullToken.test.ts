@@ -4,11 +4,11 @@ import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalances, getTestExpectations } from '../support/BullToken.helpers'
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
-import { Address } from '../../util/types'
 import { BalanceMap } from '../../util/balance'
+import { Address } from '../../util/address'
 
 describe('claimBullToken', async () => {
 

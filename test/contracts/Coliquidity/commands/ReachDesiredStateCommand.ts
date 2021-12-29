@@ -1,4 +1,4 @@
-import { Address, AmountNum, AmountNumPair, Timestamp } from '../../../../util/types'
+import { AmountNum, AmountNumPair, Timestamp } from '../../../../util/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { expect } from '../../../../util/expect'
@@ -9,6 +9,7 @@ import { UniswapV2Pair } from '../../../../typechain'
 import { OfferCreated } from '../models/Events'
 import { PairCreated } from '../../Uniswap/models/Events'
 import { impl } from '../../../../util/todo'
+import { Address } from '../../../../util/address'
 
 export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   readonly users: Address[] = []

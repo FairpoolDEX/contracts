@@ -3,8 +3,9 @@ import { strict as assert } from 'assert'
 import { uniq } from 'lodash'
 import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import type { Address, Ethers } from '../util/types'
+import type { Ethers } from '../util/types'
 import { Contract } from 'ethers'
+import { Address } from '../util/address'
 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {
   const rows = await neatcsv(data)

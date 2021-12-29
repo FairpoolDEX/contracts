@@ -1,5 +1,6 @@
-import { Address } from './types'
 import { BalanceMap } from './balance'
+
+export type Address = string
 
 export type RewriteAddressMap = Array<[Address, Address]>
 

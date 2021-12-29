@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { Address } from '../util/types'
+import { Address } from '../util/address'
 
 interface MigrateTokenExpectationsMap {
   equalBalances: Address[],

@@ -1,11 +1,12 @@
 import { strict as assert } from 'assert'
 import { expect } from './expect'
-import { Address, AmountBN } from './types'
+import { AmountBN } from './types'
 import neatcsv from 'neat-csv'
 import { CSVData } from './csv'
 import { trimEnd } from 'lodash'
 import { utils } from 'ethers'
 import { sumBigNumbers } from './bignumber'
+import { Address } from './address'
 
 export type BalanceMap = { [index: string]: AmountBN }
 

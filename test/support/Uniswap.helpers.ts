@@ -1,7 +1,8 @@
 import { BigNumber, BigNumberish, Contract, ContractFactory } from 'ethers'
-import { Address, Ethers } from '../../util/types'
+import { Ethers } from '../../util/types'
 import UniswapV2FactoryJSON from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import { UniswapV2Factory } from '../../typechain'
+import { Address } from '../../util/address'
 
 export const uniswapFeeNumber = 0.003 // equal to 0.3%
 
