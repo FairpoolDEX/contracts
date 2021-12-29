@@ -2,26 +2,26 @@ import fs from 'fs'
 import { map, shuffle } from 'lodash'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { BigNumber } from 'ethers'
-import { Readable as ReadableStream } from 'stream'
 import { chunk } from '../test/support/all.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalanceMap, parseBalancesCSV } from '../util/balance'
+import { BalanceMap, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
 import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
 import { rewriteBalanceMap } from '../util/address'
 import { Logger } from '../util/log'
+import { sumBigNumbers } from '../util/bignumber'
 
 export async function parseShieldBalancesCSV(data: CSVData) {
   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
 }
 
-export async function parseAllBalancesCSV(newDatas: Array<CSVData>, oldDatas: Array<string | Buffer | ReadableStream>, retroDatas: Array<string | Buffer | ReadableStream>, blacklistDatas: Array<string | Buffer | ReadableStream>): Promise<BalanceMap> {
+export async function parseAllBalancesCSV(nextDatas: CSVData[], prevDatas: CSVData[], retroDatas: CSVData[], blacklistDatas: CSVData[]): Promise<BalanceMap> {
   const balances: BalanceMap = {}
   // const address = '0xf5396ed020a765e561f4f176b1e1d622fb6d4154'.toLowerCase()
-  for (let i = 0; i < newDatas.length; i++) {
-    const _balances = await parseBalancesCSV(newDatas[i])
+  for (let i = 0; i < nextDatas.length; i++) {
+    const _balances = await parseBalancesCSV(nextDatas[i])
     for (const key of Object.keys(_balances)) {
       const _balance = _balances[key].mul(3)
       if (balances[key]) {
@@ -41,8 +41,8 @@ export async function parseAllBalancesCSV(newDatas: Array<CSVData>, oldDatas: Ar
       }
     }
   }
-  for (let i = 0; i < oldDatas.length; i++) {
-    const _balances = await parseBalancesCSV(oldDatas[i])
+  for (let i = 0; i < prevDatas.length; i++) {
+    const _balances = await parseBalancesCSV(prevDatas[i])
     for (const key of Object.keys(_balances)) {
       if (!balances[key]) {
         balances[key] = BigNumber.from(0)
@@ -70,7 +70,7 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
   }
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, chunkSize)
-  const totalSHLDAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
+  const totalSHLDAmount = sumBalances(balancesArr)
   let totalBULLAmount = BigNumber.from(0)
   log && log('CUR', totalSHLDAmount.toString())
   log && log('MAX', expectations.totalSHLDAmount.max.toString())
@@ -84,7 +84,7 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
     // log && log(fromPairs(entriesForDisplay))
     const addresses = map(entries, 0)
     const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
-    totalBULLAmount = amounts.reduce((acc, amount) => acc.add(amount), totalBULLAmount)
+    totalBULLAmount = totalBULLAmount.add(sumBigNumbers(amounts))
     if (!dry) {
       const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
       log && log(`TX Hash: ${tx.hash}`)

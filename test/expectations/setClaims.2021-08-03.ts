@@ -3,12 +3,13 @@ import { toTokenAmount } from '../support/all.helpers'
 import { maxSupplyTokenAmount } from '../support/ShieldToken.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../support/BullToken.helpers'
 import { SetClaimsExpectationsMap } from '../../tasks/setClaimsBullTokenTask'
+import { deployer } from '../support/address'
 
 export const expectations: SetClaimsExpectationsMap = {
   balances: {
-    '0xc77aab3c6d7dab46248f3cc3033c856171878bd5': toTokenAmount('0'), // locked liquidity
-    '0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a': toTokenAmount('0'), // NFTrade pool
-    '0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D': toTokenAmount( // Deployer
+    ['0xc77aab3c6d7dab46248f3cc3033c856171878bd5']: toTokenAmount('0'), // locked liquidity
+    ['0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a']: toTokenAmount('0'), // NFTrade pool
+    [deployer]: toTokenAmount( // Deployer
       new Decimal('0')
         .add(new Decimal('193117719.000000000000000000')) // prev balance
         .add(new Decimal('13685263.953164100000000000')) // prev liquidity pool

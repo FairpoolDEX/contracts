@@ -1,12 +1,15 @@
 import { strict as assert } from 'assert'
 import { expect } from './expect'
-import { AmountBN } from './types'
+import { Address, AmountBN } from './types'
 import neatcsv from 'neat-csv'
 import { CSVData } from './csv'
 import { trimEnd } from 'lodash'
 import { utils } from 'ethers'
+import { sumBigNumbers } from './bignumber'
 
 export type BalanceMap = { [index: string]: AmountBN }
+
+export type BalanceEntry = [Address, AmountBN]
 
 export async function parseBalancesCSV(data: CSVData): Promise<BalanceMap> {
   const balances: BalanceMap = {}
@@ -30,4 +33,12 @@ export function padAmount(amountRaw: string, decimals = 18) {
   expect(whole.length).to.be.gte(1)
   expect(fraction.length).to.be.gte(1)
   return `${whole}.${fraction.padEnd(decimals, '0')}`
+}
+
+export function getAmount(balance: BalanceEntry): AmountBN {
+  return balance[1]
+}
+
+export function sumBalances(balances: BalanceEntry[]) {
+  return sumBigNumbers(balances.map(getAmount))
 }
