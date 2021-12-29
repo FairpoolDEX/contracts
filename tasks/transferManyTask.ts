@@ -13,6 +13,7 @@ import { NetworkName, withFeeData } from '../util/network'
 import { FeeData } from '@ethersproject/abstract-provider'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
+import { Address } from '../util/address'
 
 export interface TransferManyExpectationsMap {
   balances: { [address: string]: BigNumber },
@@ -45,11 +46,12 @@ export async function transferMany(contract: any, balances: BalanceMap, expectat
 }
 
 interface TransferManyTaskArguments extends TaskArguments {
-  contract: ContractName
+  contractName: ContractName
+  contractAddress: Address
 }
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { contract: contractName, address: contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
+  const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
   const { network, ethers } = hre
   const [deployer] = await ethers.getSigners()
   const feeData = await deployer.getFeeData()

@@ -36,10 +36,14 @@ export function padAmount(amountRaw: string, decimals = 18) {
   return `${whole}.${fraction.padEnd(decimals, '0')}`
 }
 
-export function getAmount(balance: BalanceEntry): AmountBN {
+export function getBalanceAmount(balance: BalanceEntry): AmountBN {
   return balance[1]
 }
 
+export function getBalanceAddress(balance: BalanceEntry): Address {
+  return balance[0]
+}
+
 export function sumBalances(balances: BalanceEntry[]) {
-  return sumBigNumbers(balances.map(getAmount))
+  return sumBigNumbers(balances.map(getBalanceAmount))
 }
