@@ -6,7 +6,7 @@ import { chunk } from '../test/support/all.helpers'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { expect } from '../util/expect'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalanceMap, parseBalancesCSV, sumBalances } from '../util/balance'
+import { BalanceMap, getBalanceAddress, parseBalancesCSV, sumBalances } from '../util/balance'
 import { CSVData } from '../util/csv'
 import { shieldRewriteAddressMap } from '../test/support/ShieldToken.helpers'
 import { Address, rewriteBalanceMap } from '../util/address'
@@ -14,6 +14,7 @@ import { Logger } from '../util/log'
 import { sumBigNumbers } from '../util/bignumber'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
+import { impl } from '../util/todo'
 
 export async function parseShieldBalancesCSV(data: CSVData) {
   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
@@ -60,6 +61,20 @@ export async function parseAllBalancesCSV(nextDatas: CSVData[], prevDatas: CSVDa
   return balances
 }
 
+async function hasSmartContractAddress(addresses: Address[]): Promise<boolean> {
+  throw impl(`
+  * Some smart contracts are multisigs, so the user can, technically, move the tokens
+    * But those smart contracts don't exist on another network
+    * Allow manual claims?
+    * Get contract owner -> Set claim for owner address?
+  * Some smart contracts are "lockers"
+    * Liquidity pools
+    * NFTrade staking contract
+  
+  * Implement a function from locker smart contract address to locked user balances?
+  `)
+}
+
 export async function setClaims(token: any, balances: BalanceMap, expectations: SetClaimsExpectationsMap, chunkSize = 325, dry = false, log?: Logger): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
@@ -72,6 +87,8 @@ export async function setClaims(token: any, balances: BalanceMap, expectations: 
   }
   const balancesArr = shuffle(Object.entries(balances))
   const balancesArrChunks = chunk(balancesArr, chunkSize)
+  const addresses = balancesArr.map(getBalanceAddress)
+  expect(await hasSmartContractAddress(addresses)).to.equal(expectations.hasSmartContractAddress)
   const totalSHLDAmount = sumBalances(balancesArr)
   let totalBULLAmount = BigNumber.from(0)
   log && log('CUR', totalSHLDAmount.toString())
@@ -105,6 +122,7 @@ export interface SetClaimsExpectationsMap {
   balances: { [address: string]: BigNumber },
   totalSHLDAmount: { min: BigNumber, max: BigNumber },
   totalBULLAmount: { min: BigNumber, max: BigNumber },
+  hasSmartContractAddress: boolean
 }
 
 interface SetClaimsTaskArguments extends TaskArguments {

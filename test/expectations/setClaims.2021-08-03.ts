@@ -48,4 +48,5 @@ export const expectations: SetClaimsExpectationsMap = {
     min: maxSupplyTokenAmount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator),
     max: maxSupplyTokenAmount.mul(airdropRate),
   },
+  hasSmartContractAddress: false,
 }
