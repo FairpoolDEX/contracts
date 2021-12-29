@@ -8,6 +8,7 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burn
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalanceMap } from '../../util/balance'
+import { testSetClaimsContext } from '../support/context'
 
 describe('setClaimsBullToken', async () => {
 
@@ -65,13 +66,13 @@ describe('setClaimsBullToken', async () => {
   })
 
   it('should allow the owner to set claims multiple times', async () => {
-    await setClaims(bullTokenWithOwner, balances, expectations)
+    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
     const calClaim = await bullTokenWithOwner.claims(calAddress)
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('132814.914153007')))
     expect(calClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
     await timeTravel(async () => {
-      await setClaims(bullTokenWithOwner, balances, expectations)
+      await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
       const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
       const calClaim = await bullTokenWithOwner.claims(calAddress)
       expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('132814.914153007')))
@@ -81,7 +82,7 @@ describe('setClaimsBullToken', async () => {
 
   it('should not allow the stranger to set claims', async () => {
     await expect(
-      setClaims(bullTokenWithStranger, balances, expectations),
+      setClaims(bullTokenWithStranger, balances, expectations, testSetClaimsContext),
     ).to.be.revertedWith('caller is not the owner')
     const aliceClaim = await bullTokenWithStranger.claims(aliceAddress)
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
@@ -89,7 +90,7 @@ describe('setClaimsBullToken', async () => {
 
   it('should allow the stranger to claim BULL', async () => {
     const strangerAmount = toTokenAmount('10000')
-    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations)
+    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
@@ -98,14 +99,14 @@ describe('setClaimsBullToken', async () => {
 
   it('should allow multiple stages', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
-    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations)
+    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
       await timeTravel(async () => {
         const balances = await getTestBalances()
         balances[strangerAddress] = strangerAmount
-        await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations)
+        await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
         await bullTokenWithStranger.claim()
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount.mul(2)))
       }, airdropStartTimestamp + airdropStageDuration)
