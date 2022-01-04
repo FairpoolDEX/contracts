@@ -6,7 +6,7 @@ import { CSVData } from './csv'
 import { trimEnd } from 'lodash'
 import { utils } from 'ethers'
 import { sumBigNumbers } from './bignumber'
-import { Address, AddressSchema } from '../models/Address'
+import { Address, AddressSchema, normalizeAddress } from '../models/Address'
 
 export type BalanceMap = { [index: string]: AmountBN }
 
@@ -44,5 +44,5 @@ export function sumBalances(balances: BalanceBN[]) {
 }
 
 export function getBalancesFromMap(balanceMap: BalanceMap): BalanceBN[] {
-  return Object.entries(balanceMap).map(([address, amount]) => ({ address, amount }))
+  return Object.entries(balanceMap).map(([address, amount]) => ({ address: normalizeAddress(address), amount }))
 }

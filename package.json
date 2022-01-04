@@ -20,7 +20,8 @@
     "coverage": "FEES=20:1 yarn build && FEES=20:1 hardhat coverage --temp artifacts",
     "flatten": "FEES=20:1 hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
     "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol",
-    "deploy:taur:bsctestnet": "FEES=20:1 ETHERSCAN_API_KEY=$BSCSCAN_API_KEY hardhat deployContract --constructor-args-module tasks/arguments/MarnotaurToken.arguments.ts --contract GenericToken --network bsctestnet"
+    "deploy:taur:bsctestnet": "FEES=20:1 ETHERSCAN_API_KEY=$BSCSCAN_API_KEY hardhat deployContract --constructor-args-module tasks/arguments/MarnotaurToken.arguments.ts --contract GenericToken --network bsctestnet",
+    "rebrand:setClaims:testnet": "FEES=20:1 hardhat --show-stack-traces setClaims --network bsctestnet --contract-name BullToken --contract-address 0xcF4137E10086f997E19a774c7992A0790CAe5458 --expectations test/expectations/setClaims.2021-12-28.ts --nextfolder ~/Downloads/2021-08-03/next --prevfolder ~/Downloads/2021-08-03/prev --retrofolder ~/Downloads/2021-08-03/retro --blacklistfolder ~/Downloads/2021-08-03/blacklist --run-id rebrand:dummy"
   },
   "engines": {
     "node": "^16.13.0"

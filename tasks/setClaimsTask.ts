@@ -46,13 +46,11 @@ export async function setClaims(token: any, balanceMap: BalanceMap, expectations
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
   const { chunkSize, dry, log } = context
-  for (const _address in expectations.balances) {
-    const address = _address.toLowerCase()
-    expect(balanceMap[address] || BigNumber.from('0'), `Address: ${address}`).to.equal(expectations.balances[_address])
-  }
   // NOTE: shuffle is used to achieve a normal distribution of zero balances: since each zero balance would result in a gas refund, we will normalize the gas refund across multiple transactions
   const balances = optimizeForGasRefund(unwrapSmartContractBalances(context, getBalancesFromMap(balanceMap)))
   const balancesChunks = chunk(balances, chunkSize)
+  const expectedBalances = getBalancesFromMap(expectations.balances)
+  expectBalancesMatchExpectations(balances, expectedBalances)
   const addresses = balances.map(b => b.address)
   const totalSHLDAmount = sumBalances(balances)
   let totalBULLAmount = BigNumber.from(0)
@@ -81,6 +79,14 @@ export async function setClaims(token: any, balanceMap: BalanceMap, expectations
   log('BMAX', expectations.totalBULLAmount.max.toString())
   expect(totalBULLAmount.gt(expectations.totalBULLAmount.min)).to.be.true
   expect(totalBULLAmount.lt(expectations.totalBULLAmount.max)).to.be.true
+}
+
+function expectBalancesMatchExpectations(actual: BalanceBN[], expected: BalanceBN[]) {
+  for (const $balance of expected) {
+    const balance = actual.find(b => b.address === $balance.address)
+    const amount = balance?.amount ?? BigNumber.from('0')
+    expect(amount, `on address ${$balance.address}`).to.equal($balance.amount)
+  }
 }
 
 export async function getSetClaimsContext(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<SetClaimsContext> {
@@ -135,7 +141,7 @@ export async function parseAllBalancesCSV(nextDatas: CSVData[], prevDatas: CSVDa
   return balances
 }
 
-export function optimizeForGasRefund(balances: BalanceBN[]) {
+export function optimizeForGasRefund(balances: BalanceBN[]): BalanceBN[] {
   return shuffle(balances)
 }
 
