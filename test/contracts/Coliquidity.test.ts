@@ -257,8 +257,8 @@ describe('Coliquidity', async function () {
     const [reserve0Before, reserve1Before] = await pair.getReserves()
     expect(liquidityTotalSupply).to.equal(sum([positionSamBefore.liquidityAmount, positionSallyBefore.liquidityAmount]).add(uniswapMinimumLiquidity))
     // NOTE: UniswapLibrary applies alphabetic sort to [token0, token1], so it may be inverted relative to [baseAddress, quoteAddress]
-    expect([token0, token1]).to.equal(getOrderedArray(baseAddress, quoteAddress, baseAddress, quoteAddress))
-    expect([reserve0Before, reserve1Before]).to.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountBefore, quotePoolAmountBefore))
+    expect([token0, token1]).to.deep.equal(getOrderedArray(baseAddress, quoteAddress, baseAddress, quoteAddress))
+    expect([reserve0Before.toNumber(), reserve1Before.toNumber()]).to.deep.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountBefore, quotePoolAmountBefore))
 
     const toSamShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSamBefore.liquidityAmount).div(liquidityTotalSupply)
     const toSallyShare = (value: BigNumberish) => BigNumber.from(value).mul(positionSallyBefore.liquidityAmount).div(liquidityTotalSupply)
@@ -270,7 +270,7 @@ describe('Coliquidity', async function () {
     await router.connect(ted).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseAmountIn, 0, [baseAddress, quoteAddress], ted.address, MaxUint256)
     const [basePoolAmountAfter, quotePoolAmountAfter] = getLiquidityAfterSell(basePoolAmountBefore, quotePoolAmountBefore, baseAmountIn, uniswapFeeNumber)
     const [reserve0After, reserve1After] = await pair.getReserves()
-    expect([reserve0After, reserve1After]).to.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountAfter, quotePoolAmountAfter))
+    expect([reserve0After.toNumber(), reserve1After.toNumber()]).to.deep.equal(getOrderedArray(baseAddress, quoteAddress, basePoolAmountAfter, quotePoolAmountAfter))
 
     const basePoolDiff = basePoolAmountBefore - basePoolAmountAfter
     const quotePoolDiff = quotePoolAmountBefore - quotePoolAmountAfter
