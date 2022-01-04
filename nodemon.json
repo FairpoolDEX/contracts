@@ -6,7 +6,8 @@
     "cache",
     "coverage",
     "artifacts",
-    "typechain"
+    "typechain",
+    "node_modules"
   ],
   "ignore": [
     "contracts/hardhat-dependency-compiler/*"
