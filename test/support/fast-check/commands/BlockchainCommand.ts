@@ -31,8 +31,10 @@ export abstract class BlockchainCommand<Model extends BlockchainModel, Real exte
         }
       }
     } catch (e) {
-      if (modelResult.status === 'rejected') e.message += '\n\nModel ' + modelResult.reason.stack
-      if (realResult.status === 'rejected') e.message += '\n\nReal ' + realResult.reason.stack
+      if (e instanceof Error) {
+        if (modelResult.status === 'rejected') e.message += '\n\nModel ' + modelResult.reason.stack
+        if (realResult.status === 'rejected') e.message += '\n\nReal ' + realResult.reason.stack
+      }
       throw e
     }
   }

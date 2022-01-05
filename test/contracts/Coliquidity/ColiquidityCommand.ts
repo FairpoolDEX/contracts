@@ -1,7 +1,7 @@
 import { BlockchainCommand } from '../../support/fast-check/commands/BlockchainCommand'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
 import { AmountNum, Ethers, Timestamp } from '../../../util/types'
-import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../../../typechain'
+import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../../../typechain-types'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
 import { demand } from '../../../util/demand'
 import { expect } from '../../../util/expect'

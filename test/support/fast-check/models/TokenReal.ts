@@ -1,3 +1,3 @@
-import { ERC20, ERC20PausableUpgradeable } from '../../../../typechain'
+import { ERC20PausableUpgradeable } from '../../../../typechain-types'
 
 export type TokenReal = ERC20PausableUpgradeable

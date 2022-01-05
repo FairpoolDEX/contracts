@@ -5,7 +5,7 @@ import { expect } from '../../../../util/expect'
 import { TokenReal } from '../../../support/fast-check/models/TokenReal'
 import { BalanceModel, TokenModel } from '../../../support/fast-check/models/TokenModel'
 import { sum } from 'lodash'
-import { UniswapV2Pair } from '../../../../typechain'
+import { UniswapV2Pair } from '../../../../typechain-types'
 import { OfferCreated } from '../models/Events'
 import { PairCreated } from '../../Uniswap/models/Events'
 import { impl } from '../../../../util/todo'
@@ -89,17 +89,7 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
 
   async expectModelPairToBeCorrect(model: ColiquidityModel) {
     const pair = await this.getModelPair(model, this.makerToken, this.takerToken)
-
-    const OfferCreated = await this.getRealOfferCreatedEvent(real, 0)
-    const PairCreated = await this.getRealPairCreatedEvent(real, this.makerToken, this.takerToken)
-    const initialMakerAmount = OfferCreated.makerAmount
-    const initialTakerAmount = initialMakerAmount * OfferCreated.takerDenominator / OfferCreated.makerDenominator
-    const initialK = initialMakerAmount * initialTakerAmount
-    const currentKExpected = initialK
-    expect(PairCreated.timestamp).to.be.gte(OfferCreated.pausedUntil)
-    expect(await this.getRealPoolCreationDenominators(real, pair)).to.deep.equal([OfferCreated.makerDenominator, OfferCreated.takerDenominator])
-    expect(await this.getRealPoolInitialLiquidity(real, pair)).to.deep.equal([initialMakerAmount, initialTakerAmount])
-    expect(await this.getRealPoolCurrentK(real, pair)).to.deep.equal(currentKExpected)
+    throw impl()
   }
 
   async expectRealPairToBeCorrect(real: ColiquidityReal) {
