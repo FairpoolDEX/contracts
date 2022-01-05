@@ -4,7 +4,7 @@ import { BigNumber, Contract } from 'ethers'
 import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { mineBlocks, toTokenAmount } from '../test/support/all.helpers'
-import { AmountBN, Ethers } from '../util/types'
+import { Ethers } from '../util/types'
 import { expect } from '../util/expect'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
@@ -12,6 +12,7 @@ import { rollbackDate } from '../test/support/rollback.helpers'
 import { TransferTopic } from '../util/topic'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
+import { AmountBN } from '../models/AmountBN'
 
 type Transfer = {
   from: Address,

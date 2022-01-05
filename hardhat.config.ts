@@ -21,6 +21,7 @@ import { transferManyTask } from './tasks/transferManyTask'
 import { HardhatUserConfig } from 'hardhat/types'
 import { maxFeePerGas as gasPrice } from './util/gas'
 import { mnemonic } from './util/config'
+import { writeUserBalancesTask } from './tasks/writeUserBalancesTask'
 
 export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -193,6 +194,19 @@ task('addAllocations', 'Call addAllocations() for allocations with lockup period
   .addParam('token', 'SHLD token contract address')
   .addParam('allocations', 'JSON with allocations')
   .setAction(addAllocationsShieldTokenTask)
+
+task('writeUserBalancesTask', 'Call setClaims() on BULL token contract')
+  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
+  .addParam('contractName', 'Contract name', '', types.string)
+  .addParam('contractAddress', 'Contract address', '', types.string)
+  .addParam('nextFolder', 'Folder with CSV files containing next SHLD balances (mult by 3)', '', types.string)
+  .addParam('prevFolder', 'Folder with CSV files containing prev SHLD balances (to set their claims to 0 if they don\'t hold SHLD anymore)', '', types.string)
+  .addParam('retroFolder', 'Folder with CSV files containing next SHLD balances (mult by 1)', '', types.string)
+  .addParam('blacklistFolder', 'Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)', '', types.string)
+  .addParam('out', 'Filename for writing the balances', undefined, types.string)
+  .addParam('expectations', 'JSON file with test expectations')
+  .addParam('runId', 'Run ID (should be unique for each actual run)', undefined, types.string)
+  .setAction(writeUserBalancesTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)

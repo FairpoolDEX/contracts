@@ -1,8 +1,8 @@
-import { AmountBN, PriceBN } from '../../../util/types'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
 import { MCP } from '../../../typechain-types'
-import { Address } from '../../../models/Address' // export class MCPBlockchainModel {
+import { Address } from '../../../models/Address'
+import { AmountBN, PriceBN } from '../../../models/AmountBN' // export class MCPBlockchainModel {
 
 // export class MCPBlockchainModel {
 //   public mcp: MCPModel = {

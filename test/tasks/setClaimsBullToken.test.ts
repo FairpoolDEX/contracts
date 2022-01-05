@@ -4,11 +4,12 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalances, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
-import { BalanceMap } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util/balance'
 import { testSetClaimsContext } from '../support/context'
+import { balanceBN, BalanceBN } from '../../models/BalanceBN'
 
 describe('setClaimsBullToken', async () => {
 
@@ -26,7 +27,8 @@ describe('setClaimsBullToken', async () => {
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
 
-  let balances: BalanceMap
+  let balances: BalanceBN[]
+  let balancesMap: BalancesMap
   let expectations: SetClaimsExpectationsMap
 
   before(async () => {
@@ -46,19 +48,20 @@ describe('setClaimsBullToken', async () => {
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
-    balances = await getTestBalances()
+    balancesMap = await getTestBalanceMap()
     expectations = await getTestExpectations()
+    balances = getBalancesFromMap(balancesMap)
   })
 
   it('should parse the CSV export', async () => {
     // should add 0 balances for old addresses
     // should not add 0 balances for current addresses
-    expect(Object.keys(balances).length).to.be.greaterThan(0)
-    expect(balances[aliceAddress]).to.equal(toTokenAmount('132814.914153007'))
-    expect(balances[bobAddress]).to.equal(toTokenAmount('202903588.651523003442269483'))
-    expect(balances[samAddress]).to.equal(toTokenAmount('1057303.141521371440022475'))
-    expect(balances[calAddress]).to.equal(toTokenAmount('0'))
-    expect(balances[blackAddress]).to.equal(toTokenAmount('0'))
+    expect(Object.keys(balancesMap).length).to.be.greaterThan(0)
+    expect(balancesMap[aliceAddress]).to.equal(toTokenAmount('132814.914153007'))
+    expect(balancesMap[bobAddress]).to.equal(toTokenAmount('202903588.651523003442269483'))
+    expect(balancesMap[samAddress]).to.equal(toTokenAmount('1057303.141521371440022475'))
+    expect(balancesMap[calAddress]).to.equal(toTokenAmount('0'))
+    expect(balancesMap[blackAddress]).to.equal(toTokenAmount('0'))
   })
 
   it('should not parse a bogus CSV export', async () => {
@@ -90,7 +93,8 @@ describe('setClaimsBullToken', async () => {
 
   it('should allow the stranger to claim BULL', async () => {
     const strangerAmount = toTokenAmount('10000')
-    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
+    const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
+    await setClaims(bullTokenWithOwner, strangerBalances, expectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
@@ -99,14 +103,15 @@ describe('setClaimsBullToken', async () => {
 
   it('should allow multiple stages', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
-    await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
+    const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
+    await setClaims(bullTokenWithOwner, strangerBalances, expectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
       await timeTravel(async () => {
-        const balances = await getTestBalances()
-        balances[strangerAddress] = strangerAmount
-        await setClaims(bullTokenWithOwner, Object.assign({ [strangerAddress]: strangerAmount }, balances), expectations, testSetClaimsContext)
+        const testBalances = getBalancesFromMap(await getTestBalanceMap())
+        const strangerTestBalances = mergeBalance(testBalances, balanceBN(strangerAddress, strangerAmount))
+        await setClaims(bullTokenWithOwner, strangerTestBalances, expectations, testSetClaimsContext)
         await bullTokenWithStranger.claim()
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount.mul(2)))
       }, airdropStartTimestamp + airdropStageDuration)

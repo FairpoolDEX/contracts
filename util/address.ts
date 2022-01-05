@@ -1,4 +1,4 @@
-import { BalanceMap } from './balance'
+import { BalancesMap } from './balance'
 import { Address, normalizeAddress } from '../models/Address'
 
 export type RewriteAddressMap = Array<[Address, Address]>
@@ -16,7 +16,7 @@ export function rewriteAddress(rewrites: RewriteAddressMap, address: Address) {
   return address
 }
 
-export function rewriteBalanceMap(rewrites: RewriteAddressMap, balances: BalanceMap) {
+export function rewriteBalanceMap(rewrites: RewriteAddressMap, balances: BalancesMap) {
   for (const address in balances) {
     const $address = rewriteAddress(rewrites, address)
     if ($address !== address) {
