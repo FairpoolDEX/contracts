@@ -1,9 +1,8 @@
 import { shuffle } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
-import { expect } from '../util/expect'
-import { getBalancesFromMap, sumBalances, writeBalances } from '../util/balance'
-import { expectBalances, importExpectations } from '../util/expectation'
+import { getBalancesFromMap, writeBalances } from '../util/balance'
+import { expectBalances, expectTotalAmount, importExpectations } from '../util/expectation'
 import { impl } from '../util/todo'
 import { AddressTypeSchema } from '../models/AddressInfo'
 import { getAddressType } from '../data/allAddressInfos'
@@ -12,11 +11,11 @@ import { $zero } from '../data/allAddresses'
 import { getRunnableContext, isTest, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Filename, getFiles } from '../util/filesystem'
-import { BigNumberRange } from '../util/bignumber'
 import { parseAllBalancesCSV } from './util/parse'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
+import { AmountBN } from '../models/AmountBN'
 
 export async function writeUserBalancesTask(args: WriteUserBalancesTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getGetUserBalancesContext(args, hre)
@@ -27,12 +26,6 @@ export async function writeUserBalancesTask(args: WriteUserBalancesTaskArguments
   const balances = await getUserBalances(nextFolder, prevFolder, retroFolder, blacklistFolder, expectations, context)
   if (!dry) await writeBalances(balances, out)
   if (dry) logDryRun(log)
-}
-
-function expectTotalSupply(balances: BalanceBN[], expectedTotalSupply: BigNumberRange) {
-  const totalSupply = sumBalances(balances)
-  expect(totalSupply.gt(expectedTotalSupply.min)).to.be.true
-  expect(totalSupply.lt(expectedTotalSupply.max)).to.be.true
 }
 
 export async function getUserBalances(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, expectations: WriteUserBalancesExpectationsMap, context: WriteUserBalancesContext) {
@@ -46,9 +39,9 @@ export async function getUserBalances(nextFolder: Filename, prevFolder: Filename
   const balancesMap = await parseAllBalancesCSV(nextFolderFiles, prevFolderFiles, retroFolderFiles, blacklistFolderFiles)
   const balances = optimizeForGasRefund(unwrapSmartContractBalances(context, getBalancesFromMap(balancesMap)))
   const expectedBalances = getBalancesFromMap(expectations.balances)
-  const expectedTotalSupply = expectations.totalSupply
+  const expectedTotalSupply = expectations.totalAmount
   expectBalances(balances, expectedBalances)
-  expectTotalSupply(balances, expectedTotalSupply)
+  expectTotalAmount(balances, expectedTotalSupply)
   return balances
 }
 
@@ -94,7 +87,7 @@ function unwrapSmartContractBalance(context: RunnableContext, balance: BalanceBN
 
 export interface WriteUserBalancesExpectationsMap {
   balances: { [address: string]: BigNumber },
-  totalSupply: { min: BigNumber, max: BigNumber },
+  totalAmount: AmountBN,
 }
 
 interface WriteUserBalancesTaskArguments extends RunnableTaskArguments, Writable {

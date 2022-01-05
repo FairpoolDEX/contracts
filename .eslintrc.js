@@ -38,7 +38,7 @@ module.exports = {
     'space-before-function-paren': ['error', { 'anonymous': 'always', 'named': 'never', 'asyncArrow': 'always' }],
     'function-paren-newline': ['error', 'multiline-arguments'],
     'no-multiple-empty-lines': ['error', { max: 1 }],
-    'no-trailing-spaces': ['error', { 'skipBlankLines': true }],
+    'no-trailing-spaces': ['error', { 'skipBlankLines': true, 'ignoreComments': true }],
     'padding-line-between-statements': [
       'error',
       { 'blankLine': 'always', 'prev': '*', 'next': 'export' },

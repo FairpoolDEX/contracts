@@ -5,16 +5,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Chunkable } from './chunkable'
 import { pick } from 'lodash'
 import { RunnableTaskArguments } from './task'
-import { RunId } from './run'
 import { Ethers } from './types'
 
-export interface RunnableContext {
+export interface RunnableContext extends RunnableTaskArguments {
   ethers: Ethers
   deployerAddress: Address
   networkName: NetworkName
   log: Logger
-  dry: boolean
-  runId: RunId
 }
 
 export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext> {

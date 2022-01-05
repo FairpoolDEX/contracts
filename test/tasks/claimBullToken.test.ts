@@ -5,7 +5,7 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalanceMap, getTestExpectations } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
@@ -46,12 +46,9 @@ describe('claimBullToken', async () => {
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
     addresses = await getTestAddresses()
-    expectations = await getTestExpectations()
-    balancesMap = await getTestBalanceMap()
-    for (let i = 0; i < addresses.length; i++) {
-      balancesMap[addresses[i]] = defaultAmount
-    }
+    balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
     const balances = getBalancesFromMap(balancesMap)
+    expectations = await getTestExpectations(balances, testSetClaimsContext)
     await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
   })
 

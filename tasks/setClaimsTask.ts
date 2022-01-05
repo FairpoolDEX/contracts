@@ -1,10 +1,9 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { BigNumber } from 'ethers'
 import { chunk } from '../test/support/all.helpers'
-import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
+import { getMultiplier } from '../test/support/BullToken.helpers'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { readBalances } from '../util/balance'
-import { importExpectations } from '../util/expectation'
+import { BalancesMap, readBalances } from '../util/balance'
+import { expectTotalAmount, importExpectations } from '../util/expectation'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
@@ -13,10 +12,7 @@ import { ContractName } from '../util/contract'
 import { Address } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
-
-// function decodeBalances() {
-//   // return JSON.parse(buffer.toString())
-// }
+import { AmountBN } from '../models/AmountBN'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
@@ -37,15 +33,18 @@ export async function setClaims(token: any, balances: BalanceBN[], expectations:
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  const { chunkSize, dry, log } = context
+  const { airdropStageShareNumerator, airdropStageShareDenominator, airdropRate, chunkSize, dry, log } = context
   const balancesChunks = chunk(balances, chunkSize)
+  const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
+  const $balances = balances.map(b => ({ ...b, amount: multiply(b.amount) }))
+  expectTotalAmount($balances, expectations.totalAmount)
   for (let i = 0; i < balancesChunks.length; i++) {
-    const $balances = balancesChunks[i]
-    const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
     log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
+    const $balances = balancesChunks[i]
+    // const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
     // log(fromPairs(entriesForDisplay))
     const addresses = $balances.map(b => b.address)
-    const amounts = $balances.map(b => b.amount).map(amount => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
+    const amounts = $balances.map(b => b.amount).map(multiply)
     if (!dry) {
       const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
       log(`TX Hash: ${tx.hash}`)
@@ -58,15 +57,17 @@ export async function setClaims(token: any, balances: BalanceBN[], expectations:
 // }
 
 export interface SetClaimsExpectationsMap {
-  balances: { [address: string]: BigNumber },
-  totalSHLDAmount: { min: BigNumber, max: BigNumber },
-  totalBULLAmount: { min: BigNumber, max: BigNumber },
+  balances: BalancesMap,
+  totalAmount: AmountBN,
 }
 
-interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable {
+export interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable {
   contractName: ContractName
   contractAddress: Address
   balances: Filename
+  airdropStageShareNumerator: number
+  airdropStageShareDenominator: number
+  airdropRate: number
   expectations: Filename
 }
 

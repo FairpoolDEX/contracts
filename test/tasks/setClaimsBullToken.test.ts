@@ -49,8 +49,8 @@ describe('setClaimsBullToken', async () => {
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
     balancesMap = await getTestBalanceMap()
-    expectations = await getTestExpectations()
     balances = getBalancesFromMap(balancesMap)
+    expectations = await getTestExpectations(balances, testSetClaimsContext)
   })
 
   it('should parse the CSV export', async () => {
@@ -94,7 +94,8 @@ describe('setClaimsBullToken', async () => {
   it('should allow the stranger to claim BULL', async () => {
     const strangerAmount = toTokenAmount('10000')
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
-    await setClaims(bullTokenWithOwner, strangerBalances, expectations, testSetClaimsContext)
+    const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
@@ -104,14 +105,16 @@ describe('setClaimsBullToken', async () => {
   it('should allow multiple stages', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
-    await setClaims(bullTokenWithOwner, strangerBalances, expectations, testSetClaimsContext)
+    const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
       await timeTravel(async () => {
         const testBalances = getBalancesFromMap(await getTestBalanceMap())
         const strangerTestBalances = mergeBalance(testBalances, balanceBN(strangerAddress, strangerAmount))
-        await setClaims(bullTokenWithOwner, strangerTestBalances, expectations, testSetClaimsContext)
+        const strangerTestExpectations = await getTestExpectations(strangerTestBalances, testSetClaimsContext)
+        await setClaims(bullTokenWithOwner, strangerTestBalances, strangerTestExpectations, testSetClaimsContext)
         await bullTokenWithStranger.claim()
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount.mul(2)))
       }, airdropStartTimestamp + airdropStageDuration)
