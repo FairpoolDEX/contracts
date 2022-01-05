@@ -4,6 +4,8 @@
     "module": "commonjs",
     "strict": true,
     "baseUrl": ".",
+    "skipLibCheck": true,
+    "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "outDir": "dist",
     "resolveJsonModule": true,
@@ -11,7 +13,7 @@
   },
   "files": [
     "./hardhat.config.ts",
-    "./typechain/hardhat.d.ts"
+    "./typechain-types/hardhat.d.ts"
   ],
   "include": [
     "./util",

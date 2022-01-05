@@ -1,7 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
 import { toTokenAmount } from '../support/all.helpers'
 import { addLiquidity, timeTravel } from '../support/test.helpers'
-import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } from '../../typechain'
+import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalances, getTestExpectations } from '../support/BullToken.helpers'
@@ -10,6 +10,7 @@ import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
 import { BalanceMap } from '../../util/balance'
 import { Address } from '../../models/Address'
+import { testSetClaimsContext } from '../support/context'
 
 xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory
@@ -54,7 +55,7 @@ xdescribe('rollbackBullToken', async () => {
     for (let i = 0; i < addresses.length; i++) {
       balances[addresses[i]] = defaultAmount
     }
-    await setClaims(bullTokenWithOwner, balances, expectations)
+    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
 
     const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken

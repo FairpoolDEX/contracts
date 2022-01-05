@@ -3,7 +3,7 @@ import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
-import { BullToken, ShieldToken } from '../../typechain'
+import { BullToken, ShieldToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTime } from '../support/ShieldToken.helpers'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'

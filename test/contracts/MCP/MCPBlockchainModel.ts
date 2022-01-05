@@ -1,11 +1,8 @@
 import { AmountBN, PriceBN } from '../../../util/types'
-import { expect } from '../../../util/expect'
-import { Metronome } from '../../support/Metronome'
-import { TokenModel } from '../../support/fast-check/models/TokenModel'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
-import { MCP } from '../../../typechain'
-import { Address } from '../../../models/Address'
+import { MCP } from '../../../typechain-types'
+import { Address } from '../../../models/Address' // export class MCPBlockchainModel {
 
 // export class MCPBlockchainModel {
 //   public mcp: MCPModel = {

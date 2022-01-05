@@ -2,7 +2,7 @@ import { expect } from '../../util/expect'
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
-import { GenericToken } from '../../typechain'
+import { GenericToken } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
 

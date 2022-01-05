@@ -3,7 +3,7 @@ import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { toTokenAmount } from '../support/all.helpers'
 import { skipBlocks, timeTravel } from '../support/test.helpers'
-import { ShieldToken } from '../../typechain'
+import { ShieldToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTime } from '../support/ShieldToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'

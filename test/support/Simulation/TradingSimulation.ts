@@ -1,5 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../../typechain'
+import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../../typechain-types'
 import { BigNumber, Contract } from 'ethers'
 import { Ethers } from '../../../util/types'
 import { MaxUint256, scale } from '../all.helpers'
