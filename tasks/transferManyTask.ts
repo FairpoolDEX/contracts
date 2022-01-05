@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { BigNumber } from 'ethers'
-import { BalanceMap, parseBalancesCSV } from '../util/balance'
+import { BalancesMap, parseBalancesCSV } from '../util/balance'
 import fs from 'fs'
 import { Logger } from '../util/log'
 import { chunk } from '../test/support/all.helpers'
@@ -34,7 +34,7 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
-export async function transferMany(contract: any, balances: BalanceMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, feeData: FeeData, dry = false, log?: Logger): Promise<void> {
+export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, feeData: FeeData, dry = false, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))

@@ -1,4 +1,3 @@
-import { RunId } from './run'
 import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/Network'
 import { Logger } from './log'
@@ -6,25 +5,27 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Chunkable } from './chunkable'
 import { pick } from 'lodash'
 import { RunnableTaskArguments } from './task'
+import { RunId } from './run'
+import { Ethers } from './types'
 
 export interface RunnableContext {
-  runId: RunId
+  ethers: Ethers
   deployerAddress: Address
   networkName: NetworkName
-  dry: boolean
   log: Logger
+  dry: boolean
+  runId: RunId
 }
 
-export async function getRunnableContext(args: RunnableTaskArguments, hre: HardhatRuntimeEnvironment): Promise<RunnableContext> {
-  const { runId, dry } = args
+export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext> {
   const { network, ethers } = hre
   const networkName = NetworkNameSchema.parse(network.name)
   const [deployer] = await ethers.getSigners()
   return {
-    runId,
+    ...args,
+    ethers,
     networkName,
     deployerAddress: deployer.address,
-    dry,
     log: console.info.bind(console),
   }
 }

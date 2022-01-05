@@ -14,5 +14,6 @@ const _ = (allAddressInfosJSON as unknown as AddressInfo[]).forEach(info => addA
 export const allAddressInfosByUid: Record<string, AddressInfo> = Object.fromEntries(allAddressInfos.map(info => [getAddressInfoUid(info), info]))
 
 export function getAddressType(networkName: NetworkName, address: Address): AddressType {
-  return ensure(allAddressInfosByUid[toAddressInfoUid(networkName, address)]).type
+  const uid = toAddressInfoUid(networkName, address)
+  return ensure(allAddressInfosByUid[uid], new Error(`Can't find addressInfo for ${uid}`)).type
 }

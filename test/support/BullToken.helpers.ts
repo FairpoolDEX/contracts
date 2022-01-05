@@ -1,12 +1,13 @@
 import { BigNumber } from 'ethers'
 import { days, toTokenAmountString } from './all.helpers'
 import fs from 'fs'
-import { parseAllBalancesCSV, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
+import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
 import { maxSupplyTokenAmount } from './ShieldToken.helpers'
 import { Deployment } from '../../util/deployment'
-import { BalanceMap } from '../../util/balance'
+import { BalancesMap } from '../../util/balance'
 import { Address } from '../../models/Address'
+import { parseAllBalancesCSV } from '../../tasks/util/parse'
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -53,7 +54,7 @@ export async function getClaims(token: any, claimers: string[]): Promise<Claims>
   return _claims
 }
 
-export async function getTestBalances(): Promise<BalanceMap> {
+export async function getTestBalanceMap(): Promise<BalancesMap> {
   const balancesCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.balances.csv`)
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
   const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.olds.csv`)
@@ -70,7 +71,7 @@ export async function getTestExpectations(): Promise<SetClaimsExpectationsMap> {
   }
 }
 
-export async function getBogusBalances(): Promise<BalanceMap> {
+export async function getBogusBalances(): Promise<BalancesMap> {
   const tooLongFormatCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.too-long-format.csv`)
   return parseAllBalancesCSV([tooLongFormatCSV], [], [], [])
 }
