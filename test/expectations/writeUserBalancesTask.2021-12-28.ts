@@ -21,8 +21,5 @@ export const expectations: WriteUserBalancesExpectationsMap = merge({}, oldExpec
     [CryptStylo]: oldBalances[CryptStylo].add(virtualSHLDBalancesFromCurrentBullBalances[CryptStylo]),
     [winooze]: oldBalances[winooze].add(virtualSHLDBalancesFromCurrentBullBalances[winooze]),
   },
-  totalSupply: {
-    min: shieldMaxSupplyTokenAmount.mul(100),
-    max: shieldMaxSupplyTokenAmount.mul(5),
-  },
+  totalAmount: shieldMaxSupplyTokenAmount,
 })

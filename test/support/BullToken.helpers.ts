@@ -1,13 +1,15 @@
 import { BigNumber } from 'ethers'
-import { days, toTokenAmountString } from './all.helpers'
+import { days, toTokenAmount, toTokenAmountString } from './all.helpers'
+import { maxSupply as shieldMaxSupply } from './ShieldToken.helpers'
 import fs from 'fs'
-import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
+import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
-import { maxSupplyTokenAmount } from './ShieldToken.helpers'
 import { Deployment } from '../../util/deployment'
-import { BalancesMap } from '../../util/balance'
+import { BalancesMap, sumBalances } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { parseAllBalancesCSV } from '../../tasks/util/parse'
+import { AmountBN } from '../../models/AmountBN'
+import { BalanceBN } from '../../models/BalanceBN'
 
 export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -25,7 +27,9 @@ export const burnRateNumerator = 999
 
 export const burnRateDenominator = 1000
 
-export const maxSupply = 969163000 * airdropRate
+export const maxSupply = shieldMaxSupply * airdropRate
+
+export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
 export const deployments: Deployment[] = [
   {
@@ -54,6 +58,13 @@ export async function getClaims(token: any, claimers: string[]): Promise<Claims>
   return _claims
 }
 
+export async function setDefaultAmounts(balancesMap: BalancesMap, addresses: Address[], defaultAmount: AmountBN) {
+  for (let i = 0; i < addresses.length; i++) {
+    balancesMap[addresses[i]] = defaultAmount
+  }
+  return balancesMap
+}
+
 export async function getTestBalanceMap(): Promise<BalancesMap> {
   const balancesCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.balances.csv`)
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
@@ -62,12 +73,13 @@ export async function getTestBalanceMap(): Promise<BalancesMap> {
   return parseAllBalancesCSV([], [oldCSV], [balancesCSV, extrasCSV], [blacklistCSV])
 }
 
-export async function getTestExpectations(): Promise<SetClaimsExpectationsMap> {
-  const totalSHLDAmountMax = maxSupplyTokenAmount.mul(2) // it's OK to multiply by 2, because extra claims from prevoius period would make the totalSHLDAmount go over shieldMaxSupplyTokenAmount
+export async function getTestExpectations(balances: BalanceBN[], context: SetClaimsContext): Promise<SetClaimsExpectationsMap> {
+  // const totalSHLDAmountMax = maxSupplyBN.mul(2) // it's OK to multiply by 2, because extra claims from previous period would make the totalSHLDAmount go over shieldMaxSupplyTokenAmount
+  const { airdropStageShareNumerator, airdropStageShareDenominator, airdropRate } = context
+  const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
   return {
     balances: {},
-    totalSHLDAmount: { min: BigNumber.from(0), max: totalSHLDAmountMax },
-    totalBULLAmount: { min: BigNumber.from(0), max: totalSHLDAmountMax.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator) },
+    totalAmount: multiply(sumBalances(balances)),
   }
 }
 
@@ -79,4 +91,9 @@ export async function getBogusBalances(): Promise<BalancesMap> {
 export async function getTestAddresses(): Promise<Address[]> {
   const testAddressesBuffer = fs.readFileSync(`${__dirname}/../fixtures/addresses.csv`)
   return parseAddresses(testAddressesBuffer)
+}
+
+export function getMultiplier(airdropStageShareNumerator: number, airdropStageShareDenominator: number, airdropRate: number) {
+  // NOTE: this expression truncates the fractional part, so the total distributed amount is guaranteed to be lower than 90% of max supply
+  return (amount: AmountBN) => amount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
 }

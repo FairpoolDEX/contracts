@@ -6,7 +6,7 @@
     "cache",
     "coverage",
     "artifacts",
-    "typechain",
+    "typechain-types",
     "node_modules"
   ],
   "ignore": [

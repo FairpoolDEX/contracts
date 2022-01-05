@@ -4,13 +4,14 @@ import { addLiquidity, timeTravel } from '../support/test.helpers'
 import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
-import { BalancesMap } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { testSetClaimsContext } from '../support/context'
+import { BalanceBN } from '../../models/BalanceBN'
 
 xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory
@@ -18,7 +19,8 @@ xdescribe('rollbackBullToken', async () => {
   let owner: SignerWithAddress, stranger: SignerWithAddress, alice: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress
   let bullTokenWithOwner: BullToken, bullTokenWithStranger: BullToken, bullTokenWithAlice: BullToken, bullTokenWithBob: BullToken, bullTokenWithSam: BullToken
 
-  let balances: BalancesMap
+  let balancesMap: BalancesMap
+  let balances: BalanceBN[]
   let addresses: Address[]
   let expectations: SetClaimsExpectationsMap
 
@@ -49,12 +51,10 @@ xdescribe('rollbackBullToken', async () => {
     bullTokenWithBob = bullTokenWithOwner.connect(bob)
     bullTokenWithSam = bullTokenWithOwner.connect(sam)
 
-    balances = await getTestBalanceMap()
     addresses = await getTestAddresses()
-    expectations = await getTestExpectations()
-    for (let i = 0; i < addresses.length; i++) {
-      balances[addresses[i]] = defaultAmount
-    }
+    balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
+    balances = getBalancesFromMap(balancesMap)
+    expectations = await getTestExpectations(balances, testSetClaimsContext)
     await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
 
     const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')

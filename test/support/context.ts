@@ -1,21 +1,45 @@
 import { identity } from 'lodash'
 import { RunnableContext } from '../../util/context'
 import { Chunkable } from '../../util/chunkable'
-import { SetClaimsContext } from '../../tasks/setClaimsTask'
+import { SetClaimsContext, SetClaimsTaskArguments } from '../../tasks/setClaimsTask'
+import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from './BullToken.helpers'
+import { ethers } from 'hardhat'
+import { RunnableTaskArguments } from '../../util/task'
 
-export const testRunnableContext: RunnableContext = {
+export const testRunnableTaskArguments: RunnableTaskArguments = {
   runId: '',
-  networkName: 'hardhat',
-  deployerAddress: '',
   dry: false,
-  log: identity,
 }
 
-export const testChunkableContext: Chunkable = {
+export const testChunkableTaskArguments: Chunkable = {
   chunkSize: 325,
 }
 
+export const testRunnableContext: RunnableContext = {
+  ...testRunnableTaskArguments,
+  networkName: 'hardhat',
+  deployerAddress: '',
+  log: identity,
+  ethers,
+}
+
+export const testChunkableContext: Chunkable = {
+  ...testChunkableTaskArguments,
+}
+
+export const testSetClaimsTaskArguments: SetClaimsTaskArguments = {
+  contractName: 'BullToken',
+  contractAddress: '',
+  balances: '',
+  expectations: '',
+  airdropStageShareNumerator,
+  airdropStageShareDenominator,
+  airdropRate,
+  ...testRunnableTaskArguments,
+  ...testChunkableTaskArguments,
+}
+
 export const testSetClaimsContext: SetClaimsContext = {
+  ...testSetClaimsTaskArguments,
   ...testRunnableContext,
-  ...testChunkableContext,
 }

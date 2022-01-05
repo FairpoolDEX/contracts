@@ -11,7 +11,7 @@ import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, BalanceBNSchema } from '../models/BalanceBN'
 
-export type BalancesMap = { [index: string]: AmountBN }
+export type BalancesMap = { [address: string]: AmountBN }
 
 export async function parseBalancesCSV(data: CSVData): Promise<BalancesMap> {
   const balancesMap: BalancesMap = {}
