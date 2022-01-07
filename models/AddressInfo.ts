@@ -1,16 +1,7 @@
 import { z } from 'zod'
-import { NetworkName, NetworkNameSchema } from './Network'
+import { NetworkName, NetworkNameSchema } from './NetworkName'
 import { Address, AddressSchema } from './Address'
-
-export const AddressTypeSchema = z.enum([
-  'Human',
-  'NFTrade',
-  'UniswapV2',
-  'UniswapV3',
-  'TeamFinanceLiquidityLocker',
-])
-
-export type AddressType = z.infer<typeof AddressTypeSchema>
+import { AddressTypeSchema } from './AddressType'
 
 export const AddressInfoSchema = z.object({
   network: NetworkNameSchema,

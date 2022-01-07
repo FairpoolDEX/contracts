@@ -1,5 +1,5 @@
 import { Address } from '../models/Address'
-import { NetworkName, NetworkNameSchema } from '../models/Network'
+import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { Logger } from './log'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Chunkable } from './chunkable'

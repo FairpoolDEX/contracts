@@ -1,6 +1,6 @@
 import { ensure } from './ensure'
 import { Address } from '../models/Address'
-import { NetworkName } from '../models/Network'
+import { NetworkName } from '../models/NetworkName'
 
 export interface Deployment {
   network: NetworkName
