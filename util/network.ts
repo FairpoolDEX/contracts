@@ -1,7 +1,7 @@
 import { Overrides } from 'ethers'
 import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
-import { NetworkName } from '../models/Network'
+import { NetworkName } from '../models/NetworkName'
 
 export interface NetworkInfo {
   name: NetworkName

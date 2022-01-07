@@ -59,6 +59,8 @@ export function min(left: BigNumber, right: BigNumber) {
 
 export const seconds = 1000
 
+export const second = seconds
+
 export const minutes = 60 * seconds
 
 export const hours = 60 * minutes

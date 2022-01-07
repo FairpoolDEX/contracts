@@ -2,7 +2,7 @@ import { demandIntegerEnvVar } from './env'
 import { gwei } from '../test/support/all.helpers'
 import { strict as assert } from 'assert'
 import { impl } from './todo'
-import { NetworkName } from '../models/Network'
+import { NetworkName } from '../models/NetworkName'
 
 if (process.env.FEES) {
   const fees = process.env.FEES.split(':')

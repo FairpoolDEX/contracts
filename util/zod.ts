@@ -28,6 +28,8 @@ export function getDuplicatesRefinement<Model>(name: string, getUid: (object: Mo
   }
 }
 
+export type GetUid<UidHolder> = (holder: UidHolder) => string
+
 export type Inserter<Input, Output> = (object: Input) => Output
 
 export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input = Output>(name: string, schema: ZodType<Output, Def, Input>, getUid: (object: Output) => string, array: Array<Output>): Inserter<Input, Output> {
@@ -37,5 +39,12 @@ export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input =
     if (duplicate) throw new Error(`Duplicate ${name} found: ${getUid(duplicate)}`)
     array.push($object)
     return $object
+  }
+}
+
+export function getFinder<UidHolder, Output extends UidHolder>(getUid: GetUid<UidHolder>, array: Array<Output>) {
+  return function (uidHolder: UidHolder) {
+    const uid = getUid(uidHolder)
+    return array.find(obj => uid === getUid(obj))
   }
 }
