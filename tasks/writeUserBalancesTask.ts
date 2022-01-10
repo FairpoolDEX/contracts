@@ -16,10 +16,7 @@ import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { rateLimiter } from '../util/infura'
 import { AddressType, Human, NFTrade, TeamFinance } from '../models/AddressType'
-import { ensure } from '../util/ensure'
-import { findNetwork } from '../data/allNetworks'
-import { findContractInfo } from '../data/allContractInfos'
-import { getContractCode, isContract } from '../models/ContractInfo'
+import { isContract } from '../util/contract'
 
 export async function writeUserBalancesTask(args: WriteUserBalancesTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getGetUserBalancesContext(args, hre)
@@ -77,13 +74,14 @@ async function unwrapSmartContractBalances(balances: BalanceBN[], context: Runna
 }
 
 async function getAddressType(address: string, context: RunnableContext): Promise<AddressType> {
-  const { networkName, ethers } = context
-  const $isContract = await isContract(address, ethers)
-  if ($isContract) {
-    const code = await getContractCode(address, ethers)
-    const network = ensure(findNetwork({ name: networkName }))
-    const contractInfo = ensure(findContractInfo({ vm: network.vm, code }))
-    return contractInfo.type
+  const { networkName, ethers, log } = context
+  const code = await ethers.provider.getCode(address)
+  if (isContract(code)) {
+    console.log('address', address)
+    // const network = ensure(findNetwork({ name: networkName }))
+    // const contractInfo = ensure(findContractInfo({ vm: network.vm, code }), async () => { return new Error(`Cannot find contract info for network: ${networkName} and address ${address}`) })
+    // return contractInfo.type
+    return Human
   } else {
     return Human
   }

@@ -21,6 +21,7 @@
     "flatten": "FEES=20:1 hardhat flatten contracts/BullToken.sol | grep -v SPDX > ./BullToken.flat.sol",
     "mythx:analyze": "mythx analyze --async --create-group --solc-version 0.8.4 --mode standard --include BullToken ./BullToken.flat.sol",
     "deploy:taur:bsctestnet": "FEES=20:1 ETHERSCAN_API_KEY=$BSCSCAN_API_KEY hardhat deployContract --constructor-args-module tasks/arguments/MarnotaurToken.arguments.ts --contract GenericToken --network bsctestnet",
+    "deploy:ple:avaxtestnet": "FEES=40:5 ETHERSCAN_API_KEY=$SNOWTRACE_API_KEY hardhat deployContract --constructor-args-module tasks/arguments/PlethoriToken.arguments.ts --contract GenericToken --network avaxtestnet",
     "rebrand:writeUserBalancesTask:mainnet": "FEES=20:1 hardhat --show-stack-traces writeUserBalancesTask --network mainnet --expectations test/expectations/writeUserBalancesTask.2021-12-28.ts --next-folder ~/Downloads/2021-08-03/next --prev-folder ~/Downloads/2021-08-03/prev --retro-folder ~/Downloads/2021-08-03/retro --blacklist-folder ~/Downloads/2021-08-03/blacklist --out ~/Downloads/2021-08-03/balances.json --run-id rebrand:dummy",
     "rebrand:setClaims:bsctestnet": "FEES=20:1 hardhat --show-stack-traces setClaims --network bsctestnet --contract-name BullToken --contract-address 0xcF4137E10086f997E19a774c7992A0790CAe5458 --expectations test/expectations/setClaims.2021-12-28.ts --next-folder ~/Downloads/2021-08-03/next --prev-folder ~/Downloads/2021-08-03/prev --retro-folder ~/Downloads/2021-08-03/retro --blacklist-folder ~/Downloads/2021-08-03/blacklist --run-id rebrand:dummy"
   },
@@ -46,7 +47,7 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "csv-parser": "^3.0.0",
-    "debug": "^4.3.2",
+    "debug": "^4.3.3",
     "decimal.js": "^10.3.1",
     "dotenv": "^8.6.0",
     "ethereum-waffle": "^3.4.0",
