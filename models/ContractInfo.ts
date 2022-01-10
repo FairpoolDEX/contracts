@@ -2,8 +2,6 @@ import { z } from 'zod'
 import { AddressTypeSchema } from './AddressType'
 import { NetworkVMTypeSchema } from './NetworkVM'
 import { toUidSimple } from '../util/uid'
-import { Ethers } from '../util/types'
-import { impl } from '../util/todo'
 
 export const ContractInfoSchema = z.object({
   vm: NetworkVMTypeSchema,
@@ -25,12 +23,4 @@ export function validateContractInfo(info: ContractInfo) {
 
 export function getContractInfoUid(info: Pick<ContractInfo, 'vm' | 'code'>): string {
   return toUidSimple(info, 'vm', 'code')
-}
-
-export async function getContractCode(address: string, ethers: Ethers): Promise<string> {
-  throw impl()
-}
-
-export async function isContract(address: string, ethers: Ethers): Promise<boolean> {
-  throw impl()
 }

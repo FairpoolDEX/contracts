@@ -16,5 +16,5 @@ export const allAddressInfosByUid: Record<string, AddressInfo> = Object.fromEntr
 
 export function getAddressType(networkName: NetworkName, address: Address): AddressType {
   const uid = toAddressInfoUid(networkName, address)
-  return ensure(allAddressInfosByUid[uid], new Error(`Can't find addressInfo for ${uid}`)).type
+  return ensure(allAddressInfosByUid[uid], async () => new Error(`Can't find addressInfo for ${uid}`)).type
 }

@@ -45,6 +45,6 @@ export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input =
 export function getFinder<UidHolder, Output extends UidHolder>(getUid: GetUid<UidHolder>, array: Array<Output>) {
   return function (uidHolder: UidHolder) {
     const uid = getUid(uidHolder)
-    return array.find(obj => uid === getUid(obj))
+    return array.find(obj => getUid(obj) === uid)
   }
 }
