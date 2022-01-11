@@ -3,7 +3,7 @@ import { expect } from './expect'
 import { Filename } from './filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
-import { sumBalances } from './balance'
+import { sumBalanceAmounts } from './balance'
 
 export async function importExpectations(expectationsPath: Filename) {
   return (await import(`${process.cwd()}/${expectationsPath}`)).expectations
@@ -20,7 +20,7 @@ export function expectBalances(actualBalances: BalanceBN[], expectedBalances: Ba
 }
 
 export function expectTotalAmount(balances: BalanceBN[], expectedTotalAmount: AmountBN) {
-  const actualTotalAmount = sumBalances(balances)
+  const actualTotalAmount = sumBalanceAmounts(balances)
   expect(expectedTotalAmount).to.equal(actualTotalAmount)
   // expect(totalAmount.gt(expectedTotalAmount.min)).to.be.true
   // expect(totalAmount.lt(expectedTotalAmount.max)).to.be.true

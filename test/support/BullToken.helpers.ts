@@ -5,23 +5,30 @@ import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
 import { Deployment } from '../../util/deployment'
-import { BalancesMap, sumBalances } from '../../util/balance'
+import { BalancesMap, sumBalanceAmounts } from '../../util/balance'
 import { Address } from '../../models/Address'
-import { parseAllBalancesCSV } from '../../tasks/util/parse'
+import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
+import { todo } from '../../util/todo'
 
-export const airdropStartTimestamp: number = Math.floor(Date.now() / 1000) + 5 * days
+export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 
-export const airdropClaimDuration: number = 2 * days
+export const airdropStartTimestamp = 1622811600
 
-export const airdropStageDuration: number = 30 * days
+export const airdropClaimDuration = 2 * days
+
+export const airdropStageDuration = 30 * days
+
+export const airdropStageMaxCount = 5 // stages
 
 export const airdropStageShareNumerator = 18 // 18% per stage
 
 export const airdropStageShareDenominator = 100
 
 export const airdropRate = 10000 // BULL per SHLD
+
+export const airdropDefaultMultiplier = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
 
 export const burnRateNumerator = 999
 
@@ -31,6 +38,8 @@ export const maxSupply = shieldMaxSupply * airdropRate
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
+export const distributedTokenAmount = airdropDefaultMultiplier(maxSupplyTokenAmount).mul(airdropStageMaxCount)
+
 export const deployments: Deployment[] = [
   {
     network: 'mainnet',
@@ -38,9 +47,7 @@ export const deployments: Deployment[] = [
   },
 ]
 
-export function fromShieldToBull(bn: BigNumber): BigNumber {
-  return bn.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate)
-}
+export const fromShieldToBull = airdropDefaultMultiplier
 
 type Claims = { [index: string]: string }
 
@@ -70,7 +77,7 @@ export async function getTestBalanceMap(): Promise<BalancesMap> {
   const extrasCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.extras.csv`)
   const oldCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.olds.csv`)
   const blacklistCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.blacklist.csv`)
-  return parseAllBalancesCSV([], [oldCSV], [balancesCSV, extrasCSV], [blacklistCSV])
+  return getShieldBalancesForBullAirdropFinal([], [oldCSV], [balancesCSV, extrasCSV], [blacklistCSV])
 }
 
 export async function getTestExpectations(balances: BalanceBN[], context: SetClaimsContext): Promise<SetClaimsExpectationsMap> {
@@ -79,13 +86,13 @@ export async function getTestExpectations(balances: BalanceBN[], context: SetCla
   const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
   return {
     balances: {},
-    totalAmount: multiply(sumBalances(balances)),
+    totalAmount: multiply(sumBalanceAmounts(balances)),
   }
 }
 
 export async function getBogusBalances(): Promise<BalancesMap> {
   const tooLongFormatCSV = fs.readFileSync(`${__dirname}/../fixtures/SHLD.too-long-format.csv`)
-  return parseAllBalancesCSV([tooLongFormatCSV], [], [], [])
+  return getShieldBalancesForBullAirdropFinal([tooLongFormatCSV], [], [], [])
 }
 
 export async function getTestAddresses(): Promise<Address[]> {
@@ -97,3 +104,5 @@ export function getMultiplier(airdropStageShareNumerator: number, airdropStageSh
   // NOTE: this expression truncates the fractional part, so the total distributed amount is guaranteed to be lower than 90% of max supply
   return (amount: AmountBN) => amount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
 }
+
+export const bannedAddressesTokenAmount = todo(BigNumber.from(0))

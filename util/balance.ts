@@ -1,11 +1,11 @@
 import { strict as assert } from 'assert'
 import { expect } from './expect'
 import neatcsv from 'neat-csv'
-import { CSVData } from './csv'
-import { trimEnd } from 'lodash'
+import { RawCSVData } from './csv'
+import { shuffle, trimEnd } from 'lodash'
 import { utils } from 'ethers'
 import { sumBigNumbers } from './bignumber'
-import { AddressSchema, normalizeAddress } from '../models/Address'
+import { AddressSchema, validateAddress } from '../models/Address'
 import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
@@ -13,7 +13,7 @@ import { BalanceBN, BalanceBNSchema } from '../models/BalanceBN'
 
 export type BalancesMap = { [address: string]: AmountBN }
 
-export async function parseBalancesCSV(data: CSVData): Promise<BalancesMap> {
+export async function parseBalancesCSV(data: RawCSVData): Promise<BalancesMap> {
   const balancesMap: BalancesMap = {}
   const rows = await neatcsv(data)
   for (let i = 0; i < rows.length; i++) {
@@ -37,19 +37,19 @@ export function padAmount(amountRaw: string, decimals = 18) {
   return `${whole}.${fraction.padEnd(decimals, '0')}`
 }
 
-export function sumBalances(balances: BalanceBN[]) {
+export function sumBalanceAmounts(balances: BalanceBN[]) {
   return sumBigNumbers(balances.map(b => b.amount))
 }
 
 export function getBalancesFromMap(balanceMap: BalancesMap): BalanceBN[] {
-  return Object.entries(balanceMap).map(([address, amount]) => ({ address: normalizeAddress(address), amount }))
+  return Object.entries(balanceMap).map(([address, amount]) => ({ address: validateAddress(address), amount }))
 }
 
 export function encodeBalances(balances: BalanceBN[]) {
   return balances.map(b => [b.address, b.amount.toString()])
 }
 
-export async function writeBalances(balances: BalanceBN[], out: Filename) {
+export async function writeClaims(balances: BalanceBN[], out: Filename) {
   return writeFile(out, JSON.stringify(encodeBalances(balances)))
 }
 
@@ -77,4 +77,20 @@ export function mergeBalance(balances: BalanceBN[], balance: BalanceBN) {
     balances.push(balance)
   }
   return balances
+}
+
+export function sumBalances(balances: BalanceBN[]): BalanceBN[] {
+  return getBalancesFromMap(balances.reduce<BalancesMap>(function (balancesMap, balance) {
+    const { address, amount } = balance
+    if (balancesMap[address]) {
+      balancesMap[address] = balancesMap[address].add(amount)
+    } else {
+      balancesMap[address] = amount
+    }
+    return balancesMap
+  }, {}))
+}
+
+export function optimizeForGasRefund(balances: BalanceBN[]): BalanceBN[] {
+  return shuffle(balances)
 }

@@ -2,6 +2,16 @@
   {
     "network": "mainnet",
     "address": "0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D",
-    "type": "Human"
+    "type": null
+  },
+  {
+    "network": "mainnet",
+    "address": "0xc77aab3c6d7dab46248f3cc3033c856171878bd5",
+    "type": "TeamFinance"
+  },
+  {
+    "network": "mainnet",
+    "address": "0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a",
+    "type": "NFTrade"
   }
 ]

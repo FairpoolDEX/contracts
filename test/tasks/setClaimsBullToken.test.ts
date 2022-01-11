@@ -4,12 +4,13 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util/balance'
 import { testSetClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN } from '../../models/BalanceBN'
+import { validateAddress } from '../../models/Address'
 
 describe('setClaimsBullToken', async () => {
 
@@ -18,11 +19,11 @@ describe('setClaimsBullToken', async () => {
 
   let ownerAddress: string
   let strangerAddress: string
-  const aliceAddress = '0x00000000000003441d59dde9a90bffb1cd3fabf1'
-  const bobAddress = '0x7dcbefb3b9a12b58af8759e0eb8df05656db911d'
-  const samAddress = '0x81dc6f15ee72f6e6d49cb6ca44c0bf8e63770027'
-  const calAddress = '0xb3b7874f13387d44a3398d298b075b7a3505d8d4'
-  const blackAddress = '0x011850bf8aeeea25f915d2bc983d5354ccb48836'
+  const aliceAddress = validateAddress('0x00000000000003441d59dde9a90bffb1cd3fabf1')
+  const bobAddress = validateAddress('0x7dcbefb3b9a12b58af8759e0eb8df05656db911d')
+  const samAddress = validateAddress('0x81dc6f15ee72f6e6d49cb6ca44c0bf8e63770027')
+  const calAddress = validateAddress('0xb3b7874f13387d44a3398d298b075b7a3505d8d4')
+  const blackAddress = validateAddress('0x011850bf8aeeea25f915d2bc983d5354ccb48836')
 
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
@@ -44,7 +45,7 @@ describe('setClaimsBullToken', async () => {
     ownerAddress = await owner.getAddress()
 
     const bullTokenFactory = await ethers.getContractFactory('BullToken')
-    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
+    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestampForTest, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
@@ -72,15 +73,15 @@ describe('setClaimsBullToken', async () => {
     await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
     const calClaim = await bullTokenWithOwner.claims(calAddress)
-    expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('132814.914153007')))
-    expect(calClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
+    expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
+    expect(calClaim).to.equal(toTokenAmount('0'))
     await timeTravel(async () => {
       await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
       const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
       const calClaim = await bullTokenWithOwner.claims(calAddress)
-      expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('132814.914153007')))
-      expect(calClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
-    }, airdropStartTimestamp + airdropStageDuration)
+      expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
+      expect(calClaim).to.equal(toTokenAmount('0'))
+    }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
   it('should not allow the stranger to set claims', async () => {
@@ -98,8 +99,8 @@ describe('setClaimsBullToken', async () => {
     await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
-    }, airdropStartTimestamp)
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
+    }, airdropStartTimestampForTest)
   })
 
   it('should allow multiple stages', async () => {
@@ -109,16 +110,16 @@ describe('setClaimsBullToken', async () => {
     await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount))
+      expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
       await timeTravel(async () => {
         const testBalances = getBalancesFromMap(await getTestBalanceMap())
         const strangerTestBalances = mergeBalance(testBalances, balanceBN(strangerAddress, strangerAmount))
         const strangerTestExpectations = await getTestExpectations(strangerTestBalances, testSetClaimsContext)
         await setClaims(bullTokenWithOwner, strangerTestBalances, strangerTestExpectations, testSetClaimsContext)
         await bullTokenWithStranger.claim()
-        expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(fromShieldToBull(strangerAmount.mul(2)))
-      }, airdropStartTimestamp + airdropStageDuration)
-    }, airdropStartTimestamp)
+        expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
+      }, airdropStartTimestampForTest + airdropStageDuration)
+    }, airdropStartTimestampForTest)
   })
 
 })

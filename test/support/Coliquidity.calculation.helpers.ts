@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish } from 'ethers'
 import { max } from './all.helpers'
-import { zero } from './test.helpers'
+import { zero } from '../../util/bignumber'
 
 export function getFee(amountWithdrawn: BigNumberish, amountDeposited: BigNumberish, feeNumerator: BigNumberish, feeDenominator: BigNumberish) {
   const $amountWithdrawn = BigNumber.from(amountWithdrawn)

@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { AddressTypeSchema } from './AddressType'
+import { ContractTypeSchema } from './ContractType'
 import { NetworkVMTypeSchema } from './NetworkVM'
 import { toUidSimple } from '../util/uid'
 
 export const ContractInfoSchema = z.object({
   vm: NetworkVMTypeSchema,
   code: z.string(),
-  type: AddressTypeSchema,
+  type: ContractTypeSchema,
 })
 
 export type ContractInfo = z.infer<typeof ContractInfoSchema>

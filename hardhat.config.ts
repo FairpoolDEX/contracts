@@ -10,7 +10,6 @@ import 'hardhat-dependency-compiler'
 import { deployShieldTokenTask } from './tasks/deployShieldTokenTask'
 import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
-import { setClaimsTask } from './tasks/setClaimsTask'
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
 import { claimBullTokenTask } from './tasks/claimBullTokenTask'
 import { upgradeTokenTask } from './tasks/upgradeTokenTask'
@@ -21,7 +20,8 @@ import { transferManyTask } from './tasks/transferManyTask'
 import { HardhatUserConfig } from 'hardhat/types'
 import { maxFeePerGas as gasPrice } from './util/gas'
 import { mnemonic } from './util/config'
-import { writeUserBalancesTask } from './tasks/writeUserBalancesTask'
+import { setClaimsTask } from './tasks/setClaimsTask'
+import { writeClaimsTask } from './tasks/writeClaimsTask'
 
 export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -195,7 +195,7 @@ task('addAllocations', 'Call addAllocations() for allocations with lockup period
   .addParam('allocations', 'JSON with allocations')
   .setAction(addAllocationsShieldTokenTask)
 
-task('writeUserBalancesTask', 'Call setClaims() on BULL token contract')
+task('writeClaims', 'Call setClaims() on BULL token contract')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
   .addParam('contractName', 'Contract name', '', types.string)
   .addParam('contractAddress', 'Contract address', '', types.string)
@@ -206,7 +206,7 @@ task('writeUserBalancesTask', 'Call setClaims() on BULL token contract')
   .addParam('out', 'Filename for writing the balances', undefined, types.string)
   .addParam('expectations', 'JSON file with test expectations')
   .addParam('runId', 'Run ID (should be unique for each actual run)', undefined, types.string)
-  .setAction(writeUserBalancesTask)
+  .setAction(writeClaimsTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)

@@ -3,7 +3,7 @@ import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { dateAdd, days, hours, max, MaxSafeInt, MaxUint256, sum } from '../support/all.helpers'
-import { expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, zero } from '../support/test.helpers'
+import { expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../typechain-types'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { beforeEach } from 'mocha'
@@ -23,6 +23,7 @@ import { ReachDesiredStateCommand } from './Coliquidity/commands/ReachDesiredSta
 import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
+import { zero } from '../../util/bignumber'
 
 describe('Coliquidity', async function () {
   let signers: SignerWithAddress[]

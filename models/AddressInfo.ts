@@ -15,7 +15,7 @@ export function validateAddressInfo(info: AddressInfo) {
   return AddressInfoSchema.parse(info)
 }
 
-export function getAddressInfoUid(info: AddressInfo): string {
+export function getAddressInfoUid(info: Pick<AddressInfo, 'network' | 'address'>): string {
   return toAddressInfoUid(info.network, info.address)
 }
 

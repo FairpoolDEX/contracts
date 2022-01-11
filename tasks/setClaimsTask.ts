@@ -1,9 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
-import { getMultiplier } from '../test/support/BullToken.helpers'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 import { BalancesMap, readBalances } from '../util/balance'
-import { expectTotalAmount, importExpectations } from '../util/expectation'
+import { importExpectations } from '../util/expectation'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
@@ -28,23 +27,20 @@ export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRu
   if (dry) logDryRun(log)
 }
 
-export async function setClaims(token: any, balances: BalanceBN[], expectations: SetClaimsExpectationsMap, context: SetClaimsContext): Promise<void> {
+export async function setClaims(token: any, claims: BalanceBN[], expectations: SetClaimsExpectationsMap, context: SetClaimsContext): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  const { airdropStageShareNumerator, airdropStageShareDenominator, airdropRate, chunkSize, dry, log } = context
-  const balancesChunks = chunk(balances, chunkSize)
-  const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
-  const $balances = balances.map(b => ({ ...b, amount: multiply(b.amount) }))
-  expectTotalAmount($balances, expectations.totalAmount)
-  for (let i = 0; i < balancesChunks.length; i++) {
-    log(`Chunk ${i + 1} / ${balancesChunks.length}:`)
-    const $balances = balancesChunks[i]
+  const { chunkSize, dry, log } = context
+  const claimsChunks = chunk(claims, chunkSize)
+  for (let i = 0; i < claimsChunks.length; i++) {
+    log(`Chunk ${i + 1} / ${claimsChunks.length}:`)
+    const $claims = claimsChunks[i]
     // const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
     // log(fromPairs(entriesForDisplay))
-    const addresses = $balances.map(b => b.address)
-    const amounts = $balances.map(b => b.amount).map(multiply)
+    const addresses = $claims.map(b => b.address)
+    const amounts = $claims.map(b => b.amount)
     if (!dry) {
       const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
       log(`TX Hash: ${tx.hash}`)

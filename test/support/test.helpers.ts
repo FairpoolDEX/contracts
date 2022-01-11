@@ -6,14 +6,6 @@ import { expect } from '../../util/expect'
 import { Ethers } from '../../util/types'
 import { Address } from '../../models/Address'
 
-export const zero = BigNumber.from(0)
-
-export const one = BigNumber.from(1)
-
-export const ten = BigNumber.from(10)
-
-export const neg = (value: BigNumber) => zero.sub(value)
-
 type timeTravelCallback = () => Promise<void>;
 
 export async function timeTravel(callback: timeTravelCallback, nextBlockTimestamp: number): Promise<void> {
