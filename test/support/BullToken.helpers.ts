@@ -23,6 +23,8 @@ export const airdropStageDuration = 30 * days
 
 export const airdropStageMaxCount = 5 // stages
 
+export const airdropStageFirstMissedIndex = 2
+
 export const airdropStageShareNumerator = 18 // 18% per stage
 
 export const airdropStageShareDenominator = 100

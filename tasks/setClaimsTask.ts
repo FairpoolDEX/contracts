@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalancesMap, readBalances } from '../util/balance'
+import { BalancesMap, optimizeForGasRefund, readBalances } from '../util/balance'
 import { importExpectations } from '../util/expectation'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
@@ -15,15 +15,15 @@ import { AmountBN } from '../models/AmountBN'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
-  const { contractName, contractAddress, balances: balancesFilename, expectations: expectationsFilename, dry, log, ethers } = context
+  const { contractName, contractAddress, claims: claimsFilename, expectations: expectationsFilename, dry, log, ethers } = context
   const expectations: SetClaimsExpectationsMap = await importExpectations(expectationsFilename)
   log('Parsing balances')
-  const balances = await readBalances(balancesFilename)
+  const claims = await readBalances(claimsFilename)
   log(`Attaching to contract ${contractAddress}`)
   const Token = await ethers.getContractFactory(contractName)
   const token = await Token.attach(contractAddress)
   log('Setting claims')
-  await setClaims(token, balances, expectations, context)
+  await setClaims(token, claims, expectations, context)
   if (dry) logDryRun(log)
 }
 
@@ -33,14 +33,15 @@ export async function setClaims(token: any, claims: BalanceBN[], expectations: S
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
   const { chunkSize, dry, log } = context
-  const claimsChunks = chunk(claims, chunkSize)
+  const claimsOptimized = optimizeForGasRefund(claims)
+  const claimsChunks = chunk(claimsOptimized, chunkSize)
   for (let i = 0; i < claimsChunks.length; i++) {
     log(`Chunk ${i + 1} / ${claimsChunks.length}:`)
-    const $claims = claimsChunks[i]
+    const claimsChunk = claimsChunks[i]
     // const $balancesForDisplay = $balances.map(balance => [balance.address, balance.amount.toString()])
     // log(fromPairs(entriesForDisplay))
-    const addresses = $claims.map(b => b.address)
-    const amounts = $claims.map(b => b.amount)
+    const addresses = claimsChunk.map(b => b.address)
+    const amounts = claimsChunk.map(b => b.amount)
     if (!dry) {
       const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
       log(`TX Hash: ${tx.hash}`)
@@ -60,7 +61,7 @@ export interface SetClaimsExpectationsMap {
 export interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable {
   contractName: ContractName
   contractAddress: Address
-  balances: Filename
+  claims: Filename
   airdropStageShareNumerator: number
   airdropStageShareDenominator: number
   airdropRate: number

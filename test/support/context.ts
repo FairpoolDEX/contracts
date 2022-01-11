@@ -30,7 +30,7 @@ export const testChunkableContext: Chunkable = {
 export const testSetClaimsTaskArguments: SetClaimsTaskArguments = {
   contractName: 'BullToken',
   contractAddress: '',
-  balances: '',
+  claims: '',
   expectations: '',
   airdropStageShareNumerator,
   airdropStageShareDenominator,

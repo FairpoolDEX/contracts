@@ -1,4 +1,4 @@
-import { flatten, range } from 'lodash'
+import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
 import { getBalancesFromMap, optimizeForGasRefund, sumBalances, writeClaims } from '../util/balance'
@@ -11,7 +11,7 @@ import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
-import { airdropRate, airdropStageDuration, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
+import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
 import { Address } from '../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTag } from './util/getERC20Data'
@@ -20,11 +20,11 @@ import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
 import { seconds } from '../util/time'
+import { isNotBullSellerBalance } from '../data/allAddresses'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
   const { nextFolder, prevFolder, retroFolder, blacklistFolder, expectations: expectationsPath, out, dry } = args
-  const { ethers } = hre
   const { log } = context
   const claims = await getClaimsFromRequests(context)
   await expectClaims(claims, await importExpectations(expectationsPath))
@@ -87,8 +87,8 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
 export async function getClaimsFromRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
-  const claims = sumBalances(Array.prototype.concat(claimsFromBullToken, claimsFromShieldToken))
-  return optimizeForGasRefund(claims)
+  const claims = sumBalances(concat(claimsFromBullToken, claimsFromShieldToken))
+  return claims.filter(isNotBullSellerBalance)
 }
 
 async function getClaimsFromBullToken(context: WriteClaimsContext) {
@@ -111,7 +111,7 @@ async function getDistributionBlockTags(context: WriteClaimsContext): Promise<Bl
 }
 
 async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
-  const indexes = range(0, 5)
+  const indexes = range(airdropStageFirstMissedIndex, airdropStageMaxCount)
   const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
   return timestamps.map(t => new Date(t * seconds))
 }

@@ -12,7 +12,7 @@ export async function getShieldBalancesForBullAirdropFinal(nextDatas: RawCSVData
   return balances
 }
 
-async function addBalances(balances: BalancesMap, data: RawCSVData[], multiplier = 1) {
+export async function addBalances(balances: BalancesMap, data: RawCSVData[], multiplier = 1) {
   for (let i = 0; i < data.length; i++) {
     const $balances = await parseBalancesCSV(data[i])
     for (const key of Object.keys($balances)) {
@@ -26,7 +26,7 @@ async function addBalances(balances: BalancesMap, data: RawCSVData[], multiplier
   }
 }
 
-async function setBalancesToZero(balances: BalancesMap, blacklistDatas: RawCSVData[]) {
+export async function setBalancesToZero(balances: BalancesMap, blacklistDatas: RawCSVData[]) {
   for (let i = 0; i < blacklistDatas.length; i++) {
     const $balances = await parseBalancesCSV(blacklistDatas[i])
     for (const key of Object.keys($balances)) {
