@@ -1,9 +1,8 @@
-import { flatten } from 'lodash'
+import { flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
 import { getBalancesFromMap, optimizeForGasRefund, sumBalances, writeClaims } from '../util/balance'
 import { expectBalances, expectTotalAmount, importExpectations } from '../util/expectation'
-import { impl } from '../util/todo'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Filename, getFiles } from '../util/filesystem'
@@ -12,13 +11,15 @@ import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
-import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator, getMultiplier } from '../test/support/BullToken.helpers'
+import { airdropRate, airdropStageDuration, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
 import { Address } from '../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTag } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
-import { getBullToken } from './util/getToken'
 import { getClaimsFromBalances } from './util/balance'
+import { findClosestBlock } from '../data/allBlocks'
+import { ensure } from '../util/ensure'
+import { seconds } from '../util/time'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -90,6 +91,11 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
   return optimizeForGasRefund(claims)
 }
 
+async function getClaimsFromBullToken(context: WriteClaimsContext) {
+  const { bullContractAddress } = context
+  return getERC20BalancesAtBlockTag('latest', bullContractAddress, context)
+}
+
 async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const { shieldContractAddress } = context
   const blockTags = await getDistributionBlockTags(context)
@@ -99,12 +105,13 @@ async function getClaimsFromShieldToken(context: WriteClaimsContext) {
 }
 
 async function getDistributionBlockTags(context: WriteClaimsContext): Promise<BlockTag[]> {
-  const { bullContractAddress, ethers } = context
-  const bullToken = await getBullToken(bullContractAddress, ethers)
-  throw impl()
+  const dates = await getDistributionDates(context)
+  const blocks = dates.map(date => ensure(findClosestBlock(date)))
+  return blocks.map(b => b.number)
 }
 
-async function getClaimsFromBullToken(context: WriteClaimsContext) {
-  const { bullContractAddress } = context
-  return getERC20BalancesAtBlockTag('latest', bullContractAddress, context)
+async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
+  const indexes = range(0, 5)
+  const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
+  return timestamps.map(t => new Date(t * seconds))
 }

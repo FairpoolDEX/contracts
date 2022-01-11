@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers'
-import { days, toTokenAmount, toTokenAmountString } from './all.helpers'
+import { toTokenAmount, toTokenAmountString } from './all.helpers'
 import { maxSupply as shieldMaxSupply } from './ShieldToken.helpers'
 import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
@@ -11,6 +11,7 @@ import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
 import { todo } from '../../util/todo'
+import { days } from '../../util/time'
 
 export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 

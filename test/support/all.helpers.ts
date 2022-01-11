@@ -57,18 +57,4 @@ export function min(left: BigNumber, right: BigNumber) {
   return left.lte(right) ? left : right
 }
 
-export const seconds = 1000
-
-export const second = seconds
-
-export const minutes = 60 * seconds
-
-export const hours = 60 * minutes
-
-export const days = 24 * hours
-
-export const months = 30 * days // nominal, not calendar
-
-export const years = 12 * months
-
 export const gwei = 1000000000
