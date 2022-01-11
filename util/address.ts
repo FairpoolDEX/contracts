@@ -1,10 +1,10 @@
 import { BalancesMap } from './balance'
-import { Address, normalizeAddress } from '../models/Address'
+import { Address, validateAddress } from '../models/Address'
 
 export type RewriteAddressMap = Array<[Address, Address]>
 
 export function getRewriteAddressMap(raw: RewriteAddressMap): RewriteAddressMap {
-  return raw.map(([from, to]) => [normalizeAddress(from), normalizeAddress(to)])
+  return raw.map(([from, to]) => [validateAddress(from), validateAddress(to)])
 }
 
 export function rewriteAddress(rewrites: RewriteAddressMap, address: Address) {

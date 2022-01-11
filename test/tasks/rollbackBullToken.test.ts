@@ -4,7 +4,7 @@ import { addLiquidity, timeTravel } from '../support/test.helpers'
 import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
 import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
@@ -26,8 +26,8 @@ xdescribe('rollbackBullToken', async () => {
 
   const defaultAmount = toTokenAmount('10000')
 
-  const airdropFirstTimestamp = airdropStartTimestamp
-  const airdropSecondTimestamp = airdropStartTimestamp + airdropStageDuration
+  const airdropFirstTimestamp = airdropStartTimestampForTest
+  const airdropSecondTimestamp = airdropStartTimestampForTest + airdropStageDuration
 
   let uniswapV2Factory: UniswapV2Factory
   let uniswapV2Router: UniswapV2Router02
@@ -44,7 +44,7 @@ xdescribe('rollbackBullToken', async () => {
     [owner, stranger, alice, bob, sam] = await ethers.getSigners()
 
     bullTokenFactory = await ethers.getContractFactory('BullToken')
-    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
+    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestampForTest, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger) as BullToken
     bullTokenWithAlice = bullTokenWithOwner.connect(alice)

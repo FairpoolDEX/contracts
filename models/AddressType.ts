@@ -1,13 +1,8 @@
 import { z } from 'zod'
+import { ContractTypeSchema } from './ContractType'
 
-export const AddressTypeSchema = z.enum([
-  'Human',
-  'NFTrade',
-  'UniswapV2',
-  'UniswapV3',
-  'TeamFinance',
-])
-
-export const { Human, NFTrade, UniswapV2, UniswapV3, TeamFinance } = AddressTypeSchema.enum
+export const AddressTypeSchema = ContractTypeSchema.nullable()
 
 export type AddressType = z.infer<typeof AddressTypeSchema>
+
+export const Human: AddressType = null

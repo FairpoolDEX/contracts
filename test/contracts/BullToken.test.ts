@@ -6,7 +6,7 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken, ShieldToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTime } from '../support/ShieldToken.helpers'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestamp, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
@@ -48,7 +48,7 @@ describe('BullToken', async () => {
     shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)
 
     const bullTokenFactory = await ethers.getContractFactory('BullToken')
-    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestamp, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
+    bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestampForTest, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
     await bullTokenWithOwner.deployed()
     bullTokenWithStranger = bullTokenWithOwner.connect(stranger)
 
@@ -83,7 +83,7 @@ describe('BullToken', async () => {
       await bullTokenWithStranger.claim()
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
-    }, airdropStartTimestamp)
+    }, airdropStartTimestampForTest)
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
@@ -91,7 +91,7 @@ describe('BullToken', async () => {
       await bullTokenWithStranger.claim()
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
-    }, airdropStartTimestamp + airdropStageDuration)
+    }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
   it('should allow any user to claim tokens for other addresses', async () => {
@@ -103,14 +103,14 @@ describe('BullToken', async () => {
     await timeTravel(async () => {
       await bullTokenWithStranger.claimMany([strangerAddress])
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
-    }, airdropStartTimestamp)
+    }, airdropStartTimestampForTest)
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claimMany([strangerAddress])
       await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
       await bullTokenWithStranger.claimMany([strangerAddress])
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
-    }, airdropStartTimestamp + airdropStageDuration)
+    }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
   it('should not allow the user to claim BULL tokens before or after the distribution stage finishes', async () => {
@@ -124,7 +124,7 @@ describe('BullToken', async () => {
       await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
       await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
-    }, airdropStartTimestamp + airdropClaimDuration + 1)
+    }, airdropStartTimestampForTest + airdropClaimDuration + 1)
   })
 
   it('should burn BULL token on transfer', async () => {
@@ -141,7 +141,7 @@ describe('BullToken', async () => {
       await bullTokenWithStranger.transfer(ownerAddress, sentAmount)
       expect(await bullTokenWithOwner.balanceOf(strangerAddress)).to.equal(strangerAmount.sub(sentAmount))
       expect(await bullTokenWithOwner.balanceOf(ownerAddress)).to.equal(recvAmount)
-    }, airdropStartTimestamp)
+    }, airdropStartTimestampForTest)
   })
 
   // it("should allow the owner to rollback BULL token balances", async () => {

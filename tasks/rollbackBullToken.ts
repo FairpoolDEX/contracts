@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { map, max, min, sortBy } from 'lodash'
-import { BigNumber, Contract } from 'ethers'
+import { Contract } from 'ethers'
 import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import { mineBlocks, toTokenAmount } from '../test/support/all.helpers'
@@ -9,16 +9,10 @@ import { expect } from '../util/expect'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { rollbackDate } from '../test/support/rollback.helpers'
-import { TransferTopic } from '../util/topic'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
 import { AmountBN } from '../models/AmountBN'
-
-type Transfer = {
-  from: Address,
-  to: Address,
-  amount: BigNumber
-}
+import { getTransfers, Transfer } from './util/getTransfers'
 
 type FlaggedTransfer = Transfer & {
   type: FlaggedTransferType
@@ -34,24 +28,6 @@ export interface RollbackBullTokenExpectationsMap {
 }
 
 export type EtherscanTransfer = unknown // Event
-
-export async function getTransfers(token: Contract, from: BlockTag, to: BlockTag): Promise<Array<Transfer>> {
-  const transfersRaw = await token.queryFilter({ topics: [TransferTopic] }, from, to)
-  return transfersRaw.map((e) => {
-    if (!e.args) throw new Error()
-    // if (e.args.from === "0x59B8c20CA527ff18e2515b68F28939d6dD3E867B") {
-    //   console.log("e", e)
-    // }
-    const transfer = {
-      from: e.args.from,
-      to: e.args.to,
-      amount: e.args.value,
-      blockNumber: e.blockNumber,
-      transactionHash: e.transactionHash,
-    }
-    return transfer
-  })
-}
 
 export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: Address[]): Promise<Array<FlaggedTransfer>> {
   return transfers.map((t) => {
