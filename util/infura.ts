@@ -1,5 +1,5 @@
 import { RateLimiter } from 'limiter'
-import { second } from '../test/support/all.helpers'
+import { second } from './time'
 
 export const rateLimiter = new RateLimiter({
   tokensPerInterval: 5,

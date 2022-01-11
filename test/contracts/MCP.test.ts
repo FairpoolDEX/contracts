@@ -2,7 +2,6 @@ import { expect } from '../../util/expect'
 import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { hours } from '../support/all.helpers'
 import { expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp } from '../support/test.helpers'
 import { BaseToken, MCP, QuoteToken } from '../../typechain-types'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
@@ -10,6 +9,7 @@ import { beforeEach } from 'mocha'
 import { TokenModel } from '../support/fast-check/models/TokenModel'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
+import { hours } from '../../util/time'
 
 describe('Market Crash Protection', async () => {
   let owner: SignerWithAddress
