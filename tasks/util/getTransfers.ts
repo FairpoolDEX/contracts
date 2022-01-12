@@ -8,6 +8,7 @@ import { flatten, range } from 'lodash'
 import { maxBlocksPerQueryFilterRequest, rateLimiter } from '../../util/getblock'
 import { debug } from '../../util/debug'
 import { getBlockNumber } from '../../util/ethers'
+import { seqMap } from '../../util/promise'
 
 export type Transfer = {
   from: Address,
@@ -34,7 +35,7 @@ async function getTransferEventsPaginated(token: Contract, from: BlockTag, to: B
   const $from = await getBlockNumber(token.provider, from)
   const $to = await getBlockNumber(token.provider, to)
   const blockNumbers = range($from, $to, maxBlocksPerQueryFilterRequest)
-  const transferEventsArray = await Promise.all(blockNumbers.map(blockNumber => getTransferEventsCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest)))
+  const transferEventsArray = await seqMap(blockNumbers, blockNumber => getTransferEventsCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest))
   return flatten(transferEventsArray)
 }
 
