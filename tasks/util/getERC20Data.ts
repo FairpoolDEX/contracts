@@ -8,6 +8,9 @@ import { RunnableContext } from '../../util/context'
 import { unwrapSmartContractBalances } from './unwrapSmartContractBalances'
 import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ShieldToken.helpers'
+import { chunk, flatten } from 'lodash'
+import { maxRequestsPerSecond } from '../../util/getblock'
+import { seqMap } from '../../util/promise'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)
@@ -26,6 +29,18 @@ export async function getERC20BalanceForAddressAtBlockTag(address: Address, bloc
 export async function getERC20BalancesAtBlockTag(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
   const { ethers } = context
   const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers)
-  const balances = await Promise.all(addresses.map(address => getERC20BalanceForAddressAtBlockTag(address, blockTag, contractAddress, ethers)))
+  const balances = await getERC20BalancesForAddressesAtBlockTag(addresses, blockTag, contractAddress, ethers)
   return unwrapSmartContractBalances(balances, context)
+}
+
+export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
+  const { ethers } = context
+  const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers)
+  const addressesPaginated = chunk(addresses, maxRequestsPerSecond)
+  const balances = flatten(await seqMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTag(addressPage, blockTag, contractAddress, ethers)))
+  return unwrapSmartContractBalances(balances, context)
+}
+
+async function getERC20BalancesForAddressesAtBlockTag(addresses: Address[], blockTag: BlockTag, contractAddress: string, ethers: Ethers) {
+  return Promise.all(addresses.map(address => getERC20BalanceForAddressAtBlockTag(address, blockTag, contractAddress, ethers)))
 }

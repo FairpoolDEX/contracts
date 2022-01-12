@@ -3,7 +3,9 @@ import { second } from './time'
 
 export const maxBlocksPerQueryFilterRequest = 10000
 
+export const maxRequestsPerSecond = 30
+
 export const rateLimiter = new RateLimiter({
-  tokensPerInterval: 30 - 1,
+  tokensPerInterval: maxRequestsPerSecond - 1,
   interval: second,
 })

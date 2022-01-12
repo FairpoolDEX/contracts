@@ -14,7 +14,7 @@ import { AmountBN } from '../models/AmountBN'
 import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
 import { Address } from '../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
-import { getERC20BalancesAtBlockTag } from './util/getERC20Data'
+import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
@@ -93,13 +93,13 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
 
 async function getClaimsFromBullToken(context: WriteClaimsContext) {
   const { bullContractAddress } = context
-  return getERC20BalancesAtBlockTag('latest', bullContractAddress, context)
+  return getERC20BalancesAtBlockTagPaginated('latest', bullContractAddress, context)
 }
 
 async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const { shieldContractAddress } = context
   const blockTags = await getDistributionBlockTags(context)
-  const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTag(tag, shieldContractAddress, context)))
+  const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTagPaginated(tag, shieldContractAddress, context)))
   const balances = sumBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }
