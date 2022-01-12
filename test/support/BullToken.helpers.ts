@@ -11,6 +11,7 @@ import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
 import { todo } from '../../util/todo'
 import { days } from '../../util/time'
+import { validateBlockNumber } from '../../models/BlockNumber'
 
 export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 
@@ -43,6 +44,8 @@ export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 export const distributedTokenAmount = airdropDefaultMultiplier(maxSupplyTokenAmount).mul(airdropStageMaxCount)
 
 export const fromShieldToBull = airdropDefaultMultiplier
+
+export const pausedAt = validateBlockNumber(12952142)
 
 type Claims = { [index: string]: string }
 

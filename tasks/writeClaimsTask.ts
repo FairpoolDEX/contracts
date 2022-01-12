@@ -11,7 +11,7 @@ import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
-import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
+import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
@@ -21,6 +21,7 @@ import { ensure } from '../util/ensure'
 import { seconds } from '../util/time'
 import { isNotBullSellerBalance } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
+import { seqMap } from '../util/promise'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -91,13 +92,13 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
 
 async function getClaimsFromBullToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ token: 'BULL', network: context.networkName }))
-  return getERC20BalancesAtBlockTagPaginated('latest', deployment.address, context)
+  return getERC20BalancesAtBlockTagPaginated(pausedAt + 1, deployment.address, context)
 }
 
 async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ token: 'SHLD', network: context.networkName }))
   const blockTags = await getDistributionBlockTags(context)
-  const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context)))
+  const balancesByDate = await seqMap(blockTags, tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context))
   const balances = sumBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }
