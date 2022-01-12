@@ -1,6 +1,6 @@
-import { RunId } from './run'
+import { CacheKey } from './cache'
 
 export interface RunnableTaskArguments {
-  runId: RunId
+  cacheKey: CacheKey
   dry: boolean
 }

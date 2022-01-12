@@ -1,12 +1,15 @@
 import { toTokenAmount } from './all.helpers'
 import { Deployment } from '../../util/deployment'
 import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
+import { validateBlockNumber } from '../../models/BlockNumber'
 
-export const releaseTime: number = Math.floor(new Date('2022.01.01 13:00:00 UTC').getTime() / 1000)
+export const releaseTimeTest: number = Math.floor(new Date('2022.01.01 13:00:00 UTC').getTime() / 1000)
 
 export const maxSupply = 969163000
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
+
+export const deployedAt = validateBlockNumber(12463796)
 
 export const deployments: Deployment[] = [
   {

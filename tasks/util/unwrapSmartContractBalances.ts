@@ -11,7 +11,6 @@ import { ensure } from '../../util/ensure'
 import { findNetwork } from '../../data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
 import { NFTrade, TeamFinance } from '../../models/ContractType'
-import { rebrandDummyRunId } from '../../util/run'
 import { $zero } from '../../data/allAddresses'
 
 /** NOTES
@@ -33,7 +32,7 @@ export async function unwrapSmartContractBalances(balances: BalanceBN[], context
 }
 
 export async function unwrapSmartContractBalance(balance: BalanceBN, context: RunnableContext): Promise<BalanceBN[]> {
-  const { runId, deployerAddress, networkName, ethers } = context
+  const { cacheKey, deployerAddress, networkName, ethers } = context
   const { address } = balance
   const type = await getAddressType(address, context)
   switch (type) {
@@ -42,7 +41,7 @@ export async function unwrapSmartContractBalance(balance: BalanceBN, context: Ru
     case TeamFinance:
       return [{ ...balance, address: deployerAddress }]
     case NFTrade:
-      return runId === rebrandDummyRunId ? [{ ...balance, address: $zero }] : [balance]
+      return cacheKey.includes('dummy') ? [{ ...balance, address: $zero }] : [balance]
     default:
       throw impl()
   }
