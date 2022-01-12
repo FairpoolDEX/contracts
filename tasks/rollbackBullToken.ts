@@ -12,9 +12,10 @@ import { rollbackDate } from '../test/support/rollback.helpers'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
 import { AmountBN } from '../models/AmountBN'
-import { getTransfers, Transfer } from './util/getTransfers'
+import { getTransfersPaginatedCached } from './util/getTransfersFromTo'
+import { Transfer as Tr } from '../models/Transfer'
 
-type FlaggedTransfer = Transfer & {
+type FlaggedTransfer = Tr & {
   type: FlaggedTransferType
 }
 
@@ -29,7 +30,7 @@ export interface RollbackBullTokenExpectationsMap {
 
 export type EtherscanTransfer = unknown // Event
 
-export async function getFlaggedTransfers(transfers: Transfer[], poolAddresses: Address[]): Promise<Array<FlaggedTransfer>> {
+export async function getFlaggedTransfers(transfers: Tr[], poolAddresses: Address[]): Promise<Array<FlaggedTransfer>> {
   return transfers.map((t) => {
     let type: FlaggedTransferType = 'move'
     if (poolAddresses.includes(t.from)) {
@@ -51,7 +52,7 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
 }
 
 export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
-  const transfers = await getTransfers(token, from, to)
+  const transfers = await getTransfersPaginatedCached(token, from, to)
   const blockNumbers = map(transfers, 'blockNumber')
   expect(min(blockNumbers)).greaterThan(from)
   expect(max(blockNumbers)).lessThan(to)
