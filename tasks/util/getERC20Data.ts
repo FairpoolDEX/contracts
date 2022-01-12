@@ -50,7 +50,8 @@ export async function getERC20BalanceForAddressAtBlockTag(address: Address, bloc
 
 async function getERC20BalanceForAddressAtBlockTagCached(address: Address, blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<BalanceBN> {
   const cacheKey = getCacheKey(getERC20BalanceForAddressAtBlockTagCached, address, blockTag, contractAddress)
-  return cache.wrap(cacheKey, () => getERC20BalanceForAddressAtBlockTag(address, blockTag, contractAddress, ethers))
+  const balanceCached = await cache.wrap<BalanceBN>(cacheKey, () => getERC20BalanceForAddressAtBlockTag(address, blockTag, contractAddress, ethers))
+  return validateBalanceBN(balanceCached)
 }
 
 async function getERC20BalancesForAddressesAtBlockTagCached(addresses: Address[], blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
