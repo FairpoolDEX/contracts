@@ -8,7 +8,7 @@ export type CacheKey = string
 export const cache = cacheManager.caching({
   store: fsStore,
   options: {
-    path: '/tmp/contracts-cache', // path for cached files
+    path: process.env.CACHE_DIR ?? '/tmp/contracts-cache', // path for cached files
     ttl: 7 * days / seconds, // time to life in seconds
     subdirs: true, // create subdirectories to reduce the count of files in a single dir (default: false)
   },

@@ -10,6 +10,8 @@ if (process.env.FEES) {
   process.env.MAX_PRIORITY_FEE = fees[1]
 }
 
+console.log('process.env', process.env['DEBUG'])
+
 export const maxFeePerGas = demandIntegerEnvVar('MAX_FEE', 'gwei') * gwei
 
 export const maxPriorityFeePerGas = demandIntegerEnvVar('MAX_PRIORITY_FEE', 'gwei') * gwei
