@@ -22,6 +22,12 @@ import { maxFeePerGas as gasPrice } from './util/gas'
 import { mnemonic } from './util/config'
 import { setClaimsTask } from './tasks/setClaimsTask'
 import { writeClaimsTask } from './tasks/writeClaimsTask'
+// import 'longjohn'
+import { hours, minutes } from './util/time'
+
+// if (process.env.NODE_ENV !== 'production'){
+//   require('longjohn');
+// }
 
 export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -77,23 +83,23 @@ export const config: HardhatUserConfig = {
       gasPrice,
       gasMultiplier: 1.2,
       blockGasLimit: 8000000,
-      timeout: 30 * 60 * 1000,
+      timeout: 30 * minutes,
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url: `https://eth.getblock.io/mainnet/?api_key=${process.env.GETBLOCK_API_KEY}`,
       gasPrice,
       gasMultiplier: 1.2,
       blockGasLimit: 30000000, // https://etherscan.io/blocks
       accounts: { mnemonic },
-      timeout: 24 * 60 * 60 * 1000,
+      timeout: 24 * hours,
     },
     ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url: `https://eth.getblock.io/ropsten/?api_key=${process.env.GETBLOCK_API_KEY}`,
       gasPrice,
       gasMultiplier: 1.2,
       blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
       accounts: { mnemonic },
-      timeout: 2 * 60 * 1000,
+      timeout: 2 * minutes,
     },
     bscmainnet: {
       url: 'https://bsc-dataseed.binance.org/',
@@ -102,7 +108,7 @@ export const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       blockGasLimit: 85000000,
       accounts: { mnemonic },
-      timeout: 24 * 60 * 60 * 1000,
+      timeout: 24 * hours,
     },
     bsctestnet: {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
@@ -111,7 +117,7 @@ export const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       blockGasLimit: 30000000,
       accounts: { mnemonic },
-      timeout: 2 * 60 * 1000,
+      timeout: 2 * minutes,
     },
     avaxmainnet: {
       url: 'https://api.avax.network/ext/bc/C/rpc',
@@ -120,7 +126,7 @@ export const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       blockGasLimit: 8000000,
       accounts: { mnemonic },
-      timeout: 24 * 60 * 60 * 1000,
+      timeout: 24 * hours,
     },
     avaxtestnet: {
       url: 'https://api.avax-test.network/ext/bc/C/rpc',
@@ -129,7 +135,7 @@ export const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       blockGasLimit: 8000000,
       accounts: { mnemonic },
-      timeout: 2 * 60 * 1000,
+      timeout: 2 * minutes,
     },
   },
   etherscan: {
@@ -207,7 +213,7 @@ task('writeClaims', 'Call setClaims() on BULL token contract')
   .addParam('bullContractAddress', '', '', types.string)
   .addParam('out', 'Filename for writing the balances', undefined, types.string)
   .addParam('expectations', 'JSON file with test expectations')
-  .addParam('runId', 'Run ID (should be unique for each actual run)', undefined, types.string)
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(writeClaimsTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')

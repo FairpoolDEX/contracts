@@ -5,7 +5,7 @@ import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } fr
 import { ShieldToken, TraderLoot } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
-import { releaseTime } from '../support/ShieldToken.helpers'
+import { releaseTimeTest } from '../support/ShieldToken.helpers'
 import { decodeBase64, maxClaimTimestamp, name, ownerMaxTokenId, publicMaxTokenId, style, symbol } from '../support/TraderLoot.helpers'
 import { promises as fs } from 'fs'
 import * as os from 'os'
@@ -44,7 +44,7 @@ xdescribe('TraderLoot', async function () {
     const signers = [owner, stranger, bob, sam, bella, sally] = await ethers.getSigners()
 
     const shieldTokenFactory = await ethers.getContractFactory('ShieldToken')
-    shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTime])) as unknown as ShieldToken
+    shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTimeTest])) as unknown as ShieldToken
     await shieldAsOwner.deployed()
     shield = shieldAsOwner.connect($zero)
     shieldAsStranger = shieldAsOwner.connect(stranger)

@@ -6,3 +6,9 @@ export function nail(str: string): string {
     return str
   }
 }
+
+export type Stringable = string | {toString: () => string}
+
+export function toString(s: Stringable) {
+  return typeof s === 'string' ? s : s.toString()
+}

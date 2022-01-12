@@ -7,7 +7,7 @@ import { ethers } from 'hardhat'
 import { RunnableTaskArguments } from '../../util/task'
 
 export const testRunnableTaskArguments: RunnableTaskArguments = {
-  runId: '',
+  cacheKey: '',
   dry: false,
 }
 

@@ -1,7 +1,7 @@
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 
-import { releaseTime } from '../test/support/ShieldToken.helpers'
+import { releaseTimeTest } from '../test/support/ShieldToken.helpers'
 
 export async function deployShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { ethers, upgrades, network } = hre
@@ -10,7 +10,7 @@ export async function deployShieldTokenTask(args: TaskArguments, hre: HardhatRun
   console.log(`export SHLD_DEPLOYER=${deployer.address}`)
 
   const Token = await ethers.getContractFactory('ShieldToken')
-  const token = await upgrades.deployProxy(Token, [releaseTime])
+  const token = await upgrades.deployProxy(Token, [releaseTimeTest])
   await token.deployed()
   console.log(`export SHLD_PROXY_ADDRESS=${token.address}`) // eslint-disable-line no-console
 

@@ -1,7 +1,8 @@
 import { z } from 'zod'
+import { BlockNumberSchema } from './BlockNumber'
 
 export const BlockSchema = z.object({
-  number: z.number(),
+  number: BlockNumberSchema,
   timestamp: z.date(),
 })
 

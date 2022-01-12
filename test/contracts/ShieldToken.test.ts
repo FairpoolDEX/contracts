@@ -5,7 +5,7 @@ import { toTokenAmount } from '../support/all.helpers'
 import { skipBlocks, timeTravel } from '../support/test.helpers'
 import { ShieldToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTime } from '../support/ShieldToken.helpers'
+import { allocationsForTest, releaseTimeTest } from '../support/ShieldToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 describe('ShieldToken', async () => {
@@ -20,7 +20,7 @@ describe('ShieldToken', async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
     const tokenFactory = await ethers.getContractFactory('ShieldToken')
-    token = (await upgrades.deployProxy(tokenFactory, [releaseTime])) as unknown as ShieldToken
+    token = (await upgrades.deployProxy(tokenFactory, [releaseTimeTest])) as unknown as ShieldToken
     await token.deployed()
 
     nonOwnerToken = token.connect(nonOwner)
@@ -184,7 +184,7 @@ describe('ShieldToken', async () => {
 
     it('shouldn\'t be able to change release time after release', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
-      const newBlockTimestamp = releaseTime + 3600
+      const newBlockTimestamp = releaseTimeTest + 3600
       await timeTravel(async () => {
         await expect(
           token.setReleaseTime(newReleaseTime),
@@ -201,7 +201,7 @@ describe('ShieldToken', async () => {
     })
 
     it('should return 1 day after release', async () => {
-      const dayAfterRelease = releaseTime + 3600 * 24
+      const dayAfterRelease = releaseTimeTest + 3600 * 24
       await timeTravel(async () => {
         const months = await token.getMonths(0)
         expect(months).to.equal(1)
@@ -209,7 +209,7 @@ describe('ShieldToken', async () => {
     })
 
     it('should return 2 month after release', async () => {
-      const monthAfterRelease = releaseTime + 3600 * 24 * 30
+      const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const months = await token.getMonths(0)
         expect(months).to.equal(2)
@@ -219,7 +219,7 @@ describe('ShieldToken', async () => {
     it('should return 0 after release if lock period', async () => {
       // 30 days lock period
       const lockPeriod = 3600 * 24 * 30
-      const dayAfterRelease = releaseTime + 3600 * 24
+      const dayAfterRelease = releaseTimeTest + 3600 * 24
       await timeTravel(async () => {
         const months = await token.getMonths(lockPeriod)
         expect(months).to.equal(0)
@@ -229,7 +229,7 @@ describe('ShieldToken', async () => {
     it('should return 1 month after release if lock period', async () => {
       // 30 days lock period
       const lockPeriod = 3600 * 24 * 30
-      const monthAfterRelease = releaseTime + lockPeriod
+      const monthAfterRelease = releaseTimeTest + lockPeriod
       await timeTravel(async () => {
         const months = await token.getMonths(lockPeriod)
         expect(months).to.equal(1)
@@ -246,7 +246,7 @@ describe('ShieldToken', async () => {
     })
 
     it('should throw if lock period is over already', async () => {
-      const monthAfterRelease = releaseTime + 3600 * 24 * 30
+      const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const dayAfterRelease = 24 * 3600
         await expect(
@@ -256,7 +256,7 @@ describe('ShieldToken', async () => {
     })
 
     it('should add new allocation after release', async () => {
-      const monthAfterRelease = releaseTime + 3600 * 24 * 30
+      const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const newVestingIndex = 8
         const frozenAmount = 100
@@ -293,7 +293,7 @@ describe('ShieldToken', async () => {
           transferableAmount = await token.getTransferableAmount(nonOwner.address)
           expect(unlockedAmount).to.equal(initialAmount)
           expect(transferableAmount).to.equal(initialAmount.sub(transferAmount))
-        }, releaseTime + lockPeriod + 1)
+        }, releaseTimeTest + lockPeriod + 1)
 
         // check monthly amount unfreeze
         await timeTravel(async () => {
@@ -309,7 +309,7 @@ describe('ShieldToken', async () => {
           transferableAmount = await token.getTransferableAmount(nonOwner.address)
           expect(unlockedAmount).to.equal(initialAmount.add(monthlyAmount))
           expect(transferableAmount).to.equal(initialAmount.add(monthlyAmount).sub(transferAmount))
-        }, releaseTime + lockPeriod + 24 * 3600 * 30 + 1)
+        }, releaseTimeTest + lockPeriod + 24 * 3600 * 30 + 1)
 
       }, monthAfterRelease)
     })
@@ -413,7 +413,7 @@ describe('ShieldToken', async () => {
     })
 
     it('should transfer tokens from frozenWallet after vesting period ends', async () => {
-      const fiveYearsAfterRelease = releaseTime + 3600 * 24 * 365 * 5
+      const fiveYearsAfterRelease = releaseTimeTest + 3600 * 24 * 365 * 5
       await timeTravel(async () => {
         for (const allocation of Object.values(allocationsForTest)) {
           for (const [address, amount] of Object.entries(allocation)) {
@@ -437,7 +437,7 @@ describe('ShieldToken', async () => {
 
     it('should not transfer before lockup period is over', async () => {
       const seedAllocation = allocationsForTest['0']
-      const minuteAfterRelease = releaseTime + 60
+      const minuteAfterRelease = releaseTimeTest + 60
       await timeTravel(async () => {
         for (const [address, amount] of Object.entries(seedAllocation)) {
           const unlockedAmount = await token.getUnlockedAmount(address)
@@ -452,7 +452,7 @@ describe('ShieldToken', async () => {
 
     it('should transfer only initial amount after lockup period', async () => {
       const seedAllocation = allocationsForTest['0']
-      const afterLockupPeriod = releaseTime + 3600 * 24 * 30
+      const afterLockupPeriod = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         for (const [address, amount] of Object.entries(seedAllocation)) {
           const initialAmount = toTokenAmount(amount * 5 / 100)
@@ -464,7 +464,7 @@ describe('ShieldToken', async () => {
 
     it('should transfer initial + monthly amounts month after lockup period', async () => {
       const seedAllocation = allocationsForTest['0']
-      const afterLockupPeriod = releaseTime + 3600 * 24 * 30
+      const afterLockupPeriod = releaseTimeTest + 3600 * 24 * 30
       const monthAfterLockupPeriod = afterLockupPeriod + 3600 * 24 * 30
       await timeTravel(async () => {
         for (const [address, amount] of Object.entries(seedAllocation)) {
