@@ -12,7 +12,6 @@ import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier } from '../test/support/BullToken.helpers'
-import { Address } from '../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
@@ -21,6 +20,7 @@ import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
 import { seconds } from '../util/time'
 import { isNotBullSellerBalance } from '../data/allAddresses'
+import { findDeployment } from '../data/allDeployments'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -64,8 +64,6 @@ export interface WriteClaimsExpectationsMap {
 }
 
 interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable {
-  shieldContractAddress: Address
-  bullContractAddress: Address
   nextFolder: string
   prevFolder: string
   retroFolder: string
@@ -92,14 +90,14 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
 }
 
 async function getClaimsFromBullToken(context: WriteClaimsContext) {
-  const { bullContractAddress } = context
-  return getERC20BalancesAtBlockTagPaginated('latest', bullContractAddress, context)
+  const deployment = ensure(findDeployment({ token: 'BULL', network: context.networkName }))
+  return getERC20BalancesAtBlockTagPaginated('latest', deployment.address, context)
 }
 
 async function getClaimsFromShieldToken(context: WriteClaimsContext) {
-  const { shieldContractAddress } = context
+  const deployment = ensure(findDeployment({ token: 'SHLD', network: context.networkName }))
   const blockTags = await getDistributionBlockTags(context)
-  const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTagPaginated(tag, shieldContractAddress, context)))
+  const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context)))
   const balances = sumBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }

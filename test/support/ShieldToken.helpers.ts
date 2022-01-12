@@ -1,5 +1,4 @@
 import { toTokenAmount } from './all.helpers'
-import { Deployment } from '../../util/deployment'
 import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
 import { validateBlockNumber } from '../../models/BlockNumber'
 
@@ -10,13 +9,6 @@ export const maxSupply = 969163000
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
 export const deployedAt = validateBlockNumber(12463796)
-
-export const deployments: Deployment[] = [
-  {
-    network: 'mainnet',
-    address: '0xd49EFA7BC0D339D74f487959C573d518BA3F8437',
-  },
-]
 
 // @note: All values is set without decimals
 export const allocationsForTest: { [index: string]: { [index: string]: number } } = {

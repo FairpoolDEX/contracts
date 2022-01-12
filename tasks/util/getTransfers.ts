@@ -15,7 +15,6 @@ async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)
   debug(__filename, getTransfers, token.address, from, to)
   const events = await token.queryFilter({ topics: [TransferTopic] }, from, to)
-  console.log('events', events)
   return events.map(fromEventToTransfer)
 }
 

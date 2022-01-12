@@ -4,7 +4,6 @@ import { maxSupply as shieldMaxSupply } from './ShieldToken.helpers'
 import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
-import { Deployment } from '../../util/deployment'
 import { BalancesMap, sumBalanceAmounts } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
@@ -42,13 +41,6 @@ export const maxSupply = shieldMaxSupply * airdropRate
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
 export const distributedTokenAmount = airdropDefaultMultiplier(maxSupplyTokenAmount).mul(airdropStageMaxCount)
-
-export const deployments: Deployment[] = [
-  {
-    network: 'mainnet',
-    address: '0x1bb022ab668085c6417b7d7007b0fbd53bacc383',
-  },
-]
 
 export const fromShieldToBull = airdropDefaultMultiplier
 
