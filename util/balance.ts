@@ -4,7 +4,7 @@ import neatcsv from 'neat-csv'
 import { RawCSVData } from './csv'
 import { shuffle, trimEnd } from 'lodash'
 import { utils } from 'ethers'
-import { sumBigNumbers } from './bignumber'
+import { sumBigNumbers, zero } from './bignumber'
 import { AddressSchema, validateAddress } from '../models/Address'
 import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
@@ -93,4 +93,8 @@ export function sumBalances(balances: BalanceBN[]): BalanceBN[] {
 
 export function optimizeForGasRefund(balances: BalanceBN[]): BalanceBN[] {
   return shuffle(balances)
+}
+
+export function isZeroBalance(balance: BalanceBN) {
+  return balance.amount.eq(zero)
 }
