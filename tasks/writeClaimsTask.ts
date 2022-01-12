@@ -92,13 +92,11 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
 }
 
 async function getClaimsFromBullToken(context: WriteClaimsContext) {
-  context.log(getClaimsFromBullToken.name)
   const { bullContractAddress } = context
   return getERC20BalancesAtBlockTag('latest', bullContractAddress, context)
 }
 
 async function getClaimsFromShieldToken(context: WriteClaimsContext) {
-  context.log(getClaimsFromShieldToken.name)
   const { shieldContractAddress } = context
   const blockTags = await getDistributionBlockTags(context)
   const balancesByDate = await Promise.all(blockTags.map(tag => getERC20BalancesAtBlockTag(tag, shieldContractAddress, context)))
