@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { NetworkNameSchema } from './NetworkName'
 import { NetworkVMTypeSchema } from './NetworkVM'
-import { toUidSimple } from '../util/uid'
+import { toUid } from '../util/uid'
 
 export const NetworkSchema = z.object({
   name: NetworkNameSchema,
@@ -15,5 +15,5 @@ export function validateNetwork(network: Network) {
 }
 
 export function getNetworkUid(network: Pick<Network, 'name'>): string {
-  return toUidSimple(network, 'name')
+  return toUid(network, 'name')
 }

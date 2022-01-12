@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { ContractTypeSchema } from './ContractType'
 import { NetworkVMTypeSchema } from './NetworkVM'
-import { toUidSimple } from '../util/uid'
+import { toUid } from '../util/uid'
 
 export const ContractInfoSchema = z.object({
   vm: NetworkVMTypeSchema,
@@ -22,5 +22,5 @@ export function validateContractInfo(info: ContractInfo) {
 }
 
 export function getContractInfoUid(info: Pick<ContractInfo, 'vm' | 'code'>): string {
-  return toUidSimple(info, 'vm', 'code')
+  return toUid(info, 'vm', 'code')
 }

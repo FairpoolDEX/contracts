@@ -12,7 +12,7 @@ import { rollbackDate } from '../test/support/rollback.helpers'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
 import { AmountBN } from '../models/AmountBN'
-import { getTransfersPaginatedCached } from './util/getTransfersFromTo'
+import { getTransfersPaginatedCached } from './util/getTransfers'
 import { Transfer as Tr } from '../models/Transfer'
 
 type FlaggedTransfer = Tr & {
