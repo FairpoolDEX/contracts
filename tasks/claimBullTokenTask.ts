@@ -5,11 +5,11 @@ import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
 import type { Ethers } from '../util/types'
 import { Contract } from 'ethers'
-import { Address } from '../models/Address'
+import { Address, validateAddress } from '../models/Address'
 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {
   const rows = await neatcsv(data)
-  return uniq(rows.map((row) => row['Address'].toLowerCase()))
+  return uniq(rows.map((row) => validateAddress(row['Address'])))
 }
 
 export async function claimBullToken(token: Contract, addresses: Address[], ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
