@@ -16,5 +16,5 @@ export const cache = cacheManager.caching({
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function getCacheKey(func: Function, ...args: unknown[]) {
-  return JSON.stringify([func, ...args.map(toString)])
+  return JSON.stringify([func.name, ...args.map(toString)])
 }
