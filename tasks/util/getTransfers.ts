@@ -21,7 +21,8 @@ async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
 async function getTransfersCached(token: Contract, from: BlockTag, to: BlockTag, cache: Cache) {
   // debug(__filename, getTransferEventsCached, token.address, from, to)
   const cacheKey = getCacheKey(getTransfersCached, token.address, from, to)
-  return cache.wrap<Transfer[]>(cacheKey, () => getTransfers(token, from, to))
+  const transfersCached = await cache.wrap<Transfer[]>(cacheKey, () => getTransfers(token, from, to))
+  return transfersCached.map(validateTransfer)
 }
 
 export async function getTransfersPaginatedCached(token: Contract, from: BlockTag, to: BlockTag): Promise<Transfer[]> {
