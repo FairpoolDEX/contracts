@@ -105,6 +105,7 @@ async function getClaimsFromShieldToken(context: WriteClaimsContext) {
 
 async function getDistributionBlockTags(context: WriteClaimsContext): Promise<BlockTag[]> {
   const dates = await getDistributionDates(context)
+  console.log('dates', dates)
   const blocks = dates.map(date => ensure(findClosestBlock(date)))
   return blocks.map(b => b.number)
 }
