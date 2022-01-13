@@ -24,6 +24,7 @@ import { setClaimsTask } from './tasks/setClaimsTask'
 import { writeClaimsTask } from './tasks/writeClaimsTask'
 // import 'longjohn'
 import { hours, minutes } from './util/time'
+import { getJsonRpcUrl } from './util/ethereum'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -68,7 +69,7 @@ export const config: HardhatUserConfig = {
       gasPrice,
       gasMultiplier: 1,
       // forking: {
-      //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`,
       //   blockNumber: 12779553,
       // },
       blockGasLimit: 8000000,
@@ -86,7 +87,7 @@ export const config: HardhatUserConfig = {
       timeout: 30 * minutes,
     },
     mainnet: {
-      url: `https://eth.getblock.io/mainnet/?api_key=${process.env.GETBLOCK_API_KEY}`,
+      url: getJsonRpcUrl('mainnet'),
       gasPrice,
       gasMultiplier: 1.2,
       blockGasLimit: 30000000, // https://etherscan.io/blocks
@@ -94,7 +95,7 @@ export const config: HardhatUserConfig = {
       timeout: 24 * hours,
     },
     ropsten: {
-      url: `https://eth.getblock.io/ropsten/?api_key=${process.env.GETBLOCK_API_KEY}`,
+      url: getJsonRpcUrl('ropsten'),
       gasPrice,
       gasMultiplier: 1.2,
       blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
