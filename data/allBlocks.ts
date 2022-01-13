@@ -9,7 +9,7 @@ export const addBlock = getInserter('Block', BlockSchema, getBlockUid, allBlocks
 export const findBlock = getFinder(getBlockUid, allBlocks)
 
 export function findClosestBlock(date: Date) {
-  return allBlocks.find(b => b.timestamp.getTime() - date.getTime() < minute)
+  return allBlocks.find(b => Math.abs(b.timestamp.getTime() - date.getTime()) < minute)
 }
 
 addBlock({
