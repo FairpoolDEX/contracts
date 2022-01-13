@@ -15,7 +15,7 @@ import { validateBlockNumber } from '../../models/BlockNumber'
 
 export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 
-export const airdropStartTimestamp = 1622811600
+export const airdropStartTimestamp = 1622811600000
 
 export const airdropClaimDuration = 2 * days
 

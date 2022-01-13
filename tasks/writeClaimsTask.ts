@@ -18,7 +18,6 @@ import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
-import { seconds } from '../util/time'
 import { isNotBullSellerBalance } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
@@ -105,7 +104,6 @@ async function getClaimsFromShieldToken(context: WriteClaimsContext) {
 
 async function getDistributionBlockTags(context: WriteClaimsContext): Promise<BlockTag[]> {
   const dates = await getDistributionDates(context)
-  console.log('dates', dates)
   const blocks = dates.map(date => ensure(findClosestBlock(date)))
   return blocks.map(b => b.number)
 }
@@ -113,5 +111,5 @@ async function getDistributionBlockTags(context: WriteClaimsContext): Promise<Bl
 async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
   const indexes = range(airdropStageFirstMissedIndex, airdropStageMaxCount)
   const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
-  return timestamps.map(t => new Date(t * seconds))
+  return timestamps.map(t => new Date(t))
 }
