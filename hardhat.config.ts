@@ -13,7 +13,7 @@ import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldToken
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
 import { claimBullTokenTask } from './tasks/claimBullTokenTask'
 import { upgradeTokenTask } from './tasks/upgradeTokenTask'
-import { rollbackBullTokenTask } from './tasks/rollbackBullToken'
+import { rollbackBullTokenTask } from './tasks/rollbackBullTokenTask'
 import { deployMCPTask } from './tasks/deployMCPTask'
 import { deployContractTask } from './tasks/deployContractTask'
 import { transferManyTask } from './tasks/transferManyTask'

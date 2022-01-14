@@ -2,7 +2,7 @@ import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
 import { getBalancesFromMap, optimizeForGasRefund, sumBalances, writeClaims } from '../util/balance'
-import { expectBalances, expectTotalAmount, importExpectations } from '../util/expectation'
+import { expectBalances, Expected, expectTotalAmount, importExpectations } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Filename, getFiles } from '../util/filesystem'
@@ -63,12 +63,11 @@ export interface WriteClaimsExpectationsMap {
   totalAmount: AmountBN,
 }
 
-interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable {
+interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
   nextFolder: string
   prevFolder: string
   retroFolder: string
   blacklistFolder: string
-  expectations: string
 }
 
 export interface WriteClaimsContext extends WriteClaimsTaskArguments, RunnableContext {

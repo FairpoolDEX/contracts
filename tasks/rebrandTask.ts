@@ -21,7 +21,7 @@ async function migrateBullToken() {
 }
 
 async function migrateShieldToken() {
-  throw impl()
+  throw impl('Call task')
 }
 
 export async function rebrandTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {

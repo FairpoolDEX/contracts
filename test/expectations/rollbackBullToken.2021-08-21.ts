@@ -1,4 +1,4 @@
-import { RollbackBullTokenExpectationsMap } from '../../tasks/rollbackBullToken'
+import { RollbackBullTokenExpectationsMap } from '../../tasks/rollbackBullTokenTask'
 
 export const expectations: RollbackBullTokenExpectationsMap = {
   'buys': {
