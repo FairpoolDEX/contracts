@@ -4,6 +4,7 @@ import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { Provider } from '@ethersproject/providers'
 import { RateLimiter } from 'limiter'
 import { impl } from './todo'
+import { Contract } from 'ethers'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await removeTokens(ethers.provider, 1)
@@ -29,4 +30,9 @@ export async function getBlockNumber(provider: Provider, tag: BlockTag) {
 
 function isBlockNumber(tag: BlockTag): tag is number {
   return typeof tag === 'number'
+}
+
+export async function getContract(ethers: Ethers, contractName: string, contractAddress: Address): Promise<Contract> {
+  const token = await ethers.getContractFactory(contractName)
+  return token.attach(contractAddress)
 }

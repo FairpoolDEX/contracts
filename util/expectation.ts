@@ -25,3 +25,7 @@ export function expectTotalAmount(balances: BalanceBN[], expectedTotalAmount: Am
   // expect(totalAmount.gt(expectedTotalAmount.min)).to.be.true
   // expect(totalAmount.lt(expectedTotalAmount.max)).to.be.true
 }
+
+export interface Expected {
+  expectations: string
+}
