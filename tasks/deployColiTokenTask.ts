@@ -12,18 +12,6 @@ import { impl } from '../util/todo'
 import { getContract } from '../util/ethers'
 import { NetworkName } from '../models/NetworkName'
 
-async function deployShieldToken(token: ShieldToken): Promise<ShieldToken> {
-  throw impl()
-}
-
-async function setVesting(token: ShieldToken) {
-  throw impl()
-}
-
-async function setBalances(token: ShieldToken) {
-  throw impl()
-}
-
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
   const { fromNetwork, toNetwork, isPaused, expectations: expectationsPath, dry, ethers } = context
@@ -32,7 +20,7 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
 
   const fromDeployment = ensure(findDeployment({ token: 'SHLD', network: fromNetwork }))
   const fromToken = await getContract(ethers, 'ShieldToken', fromDeployment.address) as unknown as ShieldToken
-  const toToken = await deployShieldToken(fromToken)
+  const toToken = await deployColiToken(fromToken)
   // const pauseTx = await pauseContract(fromToken, true)
   const vestingTxes = await setVesting(toToken)
   const transferTxes = await setBalances(toToken)
@@ -55,6 +43,22 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
 
   // await rollbackBullToken(fromToken, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+}
+
+async function deployColiToken(token: ShieldToken): Promise<ShieldToken> {
+  await run('deployContract', {
+    contract: 'ColiToken',
+    constructorArgs: constructorArgsModule,
+    constructorArgsParams,
+  })
+}
+
+async function setVesting(token: ShieldToken) {
+  throw impl()
+}
+
+async function setBalances(token: ShieldToken) {
+  throw impl()
 }
 
 interface DeployColiExpectationsMap {
