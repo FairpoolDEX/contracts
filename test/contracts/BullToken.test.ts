@@ -42,7 +42,7 @@ describe('BullToken', async () => {
     strangerAddress = await stranger.getAddress()
     ownerAddress = await owner.getAddress()
 
-    const shieldTokenFactory = await ethers.getContractFactory('ShieldToken')
+    const shieldTokenFactory = await ethers.getContractFactory('ColiToken')
     shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTimeTest])) as unknown as ShieldToken
     await shieldTokenWithOwner.deployed()
     shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)

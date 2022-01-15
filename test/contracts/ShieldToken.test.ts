@@ -1,8 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
-import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { toTokenAmount } from '../support/all.helpers'
-import { skipBlocks, timeTravel } from '../support/test.helpers'
+import { timeTravel } from '../support/test.helpers'
 import { ShieldToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTimeTest } from '../support/ShieldToken.helpers'
@@ -19,7 +18,7 @@ describe('ShieldToken', async () => {
   beforeEach(async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
-    const tokenFactory = await ethers.getContractFactory('ShieldToken')
+    const tokenFactory = await ethers.getContractFactory('ColiToken')
     token = (await upgrades.deployProxy(tokenFactory, [releaseTimeTest])) as unknown as ShieldToken
     await token.deployed()
 
@@ -480,130 +479,4 @@ describe('ShieldToken', async () => {
     })
   })
 
-  describe('Anti bot', async () => {
-
-    let defenseBlockDuration: number
-    let tokenAmount: BigNumber
-
-    beforeEach(async () => {
-      // initialize
-      defenseBlockDuration = 10
-
-      // give some tokens to nonOwner for tests
-      tokenAmount = toTokenAmount('10')
-      token.transfer(nonOwner.address, tokenAmount)
-    })
-
-    it('should run disableTransfers only by owner', async () => {
-      await expect(
-        nonOwnerToken.disableTransfers(defenseBlockDuration),
-      ).to.be.revertedWith('caller is not the owner')
-    })
-
-    it('anti-bot defense should be off after deploy', async () => {
-      const isTransferDisabled = await nonOwnerToken.isTransferDisabled()
-      expect(isTransferDisabled).to.be.equal(false)
-    })
-
-    it('should burn when transfer for regular wallets if defense is on', async () => {
-      const supply: BigNumber = await token.totalSupply()
-
-      await token.disableTransfers(defenseBlockDuration)
-
-      // transfers should be disabled
-      expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
-      // owner should transfer
-      expect(await token.isTransferDisabled()).to.be.equal(false)
-
-      const senderBalance: BigNumber = await token.balanceOf(nonOwner.address)
-      const receiverBalance: BigNumber = await token.balanceOf(owner.address)
-
-      // try to send tokens
-      await expect(
-        nonOwnerToken.transfer(owner.address, tokenAmount),
-      ).to.emit(nonOwnerToken, 'TransferBurned').withArgs(nonOwner.address, tokenAmount)
-
-      // balance of sender should decreased
-      const newSenderBalance: BigNumber = await token.balanceOf(nonOwner.address)
-      expect(newSenderBalance).to.equal(senderBalance.sub(tokenAmount))
-
-      // balance of receiver should be unchanged
-      const newReceiverBalance: BigNumber = await token.balanceOf(owner.address)
-      expect(newReceiverBalance).to.equal(receiverBalance)
-
-      // total supply should decreased after burn
-      const newSupply: BigNumber = await token.totalSupply()
-      expect(newSupply).to.equal(supply.sub(tokenAmount))
-    })
-
-    it('should revert when transfer for frozen wallets if defense is on', async () => {
-      const frozenAMount = 100
-      await token.addAllocations([nonOwner.address], [frozenAMount], '0')
-
-      const canTransfer = await token.canTransfer(nonOwner.address, toTokenAmount(frozenAMount))
-      expect(canTransfer).to.be.equal(false)
-
-      const supply: BigNumber = await token.totalSupply()
-
-      await token.disableTransfers(defenseBlockDuration)
-
-      // transfers should be disabled
-      expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
-
-      const senderBalance: BigNumber = await token.balanceOf(nonOwner.address)
-      const receiverBalance: BigNumber = await token.balanceOf(owner.address)
-
-      // try to send tokens
-      await expect(
-        nonOwnerToken.transfer(owner.address, senderBalance),
-      ).to.be.revertedWith('Wait for vesting day!')
-
-      // balance of sender shouldn't change
-      const newSenderBalance: BigNumber = await token.balanceOf(nonOwner.address)
-      expect(newSenderBalance).to.equal(senderBalance)
-
-      // balance of receiver should be unchanged
-      const newReceiverBalance: BigNumber = await token.balanceOf(owner.address)
-      expect(newReceiverBalance).to.equal(receiverBalance)
-
-      // total supply shouldn't change
-      const newSupply: BigNumber = await token.totalSupply()
-      expect(newSupply).to.equal(supply)
-    })
-
-    it('should transfer after defense is over', async () => {
-      await token.disableTransfers(defenseBlockDuration)
-
-      expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(true)
-
-      // wait until defense is over
-      await skipBlocks(defenseBlockDuration)
-
-      expect(await nonOwnerToken.isTransferDisabled()).to.be.equal(false)
-
-      await expect(
-        nonOwnerToken.transfer(owner.address, tokenAmount),
-      ).to.not.emit(nonOwnerToken, 'TransferBurned')
-    })
-
-    it('should disable defense calling disableBurnBeforeBlockNumber method', async () => {
-      await token.disableBurnBeforeBlockNumber()
-
-      const burnBeforeBlockNumber = await token.burnBeforeBlockNumber()
-      expect(burnBeforeBlockNumber).to.be.equal(0)
-
-      const burnBeforeBlockNumberDisabled = await token.burnBeforeBlockNumberDisabled()
-      expect(burnBeforeBlockNumberDisabled).to.be.equal(true)
-
-      await expect(
-        token.disableTransfers(defenseBlockDuration),
-      ).to.be.revertedWith('Bot defense is disabled')
-    })
-
-    it('should run disableBurnBeforeBlockNumber only by owner', async () => {
-      await expect(
-        nonOwnerToken.disableBurnBeforeBlockNumber(),
-      ).to.be.revertedWith('caller is not the owner')
-    })
-  })
 })
