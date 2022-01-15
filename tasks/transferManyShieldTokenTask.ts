@@ -3,7 +3,7 @@ import { Allocations } from '../util/types'
 import { chunk } from '../test/support/all.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../util/expect'
-import { maxSupplyTokenAmount } from '../test/support/ShieldToken.helpers'
+import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 
 // NOTE: Amounts should be with decimals (with a dot)
 

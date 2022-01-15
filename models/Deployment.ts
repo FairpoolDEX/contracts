@@ -2,11 +2,11 @@ import { z } from 'zod'
 import { ensure } from '../util/ensure'
 import { AddressSchema } from './Address'
 import { NetworkName, NetworkNameSchema } from './NetworkName'
-import { NativeTokenTypeSchema } from './NativeTokenType'
+import { ContractNameSchema } from './ContractName'
 import { toUid } from '../util/uid'
 
 export const DeploymentSchema = z.object({
-  token: NativeTokenTypeSchema,
+  contract: ContractNameSchema,
   network: NetworkNameSchema,
   address: AddressSchema,
 })
@@ -17,8 +17,8 @@ export function validateDeployment(deployment: Deployment) {
   return DeploymentSchema.parse(deployment)
 }
 
-export function getDeploymentUid(deployment: Pick<Deployment, 'token' | 'network'>): string {
-  return toUid(deployment, 'token', 'network')
+export function getDeploymentUid(deployment: Pick<Deployment, 'contract' | 'network'>): string {
+  return toUid(deployment, 'contract', 'network')
 }
 
 export function getDeploymentByNetwork(deployments: Deployment[], network: NetworkName) {

@@ -1,6 +1,6 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { maxSupplyTokenAmount } from '../support/ShieldToken.helpers'
+import { maxSupplyTokenAmount } from '../support/ColiToken.helpers'
 import { airdropRate } from '../support/BullToken.helpers'
 import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { CryptStylo, deployer, NFTradePool, TeamFinanceLiquidityLocker, winooze } from '../../data/allAddresses'

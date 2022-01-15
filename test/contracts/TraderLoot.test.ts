@@ -5,7 +5,7 @@ import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } fr
 import { ShieldToken, TraderLoot } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
-import { releaseTimeTest } from '../support/ShieldToken.helpers'
+import { releaseTimeTest } from '../support/ColiToken.helpers'
 import { decodeBase64, maxClaimTimestamp, name, ownerMaxTokenId, publicMaxTokenId, style, symbol } from '../support/TraderLoot.helpers'
 import { promises as fs } from 'fs'
 import * as os from 'os'

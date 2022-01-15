@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Address } from '../models/Address'
 import { ensure } from '../util/ensure'
@@ -7,23 +6,24 @@ import { RunnableTaskArguments } from '../util/task'
 import { Writable } from '../util/writable'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { Expected } from '../util/expectation'
-import { ShieldToken } from '../typechain-types'
+import { ColiToken } from '../typechain-types'
 import { impl } from '../util/todo'
 import { getContract } from '../util/ethers'
-import { NetworkName } from '../models/NetworkName'
+import { isTestnet, NetworkName } from '../models/NetworkName'
+import { realpath } from 'fs/promises'
+import { BalanceBN } from '../models/BalanceBN'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
   const { fromNetwork, toNetwork, isPaused, expectations: expectationsPath, dry, ethers } = context
-  if (!isPaused) throw new Error('Please pause the SHLD token before migrating')
-  console.info('Migrating SHLD token')
+  if (!(isPaused || isTestnet(toNetwork))) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
 
-  const fromDeployment = ensure(findDeployment({ token: 'SHLD', network: fromNetwork }))
-  const fromToken = await getContract(ethers, 'ShieldToken', fromDeployment.address) as unknown as ShieldToken
-  const toToken = await deployColiToken(fromToken)
+  const fromDeployment = ensure(findDeployment({ contract: 'ShieldToken', network: fromNetwork }))
+  const fromToken = await getContract(ethers, 'ColiToken', fromDeployment.address) as unknown as ColiToken
+  const toToken = await deployColiToken(context)
   // const pauseTx = await pauseContract(fromToken, true)
-  const vestingTxes = await setVesting(toToken)
-  const transferTxes = await setBalances(toToken)
+  const vestingTxes = await setVesting(fromToken, toToken)
+  const transferTxes = await setBalances(fromToken, toToken)
 
   // TODO: it must migrate BULL
   // TODO: it must remove claim-related code
@@ -45,25 +45,26 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
-async function deployColiToken(token: ShieldToken): Promise<ShieldToken> {
-  await run('deployContract', {
+async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {
+  const { run } = context
+  const result = await run('deployContract', {
     contract: 'ColiToken',
-    constructorArgs: constructorArgsModule,
-    constructorArgsParams,
+    constructorArgsModule: await realpath(`${__dirname}/arguments/ColiToken.arguments.ts`),
+    upgradeable: true,
   })
 }
 
-async function setVesting(token: ShieldToken) {
+async function setVesting(fromToken: ColiToken, toToken: ColiToken) {
   throw impl()
 }
 
-async function setBalances(token: ShieldToken) {
+async function setBalances(fromToken: ColiToken, toToken: ColiToken) {
   throw impl()
 }
 
-interface DeployColiExpectationsMap {
+export interface DeployColiExpectationsMap {
   equalBalances: Address[],
-  balances: { [address: string]: BigNumber }
+  balances: BalanceBN[]
 }
 
 interface DeployColiTokenTaskArguments extends RunnableTaskArguments, Writable, Expected {

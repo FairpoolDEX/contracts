@@ -66,7 +66,7 @@ export const allocationsForTest: { [index: string]: { [index: string]: number } 
 //   },
 }
 
-export const shieldRewriteAddressMap: RewriteAddressMap = getRewriteAddressMap([
+export const coliRewriteAddressMap: RewriteAddressMap = getRewriteAddressMap([
   ['0xc77aab3c6d7dab46248f3cc3033c856171878bd5', '0x7dcbefb3b9a12b58af8759e0eb8df05656db911d'], // locked liquidity
   ['0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a', '0x0000000000000000000000000000000000000000'], // NFTrade pool
 ])
