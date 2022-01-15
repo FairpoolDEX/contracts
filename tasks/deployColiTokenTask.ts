@@ -12,6 +12,7 @@ import { getContract } from '../util/ethers'
 import { isTestnet, NetworkName } from '../models/NetworkName'
 import { realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
+import { DeployGenericTokenTaskOutput } from './deployContractTask'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -46,12 +47,17 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
 }
 
 async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {
-  const { run } = context
+  const { ethers, run } = context
   const result = await run('deployContract', {
     contract: 'ColiToken',
     constructorArgsModule: await realpath(`${__dirname}/arguments/ColiToken.arguments.ts`),
     upgradeable: true,
-  })
+  }) as DeployGenericTokenTaskOutput
+  if (result.upgradeable) {
+    return await getContract(ethers, 'ColiToken', result.proxyAddress) as unknown as ColiToken
+  } else {
+    throw new Error()
+  }
 }
 
 async function setVesting(fromToken: ColiToken, toToken: ColiToken) {
