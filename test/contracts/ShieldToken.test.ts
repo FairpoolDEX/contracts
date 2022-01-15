@@ -2,24 +2,24 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from '../../util/expect'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
-import { ShieldToken } from '../../typechain-types'
+import { ColiToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTimeTest } from '../support/ShieldToken.helpers'
+import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
-describe('ShieldToken', async () => {
+describe('ColiToken', async () => {
 
   let owner: SignerWithAddress
   let nonOwner: SignerWithAddress
 
-  let token: ShieldToken
-  let nonOwnerToken: ShieldToken
+  let token: ColiToken
+  let nonOwnerToken: ColiToken
 
   beforeEach(async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
     const tokenFactory = await ethers.getContractFactory('ColiToken')
-    token = (await upgrades.deployProxy(tokenFactory, [releaseTimeTest])) as unknown as ShieldToken
+    token = (await upgrades.deployProxy(tokenFactory, [releaseTimeTest])) as unknown as ColiToken
     await token.deployed()
 
     nonOwnerToken = token.connect(nonOwner)

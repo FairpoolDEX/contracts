@@ -7,7 +7,6 @@ import 'hardhat-watcher'
 import 'solidity-coverage'
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-dependency-compiler'
-import { deployShieldTokenTask } from './tasks/deployShieldTokenTask'
 import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
@@ -25,6 +24,7 @@ import { writeClaimsTask } from './tasks/writeClaimsTask'
 // import 'longjohn'
 import { hours, minutes } from './util/time'
 import { getJsonRpcUrl } from './util/ethereum'
+import { deployColiTokenTask } from './tasks/deployColiTokenTask'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -174,8 +174,11 @@ export const config: HardhatUserConfig = {
 
 export default config
 
-task('deployShieldToken', 'Deploy ShieldToken contract')
-  .setAction(deployShieldTokenTask)
+task('deployColiToken', 'Deploy ColiToken contract')
+  .addParam('fromNetwork', '', undefined, types.string)
+  .addParam('toNetwork', '', undefined, types.string)
+  .addParam('isPaused', '', undefined, types.boolean)
+  .setAction(deployColiTokenTask)
 
 task('deployBullToken', 'Deploy BullToken contract')
   .setAction(deployBullTokenTask)

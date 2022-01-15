@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 import { toTokenAmount, toTokenAmountString } from './all.helpers'
-import { maxSupply as shieldMaxSupply } from './ShieldToken.helpers'
+import { maxSupply as shieldMaxSupply } from './ColiToken.helpers'
 import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'

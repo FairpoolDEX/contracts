@@ -9,6 +9,10 @@ export function validateAddress(address: Address) {
   return AddressSchema.parse(address)
 }
 
+export function validateAddresses(addresses: Address[]) {
+  return addresses.map(validateAddress)
+}
+
 export function getAddressUid(address: Address): string {
   return address
 }

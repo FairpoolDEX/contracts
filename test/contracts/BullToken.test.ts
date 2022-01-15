@@ -3,9 +3,9 @@ import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
-import { BullToken, ShieldToken } from '../../typechain-types'
+import { BullToken, ColiToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTimeTest } from '../support/ShieldToken.helpers'
+import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
 
 const claimers = Object.keys(claims)
@@ -28,8 +28,8 @@ describe('BullToken', async () => {
   let ownerAddress: string
   let strangerAddress: string
 
-  let shieldTokenWithOwner: ShieldToken
-  let shieldTokenWithStranger: ShieldToken
+  let coliTokenWithOwner: ColiToken
+  let coliTokenWithStranger: ColiToken
 
   let bullTokenWithOwner: BullToken
   let bullTokenWithStranger: BullToken
@@ -42,10 +42,10 @@ describe('BullToken', async () => {
     strangerAddress = await stranger.getAddress()
     ownerAddress = await owner.getAddress()
 
-    const shieldTokenFactory = await ethers.getContractFactory('ColiToken')
-    shieldTokenWithOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTimeTest])) as unknown as ShieldToken
-    await shieldTokenWithOwner.deployed()
-    shieldTokenWithStranger = shieldTokenWithOwner.connect(stranger)
+    const coliTokenFactory = await ethers.getContractFactory('ColiToken')
+    coliTokenWithOwner = (await upgrades.deployProxy(coliTokenFactory, [releaseTimeTest])) as unknown as ColiToken
+    await coliTokenWithOwner.deployed()
+    coliTokenWithStranger = coliTokenWithOwner.connect(stranger)
 
     const bullTokenFactory = await ethers.getContractFactory('BullToken')
     bullTokenWithOwner = (await upgrades.deployProxy(bullTokenFactory, [airdropStartTimestampForTest, airdropClaimDuration, airdropStageDuration, burnRateNumerator, burnRateDenominator])) as unknown as BullToken
@@ -57,7 +57,7 @@ describe('BullToken', async () => {
       const addresses = Object.keys(allocation)
       const amounts = Object.values(allocation)
 
-      await shieldTokenWithOwner.addAllocations(addresses, amounts, vestingTypeIndex)
+      await coliTokenWithOwner.addAllocations(addresses, amounts, vestingTypeIndex)
     }
   })
 
