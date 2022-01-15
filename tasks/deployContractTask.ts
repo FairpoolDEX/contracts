@@ -60,7 +60,7 @@ interface DeployGenericTokenTaskArguments {
   constructorArgsParams: string[]
 }
 
-type DeployGenericTokenTaskOutput = DeployGenericTokenTaskUpgradeableOutput | DeployGenericTokenTaskNonUpgradeableOutput
+export type DeployGenericTokenTaskOutput = DeployGenericTokenTaskUpgradeableOutput | DeployGenericTokenTaskNonUpgradeableOutput
 
 interface DeployGenericTokenTaskUpgradeableOutput {
   upgradeable: true
