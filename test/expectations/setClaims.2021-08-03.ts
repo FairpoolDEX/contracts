@@ -3,7 +3,7 @@ import { toTokenAmount } from '../support/all.helpers'
 import { maxSupplyTokenAmount } from '../support/ColiToken.helpers'
 import { airdropRate } from '../support/BullToken.helpers'
 import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { CryptStylo, deployer, NFTradePool, TeamFinanceLiquidityLocker, winooze } from '../../data/allAddresses'
+import { CS, deployer, KS, NFTradePool, TeamFinanceLiquidityLocker } from '../../data/allAddresses'
 
 export const expectations: SetClaimsExpectationsMap = {
   balances: {
@@ -22,7 +22,7 @@ export const expectations: SetClaimsExpectationsMap = {
     ),
     '0x3aff228382d3D6a420f065DC87459557b4646ee1': toTokenAmount('0'), // BULL seller
     '0x0D2Be688Cb203Ee577B6bABbf84B933961497128': toTokenAmount('0'), // BULL seller
-    [CryptStylo]: toTokenAmount( // Stylo
+    [CS]: toTokenAmount( // Stylo
       new Decimal('0')
         .add(new Decimal('1090600.19751302')) // prev balance
         .add(new Decimal('17790.000000000000000000')) // prev liquidity pool
@@ -32,7 +32,7 @@ export const expectations: SetClaimsExpectationsMap = {
           .add(new Decimal('1000000')) // curr NFTrade
           .mul(3),),
     ),
-    [winooze]: toTokenAmount( // winooze
+    [KS]: toTokenAmount( // winooze
       new Decimal('0')
         .add(new Decimal('19418.000000000000000000')) // prev balance
         .add(new Decimal('0')

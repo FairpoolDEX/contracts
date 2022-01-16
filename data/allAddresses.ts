@@ -11,9 +11,13 @@ export const $zero = addAddress('0x0000000000000000000000000000000000000000')
 
 export const deployer = addAddress('0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D')
 
-export const CryptStylo = addAddress('0x81DC6F15eE72F6E6d49CB6Ca44C0Bf8E63770027')
+export const CS = addAddress('0x81DC6F15eE72F6E6d49CB6Ca44C0Bf8E63770027')
 
-export const winooze = addAddress('0x86F7E1B163D8E7F85DEF9Ca6301Ce2B41f5c76ce')
+export const KS = addAddress('0x86F7E1B163D8E7F85DEF9Ca6301Ce2B41f5c76ce')
+
+export const ChrSc = addAddress('0x53cC4422e3ADf3A75051D4D21069B704c46c91C6')
+
+export const DanDB = addAddress('0xeDB28Ab9B1b0ac1C37d01BCFB868580eFD20A8a4')
 
 export const NFTradePool = addAddress('0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a')
 
