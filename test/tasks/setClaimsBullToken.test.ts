@@ -8,9 +8,12 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTes
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util/balance'
-import { testSetClaimsContext } from '../support/context'
+import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
+import { getClaimsFromBullToken } from '../../tasks/writeClaimsTask'
+import { long } from '../../util/mocha'
+import { expectTotalAmount } from '../../util/expectation'
 
 describe('setClaimsBullToken', async () => {
 
@@ -120,6 +123,12 @@ describe('setClaimsBullToken', async () => {
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
       }, airdropStartTimestampForTest + airdropStageDuration)
     }, airdropStartTimestampForTest)
+  })
+
+  long(getClaimsFromBullToken.name, async () => {
+    const claimsFromBullToken = await getClaimsFromBullToken(testWriteClaimsContext)
+    const bullTotalSupply_2022_01_16 = BigNumber.from('1490403967926689867814673435496')
+    expectTotalAmount(claimsFromBullToken, bullTotalSupply_2022_01_16)
   })
 
 })

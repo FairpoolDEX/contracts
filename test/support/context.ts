@@ -3,8 +3,10 @@ import { RunnableContext } from '../../util/context'
 import { Chunkable } from '../../util/chunkable'
 import { SetClaimsContext, SetClaimsTaskArguments } from '../../tasks/setClaimsTask'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from './BullToken.helpers'
-import { ethers } from 'hardhat'
+import hardhatRuntimeEnvironment from 'hardhat'
 import { RunnableTaskArguments } from '../../util/task'
+import { WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { tmpdir } from 'os'
 
 export const testRunnableTaskArguments: RunnableTaskArguments = {
   cacheKey: '',
@@ -16,11 +18,11 @@ export const testChunkableTaskArguments: Chunkable = {
 }
 
 export const testRunnableContext: RunnableContext = {
+  ...hardhatRuntimeEnvironment,
   ...testRunnableTaskArguments,
   networkName: 'hardhat',
   deployerAddress: '',
   log: identity,
-  ethers,
   run: () => Promise.resolve(),
 }
 
@@ -42,5 +44,11 @@ export const testSetClaimsTaskArguments: SetClaimsTaskArguments = {
 
 export const testSetClaimsContext: SetClaimsContext = {
   ...testSetClaimsTaskArguments,
+  ...testRunnableContext,
+}
+
+export const testWriteClaimsContext: WriteClaimsContext = {
+  out: `${tmpdir()}/testWriteClaims.json`,
+  expectations: '',
   ...testRunnableContext,
 }
