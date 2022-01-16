@@ -4,14 +4,14 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
-import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap, mergeBalance, sumBalanceAmounts } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromShieldToken, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
@@ -137,6 +137,16 @@ describe('setClaimsBullToken', async () => {
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     expectTotalAmount(claimsFromBullToken, bullTotalSupply_2022_01_16)
+  })
+
+  long(getClaimsFromShieldToken.name, async () => {
+    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
+    const claimsFromBullToken = await getClaimsFromBullToken(context)
+    const claimsFromShieldToken = await getClaimsFromShieldToken(context)
+    const sumClaimsFromBullToken = sumBalanceAmounts(claimsFromBullToken)
+    const sumClaimsFromShieldToken = sumBalanceAmounts(claimsFromShieldToken)
+    expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
+    expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(3))
   })
 
 })

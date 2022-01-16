@@ -1,11 +1,13 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { bannedAddressesTokenAmount, distributedTokenAmount } from '../support/BullToken.helpers'
+import { airdropDistributedTokenAmountTotal } from '../support/BullToken.helpers'
 import { BalancesMap } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, deployer, KS } from '../../data/allAddresses'
 import { WriteClaimsExpectationsMap } from '../../tasks/writeClaimsTask'
 import { mergeVersionedRecords } from '../../util/version'
+import { todo } from '../../util/todo'
+import { BigNumber } from 'ethers'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [deployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -15,9 +17,16 @@ export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
 
 const { balances: oldBalances } = oldExpectations
 
+function getTotalAmount() {
+  // It will take too much time to implement this function
+  const bannedAddressesTokenAmount = todo(BigNumber.from(0))
+  const unclaimedTokenAmount = todo(BigNumber.from(0))
+  return airdropDistributedTokenAmountTotal.sub(bannedAddressesTokenAmount).sub(unclaimedTokenAmount)
+}
+
 export const expectations: WriteClaimsExpectationsMap = {
   balances: getBalances(),
-  totalAmount: distributedTokenAmount.sub(bannedAddressesTokenAmount),
+  totalAmount: getTotalAmount(),
 }
 
 function getBalances(): BalancesMap {
