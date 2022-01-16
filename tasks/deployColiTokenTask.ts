@@ -82,8 +82,8 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
 
 function expectAllocations(allocations: Allocation[]) {
   const sum = sumBalanceAmounts(allocations)
-  expect(sum).to.be.lessThan(maxSupplyTokenAmount)
-  expect(sum).to.be.greaterThan(toTokenAmount(1))
+  expect(sum.lt(maxSupplyTokenAmount)).to.be.true
+  expect(sum.gt(toTokenAmount(1))).to.be.true
 }
 
 async function getAllocations(context: DeployColiTokenContext) {
