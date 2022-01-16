@@ -5,11 +5,9 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Chunkable } from './chunkable'
 import { pick } from 'lodash'
 import { RunnableTaskArguments } from './task'
-import { Ethers } from './types'
 import { RunTaskFunction } from 'hardhat/types/runtime'
 
-export interface RunnableContext extends RunnableTaskArguments {
-  ethers: Ethers
+export interface RunnableContext extends RunnableTaskArguments, HardhatRuntimeEnvironment {
   run: RunTaskFunction,
   deployerAddress: Address
   networkName: NetworkName
@@ -17,13 +15,12 @@ export interface RunnableContext extends RunnableTaskArguments {
 }
 
 export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext> {
-  const { network, ethers, run } = hre
+  const { ethers, network } = hre
   const networkName = NetworkNameSchema.parse(network.name)
   const [deployer] = await ethers.getSigners()
   return {
+    ...hre,
     ...args,
-    ethers,
-    run,
     networkName,
     deployerAddress: deployer.address,
     log: console.info.bind(console),

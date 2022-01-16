@@ -25,6 +25,9 @@ import { writeClaimsTask } from './tasks/writeClaimsTask'
 import { hours, minutes } from './util/time'
 import { getJsonRpcUrl } from './util/ethereum'
 import { deployColiTokenTask } from './tasks/deployColiTokenTask'
+import { bscmainnet, bsctestnet, mainnet, ropsten } from './data/allNetworks'
+import { Network } from './models/Network'
+import { NetworkUserConfig } from 'hardhat/src/types/config'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -86,40 +89,36 @@ export const config: HardhatUserConfig = {
       blockGasLimit: 8000000,
       timeout: 30 * minutes,
     },
-    mainnet: {
+    mainnet: fromNetwork(mainnet, {
       url: getJsonRpcUrl('mainnet'),
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 30000000, // https://etherscan.io/blocks
       accounts: { mnemonic },
       timeout: 24 * hours,
-    },
-    ropsten: {
+    }),
+    ropsten: fromNetwork(ropsten, {
       url: getJsonRpcUrl('ropsten'),
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
       accounts: { mnemonic },
       timeout: 2 * minutes,
-    },
-    bscmainnet: {
+    }),
+    bscmainnet: fromNetwork(bscmainnet, {
       url: 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 85000000,
       accounts: { mnemonic },
       timeout: 24 * hours,
-    },
-    bsctestnet: {
+    }),
+    bsctestnet: fromNetwork(bsctestnet, {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
-      blockGasLimit: 30000000,
       accounts: { mnemonic },
       timeout: 2 * minutes,
-    },
+    }),
     avaxmainnet: {
       url: 'https://api.avax.network/ext/bc/C/rpc',
       chainId: 43114,
@@ -179,6 +178,13 @@ export const config: HardhatUserConfig = {
   //   // sources: "?(.|./node_modules/@uniswap/v2-core|./node_modules/@uniswap/v2-periphery)/contracts",
   //   sources: "+(./contracts)",
   // },
+}
+
+function fromNetwork(network: Network, config: NetworkUserConfig): NetworkUserConfig {
+  return {
+    blockGasLimit: network.blockGasLimit,
+    ...config,
+  }
 }
 
 export default config
