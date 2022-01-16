@@ -1,7 +1,7 @@
 import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber } from 'ethers'
-import { getBalancesFromMap, optimizeForGasRefund, sumBalances, writeClaims } from '../util/balance'
+import { addBalances, getBalancesFromMap, optimizeForGasRefund, writeClaims } from '../util/balance'
 import { expectBalances, Expected, expectTotalAmount, importExpectations } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
@@ -84,7 +84,7 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
 export async function getClaimsFromRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
-  const claims = sumBalances(concat(claimsFromBullToken, claimsFromShieldToken))
+  const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
   return claims.filter(isNotBullSellerBalance)
 }
 
@@ -97,7 +97,7 @@ async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
   const blockTags = await getDistributionBlockTags(context)
   const balancesByDate = await seqMap(blockTags, tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context))
-  const balances = sumBalances(flatten(balancesByDate))
+  const balances = addBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }
 
