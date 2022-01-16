@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { Allocations } from '../util/types'
+import { StringAllocations } from '../util/types'
 
 export async function addAllocationsShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const allocations: Allocations = (await import(args.allocations)).default
+  const allocations: StringAllocations = (await import(args.allocations)).default
   const address = args.token
 
   console.log(`Attaching to contract ${address}...`)
