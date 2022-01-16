@@ -23,6 +23,9 @@ import { expect } from '../util/expect'
 import { FrozenWallet } from '../models/FrozenWallet'
 import { expectFrozenWalletsOnToken } from '../models/FrozenWallet/expectFrozenWalletsOnToken'
 import { expectBalancesOnToken } from '../util/expectBalancesOnToken'
+import { sumBalanceAmounts } from '../util/balance'
+import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
+import { toTokenAmount } from '../test/support/all.helpers'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -77,9 +80,16 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
   }
 }
 
+function expectAllocations(allocations: Allocation[]) {
+  const sum = sumBalanceAmounts(allocations)
+  expect(sum).to.be.lessThan(maxSupplyTokenAmount)
+  expect(sum).to.be.greaterThan(toTokenAmount(1))
+}
+
 async function getAllocations(context: DeployColiTokenContext) {
   const data = await readFile(context.allocations)
   const allocations = await parseAllocationsCSV(data)
+  expectAllocations(allocations)
   return allocations.filter(a => !isFinished(a))
 }
 

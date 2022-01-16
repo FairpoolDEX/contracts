@@ -1,6 +1,6 @@
 import { BalanceBN } from '../../models/BalanceBN'
 import { isTest, RunnableContext } from '../../util/context'
-import { sumBalances } from '../../util/balance'
+import { addBalances } from '../../util/balance'
 import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
 import { findAddressInfo } from '../../data/allAddressInfos'
@@ -25,7 +25,7 @@ import { $zero } from '../../data/allAddresses'
  */
 export async function unwrapSmartContractBalances(balances: BalanceBN[], context: RunnableContext): Promise<BalanceBN[]> {
   if (isTest(context)) return balances
-  return sumBalances(flatten(await Promise.all(balances.map(async b => {
+  return addBalances(flatten(await Promise.all(balances.map(async b => {
     return unwrapSmartContractBalance(b, context)
   }))))
   // return balances.reduce((newBalances: BalanceBN[], balance: BalanceBN) => newBalances.concat(unwrapSmartContractBalance(context, balance)), [])

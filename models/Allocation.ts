@@ -20,7 +20,7 @@ export type Allocation = z.infer<typeof AllocationSchema>
 
 export type AllocationUid = z.infer<typeof AllocationUidSchema>
 
-export function validateAllocation(allocation: Allocation) {
+export function validateAllocation(allocation: Allocation): Allocation {
   return AllocationSchema.parse(allocation)
 }
 

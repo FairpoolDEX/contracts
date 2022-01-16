@@ -77,7 +77,7 @@ export function mergeBalance(balances: BalanceBN[], balance: BalanceBN) {
   return balances
 }
 
-export function sumBalances(balances: BalanceBN[]): BalanceBN[] {
+export function addBalances(balances: BalanceBN[]): BalanceBN[] {
   return getBalancesFromMap(balances.reduce<BalancesMap>(function (balancesMap, balance) {
     const { address, amount } = balance
     if (balancesMap[address]) {
