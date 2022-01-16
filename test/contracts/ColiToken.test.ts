@@ -6,6 +6,7 @@ import { ColiToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { fest } from '../../util/mocha'
 
 describe('ColiToken', async () => {
 
@@ -33,7 +34,7 @@ describe('ColiToken', async () => {
     }
   })
 
-  it('should assign the total supply of tokens to the owner and transfer to frozen wallets', async () => {
+  fest('should assign the total supply of tokens to the owner and transfer to frozen wallets', async () => {
     const totalSupply = await token.totalSupply()
     const balance = await token.balanceOf(owner.address)
     const frozenSupply = Object.values(allocationsForTest)
@@ -45,7 +46,7 @@ describe('ColiToken', async () => {
 
   describe('transferMany', async () => {
 
-    it('should transfer to many recipients', async () => {
+    fest('should transfer to many recipients', async () => {
       const wallets = (await ethers.getSigners()).slice(2)
       const amounts = wallets.map((wallet, i) => toTokenAmount(i + 1))
 
@@ -54,7 +55,7 @@ describe('ColiToken', async () => {
       }).to.changeTokenBalances(token, wallets, amounts)
     })
 
-    it('should throw if wrong array length parameters', async () => {
+    fest('should throw if wrong array length parameters', async () => {
       const recipients = [owner.address, nonOwner.address]
       const amounts = [toTokenAmount(10)]
       await expect(
@@ -62,7 +63,7 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('Wrong array length')
     })
 
-    it('should throw if amount exceeds balance ', async () => {
+    fest('should throw if amount exceeds balance ', async () => {
       const ownerBalance = await token.balanceOf(owner.address)
 
       const recipients = (await ethers.getSigners()).slice(2).map(i => i.address)
@@ -73,7 +74,7 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('ERC20: transfer amount exceeds balance')
     })
 
-    it('should run only by owner', async () => {
+    fest('should run only by owner', async () => {
       const amount = toTokenAmount(100)
       await token.transfer(nonOwner.address, amount)
 
@@ -85,7 +86,7 @@ describe('ColiToken', async () => {
 
   describe('Withdraw', async () => {
 
-    it('should withdraw ETH', async () => {
+    fest('should withdraw ETH', async () => {
       const amount = 1
       // send some ETH to token's address using payable addAllocations func
       await token.addAllocations([], [], '0', { value: amount })
@@ -97,7 +98,7 @@ describe('ColiToken', async () => {
       await expect(await token.provider.getBalance(token.address)).to.equal(0)
     })
 
-    it('should withdraw ERC20 token', async () => {
+    fest('should withdraw ERC20 token', async () => {
       const amount = 1000
       await token.transfer(token.address, amount)
 
@@ -108,7 +109,7 @@ describe('ColiToken', async () => {
       await expect(await token.balanceOf(token.address)).to.equal(0)
     })
 
-    it('should run only by owner', async () => {
+    fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.withdraw(1),
       ).to.be.revertedWith('caller is not the owner')
@@ -121,7 +122,7 @@ describe('ColiToken', async () => {
 
   describe('Pausable', async () => {
 
-    it('should pause / unpause', async () => {
+    fest('should pause / unpause', async () => {
       let paused = await token.paused()
       expect(paused).to.be.equal(false)
 
@@ -147,7 +148,7 @@ describe('ColiToken', async () => {
       }).to.changeTokenBalance(token, owner, amount)
     })
 
-    it('should pause / unpause only by owner', async () => {
+    fest('should pause / unpause only by owner', async () => {
       await expect(
         nonOwnerToken.pause(true),
       ).to.be.revertedWith('caller is not the owner')
@@ -156,12 +157,12 @@ describe('ColiToken', async () => {
 
   describe('Release time', async () => {
 
-    it('should have correct release time after deploy', async () => {
+    fest('should have correct release time after deploy', async () => {
       const releaseTime = await token.releaseTime()
       expect(releaseTime).to.equal(releaseTime)
     })
 
-    it('should be able to change release time', async () => {
+    fest('should be able to change release time', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
       await token.setReleaseTime(newReleaseTime)
 
@@ -169,13 +170,13 @@ describe('ColiToken', async () => {
       expect(releaseTime).to.equal(newReleaseTime)
     })
 
-    it('shouldn\'t be able to change release time by non owner', async () => {
+    fest('shouldn\'t be able to change release time by non owner', async () => {
       await expect(
         token.connect(nonOwner).setReleaseTime(Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)),
       ).to.be.revertedWith('caller is not the owner')
     })
 
-    it('shouldn\'t be able to change release time after release', async () => {
+    fest('shouldn\'t be able to change release time after release', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
       const newBlockTimestamp = releaseTimeTest + 3600
       await timeTravel(async () => {
@@ -188,12 +189,12 @@ describe('ColiToken', async () => {
   })
 
   describe('getMonths function', async () => {
-    it('should return 0 before release', async () => {
+    fest('should return 0 before release', async () => {
       const months = await token.getMonths(0)
       expect(months).to.equal(0)
     })
 
-    it('should return 1 day after release', async () => {
+    fest('should return 1 day after release', async () => {
       const dayAfterRelease = releaseTimeTest + 3600 * 24
       await timeTravel(async () => {
         const months = await token.getMonths(0)
@@ -201,7 +202,7 @@ describe('ColiToken', async () => {
       }, dayAfterRelease)
     })
 
-    it('should return 2 month after release', async () => {
+    fest('should return 2 month after release', async () => {
       const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const months = await token.getMonths(0)
@@ -209,7 +210,7 @@ describe('ColiToken', async () => {
       }, monthAfterRelease)
     })
 
-    it('should return 0 after release if lock period', async () => {
+    fest('should return 0 after release if lock period', async () => {
       // 30 days lock period
       const lockPeriod = 3600 * 24 * 30
       const dayAfterRelease = releaseTimeTest + 3600 * 24
@@ -219,7 +220,7 @@ describe('ColiToken', async () => {
       }, dayAfterRelease)
     })
 
-    it('should return 1 month after release if lock period', async () => {
+    fest('should return 1 month after release if lock period', async () => {
       // 30 days lock period
       const lockPeriod = 3600 * 24 * 30
       const monthAfterRelease = releaseTimeTest + lockPeriod
@@ -232,13 +233,13 @@ describe('ColiToken', async () => {
 
   describe('addVestingType', async () => {
 
-    it('should run only by owner', async () => {
+    fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addVestingType(40000, 4, 10 * 24 * 3600),
       ).to.be.revertedWith('caller is not the owner')
     })
 
-    it('should throw if lock period is over already', async () => {
+    fest('should throw if lock period is over already', async () => {
       const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const dayAfterRelease = 24 * 3600
@@ -248,7 +249,7 @@ describe('ColiToken', async () => {
       }, monthAfterRelease)
     })
 
-    it('should add new allocation after release', async () => {
+    fest('should add new allocation after release', async () => {
       const monthAfterRelease = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
         const newVestingIndex = 8
@@ -310,20 +311,20 @@ describe('ColiToken', async () => {
 
   describe('Adding allocations', async () => {
 
-    it('should run only by owner', async () => {
+    fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addAllocations([nonOwner.address], [10], '0'),
       ).to.be.revertedWith('caller is not the owner')
     })
 
-    it('should throw if invalid vestingType is passed', async () => {
+    fest('should throw if invalid vestingType is passed', async () => {
       const invalidVestingTypeIndex = 999
       await expect(
         token.addAllocations([nonOwner.address], [10], invalidVestingTypeIndex),
       ).to.be.revertedWith('Invalid vestingTypeIndex')
     })
 
-    it('should throw if different array lengths are passed', async () => {
+    fest('should throw if different array lengths are passed', async () => {
       await expect(
         token.addAllocations([nonOwner.address], [10, 20], '0'),
       ).to.be.revertedWith('Array lengths must be same')
@@ -333,7 +334,7 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('Array lengths must be same')
     })
 
-    it('should throw if some amount of allocations exceeds the current supply', async () => {
+    fest('should throw if some amount of allocations exceeds the current supply', async () => {
       const supply = await token.totalSupply()
       const amount = supply.div(18).add(1)
       await expect(
@@ -341,7 +342,7 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('ERC20: transfer amount exceeds balance')
     })
 
-    it('should throw if total amount of allocations exceeds the current supply', async () => {
+    fest('should throw if total amount of allocations exceeds the current supply', async () => {
       const supply = await token.totalSupply()
       const addresses = (await ethers.getSigners()).slice(2).map(i => i.address)
       const amounts = addresses.map(() => supply.div(addresses.length - 1))
@@ -350,7 +351,7 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('ERC20: transfer amount exceeds balance')
     })
 
-    it('should throw if freezing same address at second time ', async () => {
+    fest('should throw if freezing same address at second time ', async () => {
       const [vestingIndex, allocation] = Object.entries(allocationsForTest)[0]
       const address = Object.keys(allocation)[0]
       await expect(
@@ -361,7 +362,7 @@ describe('ColiToken', async () => {
 
   describe('Vesting', async () => {
 
-    it('should have scheduled frozen wallets', async () => {
+    fest('should have scheduled frozen wallets', async () => {
       for (const allocation of Object.values(allocationsForTest)) {
         for (const address of Object.keys(allocation)) {
           // check frozen wallet existance
@@ -371,7 +372,7 @@ describe('ColiToken', async () => {
       }
     })
 
-    it('frozen wallets should have correct balances after adding allocations', async () => {
+    fest('frozen wallets should have correct balances after adding allocations', async () => {
       for (const allocation of Object.values(allocationsForTest)) {
         for (const [address, amount] of Object.entries(allocation)) {
           // check balance
@@ -381,7 +382,7 @@ describe('ColiToken', async () => {
       }
     })
 
-    it('shouldn\'t transfer from frozen wallets', async () => {
+    fest('shouldn\'t transfer from frozen wallets', async () => {
       for (const allocation of Object.values(allocationsForTest)) {
         for (const [address, amount] of Object.entries(allocation)) {
           const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
@@ -394,7 +395,7 @@ describe('ColiToken', async () => {
       }
     })
 
-    it('should transfer tokens from non-frozen wallets', async () => {
+    fest('should transfer tokens from non-frozen wallets', async () => {
       const amount = toTokenAmount('10')
 
       await token.transfer(nonOwner.address, amount)
@@ -405,7 +406,7 @@ describe('ColiToken', async () => {
       await nonOwnerToken.transfer(owner.address, amount)
     })
 
-    it('should transfer tokens from frozenWallet after vesting period ends', async () => {
+    fest('should transfer tokens from frozenWallet after vesting period ends', async () => {
       const fiveYearsAfterRelease = releaseTimeTest + 3600 * 24 * 365 * 5
       await timeTravel(async () => {
         for (const allocation of Object.values(allocationsForTest)) {
@@ -417,7 +418,7 @@ describe('ColiToken', async () => {
       }, fiveYearsAfterRelease)
     })
 
-    // it("should transfer all tokens after release if initial amount is 100%", async () => {
+    // fest("should transfer all tokens after release if initial amount is 100%", async () => {
     //     const publicAllocation = ALLOCATIONS["2"]
     //     const minuteAfterRelease = RELEASE_TIME + 60
     //     await timeTravel(async () => {
@@ -428,7 +429,7 @@ describe('ColiToken', async () => {
     //     }, minuteAfterRelease)
     // })
 
-    it('should not transfer before lockup period is over', async () => {
+    fest('should not transfer before lockup period is over', async () => {
       const seedAllocation = allocationsForTest['0']
       const minuteAfterRelease = releaseTimeTest + 60
       await timeTravel(async () => {
@@ -443,7 +444,7 @@ describe('ColiToken', async () => {
       }, minuteAfterRelease)
     })
 
-    it('should transfer only initial amount after lockup period', async () => {
+    fest('should transfer only initial amount after lockup period', async () => {
       const seedAllocation = allocationsForTest['0']
       const afterLockupPeriod = releaseTimeTest + 3600 * 24 * 30
       await timeTravel(async () => {
@@ -455,7 +456,7 @@ describe('ColiToken', async () => {
       }, afterLockupPeriod)
     })
 
-    it('should transfer initial + monthly amounts month after lockup period', async () => {
+    fest('should transfer initial + monthly amounts month after lockup period', async () => {
       const seedAllocation = allocationsForTest['0']
       const afterLockupPeriod = releaseTimeTest + 3600 * 24 * 30
       const monthAfterLockupPeriod = afterLockupPeriod + 3600 * 24 * 30

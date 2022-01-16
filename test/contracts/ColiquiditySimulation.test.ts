@@ -4,6 +4,7 @@ import { BigNumber } from 'ethers'
 import { beforeEach, Context } from 'mocha'
 import { ColiquiditySimulation } from '../support/Simulation/ColiquiditySimulation'
 import $debug from 'debug'
+import { fest } from '../../util/mocha'
 
 describe('ColiquiditySimulation', async function () {
   let simulation: ColiquiditySimulation
@@ -31,7 +32,7 @@ describe('ColiquiditySimulation', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  it('must calculate coliquidity profit', async function (this: Context) {
+  fest('must calculate coliquidity profit', async function (this: Context) {
     if (!process.env.SIMULATE) return this.skip()
     this.timeout(300000)
     await simulation.run()

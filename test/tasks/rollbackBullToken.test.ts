@@ -12,6 +12,7 @@ import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { testSetClaimsContext } from '../support/context'
 import { BalanceBN } from '../../models/BalanceBN'
+import { fest } from '../../util/mocha'
 
 xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory
@@ -72,7 +73,7 @@ xdescribe('rollbackBullToken', async () => {
 
   // https://www.dextools.io/app/uniswap/pair-explorer/0x59b8c20ca527ff18e2515b68f28939d6dd3e867b
   // https://etherscan.io/address/0x1bb022ab668085c6417b7d7007b0fbd53bacc383
-  it('should download marked transfers', async () => {
+  fest('should download marked transfers', async () => {
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)
       await claimBullToken(bullTokenWithAlice, addresses, ethers)
@@ -96,7 +97,7 @@ xdescribe('rollbackBullToken', async () => {
     }, airdropFirstTimestamp)
   })
 
-  it('should allow to claim the tokens', async () => {
+  fest('should allow to claim the tokens', async () => {
     // TODO: Sells and buys should only be reflected on the next airdrop
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)

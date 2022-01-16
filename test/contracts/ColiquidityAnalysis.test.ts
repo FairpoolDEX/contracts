@@ -1,16 +1,17 @@
 import { Context } from 'mocha'
-import { getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell, getLiquidityPoolShare, getBaseVolumeForStablePrice } from '../support/Coliquidity.generic.helpers'
+import { getBaseVolumeForStablePrice, getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell } from '../support/Coliquidity.generic.helpers'
 import { expect } from '../../util/expect'
 import { uniswapFeeNumber } from '../support/Uniswap.helpers'
+import { fest } from '../../util/mocha'
 
 describe('ColiquidityAnalysis', async function () {
 
-  it('must compare coliquidity profit with long profit', async function (this: Context) {
+  fest('must compare coliquidity profit with long profit', async function (this: Context) {
     // expect(getColiquidityProfit(HighVolumePump)).to.be.greaterThan(getLongProfit(HighVolumePump))
     // expect(getColiquidityProfit(LowVolumePump)).to.be.lessThan(getLongProfit(LowVolumePump))
   })
 
-  it('must compare coliquidity profit with regular liquidity provisioning profit', async function (this: Context) {
+  fest('must compare coliquidity profit with regular liquidity provisioning profit', async function (this: Context) {
 
   })
 })

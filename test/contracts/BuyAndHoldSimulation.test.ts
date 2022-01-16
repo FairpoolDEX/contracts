@@ -4,6 +4,7 @@ import { BigNumber } from 'ethers'
 import { beforeEach, Context } from 'mocha'
 import { BuyAndHoldSimulation } from '../support/Simulation/BuyAndHoldSimulation'
 import $debug from 'debug'
+import { fest } from '../../util/mocha'
 
 describe('BuyAndHoldSimulation', async function () {
   let simulation: BuyAndHoldSimulation
@@ -31,7 +32,7 @@ describe('BuyAndHoldSimulation', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  it('must calculate trading profit', async function (this: Context) {
+  fest('must calculate trading profit', async function (this: Context) {
     if (!process.env.SIMULATE) return this.skip()
     this.timeout(300000)
     await simulation.run()
