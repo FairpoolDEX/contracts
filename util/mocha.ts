@@ -11,10 +11,14 @@ export function long(name: string, fn: AsyncFunc): Test {
 }
 
 export function fest(name: string, fn: AsyncFunc): Test {
-  if (!testFilterRegExp || name.match(testFilterRegExp)) {
-    return it(name, fn)
+  if (testFilterRegExp) {
+    if (name.match(testFilterRegExp)) {
+      return it.only(name, fn)
+    } else {
+      return it.skip(name, fn)
+    }
   } else {
-    return it.skip(name, fn)
+    return it(name, fn)
   }
 }
 
