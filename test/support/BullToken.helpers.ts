@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers'
 import { toTokenAmount, toTokenAmountString } from './all.helpers'
 import { maxSupply as shieldMaxSupply } from './ColiToken.helpers'
 import fs from 'fs'
@@ -9,7 +8,6 @@ import { Address } from '../../models/Address'
 import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
-import { todo } from '../../util/todo'
 import { days } from '../../util/time'
 import { validateBlockNumber } from '../../models/BlockNumber'
 
@@ -41,7 +39,9 @@ export const maxSupply = shieldMaxSupply * airdropRate
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
-export const distributedTokenAmount = airdropMultiply(maxSupplyTokenAmount).mul(airdropStageMaxCount)
+export const airdropDistributedTokenAmountSingleStage = maxSupplyTokenAmount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
+
+export const airdropDistributedTokenAmountTotal = airdropDistributedTokenAmountSingleStage.mul(airdropStageMaxCount)
 
 export const fromShieldToBull = airdropMultiply
 
@@ -102,5 +102,3 @@ export function getMultiplier(airdropStageShareNumerator: number, airdropStageSh
   // NOTE: this expression truncates the fractional part, so the total distributed amount is guaranteed to be lower than 90% of max supply
   return (amount: AmountBN) => amount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
 }
-
-export const bannedAddressesTokenAmount = todo(BigNumber.from(0))
