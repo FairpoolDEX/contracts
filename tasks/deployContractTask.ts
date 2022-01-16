@@ -1,14 +1,13 @@
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { upperCase } from 'lodash'
-import { withFeeData } from '../util/network'
+import { getOverrides } from '../util/network'
 import { Address } from '../models/Address'
 
 export async function deployContractTask(args: DeployGenericTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployGenericTokenTaskOutput> {
   const { ethers, upgrades, network, run } = hre
   const { contract: contractName, upgradeable, constructorArgsModule, constructorArgsParams } = args
   const [deployer] = await ethers.getSigners()
-  const feeData = await deployer.getFeeData()
   const envVarContract = upperCase(contractName).replace(/\s/g, '_')
   const constructorArgs: unknown[] = await run('verify:get-constructor-arguments', {
     constructorArgsModule,
@@ -33,13 +32,12 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
     })
     return { upgradeable, proxyAddress, implementationAddress }
   } else {
-    const contract = await factory.deploy(...constructorArgs, withFeeData(feeData, {
+    const contract = await factory.deploy(...constructorArgs, {
+      ...await getOverrides(deployer),
       // TODO: Fix "transaction type not supported" when deploying to legacy chains (e.g. BSC)
       // maxPriorityFeePerGas: BigNumber.from("2500000000"),
       // maxFeePerGas: BigNumber.from(network.config.gasPrice),
-
-      // gasLimit: 8000000,
-    }))
+    })
     await contract.deployed()
     const address = contract.address
     console.info(`export ${envVarContract}_ADDRESS=${address}`) // eslint-disable-line no-console

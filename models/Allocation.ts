@@ -8,7 +8,7 @@ import { getFinishedVestingTypes } from '../data/allVestingSchedules'
 export const AllocationSchema = z.object({
   address: AddressSchema,
   amount: AmountBNSchema,
-  vestingType: VestingTypeSchema,
+  type: VestingTypeSchema,
 })
 
 export const AllocationUidSchema = AllocationSchema.pick({
@@ -29,5 +29,5 @@ export function getAllocationUid(allocationUid: AllocationUid): Uid {
 }
 
 export function isFinished(allocation: Allocation) {
-  return getFinishedVestingTypes().includes(allocation.vestingType)
+  return getFinishedVestingTypes().includes(allocation.type)
 }

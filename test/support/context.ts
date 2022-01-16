@@ -21,6 +21,7 @@ export const testRunnableContext: RunnableContext = {
   deployerAddress: '',
   log: identity,
   ethers,
+  run: () => Promise.resolve(),
 }
 
 export const testChunkableContext: Chunkable = {

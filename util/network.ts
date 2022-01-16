@@ -1,7 +1,9 @@
 import { Overrides } from 'ethers'
-import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
+import { getGasLimit, maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName, validateNetworkName } from '../models/NetworkName'
+import { Signer } from '@ethersproject/abstract-signer/src.ts/index'
+import { ensure } from './ensure'
 
 export interface NetworkInfo {
   name: NetworkName
@@ -14,10 +16,20 @@ export interface FeeData {
   gasPrice: null | BigNumber;
 }
 
-export async function withFeeData(feeData: FeeData, overrides: Overrides = {}) {
+export async function getFeeOverrides(signer: Signer): Promise<Pick<Overrides, 'maxFeePerGas' | 'maxPriorityFeePerGas' | 'gasPrice'>> {
+  const feeData = await signer.getFeeData()
   if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-    return Object.assign({}, { maxFeePerGas, maxPriorityFeePerGas }, overrides)
+    return { maxFeePerGas, maxPriorityFeePerGas }
   } else {
-    return Object.assign({}, { gasPrice: maxFeePerGas }, overrides)
+    return { gasPrice: maxFeePerGas }
   }
+}
+
+export async function getOverrides(signer: Signer): Promise<Overrides> {
+  const feeOverrides = await getFeeOverrides(signer)
+  const provider = ensure(signer.provider)
+  const network = await provider.getNetwork()
+  const networkName = validateNetworkName(network.name)
+  const gasLimit = getGasLimit(networkName)
+  return { ...feeOverrides, gasLimit }
 }
