@@ -49,9 +49,9 @@ export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filen
 
 async function expectClaims(claims: BalanceBN[], expectations: WriteClaimsExpectationsMap) {
   const expectedBalances = getBalancesFromMap(expectations.balances)
-  const expectedTotalSupply = expectations.totalAmount
+  const expectedTotalAmount = expectations.totalAmount
   expectBalances(claims, expectedBalances)
-  expectTotalAmount(claims, expectedTotalSupply)
+  expectTotalAmount(claims, expectedTotalAmount)
 }
 
 // export async function parseShieldBalancesCSV(data: CSVData) {
