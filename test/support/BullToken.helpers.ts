@@ -31,7 +31,7 @@ export const airdropStageShareDenominator = 100
 
 export const airdropRate = 10000 // BULL per SHLD
 
-export const airdropDefaultMultiplier = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
+export const airdropMultiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
 
 export const burnRateNumerator = 999
 
@@ -41,9 +41,9 @@ export const maxSupply = shieldMaxSupply * airdropRate
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
-export const distributedTokenAmount = airdropDefaultMultiplier(maxSupplyTokenAmount).mul(airdropStageMaxCount)
+export const distributedTokenAmount = airdropMultiply(maxSupplyTokenAmount).mul(airdropStageMaxCount)
 
-export const fromShieldToBull = airdropDefaultMultiplier
+export const fromShieldToBull = airdropMultiply
 
 export const pausedAt = validateBlockNumber(12952142)
 
