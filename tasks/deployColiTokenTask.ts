@@ -16,6 +16,10 @@ import { DeployGenericTokenTaskOutput } from './deployContractTask'
 import { Allocation } from '../models/Allocation'
 import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
+import { flatten, uniq } from 'lodash'
+import { VestingType } from '../models/VestingType'
+import { findVestingSchedule } from '../data/allVestingSchedules'
+import { getOverrides } from '../util/network'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -26,7 +30,7 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   const fromToken = await getContract(ethers, 'ColiToken', fromDeployment.address) as unknown as ColiToken
   const toToken = await deployColiToken(context)
   // const pauseTx = await pauseContract(fromToken, true)
-  const allocationTxes = await setAllocations(await getAllocations(context), fromToken, toToken)
+  const allocationTxes = await setAllocations(await getAllocations(context), toToken)
   const balanceTxes = await setBalances(fromToken, toToken)
 
   // TODO: it must migrate BULL
@@ -68,9 +72,17 @@ async function getAllocations(context: DeployColiTokenContext) {
   return parseAllocationsCSV(data)
 }
 
-async function setAllocations(allocations: Allocation[], fromToken: ColiToken, toToken: ColiToken) {
-  // TODO: const index = vestingTypeIndexes[vesting]
-  throw impl()
+async function setAllocations(allocations: Allocation[], token: ColiToken) {
+  const types = uniq<VestingType>(allocations.map(a => a.type))
+  const groupedTxes = await Promise.all(types.map(async (type) => {
+    const allocationsByType = allocations.filter(a => a.type === type)
+    const addresses = allocationsByType.map(a => a.address)
+    const amounts = allocationsByType.map(a => a.amount)
+    const schedule = ensure(findVestingSchedule({ type }))
+    const index = ensure(schedule.smartContractIndex)
+    const tx = await token.addAllocations(addresses, amounts, index, await getOverrides(token.signer))
+  }))
+  return flatten(groupedTxes)
 }
 
 async function setBalances(fromToken: ColiToken, toToken: ColiToken) {

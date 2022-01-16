@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { BigNumber } from 'ethers'
+import { BigNumber, Signer } from 'ethers'
 import { BalancesMap, parseBalancesCSV } from '../util/balance'
 import fs from 'fs'
 import { Logger } from '../util/log'
@@ -9,18 +9,16 @@ import { map } from 'lodash'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { getGasLimit } from '../util/gas'
 import { network } from 'hardhat'
-import { withFeeData } from '../util/network'
-import { FeeData } from '@ethersproject/abstract-provider'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
+import { getOverrides } from '../util/network'
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
   const { network, ethers } = hre
   const [deployer] = await ethers.getSigners()
-  const feeData = await deployer.getFeeData()
   const balancesCSV = fs.readFileSync(balancesPath)
   const expectations: TransferManyExpectationsMap = await importExpectations(expectationsPath)
   console.info('Parsing balances')
@@ -30,11 +28,11 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const contract = await ContractFactory.attach(contractAddress)
   console.info('Calling transferMany')
   const networkName = NetworkNameSchema.parse(network.name)
-  await transferMany(contract, balances, expectations, 400, networkName, feeData, dry, console.info.bind(console))
+  await transferMany(contract, balances, expectations, 400, networkName, deployer, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
-export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, feeData: FeeData, dry = false, log?: Logger): Promise<void> {
+export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, dry = false, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
@@ -49,7 +47,7 @@ export async function transferMany(contract: any, balances: BalancesMap, expecta
     // totalBULLAmount = amounts.reduce((acc, amount) => acc.add(amount), totalBULLAmount)
     if (!dry) {
       console.log('getGasLimit(network)', getGasLimit(network))
-      const tx = await contract.transferMany(addresses, amounts, withFeeData(feeData, { gasLimit: getGasLimit(network) }))
+      const tx = await contract.transferMany(addresses, amounts, await getOverrides(deployer))
       log && log(`TX Hash: ${tx.hash}`)
     }
   }

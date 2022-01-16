@@ -8,6 +8,10 @@ export const localTestnets = [hardhat, localhost]
 
 export type NetworkName = z.infer<typeof NetworkNameSchema>
 
+export function validateNetworkName(name: NetworkName | string) {
+  return NetworkNameSchema.parse(name)
+}
+
 export function isTestnet(network: NetworkName) {
   return network.includes('testnet') || localTestnets.includes(network)
 }
