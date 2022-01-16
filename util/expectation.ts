@@ -27,5 +27,5 @@ export function expectTotalAmount(balances: BalanceBN[], expectedTotalAmount: Am
 }
 
 export interface Expected {
-  expectations: string
+  expectations: Filename
 }

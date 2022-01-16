@@ -1,14 +1,20 @@
 import { toTokenAmount } from './all.helpers'
 import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
 import { validateBlockNumber } from '../../models/BlockNumber'
+import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
+import { days, seconds } from '../../util/time'
 
-export const releaseTimeTest: number = Math.floor(new Date('2022.01.01 13:00:00 UTC').getTime() / 1000)
+export const releaseTime = 1621429200
+
+export const releasePeriodInMilliseconds = 30 * days
 
 export const maxSupply = 969163000
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
 export const deployedAt = validateBlockNumber(12463796)
+
+export const releaseTimeTest = dateToTimestampSeconds(new Date('2022.01.01 13:00:00 UTC'))
 
 // @note: All values is set without decimals
 export const allocationsForTest: { [index: string]: { [index: string]: number } } = {
@@ -70,3 +76,9 @@ export const coliRewriteAddressMap: RewriteAddressMap = getRewriteAddressMap([
   ['0xc77aab3c6d7dab46248f3cc3033c856171878bd5', '0x7dcbefb3b9a12b58af8759e0eb8df05656db911d'], // locked liquidity
   ['0x33a4288AB7043C274AACD2c9Eb8a931c30C0288a', '0x0000000000000000000000000000000000000000'], // NFTrade pool
 ])
+
+export function getReleasePeriodsElapsed(now: Date) {
+  const timeElapsed = now.getTime() - releaseTime * seconds
+  const val = Math.floor(timeElapsed / releasePeriodInMilliseconds)
+  return val
+}

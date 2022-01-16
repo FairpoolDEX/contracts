@@ -1,15 +1,14 @@
-import { strict as assert } from 'assert'
 import { expect } from './expect'
 import neatcsv from 'neat-csv'
 import { RawCSVData } from './csv'
-import { shuffle, trimEnd } from 'lodash'
-import { utils } from 'ethers'
+import { shuffle } from 'lodash'
 import { sumBigNumbers, zero } from './bignumber'
 import { AddressSchema, validateAddress } from '../models/Address'
 import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, BalanceBNSchema } from '../models/BalanceBN'
+import { parseAmountBNCSV } from '../models/AmountBN/parseAmountBNCSV'
 
 export type BalancesMap = { [address: string]: AmountBN }
 
@@ -21,8 +20,7 @@ export async function parseBalancesCSV(data: RawCSVData): Promise<BalancesMap> {
     const amountRaw = rows[i]['Balance']
     // console.log('[addressRaw, amountRaw]', [addressRaw, amountRaw])
     const addressParsed = AddressSchema.parse(addressRaw)
-    const amountParsed = utils.parseUnits(amountRaw, 18)
-    assert.equal(trimEnd(utils.formatUnits(amountParsed, 18), '0'), trimEnd(amountRaw, '0'), 'Can\'t parse balance')
+    const amountParsed = parseAmountBNCSV(amountRaw)
     balancesMap[addressParsed] = amountParsed
   }
   return balancesMap

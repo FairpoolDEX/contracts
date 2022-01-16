@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { Allocations } from '../util/types'
+import { StringAllocations } from '../util/types'
 import { chunk } from '../test/support/all.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../util/expect'
@@ -8,7 +8,7 @@ import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 // NOTE: Amounts should be with decimals (with a dot)
 
 export async function transferManyShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const allocations: Allocations = (await import(args.allocations)).default
+  const allocations: StringAllocations = (await import(args.allocations)).default
   const address = args.token
 
   const allocation = allocations['']

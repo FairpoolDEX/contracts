@@ -10,9 +10,12 @@ import { ColiToken } from '../typechain-types'
 import { impl } from '../util/todo'
 import { getContract } from '../util/ethers'
 import { isTestnet, NetworkName } from '../models/NetworkName'
-import { realpath } from 'fs/promises'
+import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
 import { DeployGenericTokenTaskOutput } from './deployContractTask'
+import { Allocation } from '../models/Allocation'
+import { Filename } from '../util/filesystem'
+import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -23,8 +26,8 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   const fromToken = await getContract(ethers, 'ColiToken', fromDeployment.address) as unknown as ColiToken
   const toToken = await deployColiToken(context)
   // const pauseTx = await pauseContract(fromToken, true)
-  const vestingTxes = await setVesting(fromToken, toToken)
-  const transferTxes = await setBalances(fromToken, toToken)
+  const allocationTxes = await setAllocations(await getAllocations(context), fromToken, toToken)
+  const balanceTxes = await setBalances(fromToken, toToken)
 
   // TODO: it must migrate BULL
   // TODO: it must remove claim-related code
@@ -60,7 +63,13 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
   }
 }
 
-async function setVesting(fromToken: ColiToken, toToken: ColiToken) {
+async function getAllocations(context: DeployColiTokenContext) {
+  const data = await readFile(context.allocations)
+  return parseAllocationsCSV(data)
+}
+
+async function setAllocations(allocations: Allocation[], fromToken: ColiToken, toToken: ColiToken) {
+  // TODO: const index = vestingTypeIndexes[vesting]
   throw impl()
 }
 
@@ -80,7 +89,7 @@ interface DeployColiTokenTaskArguments extends RunnableTaskArguments, Writable, 
 }
 
 export interface DeployColiTokenContext extends DeployColiTokenTaskArguments, RunnableContext {
-
+  allocations: Filename
 }
 
 export async function getDeployColiTokenContext(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployColiTokenContext> {

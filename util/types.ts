@@ -11,10 +11,10 @@ export type Timestamp = number
 
 export type Ethers = typeof ethers & HardhatEthersHelpers
 
-export interface Allocation {
+export interface StringAllocation {
   [address: string]: string
 }
 
-export interface Allocations {
-  [id: string]: Allocation
+export interface StringAllocations {
+  [id: string]: StringAllocation
 }

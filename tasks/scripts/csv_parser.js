@@ -4,7 +4,7 @@ const fs = require("fs")
 /* eslint-env node */
 /* globals Set */
 
-const VESTING_TYPES = {
+export const VESTING_TYPES = {
   "Seed": "0",
   "Private": "1",
   "Advisory": "2",

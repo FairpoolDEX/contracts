@@ -112,10 +112,6 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
-    // this function returns upper rounded amount of months.
-    // 0 - locked
-    // 1 - unlock initial amount (vesting not available yet)
-    // x... - months since lockup period is over (vesting months == x - 1)
     function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
         uint256 unlockTime = releaseTime + lockDaysPeriod;
 
