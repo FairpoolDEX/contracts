@@ -25,11 +25,11 @@ function getTotalAmount() {
 }
 
 export const expectations: WriteClaimsExpectationsMap = {
-  balances: getBalances(),
+  balances: getRebrandBalances(),
   totalAmount: getTotalAmount(),
 }
 
-function getBalances(): BalancesMap {
+function getRebrandBalances(): BalancesMap {
   return mergeVersionedRecords([
     ['1.0.1', {
       [KS]: oldBalances[KS].add(virtualSHLDBalancesFromCurrentBullBalances[KS]),
