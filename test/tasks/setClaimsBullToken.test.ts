@@ -4,19 +4,20 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStageMaxCount, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance, sumBalanceAmounts } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
-import { balanceBN, BalanceBN } from '../../models/BalanceBN'
+import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken, getClaimsFromShieldToken, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
-import { expectTotalAmount } from '../../util/expectation'
+import { expectBalances, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
+import { marketing } from '../../data/allAddresses'
 
 describe('setClaimsBullToken', async () => {
 
@@ -147,6 +148,12 @@ describe('setClaimsBullToken', async () => {
     const sumClaimsFromShieldToken = sumBalanceAmounts(claimsFromShieldToken)
     expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
     expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(3))
+    expectBalances(claimsFromBullToken, validateBalancesBN([
+      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(2)),
+    ]))
+    expectBalances(claimsFromShieldToken, validateBalancesBN([
+      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageMaxCount)),
+    ]))
   })
 
 })

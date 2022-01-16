@@ -11,6 +11,8 @@ export const $zero = addAddress('0x0000000000000000000000000000000000000000')
 
 export const deployer = addAddress('0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D')
 
+export const marketing = addAddress('0x2d3be8E442bdeF1b263160fda6C86E560CE7E4Ad')
+
 export const CS = addAddress('0x81DC6F15eE72F6E6d49CB6Ca44C0Bf8E63770027')
 
 export const KS = addAddress('0x86F7E1B163D8E7F85DEF9Ca6301Ce2B41f5c76ce')
