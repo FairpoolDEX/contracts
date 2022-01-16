@@ -21,8 +21,8 @@ import { findVestingSchedule } from '../data/allVestingSchedules'
 import { getOverrides } from '../util/network'
 import { expect } from '../util/expect'
 import { FrozenWallet } from '../models/FrozenWallet'
-import { expectTokenBalances } from '../util/balance'
-import { expectTokenFrozenWallets } from '../models/FrozenWallet/expectTokenFrozenWallets'
+import { expectFrozenWalletsOnToken } from '../models/FrozenWallet/expectFrozenWalletsOnToken'
+import { expectBalancesOnToken } from '../util/expectBalancesOnToken'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -58,8 +58,8 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
 }
 
 async function expectDeployColiToken(expectations: DeployColiTokenExpectationsMap, token: ColiToken) {
-  await expectTokenBalances(token, expectations.balances)
-  await expectTokenFrozenWallets(token, expectations.frozenWallets)
+  await expectBalancesOnToken(token, expectations.balances)
+  await expectFrozenWalletsOnToken(token, expectations.frozenWallets)
 }
 
 async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {

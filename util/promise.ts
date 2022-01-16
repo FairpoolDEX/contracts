@@ -5,3 +5,7 @@ export async function seqMap<In, Out, Args extends unknown[]>(values: In[], mapp
   }
   return results
 }
+
+export async function allMap<In, Out, Args extends unknown[]>(values: In[], mapper: (value: In, ...args: Args) => Promise<Out>, ...args: Args) {
+  return Promise.all(values.map(value => mapper(value, ...args)))
+}
