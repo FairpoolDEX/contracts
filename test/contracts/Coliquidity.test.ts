@@ -3,7 +3,7 @@ import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { dateAdd, max, MaxSafeInt, MaxUint256, sum } from '../support/all.helpers'
-import { expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
+import { expectSignerBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { BaseToken, Coliquidity, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../typechain-types'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { beforeEach } from 'mocha'
@@ -174,7 +174,7 @@ describe('Coliquidity', async function () {
 
   it('must allow to create an offer', async () => {
     await coliquidityAsBob.createOffer(baseAddress, makerAmount, $zero, [quoteAddress], 0, 0, true, 0, 0)
-    await expectBalances([
+    await expectSignerBalances([
       [bob, base, initialBaseAmount - makerAmount],
       [bob, quote, initialQuoteAmount],
       [sam, base, initialBaseAmount],
@@ -205,7 +205,7 @@ describe('Coliquidity', async function () {
     // must now allow sam to add liquidity at a different ratio
     await expect(coliquidityAsSam.createPosition(offerIndex, quoteAddress, makerAmountDesired, 1, makerAmountDesired * 0.99, 1, MaxUint256)).to.be.revertedWith('INSUFFICIENT_A_AMOUNT')
 
-    await expectBalances([
+    await expectSignerBalances([
       [bob, base, initialBaseAmount - makerAmount],
       [bob, quote, initialQuoteAmount],
       [sam, base, initialBaseAmount],
@@ -333,7 +333,7 @@ describe('Coliquidity', async function () {
     const baseAdjustment = 1
     const quoteAdjustment = 1
 
-    await expectBalances([
+    await expectSignerBalances([
       [bob, base, initialBaseAmount - makerAmount + offerBobAfter.makerAmount.toNumber()],
       [bob, quote, initialQuoteAmount],
       [sam, base, initialBaseAmount],
@@ -415,7 +415,7 @@ describe('Coliquidity', async function () {
     await coliquidityAsSam.withdrawPosition(0, positionSamBefore.liquidityAmount, 0, 0, MaxUint256)
     await coliquidityAsSally.withdrawPosition(1, positionSallyBefore.liquidityAmount, 0, 0, MaxUint256)
 
-    await expectBalances([
+    await expectSignerBalances([
       [bob, base, initialBaseAmount - makerAmount],
       [bob, quote, initialQuoteAmount],
     ])
@@ -439,7 +439,7 @@ describe('Coliquidity', async function () {
 
     const basePoolAmountAfter = makerAmountDesired + 4 * makerAmountDesired
 
-    await expectBalances([
+    await expectSignerBalances([
       [bob, base, initialBaseAmount - makerAmount + toSamShare(basePoolAmountAfter).toNumber() + toSallyShare(basePoolAmountAfter).toNumber()],
       [bob, quote, initialQuoteAmount],
     ])

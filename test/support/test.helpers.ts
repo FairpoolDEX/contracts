@@ -5,6 +5,7 @@ import { MaxUint256 } from './all.helpers'
 import { expect } from '../../util/expect'
 import { Ethers } from '../../util/types'
 import { Address } from '../../models/Address'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 type timeTravelCallback = () => Promise<void>;
 
@@ -50,14 +51,20 @@ export async function setNextBlockTimestamp(timestamp: number) {
   return ethers.provider.send('evm_setNextBlockTimestamp', [timestamp])
 }
 
-export async function expectBalances(balances: [{ address: Address }, Contract, BigNumberish][]) {
+export type SignerBalance = [SignerWithAddress, Contract, BigNumberish]
+
+export async function expectSignerBalances(balances: SignerBalance[]) {
   return Promise.all(balances.map(async ([signer, token, amount], index: number) => {
     expect(await token.balanceOf(signer.address), `index ${index}`).to.equal(amount)
   }))
 }
 
-export async function expectBalance(signer: { address: Address }, token: Contract, amount: BigNumberish) {
-  return expect(await token.balanceOf(signer.address)).to.equal(amount)
+export async function expectSignerBalance(signer: { address: Address }, token: Contract, amount: BigNumberish) {
+  return expectBalance(token, signer.address, amount)
+}
+
+export async function expectBalance(token: Contract, address: Address, amount: BigNumberish) {
+  return expect(await token.balanceOf(address)).to.equal(amount)
 }
 
 export const hh = function (args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {

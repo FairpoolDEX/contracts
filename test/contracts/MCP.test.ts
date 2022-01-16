@@ -2,7 +2,7 @@ import { expect } from '../../util/expect'
 import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { expectBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp } from '../support/test.helpers'
+import { expectSignerBalances, getLatestBlockTimestamp, getSnapshot, revertToSnapshot, setNextBlockTimestamp } from '../support/test.helpers'
 import { BaseToken, MCP, QuoteToken } from '../../typechain-types'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { beforeEach } from 'mocha'
@@ -131,7 +131,7 @@ describe('Market Crash Protection', async () => {
     describe(`buy ${suffix}`, async () => {
       it(`must allow to buy ${suffix}`, async () => {
         await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0)],
           [sam, base, initialBaseAmount],
@@ -167,7 +167,7 @@ describe('Market Crash Protection', async () => {
 
       it(`must allow to sell ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0)],
           [sam, base, initialBaseAmount + (payInBase ? premium : 0)],
@@ -226,7 +226,7 @@ describe('Market Crash Protection', async () => {
 
       it(`must allow to cancel ${suffix}`, async () => {
         await mcpAsBob.cancel(protectionIndex)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount],
           [bob, quote, initialQuoteAmount],
           [sam, base, initialBaseAmount],
@@ -282,7 +282,7 @@ describe('Market Crash Protection', async () => {
 
       it(`must allow to use ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0) - guaranteedAmount],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0) + coverage],
           [sam, base, initialBaseAmount + (payInBase ? premium : 0)],
@@ -336,7 +336,7 @@ describe('Market Crash Protection', async () => {
         await mcpAsBob.use(protectionIndex)
         await expect(getLatestBlockTimestamp(ethers)).to.eventually.be.lessThan(expirationDate)
         await mcpAsSam.withdraw(protectionIndex)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0) - guaranteedAmount],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0) + coverage],
           [sam, base, initialBaseAmount + (payInBase ? premium : 0) + guaranteedAmount],
@@ -350,7 +350,7 @@ describe('Market Crash Protection', async () => {
       it(`must allow to withdraw after expiration ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
-        await expectBalances([
+        await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
           [bob, quote, initialQuoteAmount - (!payInBase ? premium + fee : 0)],
           [sam, base, initialBaseAmount + (payInBase ? premium : 0)],

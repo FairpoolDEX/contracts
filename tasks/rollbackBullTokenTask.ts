@@ -11,9 +11,9 @@ import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { rollbackDate } from '../test/support/rollback.helpers'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
-import { AmountBN } from '../models/AmountBN'
 import { getTransfersPaginatedCached } from './util/getTransfers'
 import { Transfer as Tr } from '../models/Transfer'
+import { expectBalancesAreEqual } from '../models/BalanceBN/expectBalancesAreEqual'
 
 type FlaggedTransfer = Tr & {
   type: FlaggedTransferType
@@ -148,16 +148,6 @@ export async function expectBalancesMatchExpectations(token: Contract, expectati
     const actualBalance = await token.balanceOf(address)
     expect(actualBalance).to.equal(toTokenAmount(expectations.balances[address]))
   }
-}
-
-export async function expectBalancesAreEqual(token: Contract, from: BlockTag, to: BlockTag, holderAddresses: Address[]) {
-  const balancesBeforeAirdrop = await getBalancesAt(token, from, holderAddresses)
-  const balancesAfterRollback = await getBalancesAt(token, to, holderAddresses)
-  expect(balancesBeforeAirdrop).to.deep.equal(balancesAfterRollback)
-}
-
-async function getBalancesAt(token: Contract, blockTag: BlockTag, holderAddresses: Address[]): Promise<AmountBN[]> {
-  return Promise.all(holderAddresses.map((address) => token.balanceOf(address, { blockTag })))
 }
 
 export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
