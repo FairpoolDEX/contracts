@@ -175,12 +175,6 @@ describe('ColiToken', async () => {
       ).to.be.revertedWith('caller is not the owner')
     })
 
-    it('shouldn\'t be able to change release time from past', async () => {
-      await expect(
-        token.setReleaseTime(1),
-      ).to.be.revertedWith('Release time should be in future')
-    })
-
     it('shouldn\'t be able to change release time after release', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
       const newBlockTimestamp = releaseTimeTest + 3600
