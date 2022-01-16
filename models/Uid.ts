@@ -1,6 +1,6 @@
 import { z, ZodObject } from 'zod'
 import { pick } from 'lodash'
-import { GetUid } from '../../../util/zod'
+import { GetUid } from '../util/zod'
 import { ZodRawShape } from 'zod/lib/types'
 
 export const UidSchema = z.string().min(1).regex(/^[\w\d-_.]+$/)
