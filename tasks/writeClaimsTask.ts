@@ -24,7 +24,7 @@ import { seqMap } from '../util/promise'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
-  const { nextFolder, prevFolder, retroFolder, blacklistFolder, expectations: expectationsPath, out, dry } = args
+  const { expectations: expectationsPath, out, dry } = args
   const { log } = context
   const claims = await getClaimsFromRequests(context)
   await expectClaims(claims, await importExpectations(expectationsPath))
@@ -64,10 +64,10 @@ export interface WriteClaimsExpectationsMap {
 }
 
 interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
-  nextFolder: string
-  prevFolder: string
-  retroFolder: string
-  blacklistFolder: string
+  // nextFolder: string
+  // prevFolder: string
+  // retroFolder: string
+  // blacklistFolder: string
 }
 
 export interface WriteClaimsContext extends WriteClaimsTaskArguments, RunnableContext {
@@ -88,12 +88,12 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
   return claims.filter(isNotBullSellerBalance)
 }
 
-async function getClaimsFromBullToken(context: WriteClaimsContext) {
+export async function getClaimsFromBullToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
   return getERC20BalancesAtBlockTagPaginated(pausedAt + 1, deployment.address, context)
 }
 
-async function getClaimsFromShieldToken(context: WriteClaimsContext) {
+export async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
   const blockTags = await getDistributionBlockTags(context)
   const balancesByDate = await seqMap(blockTags, tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context))
