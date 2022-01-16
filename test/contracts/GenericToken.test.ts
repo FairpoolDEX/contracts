@@ -5,6 +5,7 @@ import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../suppo
 import { GenericToken } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
+import { fest } from '../../util/mocha'
 
 describe('GenericToken', async function () {
   let owner: SignerWithAddress
@@ -38,7 +39,7 @@ describe('GenericToken', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  it('must allow to transfer', async () => {
+  fest('must allow to transfer', async () => {
     const balanceExpected = 100
     await generic.connect(owner).transfer(bob.address, balanceExpected)
     const balanceActual = await generic.balanceOf(bob.address)

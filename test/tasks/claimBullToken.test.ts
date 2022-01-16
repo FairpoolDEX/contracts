@@ -10,6 +10,7 @@ import { claimBullToken } from '../../tasks/claimBullTokenTask'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { testSetClaimsContext } from '../support/context'
+import { fest } from '../../util/mocha'
 
 describe('claimBullToken', async () => {
 
@@ -52,7 +53,7 @@ describe('claimBullToken', async () => {
     await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
   })
 
-  it('should allow to claim the tokens', async () => {
+  fest('should allow to claim the tokens', async () => {
     await timeTravel(async () => {
       await claimBullToken(bullTokenWithStranger, addresses, ethers)
       for (let i = 0; i < addresses.length; i++) {

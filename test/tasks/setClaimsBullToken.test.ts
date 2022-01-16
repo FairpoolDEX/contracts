@@ -12,7 +12,7 @@ import { testSetClaimsContext, testWriteClaimsContext } from '../support/context
 import { balanceBN, BalanceBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken } from '../../tasks/writeClaimsTask'
-import { long } from '../../util/mocha'
+import { fest, long } from '../../util/mocha'
 import { expectTotalAmount } from '../../util/expectation'
 
 describe('setClaimsBullToken', async () => {
@@ -57,7 +57,7 @@ describe('setClaimsBullToken', async () => {
     expectations = await getTestExpectations(balances, testSetClaimsContext)
   })
 
-  it('should parse the CSV export', async () => {
+  fest('should parse the CSV export', async () => {
     // should add 0 balances for old addresses
     // should not add 0 balances for current addresses
     expect(Object.keys(balancesMap).length).to.be.greaterThan(0)
@@ -68,11 +68,11 @@ describe('setClaimsBullToken', async () => {
     expect(balancesMap[blackAddress]).to.equal(toTokenAmount('0'))
   })
 
-  it('should not parse a bogus CSV export', async () => {
+  fest('should not parse a bogus CSV export', async () => {
     await expect(getBogusBalances()).to.be.rejectedWith('Can\'t parse balance')
   })
 
-  it('should allow the owner to set claims multiple times', async () => {
+  fest('should allow the owner to set claims multiple times', async () => {
     await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
     const calClaim = await bullTokenWithOwner.claims(calAddress)
@@ -87,7 +87,7 @@ describe('setClaimsBullToken', async () => {
     }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
-  it('should not allow the stranger to set claims', async () => {
+  fest('should not allow the stranger to set claims', async () => {
     await expect(
       setClaims(bullTokenWithStranger, balances, expectations, testSetClaimsContext),
     ).to.be.revertedWith('caller is not the owner')
@@ -95,7 +95,7 @@ describe('setClaimsBullToken', async () => {
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
   })
 
-  it('should allow the stranger to claim BULL', async () => {
+  fest('should allow the stranger to claim BULL', async () => {
     const strangerAmount = toTokenAmount('10000')
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
     const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
@@ -106,7 +106,7 @@ describe('setClaimsBullToken', async () => {
     }, airdropStartTimestampForTest)
   })
 
-  it('should allow multiple stages', async () => {
+  fest('should allow multiple stages', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
     const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)

@@ -10,6 +10,7 @@ import { TokenModel } from '../support/fast-check/models/TokenModel'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { hours } from '../../util/time'
+import { fest } from '../../util/mocha'
 
 describe('Market Crash Protection', async () => {
   let owner: SignerWithAddress
@@ -129,7 +130,7 @@ describe('Market Crash Protection', async () => {
     const suffix = payInBase ? '(pay in base)' : '(pay in quote)'
 
     describe(`buy ${suffix}`, async () => {
-      it(`must allow to buy ${suffix}`, async () => {
+      fest(`must allow to buy ${suffix}`, async () => {
         await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
@@ -141,21 +142,21 @@ describe('Market Crash Protection', async () => {
         ])
       })
 
-      it(`must not allow to buy if expiration date is less than block timestamp ${suffix}`, async () => {
+      fest(`must not allow to buy if expiration date is less than block timestamp ${suffix}`, async () => {
         await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, dateToTimestampSeconds(now) - 1, premium, fee, payInBase)).to.be.revertedWith('MCP: BEXP')
       })
 
-      it(`must not allow to buy if buyer doesn't have enough balance ${suffix}`, async () => {
+      fest(`must not allow to buy if buyer doesn't have enough balance ${suffix}`, async () => {
         const premiumNext = premium + (payInBase ? initialBaseAmount : initialQuoteAmount)
         const feeNext = getFee(premiumNext)
         await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premiumNext, feeNext, payInBase)).to.be.revertedWith('transfer amount exceeds balance')
       })
 
-      it(`must not allow to buy if buyer sets a zero premium ${suffix}`, async () => {
+      fest(`must not allow to buy if buyer sets a zero premium ${suffix}`, async () => {
         await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, 0, fee, payInBase)).to.be.revertedWith('MCP: BPGD')
       })
 
-      it(`must not allow to buy if buyer sets a fee that is less than premium / feeDivisorMin ${suffix}`, async () => {
+      fest(`must not allow to buy if buyer sets a fee that is less than premium / feeDivisorMin ${suffix}`, async () => {
         await expect(mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, 0, payInBase)).to.be.revertedWith('MCP: BFSM')
       })
     })
@@ -165,7 +166,7 @@ describe('Market Crash Protection', async () => {
         await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
       })
 
-      it(`must allow to sell ${suffix}`, async () => {
+      fest(`must allow to sell ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0)],
@@ -177,41 +178,41 @@ describe('Market Crash Protection', async () => {
         ])
       })
 
-      it(`must not allow to sell if seller doesn't have enough balance ${suffix}`, async () => {
+      fest(`must not allow to sell if seller doesn't have enough balance ${suffix}`, async () => {
         await quoteAsSam.transfer(mark.address, await quoteAsSam.balanceOf(sam.address))
         await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith('transfer amount exceeds balance')
       })
 
-      it(`must not allow to sell if seller address is different from specified address ${suffix}`, async () => {
+      fest(`must not allow to sell if seller address is different from specified address ${suffix}`, async () => {
         await expect(mcpAsMark.sell(protectionIndex)).to.be.revertedWith('MCP: SPSS')
       })
 
-      it(`must not allow to sell if protection has expired ${suffix}`, async () => {
+      fest(`must not allow to sell if protection has expired ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith('MCP: SPET')
       })
 
-      it(`must not allow to sell if protection does not exist ${suffix}`, async () => {
+      fest(`must not allow to sell if protection does not exist ${suffix}`, async () => {
         await expect(mcpAsSam.sell(protectionIndex + 1)).to.be.revertedWith('revert')
       })
 
-      it(`must not allow to sell if protection is cancelled ${suffix}`, async () => {
+      fest(`must not allow to sell if protection is cancelled ${suffix}`, async () => {
         await mcpAsBob.cancel(protectionIndex)
         await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith('MCP: SPSB')
       })
 
-      it(`must not allow to sell if protection is sold ${suffix}`, async () => {
+      fest(`must not allow to sell if protection is sold ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith('MCP: SPSB')
       })
 
-      it(`must not allow to sell if protection is used ${suffix}`, async () => {
+      fest(`must not allow to sell if protection is used ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await mcpAsBob.use(protectionIndex)
         await expect(mcpAsSam.sell(protectionIndex)).to.be.revertedWith('MCP: SPSB')
       })
 
-      it(`must not allow to sell if protection is withdrawn ${suffix}`, async () => {
+      fest(`must not allow to sell if protection is withdrawn ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
@@ -224,7 +225,7 @@ describe('Market Crash Protection', async () => {
         await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
       })
 
-      it(`must allow to cancel ${suffix}`, async () => {
+      fest(`must allow to cancel ${suffix}`, async () => {
         await mcpAsBob.cancel(protectionIndex)
         await expectSignerBalances([
           [bob, base, initialBaseAmount],
@@ -236,36 +237,36 @@ describe('Market Crash Protection', async () => {
         ])
       })
 
-      it(`must not allow to cancel if sender is not buyer ${suffix}`, async () => {
+      fest(`must not allow to cancel if sender is not buyer ${suffix}`, async () => {
         await expect(mcpAsSam.cancel(protectionIndex)).to.be.revertedWith('MCP: CPBS')
       })
 
-      it(`must not allow to cancel if cancellationTimeout has passed ${suffix}`, async () => {
+      fest(`must not allow to cancel if cancellationTimeout has passed ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + cancellationTimeout + 1)
         await expect(mcpAsBob.cancel(protectionIndex)).to.be.revertedWith('MCP: CPCT')
       })
 
-      it(`must not allow to cancel if protection does not exist ${suffix}`, async () => {
+      fest(`must not allow to cancel if protection does not exist ${suffix}`, async () => {
         await expect(mcpAsBob.cancel(protectionIndex + 1)).to.be.revertedWith('revert')
       })
 
-      it(`must not allow to cancel if protection is cancelled ${suffix}`, async () => {
+      fest(`must not allow to cancel if protection is cancelled ${suffix}`, async () => {
         await mcpAsBob.cancel(protectionIndex)
         await expect(mcpAsBob.cancel(protectionIndex)).to.be.revertedWith('MCP: CPSB')
       })
 
-      it(`must not allow to cancel if protection is sold ${suffix}`, async () => {
+      fest(`must not allow to cancel if protection is sold ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await expect(mcpAsBob.cancel(protectionIndex)).to.be.revertedWith('MCP: CPSB')
       })
 
-      it(`must not allow to cancel if protection is used ${suffix}`, async () => {
+      fest(`must not allow to cancel if protection is used ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await mcpAsBob.use(protectionIndex)
         await expect(mcpAsBob.cancel(protectionIndex)).to.be.revertedWith('MCP: CPSB')
       })
 
-      it(`must not allow to cancel if protection is withdrawn ${suffix}`, async () => {
+      fest(`must not allow to cancel if protection is withdrawn ${suffix}`, async () => {
         await mcpAsSam.sell(protectionIndex)
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
@@ -280,7 +281,7 @@ describe('Market Crash Protection', async () => {
         await mcpAsSam.sell(protectionIndex)
       })
 
-      it(`must allow to use ${suffix}`, async () => {
+      fest(`must allow to use ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
         await expectSignerBalances([
           [bob, base, initialBaseAmount - (payInBase ? premium + fee : 0) - guaranteedAmount],
@@ -292,34 +293,34 @@ describe('Market Crash Protection', async () => {
         ])
       })
 
-      it(`must not allow to use if sender is not buyer ${suffix}`, async () => {
+      fest(`must not allow to use if sender is not buyer ${suffix}`, async () => {
         await expect(mcpAsSam.use(protectionIndex)).to.be.revertedWith('MCP: UPBS')
       })
 
-      it(`must not allow to use if protection has expired ${suffix}`, async () => {
+      fest(`must not allow to use if protection has expired ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await expect(mcpAsBob.use(protectionIndex)).to.be.revertedWith('MCP: UPET')
       })
 
-      it(`must not allow to use if protection does not exist ${suffix}`, async () => {
+      fest(`must not allow to use if protection does not exist ${suffix}`, async () => {
         await expect(mcpAsBob.use(protectionIndex + 1)).to.be.revertedWith('revert')
       })
 
-      it(`must allow to use if protection is not cancelled ${suffix}`, async () => {
+      fest(`must allow to use if protection is not cancelled ${suffix}`, async () => {
         await expect(mcpAsBob.cancel(protectionIndex)).to.be.revertedWith('MCP: CPSB')
         await mcpAsBob.use(protectionIndex)
       })
 
-      it(`must allow to use before expirationDate if protection is sold ${suffix}`, async () => {
+      fest(`must allow to use before expirationDate if protection is sold ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
       })
 
-      it(`must not allow to use if protection is used ${suffix}`, async () => {
+      fest(`must not allow to use if protection is used ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
         await expect(mcpAsBob.use(protectionIndex)).to.be.revertedWith('MCP: UPSS')
       })
 
-      it(`must not allow to use if protection is withdrawn ${suffix}`, async () => {
+      fest(`must not allow to use if protection is withdrawn ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
         await expect(mcpAsBob.use(protectionIndex)).to.be.revertedWith('MCP: UPSS')
@@ -332,7 +333,7 @@ describe('Market Crash Protection', async () => {
         await mcpAsSam.sell(protectionIndex)
       })
 
-      it(`must allow to withdraw after use without waiting for expiration ${suffix}`, async () => {
+      fest(`must allow to withdraw after use without waiting for expiration ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
         await expect(getLatestBlockTimestamp(ethers)).to.eventually.be.lessThan(expirationDate)
         await mcpAsSam.withdraw(protectionIndex)
@@ -347,7 +348,7 @@ describe('Market Crash Protection', async () => {
 
       })
 
-      it(`must allow to withdraw after expiration ${suffix}`, async () => {
+      fest(`must allow to withdraw after expiration ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
         await expectSignerBalances([
@@ -360,27 +361,27 @@ describe('Market Crash Protection', async () => {
         ])
       })
 
-      it(`must not allow to withdraw if sender is not seller ${suffix}`, async () => {
+      fest(`must not allow to withdraw if sender is not seller ${suffix}`, async () => {
         await mcpAsBob.use(protectionIndex)
         await expect(mcpAsBob.withdraw(protectionIndex)).to.be.revertedWith('MCP: WPSS')
       })
 
-      it(`must not allow to withdraw if protection does not exist ${suffix}`, async () => {
+      fest(`must not allow to withdraw if protection does not exist ${suffix}`, async () => {
         await expect(mcpAsSam.withdraw(protectionIndex + 1)).to.be.revertedWith('revert')
       })
 
-      it(`must not allow to withdraw if protection is cancelled ${suffix}`, async () => {
+      fest(`must not allow to withdraw if protection is cancelled ${suffix}`, async () => {
         const protectionIndexNext = protectionIndex + 1
         await mcpAsBob.buy(baseAddress, quoteAddress, sellerAddress, guaranteedAmount, guaranteedPrice, expirationDate, premium, fee, payInBase)
         await mcpAsBob.cancel(protectionIndexNext)
         await expect(mcpAsSam.withdraw(protectionIndexNext)).to.be.revertedWith('MCP: WPSU')
       })
 
-      it(`must not allow to withdraw if protection is sold but expiration date has not been reached ${suffix}`, async () => {
+      fest(`must not allow to withdraw if protection is sold but expiration date has not been reached ${suffix}`, async () => {
         await expect(mcpAsSam.withdraw(protectionIndex)).to.be.revertedWith('MCP: WPET')
       })
 
-      it(`must not allow to withdraw if protection is withdrawn ${suffix}`, async () => {
+      fest(`must not allow to withdraw if protection is withdrawn ${suffix}`, async () => {
         await setNextBlockTimestamp(expirationDate + 1)
         await mcpAsSam.withdraw(protectionIndex)
         await expect(mcpAsSam.withdraw(protectionIndex)).to.be.revertedWith('MCP: WPSU')
@@ -388,27 +389,27 @@ describe('Market Crash Protection', async () => {
     })
   }
 
-  it('must allow the owner to set feeDivisorMin', async () => {
+  fest('must allow the owner to set feeDivisorMin', async () => {
     await mcpAsMark.setFeeDivisorMin(2)
   })
 
-  it('must not allow the owner to set feeDivisorMin to zero', async () => {
+  fest('must not allow the owner to set feeDivisorMin to zero', async () => {
     await expect(mcpAsMark.setFeeDivisorMin(0)).to.be.revertedWith('MCP: SFSM')
   })
 
-  it('must not allow non-owner to set feeDivisorMin', async () => {
+  fest('must not allow non-owner to set feeDivisorMin', async () => {
     await expect(mcpAsBob.setFeeDivisorMin(2)).to.be.revertedWith('not the owner')
   })
 
-  it('must allow the owner to set cancellationTimeout', async () => {
+  fest('must allow the owner to set cancellationTimeout', async () => {
     await mcpAsMark.setCancellationTimeout(2)
   })
 
-  it('must not allow the owner to set cancellationTimeout to zero', async () => {
+  fest('must not allow the owner to set cancellationTimeout to zero', async () => {
     await expect(mcpAsMark.setCancellationTimeout(0)).to.be.revertedWith('MCP: SCTM')
   })
 
-  it('must not allow non-owner to set cancellationTimeout', async () => {
+  fest('must not allow non-owner to set cancellationTimeout', async () => {
     await expect(mcpAsBob.setCancellationTimeout(2)).to.be.revertedWith('not the owner')
   })
 
@@ -417,7 +418,7 @@ describe('Market Crash Protection', async () => {
   // TODO: must not allow to buy/sell protection for toxic tokens that don't transfer the full amount (e.g. Salmonella)
   // TODO: should allow automatic ETH -> WETH conversion like on Uniswap
 
-  // xit("must pass fast-check", async () => {
+  // fest.skip("must pass fast-check", async () => {
   //   const expirationDateMin = now
   //   const expirationDateMax = dateAdd(now, { years: 5 })
   //   const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })

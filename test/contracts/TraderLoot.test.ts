@@ -2,7 +2,7 @@ import { expect } from '../../util/expect'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
-import { ShieldToken, TraderLoot } from '../../typechain-types'
+import { ColiToken, TraderLoot } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { releaseTimeTest } from '../support/ColiToken.helpers'
@@ -12,6 +12,7 @@ import * as os from 'os'
 import { range, toInteger } from 'lodash'
 import mkdirp from 'mkdirp'
 import { $zero } from '../../data/allAddresses'
+import { fest } from '../../util/mocha'
 
 xdescribe('TraderLoot', async function () {
   let owner: SignerWithAddress
@@ -21,12 +22,12 @@ xdescribe('TraderLoot', async function () {
   let bella: SignerWithAddress
   let sally: SignerWithAddress
 
-  let shield: ShieldToken
-  let shieldAsOwner: ShieldToken
-  let shieldAsStranger: ShieldToken
-  let shieldAsBob: ShieldToken
-  let shieldAsSam: ShieldToken
-  let shieldAsSally: ShieldToken
+  let shield: ColiToken
+  let shieldAsOwner: ColiToken
+  let shieldAsStranger: ColiToken
+  let shieldAsBob: ColiToken
+  let shieldAsSam: ColiToken
+  let shieldAsSally: ColiToken
 
   let loot: TraderLoot
   let lootAsOwner: TraderLoot
@@ -43,8 +44,8 @@ xdescribe('TraderLoot', async function () {
   before(async () => {
     const signers = [owner, stranger, bob, sam, bella, sally] = await ethers.getSigners()
 
-    const shieldTokenFactory = await ethers.getContractFactory('ShieldToken')
-    shieldAsOwner = (await upgrades.deployProxy(shieldTokenFactory, [releaseTimeTest])) as unknown as ShieldToken
+    const ColiTokenFactory = await ethers.getContractFactory('ColiToken')
+    shieldAsOwner = (await upgrades.deployProxy(ColiTokenFactory, [releaseTimeTest])) as unknown as ColiToken
     await shieldAsOwner.deployed()
     shield = shieldAsOwner.connect($zero)
     shieldAsStranger = shieldAsOwner.connect(stranger)
@@ -72,19 +73,19 @@ xdescribe('TraderLoot', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  it('must allow to claim loot for holders of ShieldToken', async () => {
+  fest('must allow to claim loot for holders of ColiToken', async () => {
     await loot.connect(bob).claim(1)
     const tokenId = await loot.connect(bob).tokenOfOwnerByIndex(bob.address, 0)
     expect(tokenId).to.equal(1)
   })
 
-  it('must not allow to claim loot for non-holders of ShieldToken', async () => {
+  fest('must not allow to claim loot for non-holders of ColiToken', async () => {
     await expect(loot.connect(sam).claim(1)).to.be.revertedWith('Only parent token owners can claim')
     const balance = await loot.connect(sam).balanceOf(sam.address)
     expect(balance).to.equal(0)
   })
 
-  it('must not allow non-owner to claim multiple tokens anytime', async () => {
+  fest('must not allow non-owner to claim multiple tokens anytime', async () => {
     await loot.connect(bob).claim(1)
     await expect(loot.connect(bob).claim(2)).to.be.revertedWith('This address already has a token')
     await timeTravel(async () => {
@@ -92,7 +93,7 @@ xdescribe('TraderLoot', async function () {
     }, maxClaimTimestamp + 1)
   })
 
-  it('must allow owner to claim multiple tokens anytime', async () => {
+  fest('must allow owner to claim multiple tokens anytime', async () => {
     await loot.connect(owner).claimForOwner(ownerMaxTokenId - 1)
     await loot.connect(owner).claimForOwner(ownerMaxTokenId - 2)
     await timeTravel(async () => {
@@ -101,23 +102,23 @@ xdescribe('TraderLoot', async function () {
     }, maxClaimTimestamp + 1)
   })
 
-  it('must not allow non-owner to claim after maxClaimTimestamp', async () => {
+  fest('must not allow non-owner to claim after maxClaimTimestamp', async () => {
     await timeTravel(async () => {
       await expect(loot.connect(bob).claim(1)).to.be.revertedWith('Can\'t claim after maxClaimTimestamp')
     }, maxClaimTimestamp + 1)
   })
 
-  it('must not allow owner to claim public tokens before maxClaimTimestamp', async () => {
+  fest('must not allow owner to claim public tokens before maxClaimTimestamp', async () => {
     await expect(loot.connect(owner).claim(1)).to.be.revertedWith('Owner can\'t claim')
   })
 
-  it('must allow owner to claim any token after maxClaimTimestamp', async () => {
+  fest('must allow owner to claim any token after maxClaimTimestamp', async () => {
     await timeTravel(async () => {
       await loot.connect(owner).claimForOwner(1)
     }, maxClaimTimestamp + 1)
   })
 
-  it('must generate loot with correct distribution', async function () {
+  fest('must generate loot with correct distribution', async function () {
     const size = process.env.LOOT_SIZE ? toInteger(process.env.LOOT_SIZE) : 25
     const from = process.env.LOOT_FROM ? toInteger(process.env.LOOT_FROM) : 1
     const to = process.env.LOOT_TO ? toInteger(process.env.LOOT_TO) : size + 1
@@ -136,7 +137,7 @@ xdescribe('TraderLoot', async function () {
     }))
   })
 
-  it('must not allow to deploy with invalid ownerMaxTokenId, publicMaxTokenId', async () => {
+  fest('must not allow to deploy with invalid ownerMaxTokenId, publicMaxTokenId', async () => {
     const lootFactory = await ethers.getContractFactory('TraderLoot')
     await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 0, 0, maxClaimTimestamp, style)).to.be.revertedWith('ownerMaxTokenId must be greater than 0')
     await expect(lootFactory.connect(owner).deploy(name, symbol, shield.address, 100, 1, maxClaimTimestamp, style)).to.be.revertedWith('ownerMaxTokenId must be greater or equal to publicMaxTokenId')

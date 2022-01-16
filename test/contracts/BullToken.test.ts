@@ -7,6 +7,7 @@ import { BullToken, ColiToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
+import { fest } from '../../util/mocha'
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
@@ -61,19 +62,19 @@ describe('BullToken', async () => {
     }
   })
 
-  it('should allow the owner to set claims', async () => {
+  fest('should allow the owner to set claims', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     const _claims = await getClaims(bullTokenWithOwner, claimers)
     expect(_claims).to.deep.equal(claims)
   })
 
-  it('should not allow non-owner to set claims', async () => {
+  fest('should not allow non-owner to set claims', async () => {
     await expect(
       bullTokenWithStranger.setClaims(claimers, amounts),
     ).to.be.revertedWith('caller is not the owner')
   })
 
-  it('should allow any user to claim the tokens for his own address', async () => {
+  fest('should allow any user to claim the tokens for his own address', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
@@ -94,7 +95,7 @@ describe('BullToken', async () => {
     }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
-  it('should allow any user to claim tokens for other addresses', async () => {
+  fest('should allow any user to claim tokens for other addresses', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim')
@@ -113,7 +114,7 @@ describe('BullToken', async () => {
     }, airdropStartTimestampForTest + airdropStageDuration)
   })
 
-  it('should not allow the user to claim BULL tokens before or after the distribution stage finishes', async () => {
+  fest('should not allow the user to claim BULL tokens before or after the distribution stage finishes', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
     await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
@@ -127,7 +128,7 @@ describe('BullToken', async () => {
     }, airdropStartTimestampForTest + airdropClaimDuration + 1)
   })
 
-  it('should burn BULL token on transfer', async () => {
+  fest('should burn BULL token on transfer', async () => {
     const sentAmount = toTokenAmount('150')
     const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
 
@@ -144,7 +145,7 @@ describe('BullToken', async () => {
     }, airdropStartTimestampForTest)
   })
 
-  // it("should allow the owner to rollback BULL token balances", async () => {
+  // fest("should allow the owner to rollback BULL token balances", async () => {
   //   const sentAmount = toTokenAmount("150")
   //   const recvAmount = sentAmount.mul(burnRateNumerator).div(burnRateDenominator)
   //   const feeAmount = sentAmount.sub(recvAmount)
@@ -167,13 +168,13 @@ describe('BullToken', async () => {
   //   }, airdropStartTimestamp)
   // })
   //
-  // it("should not allow the non-owner to rollback BULL token balances", async () => {
+  // fest("should not allow the non-owner to rollback BULL token balances", async () => {
   //   await timeTravel(async () => {
   //     expect(bullTokenWithStranger.rollbackMany([ownerAddress], [strangerAddress], [toTokenAmount("100")])).to.be.revertedWith("caller is not the owner")
   //   }, airdropStartTimestamp)
   // })
   //
-  // it("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
+  // fest("should not allow the owner to rollback BULL token balances if rollback is disabled", async () => {
   //   await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
   //
   //   await timeTravel(async () => {
