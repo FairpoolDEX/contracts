@@ -5,12 +5,12 @@ import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { BalancesMap } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { merge } from 'lodash'
-import { CryptStylo, deployer, winooze } from '../../data/allAddresses'
+import { CS, deployer, KS } from '../../data/allAddresses'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [deployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
-  [CryptStylo]: toTokenAmount(new Decimal('190314.565473847000000000')),
-  [winooze]: toTokenAmount(new Decimal('3495.240000000000000000')),
+  [CS]: toTokenAmount(new Decimal('190314.565473847000000000')),
+  [KS]: toTokenAmount(new Decimal('3495.240000000000000000')),
 }
 
 const { balances: oldBalances } = oldExpectations
@@ -18,8 +18,8 @@ const { balances: oldBalances } = oldExpectations
 export const expectations: SetClaimsExpectationsMap = merge<Partial<SetClaimsExpectationsMap>, SetClaimsExpectationsMap, SetClaimsExpectationsMap>({}, oldExpectations, {
   balances: {
     [deployer]: oldBalances[deployer].add(virtualSHLDBalancesFromCurrentBullBalances[deployer]),
-    [CryptStylo]: oldBalances[CryptStylo].add(virtualSHLDBalancesFromCurrentBullBalances[CryptStylo]),
-    [winooze]: oldBalances[winooze].add(virtualSHLDBalancesFromCurrentBullBalances[winooze]),
+    [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),
+    [KS]: oldBalances[KS].add(virtualSHLDBalancesFromCurrentBullBalances[KS]),
   },
   totalAmount: bullMaxSupplyTokenAmount,
 })

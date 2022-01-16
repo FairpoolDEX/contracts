@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { Address } from '../models/Address'
 import { ensure } from '../util/ensure'
 import { findDeployment } from '../data/allDeployments'
 import { RunnableTaskArguments } from '../util/task'
@@ -20,6 +19,7 @@ import { flatten, uniq } from 'lodash'
 import { VestingType } from '../models/VestingType'
 import { findVestingSchedule } from '../data/allVestingSchedules'
 import { getOverrides } from '../util/network'
+import { expect } from '../util/expect'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -47,7 +47,7 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   // TODO: it must distribute COLI to addresses who are staking in NFTrade smart contract
   // TODO: it must maintain the vesting
 
-  const expectations: DeployColiExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
+  const expectations: DeployColiTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
 
   // await rollbackBullToken(fromToken, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
@@ -89,9 +89,14 @@ async function setBalances(fromToken: ColiToken, toToken: ColiToken) {
   throw impl()
 }
 
-export interface DeployColiExpectationsMap {
-  equalBalances: Address[],
+export interface DeployColiTokenExpectationsMap {
   balances: BalanceBN[]
+  frozenWallets: unknown[]
+}
+
+export function validateDeployColiTokenExpectationsMap(map: DeployColiTokenExpectationsMap) {
+  expect(map, 'totalSupply is fully minted in initialize() -> expectation will always pass').not.to.have.key('totalSupply')
+  return map
 }
 
 interface DeployColiTokenTaskArguments extends RunnableTaskArguments, Writable, Expected {

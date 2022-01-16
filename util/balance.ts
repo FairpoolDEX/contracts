@@ -3,11 +3,11 @@ import neatcsv from 'neat-csv'
 import { RawCSVData } from './csv'
 import { shuffle } from 'lodash'
 import { sumBigNumbers, zero } from './bignumber'
-import { AddressSchema, validateAddress } from '../models/Address'
+import { AddressSchema } from '../models/Address'
 import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
-import { BalanceBN, BalanceBNSchema } from '../models/BalanceBN'
+import { BalanceBN, BalanceBNSchema, validateBalanceBN } from '../models/BalanceBN'
 import { parseAmountBNCSV } from '../models/AmountBN/parseAmountBNCSV'
 
 export type BalancesMap = { [address: string]: AmountBN }
@@ -40,7 +40,7 @@ export function sumBalanceAmounts(balances: BalanceBN[]) {
 }
 
 export function getBalancesFromMap(balanceMap: BalancesMap): BalanceBN[] {
-  return Object.entries(balanceMap).map(([address, amount]) => ({ address: validateAddress(address), amount }))
+  return Object.entries(balanceMap).map(([address, amount]) => validateBalanceBN({ address, amount }))
 }
 
 export function encodeBalances(balances: BalanceBN[]) {

@@ -8,6 +8,8 @@ export const one = BigNumber.from(1)
 
 export const ten = BigNumber.from(10)
 
+export const bn = BigNumber.from
+
 export function sumBigNumbers(nums: BigNumber[]) {
   return nums.reduce((acc, num) => acc.add(num), BigNumber.from(0))
 }
