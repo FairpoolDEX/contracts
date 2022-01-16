@@ -20,7 +20,7 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
   let addressToVerify: string
 
   if (upgradeable) {
-    const contract = await upgrades.deployProxy(factory)
+    const contract = await upgrades.deployProxy(factory, constructorArgs)
     await contract.deployed()
     const proxyAddress = contract.address
     console.info(`export ${envVarContract}_PROXY_ADDRESS=${proxyAddress}`) // eslint-disable-line no-console

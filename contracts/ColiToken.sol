@@ -226,7 +226,6 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         if (releaseTime > 0) {
             require(releaseTime > block.timestamp, "Can't change after release");
         }
-        require(_releaseTime > block.timestamp, "Release time should be in future");
         releaseTime = _releaseTime;
     }
 

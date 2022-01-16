@@ -140,7 +140,16 @@ export const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      ropsten: process.env.ETHERSCAN_API_KEY,
+
+      bsc: process.env.BSCSCAN_API_KEY,
+      bscTestnet: process.env.BSCSCAN_API_KEY,
+
+      avalanche: process.env.SNOWTRACE_API_KEY,
+      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+    },
   },
   watcher: {
     run: {
@@ -176,10 +185,10 @@ export default config
 
 task('deployColiToken', 'Deploy ColiToken contract')
   .addParam('fromNetwork', '', undefined, types.string)
-  .addParam('toNetwork', '', undefined, types.string)
-  .addParam('isPaused', '', undefined, types.boolean)
+  .addParam('isPaused', '', false, types.boolean)
   .addParam('allocations', 'CSV file with allocations', undefined, types.string)
   .addParam('expectations', 'TypeScript file with test expectations', undefined, types.string)
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(deployColiTokenTask)
 
 task('deployBullToken', 'Deploy BullToken contract')

@@ -26,7 +26,7 @@ import { expectBalancesOnToken } from '../util/expectBalancesOnToken'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
-  const { fromNetwork, toNetwork, isPaused, expectations: expectationsPath, dry, ethers } = context
+  const { fromNetwork, isPaused, expectations: expectationsPath, dry, networkName: toNetwork, ethers } = context
   if (!(isPaused || isTestnet(toNetwork))) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
 
   const fromDeployment = ensure(findDeployment({ contract: 'ShieldToken', network: fromNetwork }))
@@ -64,9 +64,10 @@ async function expectDeployColiToken(expectations: DeployColiTokenExpectationsMa
 
 async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {
   const { ethers, run } = context
+  const constructorArgsModule = await realpath(`${__dirname}/arguments/ColiToken.arguments.ts`)
   const result = await run('deployContract', {
     contract: 'ColiToken',
-    constructorArgsModule: await realpath(`${__dirname}/arguments/ColiToken.arguments.ts`),
+    constructorArgsModule,
     upgradeable: true,
   }) as DeployGenericTokenTaskOutput
   if (result.upgradeable) {
@@ -110,7 +111,6 @@ export function validateDeployColiTokenExpectationsMap(map: DeployColiTokenExpec
 
 interface DeployColiTokenTaskArguments extends RunnableTaskArguments, Writable, Expected {
   fromNetwork: NetworkName
-  toNetwork: NetworkName
   isPaused: boolean
   allocations: Filename
 }
