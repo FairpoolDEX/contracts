@@ -4,16 +4,19 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectTotalAmount } from '../../util/expectation'
+import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
+import { ensure } from '../../util/ensure'
+import { findDeployment } from '../../data/allDeployments'
 
 describe('setClaimsBullToken', async () => {
 
@@ -126,8 +129,13 @@ describe('setClaimsBullToken', async () => {
   })
 
   long(getClaimsFromBullToken.name, async () => {
-    const claimsFromBullToken = await getClaimsFromBullToken(testWriteClaimsContext)
     const bullTotalSupply_2022_01_16 = BigNumber.from('1490403967926689867814673435496')
+    const bullAddressesLength_2022_01_16 = 313
+    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
+    const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
+    const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers)
+    expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
+    const claimsFromBullToken = await getClaimsFromBullToken(context)
     expectTotalAmount(claimsFromBullToken, bullTotalSupply_2022_01_16)
   })
 

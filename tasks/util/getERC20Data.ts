@@ -8,7 +8,7 @@ import { RunnableContext } from '../../util/context'
 import { unwrapSmartContractBalances } from './unwrapSmartContractBalances'
 import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
-import { chunk, flatten } from 'lodash'
+import { chunk, flatten, uniq } from 'lodash'
 import { maxRequestsPerSecond } from '../../util/getblock'
 import { seqMap } from '../../util/promise'
 import { createFsCache, getCacheKey, getFsCachePath } from '../../util/cache'
@@ -19,7 +19,7 @@ export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, cont
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)
   const token = await getGenericToken(contractAddress, ethers)
   const transfers = await getTransfersPaginatedCached(token, deployedAt, blockTag)
-  return transfers.map(t => t.to)
+  return uniq(transfers.map(t => t.to))
 }
 
 export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
