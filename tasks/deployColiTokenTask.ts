@@ -4,7 +4,7 @@ import { findDeployment } from '../data/allDeployments'
 import { RunnableTaskArguments } from '../util/task'
 import { Writable } from '../util/writable'
 import { getRunnableContext, RunnableContext } from '../util/context'
-import { Expected } from '../util/expectation'
+import { Expected, importExpectations } from '../util/expectation'
 import { ColiToken } from '../typechain-types'
 import { impl } from '../util/todo'
 import { getContract } from '../util/ethers'
@@ -21,6 +21,8 @@ import { findVestingSchedule } from '../data/allVestingSchedules'
 import { getOverrides } from '../util/network'
 import { expect } from '../util/expect'
 import { FrozenWallet } from '../models/FrozenWallet'
+import { expectTokenBalances } from '../util/balance'
+import { expectTokenFrozenWallets } from '../models/FrozenWallet/expectTokenFrozenWallets'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -48,10 +50,16 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   // TODO: it must distribute COLI to addresses who are staking in NFTrade smart contract
   // TODO: it must maintain the vesting
 
-  const expectations: DeployColiTokenExpectationsMap = await import(`${process.cwd()}/${expectationsPath}`)
+  const expectations: DeployColiTokenExpectationsMap = await importExpectations(expectationsPath)
+  await expectDeployColiToken(expectations, toToken)
 
   // await rollbackBullToken(fromToken, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
   if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+}
+
+async function expectDeployColiToken(expectations: DeployColiTokenExpectationsMap, token: ColiToken) {
+  await expectTokenBalances(token, expectations.balances)
+  await expectTokenFrozenWallets(token, expectations.frozenWallets)
 }
 
 async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {
@@ -104,6 +112,7 @@ interface DeployColiTokenTaskArguments extends RunnableTaskArguments, Writable, 
   fromNetwork: NetworkName
   toNetwork: NetworkName
   isPaused: boolean
+  allocations: Filename
 }
 
 export interface DeployColiTokenContext extends DeployColiTokenTaskArguments, RunnableContext {

@@ -9,6 +9,8 @@ import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, BalanceBNSchema, validateBalanceBN } from '../models/BalanceBN'
 import { parseAmountBNCSV } from '../models/AmountBN/parseAmountBNCSV'
+import { Contract } from 'ethers'
+import { getERC20Balances } from '../test/support/ERC20.helpers'
 
 export type BalancesMap = { [address: string]: AmountBN }
 
@@ -95,4 +97,10 @@ export function optimizeForGasRefund(balances: BalanceBN[]): BalanceBN[] {
 
 export function isZeroBalance(balance: BalanceBN) {
   return balance.amount.eq(zero)
+}
+
+export async function expectTokenBalances(token: Contract, expectedBalances: BalanceBN[]) {
+  const addresses = expectedBalances.map(b => b.address)
+  const actualBalances = await getERC20Balances(token, addresses)
+  expect(expectedBalances).to.deep.equal(actualBalances)
 }
