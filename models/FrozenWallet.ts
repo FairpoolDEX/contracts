@@ -3,6 +3,7 @@ import { toUidFromSchema, Uid } from './Uid'
 import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
 import { DurationSchema } from './Duration'
+import { getDuplicatesRefinement } from '../util/zod'
 
 export const FrozenWalletSchema = z.object({
   wallet: AddressSchema,
@@ -11,6 +12,8 @@ export const FrozenWalletSchema = z.object({
   initialAmount: AmountBNSchema,
   lockDaysPeriod: DurationSchema,
 })
+
+export const FrozenWalletsSchema = z.array(FrozenWalletSchema).superRefine(getDuplicatesRefinement('FrozenWallet', getFrozenWalletUid))
 
 export const FrozenWalletUidSchema = FrozenWalletSchema.pick({
   wallet: true,
@@ -32,17 +35,12 @@ export function getFrozenWalletUid(walletUid: FrozenWalletUid): Uid {
   return toUidFromSchema(walletUid, FrozenWalletUidSchema)
 }
 
-export function validateFrozenWallet(wallet: FrozenWallet) {
+export function validateFrozenWallet(wallet: FrozenWallet): FrozenWallet {
   return FrozenWalletSchema.parse(wallet)
 }
 
 export function validateFrozenWallets(wallets: FrozenWallet[]): FrozenWallet[] {
-  const $wallets = wallets.map(validateFrozenWallet)
-  // const $uidCounts = getUniqueCounts($wallets, getFrozenWalletUid)
-  return $wallets
-  // throw impl()
-  // const uniqueUidsLength = uniq($uids).length
-  // if (uniqueUidsLength > 1) throw new Error()
+  return FrozenWalletsSchema.parse(wallets)
 }
 
 export function validateRawFrozenWallets(wallets: RawFrozenWallet[]) {

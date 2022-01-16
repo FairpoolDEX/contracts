@@ -20,6 +20,7 @@ import { VestingType } from '../models/VestingType'
 import { findVestingSchedule } from '../data/allVestingSchedules'
 import { getOverrides } from '../util/network'
 import { expect } from '../util/expect'
+import { FrozenWallet } from '../models/FrozenWallet'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -91,7 +92,7 @@ async function setBalances(fromToken: ColiToken, toToken: ColiToken) {
 
 export interface DeployColiTokenExpectationsMap {
   balances: BalanceBN[]
-  frozenWallets: unknown[]
+  frozenWallets: FrozenWallet[]
 }
 
 export function validateDeployColiTokenExpectationsMap(map: DeployColiTokenExpectationsMap) {

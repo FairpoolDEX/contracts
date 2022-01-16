@@ -1,6 +1,7 @@
-import { RefinementCtx, ZodIssueCode, ZodType } from 'zod'
+import { RefinementCtx, ZodIssueCode, ZodSchema, ZodType } from 'zod'
 import { isEqualBy } from './lodash'
 import { ZodTypeDef } from 'zod/lib/types'
+import { impl } from './todo'
 
 export interface ZodFlatError {
   formErrors: string[];
@@ -9,30 +10,53 @@ export interface ZodFlatError {
   };
 }
 
-export function getDuplicatesRefinement<Model>(name: string, getUid: (object: Model) => string) {
-  return function (objects: Model[], context: RefinementCtx) {
-    const uidCounts = objects.map(getUid).reduce((acc, uid) => {
-      acc[uid] = (acc[uid] || 0) + 1
-      return acc
-    }, {} as { [key: string]: number })
-    for (const uid of Object.keys(uidCounts)) {
-      const count = uidCounts[uid]
-      if (count > 1) {
-        context.addIssue({
-          code: ZodIssueCode.custom,
-          params: { uid, count },
-          message: `Found ${name} duplicates with uid "${uid}" (${count} objects)`,
-        })
-      }
-    }
+export type GetUid<UidHolder> = (holder: UidHolder) => string
+
+export type Validate<Obj> = (object: Obj) => Obj
+
+export interface Model<Obj, UidHolder> {
+  schema: ZodSchema<Obj>,
+  validate: Validate<Obj>
+  getUid: GetUid<Obj>
+}
+
+export interface Stat {
+  uid: string
+  count: number
+}
+
+export function getDuplicatesRefinement<Val>(name: string, getUid: GetUid<Val>) {
+  return function (values: Val[], context: RefinementCtx) {
+    const stats = getDuplicateStats(values, getUid)
+    stats.map(err => context.addIssue({
+      code: ZodIssueCode.custom,
+      params: err,
+      message: `Found ${name} duplicates: ${JSON.stringify(err)}`,
+    }))
   }
 }
 
-export type GetUid<UidHolder> = (holder: UidHolder) => string
+export function getDuplicateStats<Val>(values: Val[], getUid: GetUid<Val>) {
+  const stats = getUniqueCountStats(values, getUid)
+  return stats.filter(stat => stat.count > 1)
+}
 
-export type Inserter<Input, Output> = (object: Input) => Output
+export function getUniqueCountMap<Val>(values: Val[], getUid: GetUid<Val>) {
+  return values.map(getUid).reduce<Record<string, number>>((acc, uid) => {
+    acc[uid] = (acc[uid] || 0) + 1
+    return acc
+  }, {})
+}
 
-export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input = Output>(name: string, schema: ZodType<Output, Def, Input>, getUid: (object: Output) => string, array: Array<Output>): Inserter<Input, Output> {
+export function getUniqueCountStats<Val>(values: Val[], getUid: GetUid<Val>): Stat[] {
+  const map = getUniqueCountMap(values, getUid)
+  return Object.entries(map).map(entry => ({
+    uid: entry[0],
+    count: entry[1],
+  }))
+}
+
+export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input = Output>(name: string, schema: ZodType<Output, Def, Input>, getUid: GetUid<Output>, array: Array<Output>) {
   return function (object: Input) {
     const $object = schema.parse(object)
     const duplicate = array.find(o => isEqualBy(o, $object, getUid))
@@ -42,9 +66,13 @@ export function getInserter<Output, Def extends ZodTypeDef = ZodTypeDef, Input =
   }
 }
 
+export function getCustomInserter() {
+  throw impl()
+}
+
 export function getFinder<UidHolder, Output extends UidHolder>(getUid: GetUid<UidHolder>, array: Array<Output>) {
   return function (uidHolder: UidHolder) {
     const uid = getUid(uidHolder)
-    return array.find(obj => getUid(obj) === uid)
+    return array.find(obj => uid === getUid(obj))
   }
 }
