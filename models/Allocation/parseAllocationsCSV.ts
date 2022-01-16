@@ -17,7 +17,7 @@ export async function parseAllocationsCSV(data: RawCSVData) {
 function parseAllocationRow(row: AllocationRow) {
   return validateAllocation({
     address: row.Address,
-    vestingType: validateVestingType(row.Vesting),
+    type: validateVestingType(row.Vesting),
     amount: parseAmountBNCSV(row.Total),
   })
 }
