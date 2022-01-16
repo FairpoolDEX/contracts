@@ -5,7 +5,6 @@ import { MaxUint256 } from './all.helpers'
 import { expect } from '../../util/expect'
 import { Ethers } from '../../util/types'
 import { Address } from '../../models/Address'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 type timeTravelCallback = () => Promise<void>;
 
@@ -51,16 +50,18 @@ export async function setNextBlockTimestamp(timestamp: number) {
   return ethers.provider.send('evm_setNextBlockTimestamp', [timestamp])
 }
 
-export type SignerBalance = [SignerWithAddress, Contract, BigNumberish]
+export type Addressable = { address: Address }
 
-export async function expectSignerBalances(balances: SignerBalance[]) {
-  return Promise.all(balances.map(async ([signer, token, amount], index: number) => {
-    expect(await token.balanceOf(signer.address), `index ${index}`).to.equal(amount)
+export type AddressableBalance = [Addressable, Contract, BigNumberish]
+
+export async function expectSignerBalances(balances: AddressableBalance[]) {
+  return Promise.all(balances.map(async ([addressable, token, amount], index: number) => {
+    expect(await token.balanceOf(addressable.address), `index ${index}`).to.equal(amount)
   }))
 }
 
-export async function expectSignerBalance(signer: { address: Address }, token: Contract, amount: BigNumberish) {
-  return expectBalance(token, signer.address, amount)
+export async function expectSignerBalance(addressable: Addressable, token: Contract, amount: BigNumberish) {
+  return expectBalance(token, addressable.address, amount)
 }
 
 export async function expectBalance(token: Contract, address: Address, amount: BigNumberish) {

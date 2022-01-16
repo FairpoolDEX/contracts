@@ -5,6 +5,8 @@ import { toUid } from '../util/uid'
 
 export const NetworkSchema = z.object({
   name: NetworkNameSchema,
+  chainId: z.number().int().min(1),
+  blockGasLimit: z.number().int().min(1000),
   vm: NetworkVMTypeSchema,
 })
 

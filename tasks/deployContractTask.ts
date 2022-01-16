@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { upperCase } from 'lodash'
 import { getOverrides } from '../util/network'
 import { Address } from '../models/Address'
+import { verify } from '../util/verify'
 
 export async function deployContractTask(args: DeployGenericTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployGenericTokenTaskOutput> {
   const { ethers, upgrades, network, run } = hre
@@ -26,9 +27,9 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
     console.info(`export ${envVarContract}_PROXY_ADDRESS=${proxyAddress}`) // eslint-disable-line no-console
     const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
     console.info(`export ${envVarContract}_IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
-    await run('verify', {
+    await verify(run, {
       address: implementationAddress,
-      // constructorArgs* not needed since the implementation contract constructor has zero arguments
+      // constructorArgs not needed since the implementation contract constructor has zero arguments
     })
     return { upgradeable, proxyAddress, implementationAddress }
   } else {
@@ -41,7 +42,7 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
     await contract.deployed()
     const address = contract.address
     console.info(`export ${envVarContract}_ADDRESS=${address}`) // eslint-disable-line no-console
-    await run('verify', {
+    await verify(run, {
       address,
       constructorArgs: constructorArgsModule,
       constructorArgsParams,

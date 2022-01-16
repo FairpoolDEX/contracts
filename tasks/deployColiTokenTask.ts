@@ -12,7 +12,7 @@ import { isTestnet, NetworkName } from '../models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
 import { DeployGenericTokenTaskOutput } from './deployContractTask'
-import { Allocation } from '../models/Allocation'
+import { Allocation, isFinished } from '../models/Allocation'
 import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
 import { flatten, uniq } from 'lodash'
@@ -34,7 +34,7 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   const toToken = await deployColiToken(context)
   // const pauseTx = await pauseContract(fromToken, true)
   const allocationTxes = await setAllocations(await getAllocations(context), toToken)
-  const balanceTxes = await setBalances(fromToken, toToken)
+  const balanceTxes = await setBalances(fromToken, toToken, context)
 
   // TODO: it must migrate BULL
   // TODO: it must remove claim-related code
@@ -79,7 +79,8 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
 
 async function getAllocations(context: DeployColiTokenContext) {
   const data = await readFile(context.allocations)
-  return parseAllocationsCSV(data)
+  const allocations = await parseAllocationsCSV(data)
+  return allocations.filter(a => !isFinished(a))
 }
 
 async function setAllocations(allocations: Allocation[], token: ColiToken) {
@@ -90,12 +91,14 @@ async function setAllocations(allocations: Allocation[], token: ColiToken) {
     const amounts = allocationsByType.map(a => a.amount)
     const schedule = ensure(findVestingSchedule({ type }))
     const index = ensure(schedule.smartContractIndex)
-    const tx = await token.addAllocations(addresses, amounts, index, await getOverrides(token.signer))
+    const overrides = await getOverrides(token.signer)
+    const tx = await token.addAllocations(addresses, amounts, index, overrides)
   }))
   return flatten(groupedTxes)
 }
 
-async function setBalances(fromToken: ColiToken, toToken: ColiToken) {
+async function setBalances(fromToken: ColiToken, toToken: ColiToken, context: DeployColiTokenContext) {
+  // const balances = await getERC20BalancesAtBlockTagPaginated(blockTag, fromToken.address, context)
   throw impl()
 }
 

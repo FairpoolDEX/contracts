@@ -5,9 +5,32 @@ export const allNetworks: Network[] = []
 
 export const addNetwork = getInserter('Network', NetworkSchema, getNetworkUid, allNetworks)
 
+export const addEVMNetwork = (network: Omit<Network, 'vm'>) => addNetwork({ ...network, vm: 'EVM' })
+
 export const findNetwork = getFinder(getNetworkUid, allNetworks)
 
-export const mainnet = addNetwork({
+export const findNetworkByChainId = (chainId: number) => allNetworks.find(n => n.chainId === chainId)
+
+export const mainnet = addEVMNetwork({
   name: 'mainnet',
-  vm: 'EVM',
+  chainId: 1,
+  blockGasLimit: 30000000, // https://etherscan.io/blocks
+})
+
+export const ropsten = addEVMNetwork({
+  name: 'ropsten',
+  chainId: 3,
+  blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
+})
+
+export const bscmainnet = addEVMNetwork({
+  name: 'bscmainnet',
+  chainId: 56,
+  blockGasLimit: 85000000,
+})
+
+export const bsctestnet = addEVMNetwork({
+  name: 'bsctestnet',
+  chainId: 97,
+  blockGasLimit: 30000000,
 })

@@ -7,7 +7,6 @@ import { chunk } from '../test/support/all.helpers'
 import { expect } from '../util/expect'
 import { map } from 'lodash'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
-import { getGasLimit } from '../util/gas'
 import { network } from 'hardhat'
 import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
@@ -46,7 +45,6 @@ export async function transferMany(contract: any, balances: BalancesMap, expecta
     const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     // totalBULLAmount = amounts.reduce((acc, amount) => acc.add(amount), totalBULLAmount)
     if (!dry) {
-      console.log('getGasLimit(network)', getGasLimit(network))
       const tx = await contract.transferMany(addresses, amounts, await getOverrides(deployer))
       log && log(`TX Hash: ${tx.hash}`)
     }
