@@ -3,8 +3,6 @@ import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
 import { NetworkName } from '../models/NetworkName'
 import { Signer } from '@ethersproject/abstract-signer/src.ts/index'
-import { ensure } from './ensure'
-import { findNetworkByChainId } from '../data/allNetworks'
 
 export interface NetworkInfo {
   name: NetworkName
@@ -28,9 +26,9 @@ export async function getFeeOverrides(signer: Signer): Promise<Pick<Overrides, '
 
 export async function getOverrides(signer: Signer): Promise<Overrides> {
   const feeOverrides = await getFeeOverrides(signer)
-  const provider = ensure(signer.provider)
-  const $network = await provider.getNetwork()
-  const network = ensure(findNetworkByChainId($network.chainId))
+  // const provider = ensure(signer.provider)
+  // const $network = await provider.getNetwork()
+  // const network = ensure(findNetworkByChainId($network.chainId))
   // const gasLimit = getGasLimit(network.name)
   return { ...feeOverrides }
 }

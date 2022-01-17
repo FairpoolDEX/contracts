@@ -8,12 +8,12 @@ import { Address } from '../../models/Address'
 import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
-import { days } from '../../util/time'
+import { days, seconds } from '../../util/time'
 import { validateBlockNumber } from '../../models/BlockNumber'
 
 export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 
-export const airdropStartTimestamp = 1622811600000
+export const airdropStartTimestamp = 1622811600 * seconds
 
 export const airdropClaimDuration = 2 * days
 

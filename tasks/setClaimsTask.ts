@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
-import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
 import { BalancesMap, optimizeForGasRefund, readBalances, sumAmountsOf } from '../util/balance'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
@@ -13,21 +12,23 @@ import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { expect } from '../util/expect'
 import { airdropDistributedTokenAmountTotal } from '../test/support/BullToken.helpers'
+import { ensure } from '../util/ensure'
+import { findDeployment } from '../data/allDeployments'
+import { getBullToken } from './util/getToken'
+import { BullToken } from '../typechain-types'
+import { getOverrides } from '../util/network'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
-  const { contractName, contractAddress, claims: claimsFilename, expectations: expectationsFilename, dry, log, ethers } = context
-  log('Parsing balances')
-  const claims = await getClaims(claimsFilename)
-  log(`Attaching to contract ${contractAddress}`)
-  const Token = await ethers.getContractFactory(contractName)
-  const token = await Token.attach(contractAddress)
-  log('Setting claims')
+  const { contractName, contractAddress, claims: claimsFilename, networkName, dry, log, ethers } = context
+  const deployment = ensure(findDeployment({ contract: 'BullToken', network: networkName }))
+  const claims = await getValidatedClaims(claimsFilename)
+  const token = await getBullToken(deployment.address, ethers)
   await setClaims(token, claims, context)
   if (dry) logDryRun(log)
 }
 
-export async function setClaims(token: any, claims: BalanceBN[], context: SetClaimsContext): Promise<void> {
+export async function setClaims(token: BullToken, claims: BalanceBN[], context: SetClaimsContext): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
@@ -43,13 +44,13 @@ export async function setClaims(token: any, claims: BalanceBN[], context: SetCla
     const addresses = claimsChunk.map(b => b.address)
     const amounts = claimsChunk.map(b => b.amount)
     if (!dry) {
-      const tx = await token.setClaims(addresses, amounts, { gasLimit: 8000000, maxFeePerGas, maxPriorityFeePerGas })
+      const tx = await token.setClaims(addresses, amounts, await getOverrides(token.signer))
       log(`TX Hash: ${tx.hash}`)
     }
   }
 }
 
-async function getClaims(filename: Filename) {
+async function getValidatedClaims(filename: Filename) {
   return validateClaims(await readBalances(filename))
 }
 
@@ -74,7 +75,6 @@ export interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable
   airdropStageShareNumerator: number
   airdropStageShareDenominator: number
   airdropRate: number
-  expectations: Filename
 }
 
 export interface SetClaimsContext extends SetClaimsTaskArguments, RunnableContext {
