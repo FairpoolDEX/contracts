@@ -104,3 +104,11 @@ export function getMultiplier(airdropStageShareNumerator: number, airdropStageSh
   // NOTE: this expression truncates the fractional part, so the total distributed amount is guaranteed to be lower than 90% of max supply
   return (amount: AmountBN) => amount.mul(airdropRate).mul(airdropStageShareNumerator).div(airdropStageShareDenominator)
 }
+
+export const airdropDistributionDates = [
+  '2021-06-04T13:00:00.000Z',
+  '2021-07-04T13:00:00.000Z',
+  '2021-08-03T13:00:00.000Z',
+  '2021-09-02T13:00:00.000Z',
+  '2021-10-02T13:00:00.000Z',
+].map(s => new Date(s))

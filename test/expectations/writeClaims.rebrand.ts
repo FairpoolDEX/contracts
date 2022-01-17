@@ -36,13 +36,19 @@ export default [
   validateTotalAmount,
 ]
 
-const distributionDates = [
-  '2021-06-04T13:00:00.000Z',
-  '2021-07-04T13:00:00.000Z',
-  '2021-08-03T13:00:00.000Z',
-  '2021-09-02T13:00:00.000Z',
-  '2021-10-02T13:00:00.000Z',
-]
+const getRebrandBalances = function (): BalancesMap {
+  return mergeVersionedRecords([
+    ['1.0.1', {
+      [KS]: getKSBalance(),
+    }],
+    ['1.0.2', {
+      [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),
+    }],
+    ['1.1.0', {
+      [deployer]: oldBalances[deployer].add(virtualSHLDBalancesFromCurrentBullBalances[deployer]),
+    }],
+  ])
+}
 
 function getKSBalance() {
   const transfer19418 = ({ amount: toTokenAmount(19418), createdAt: 'May-27-2021 02:18:15 AM' })
@@ -56,18 +62,4 @@ function getKSBalance() {
     sumAmountsOf([transfer19418, transfer66750, transfer56700]),
   ]
   return fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
-}
-
-const getRebrandBalances = function (): BalancesMap {
-  return mergeVersionedRecords([
-    ['1.0.1', {
-      [KS]: getKSBalance(),
-    }],
-    ['1.0.2', {
-      [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),
-    }],
-    ['1.1.0', {
-      [deployer]: oldBalances[deployer].add(virtualSHLDBalancesFromCurrentBullBalances[deployer]),
-    }],
-  ])
 }
