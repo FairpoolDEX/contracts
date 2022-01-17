@@ -3,13 +3,13 @@ import { toTokenAmount } from '../support/all.helpers'
 import { maxSupplyTokenAmount } from '../support/ColiToken.helpers'
 import { airdropRate } from '../support/BullToken.helpers'
 import { SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { CS, deployer, KS, NFTradePool, TeamFinanceLiquidityLocker } from '../../data/allAddresses'
+import { CS, KS, NFTradePool, oldDeployer, TeamFinanceLiquidityLocker } from '../../data/allAddresses'
 
 export const expectations: SetClaimsExpectationsMap = {
   balances: {
     [TeamFinanceLiquidityLocker]: toTokenAmount('0'), // locked liquidity
     [NFTradePool]: toTokenAmount('0'), // NFTrade pool
-    [deployer]: toTokenAmount( // Deployer
+    [oldDeployer]: toTokenAmount( // Deployer
       new Decimal('0')
         .add(new Decimal('193117719.000000000000000000')) // prev balance
         .add(new Decimal('13685263.953164100000000000')) // prev liquidity pool

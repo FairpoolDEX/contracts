@@ -19,6 +19,7 @@ import { BullToken } from '../typechain-types'
 import { getOverrides } from '../util/network'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  throw new Error('Rewrite old deployer address to new deployer address')
   const context = await getSetClaimsContext(args, hre)
   const { contractName, contractAddress, claims: claimsFilename, networkName, dry, log, ethers } = context
   const deployment = ensure(findDeployment({ contract: 'BullToken', network: networkName }))

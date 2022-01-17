@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
 import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
-import { CS, deployer, KS } from '../../data/allAddresses'
+import { CS, KS, oldDeployer } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
 import { airdropDistributedTokenAmountTotal, fromShieldToBull } from '../support/BullToken.helpers'
@@ -10,7 +10,7 @@ import { share, sumBigNumbers } from '../../util/bignumber'
 import { WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
-  [deployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
+  [oldDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
   [CS]: toTokenAmount(new Decimal('190314.565473847000000000')),
   [KS]: toTokenAmount(new Decimal('3495.240000000000000000')),
 }
@@ -45,7 +45,7 @@ const getRebrandBalances = function (): BalancesMap {
       [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),
     }],
     ['1.1.0', {
-      [deployer]: oldBalances[deployer].add(virtualSHLDBalancesFromCurrentBullBalances[deployer]),
+      [oldDeployer]: oldBalances[oldDeployer].add(virtualSHLDBalancesFromCurrentBullBalances[oldDeployer]),
     }],
   ])
 }

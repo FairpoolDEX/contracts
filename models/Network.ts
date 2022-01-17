@@ -19,3 +19,7 @@ export function validateNetwork(network: Network) {
 export function getNetworkUid(network: Pick<Network, 'name'>): string {
   return toUid(network, 'name')
 }
+
+export function getNetworkChainIdUid(network: Pick<Network, 'chainId'>): string {
+  return toUid(network, 'chainId')
+}
