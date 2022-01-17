@@ -3,7 +3,7 @@ import { maxSupply as shieldMaxSupply } from './ColiToken.helpers'
 import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimBullTokenTask'
-import { BalancesMap, sumBalanceAmounts } from '../../util/balance'
+import { BalancesMap, sumAmountsOf } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
@@ -86,7 +86,7 @@ export async function getTestExpectations(balances: BalanceBN[], context: SetCla
   const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
   return {
     balances: {},
-    totalAmount: multiply(sumBalanceAmounts(balances)),
+    totalAmount: multiply(sumAmountsOf(balances)),
   }
 }
 

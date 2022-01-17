@@ -1,6 +1,6 @@
 {
   "name": "shield-contracts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shield Finance contracts",
   "main": "index.js",
   "license": "MIT",

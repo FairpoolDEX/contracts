@@ -7,7 +7,7 @@ import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStageFailureCount, airdropStageSuccessCount, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
-import { BalancesMap, getBalancesFromMap, mergeBalance, sumBalanceAmounts } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
@@ -150,8 +150,8 @@ describe('setClaimsBullToken', async () => {
     const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     const claimsFromShieldToken = await getClaimsFromShieldToken(context)
-    const sumClaimsFromBullToken = sumBalanceAmounts(claimsFromBullToken)
-    const sumClaimsFromShieldToken = sumBalanceAmounts(claimsFromShieldToken)
+    const sumClaimsFromBullToken = sumAmountsOf(claimsFromBullToken)
+    const sumClaimsFromShieldToken = sumAmountsOf(claimsFromShieldToken)
     expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
     expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(airdropStageFailureCount))
     expectBalancesToMatch(validateBalancesBN([

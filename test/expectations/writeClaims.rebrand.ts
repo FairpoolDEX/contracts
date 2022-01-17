@@ -1,12 +1,12 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { BalancesMap, getBalancesFromMap } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, deployer, KS } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
-import { airdropDistributedTokenAmountTotal } from '../support/BullToken.helpers'
-import { share } from '../../util/bignumber'
+import { airdropDistributedTokenAmountTotal, fromShieldToBull } from '../support/BullToken.helpers'
+import { share, sumBigNumbers } from '../../util/bignumber'
 import { WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
@@ -36,10 +36,32 @@ export default [
   validateTotalAmount,
 ]
 
+const distributionDates = [
+  '2021-06-04T13:00:00.000Z',
+  '2021-07-04T13:00:00.000Z',
+  '2021-08-03T13:00:00.000Z',
+  '2021-09-02T13:00:00.000Z',
+  '2021-10-02T13:00:00.000Z',
+]
+
+function getKSBalance() {
+  const transfer19418 = ({ amount: toTokenAmount(19418), createdAt: 'May-27-2021 02:18:15 AM' })
+  const transfer66750 = ({ amount: toTokenAmount(66750), createdAt: 'Aug-19-2021 06:00:24 AM' })
+  const transfer56700 = ({ amount: toTokenAmount(56700), createdAt: 'Sep-02-2021 11:17:02 AM' })
+  const balancesAtDistributionDates = [
+    sumAmountsOf([transfer19418]),
+    sumAmountsOf([transfer19418]),
+    sumAmountsOf([transfer19418]),
+    sumAmountsOf([transfer19418, transfer66750, transfer56700]),
+    sumAmountsOf([transfer19418, transfer66750, transfer56700]),
+  ]
+  return fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
+}
+
 const getRebrandBalances = function (): BalancesMap {
   return mergeVersionedRecords([
     ['1.0.1', {
-      [KS]: oldBalances[KS].add(virtualSHLDBalancesFromCurrentBullBalances[KS]),
+      [KS]: getKSBalance(),
     }],
     ['1.0.2', {
       [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),

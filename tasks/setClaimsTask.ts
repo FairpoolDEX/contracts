@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalancesMap, optimizeForGasRefund, readBalances, sumBalanceAmounts } from '../util/balance'
+import { BalancesMap, optimizeForGasRefund, readBalances, sumAmountsOf } from '../util/balance'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
@@ -54,7 +54,7 @@ async function getClaims(filename: Filename) {
 }
 
 function validateClaims(claims: BalanceBN[]) {
-  expect(sumBalanceAmounts(claims)).to.be.lt(airdropDistributedTokenAmountTotal)
+  expect(sumAmountsOf(claims)).to.be.lt(airdropDistributedTokenAmountTotal)
   return claims
 }
 

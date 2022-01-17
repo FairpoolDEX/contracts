@@ -35,8 +35,8 @@ export function padAmount(amountRaw: string, decimals = 18) {
   return `${whole}.${fraction.padEnd(decimals, '0')}`
 }
 
-export function sumBalanceAmounts(balances: BalanceBN[]) {
-  return sumBigNumbers(balances.map(b => b.amount))
+export function sumAmountsOf(amountables: { amount: AmountBN }[]) {
+  return sumBigNumbers(amountables.map(a => a.amount))
 }
 
 export function getBalancesFromMap(balanceMap: BalancesMap): BalanceBN[] {
