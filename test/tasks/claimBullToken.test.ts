@@ -50,7 +50,7 @@ describe('claimBullToken', async () => {
     balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
     const balances = getBalancesFromMap(balancesMap)
     expectations = await getTestExpectations(balances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
   })
 
   fest('should allow to claim the tokens', async () => {
