@@ -1,12 +1,13 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { BalancesMap } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, deployer, KS } from '../../data/allAddresses'
-import { WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 import { mergeVersionedRecords } from '../../util/version'
-import { todo } from '../../util/todo'
-import { BigNumber } from 'ethers'
+import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
+import { airdropDistributedTokenAmountTotal } from '../support/BullToken.helpers'
+import { share } from '../../util/bignumber'
+import { WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [deployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -17,15 +18,17 @@ export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
 const { balances: oldBalances } = oldExpectations
 
 const validateBalances: WriteClaimsValidator = async function (claims, context) {
-  return todo(claims)
+  const expectedBalances = getBalancesFromMap(getRebrandBalances())
+  return expectBalancesToMatch(expectedBalances, claims)
 }
 
 const validateTotalAmount: WriteClaimsValidator = async function (claims, context) {
-  // It will take too much time to implement this function
-  const bannedAddressesTokenAmount = todo(BigNumber.from(0))
-  const unclaimedTokenAmount = todo(BigNumber.from(0))
-  // return airdropDistributedTokenAmountTotal.sub(bannedAddressesTokenAmount).sub(unclaimedTokenAmount)
-  return todo(claims)
+  const expectedTotalAmount = airdropDistributedTokenAmountTotal
+  const expectedTotalAmountDelta = share(expectedTotalAmount, 5, 100)
+  // NOTE: It will take too much time to calculate the delta precisely
+  // const bannedAddressesTokenAmount = todo(BigNumber.from(0))
+  // const unclaimedTokenAmount = todo(BigNumber.from(0))
+  return expectUnderTotalAmount(expectedTotalAmount, expectedTotalAmountDelta, claims)
 }
 
 export default [
@@ -33,7 +36,7 @@ export default [
   validateTotalAmount,
 ]
 
-function getRebrandBalances(): BalancesMap {
+const getRebrandBalances = function (): BalancesMap {
   return mergeVersionedRecords([
     ['1.0.1', {
       [KS]: oldBalances[KS].add(virtualSHLDBalancesFromCurrentBullBalances[KS]),

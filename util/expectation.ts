@@ -13,7 +13,7 @@ export async function importDefault(filename: Filename) {
   return (await import(`${process.cwd()}/${filename}`)).default
 }
 
-export function expectBalances(expectedBalances: BalanceBN[], actualBalances: BalanceBN[]) {
+export function expectBalancesToMatch(expectedBalances: BalanceBN[], actualBalances: BalanceBN[]) {
   for (const expectedBalance of expectedBalances) {
     const address = expectedBalance.address
     const actualBalance = actualBalances.find(b => b.address === address)
@@ -21,6 +21,7 @@ export function expectBalances(expectedBalances: BalanceBN[], actualBalances: Ba
     const expectedAmount = expectedBalance.amount
     expect(expectedAmount, `on address ${address}`).to.equal(actualAmount)
   }
+  return actualBalances
 }
 
 export function expectTotalAmount(expectedTotalAmount: AmountBN, balances: BalanceBN[]) {
@@ -33,6 +34,7 @@ export function expectUnderTotalAmount(expectedTotalAmount: AmountBN, delta: Amo
   const actualTotalAmount = sumBalanceAmounts(balances)
   expect(expectedTotalAmount).to.be.gte(actualTotalAmount)
   expect(expectedTotalAmount.sub(delta)).to.be.lte(actualTotalAmount)
+  return balances
 }
 
 export interface Expected {

@@ -13,7 +13,7 @@ import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN
 import { validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
-import { expectBalances, expectTotalAmount } from '../../util/expectation'
+import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
@@ -154,10 +154,10 @@ describe('setClaimsBullToken', async () => {
     const sumClaimsFromShieldToken = sumBalanceAmounts(claimsFromShieldToken)
     expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
     expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(airdropStageFailureCount))
-    expectBalances(validateBalancesBN([
+    expectBalancesToMatch(validateBalancesBN([
       balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageSuccessCount)),
     ]), claimsFromBullToken)
-    expectBalances(validateBalancesBN([
+    expectBalancesToMatch(validateBalancesBN([
       balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageFailureCount)),
     ]), claimsFromShieldToken)
   })
