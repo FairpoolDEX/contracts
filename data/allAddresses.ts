@@ -9,7 +9,7 @@ export const addAddress = getInserter('Address', AddressSchema, getAddressUid, a
 
 export const $zero = addAddress('0x0000000000000000000000000000000000000000')
 
-export const deployer = addAddress('0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D')
+export const oldDeployer = addAddress('0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D')
 
 export const marketing = addAddress('0x2d3be8E442bdeF1b263160fda6C86E560CE7E4Ad')
 

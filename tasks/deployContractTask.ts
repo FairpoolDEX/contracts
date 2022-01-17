@@ -4,6 +4,7 @@ import { upperCase } from 'lodash'
 import { getOverrides } from '../util/network'
 import { Address } from '../models/Address'
 import { verify } from '../util/verify'
+import { getProxyCheckerUrl } from '../util/url'
 
 export async function deployContractTask(args: DeployGenericTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployGenericTokenTaskOutput> {
   const { ethers, upgrades, network, run } = hre
@@ -31,6 +32,7 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
       address: implementationAddress,
       // constructorArgs not needed since the implementation contract constructor has zero arguments
     })
+    console.info(`IMPORTANT: Verify proxy manually using ${getProxyCheckerUrl(proxyAddress, contract.signer)}`)
     return { upgradeable, proxyAddress, implementationAddress }
   } else {
     const contract = await factory.deploy(...constructorArgs, {

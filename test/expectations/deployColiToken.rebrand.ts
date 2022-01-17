@@ -1,12 +1,12 @@
 import { validateDeployColiTokenExpectationsMap } from '../../tasks/deployColiTokenTask'
 import { getBalancesFromMap } from '../../util/balance'
-import { CS, deployer, KS } from '../../data/allAddresses'
+import { CS, KS, oldDeployer } from '../../data/allAddresses'
 import { bn } from '../../util/bignumber'
 import { validateRawFrozenWallets } from '../../models/FrozenWallet'
 
 export const expectations = validateDeployColiTokenExpectationsMap({
   balances: getBalancesFromMap({
-    [deployer]: bn('189268918207660000002328306'),
+    [oldDeployer]: bn('189268918207660000002328306'),
     [CS]: bn('90600197513023672531491'),
     [KS]: bn('142868000000000000000000'),
   }),
