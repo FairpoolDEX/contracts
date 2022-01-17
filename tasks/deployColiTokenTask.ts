@@ -23,7 +23,7 @@ import { expect } from '../util/expect'
 import { FrozenWallet } from '../models/FrozenWallet'
 import { expectFrozenWalletsOnToken } from '../models/FrozenWallet/expectFrozenWalletsOnToken'
 import { expectBalancesOnToken } from '../util/expectBalancesOnToken'
-import { sumBalanceAmounts } from '../util/balance'
+import { sumAmountsOf } from '../util/balance'
 import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 import { toTokenAmount } from '../test/support/all.helpers'
 
@@ -81,7 +81,7 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
 }
 
 function expectAllocations(allocations: Allocation[]) {
-  const sum = sumBalanceAmounts(allocations)
+  const sum = sumAmountsOf(allocations)
   expect(sum.lt(maxSupplyTokenAmount)).to.be.true
   expect(sum.gt(toTokenAmount(1))).to.be.true
 }

@@ -11,3 +11,5 @@ export function validateTransactionHash(hash: TransactionHash) {
 export function getTransactionHashUid(hash: TransactionHash): string {
   return hash
 }
+
+export const zeroTransactionHash = validateTransactionHash('0x' + '0'.repeat(64))
