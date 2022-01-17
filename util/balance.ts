@@ -63,7 +63,7 @@ export function decodeBalances(balances: unknown) {
 }
 
 export async function readBalances(balancesFilename: Filename) {
-  return decodeBalances(await import(balancesFilename.toString()))
+  return decodeBalances((await import(balancesFilename.toString())).default)
 }
 
 export function mergeBalance(balances: BalanceBN[], balance: BalanceBN) {

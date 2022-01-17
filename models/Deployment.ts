@@ -9,6 +9,7 @@ export const DeploymentSchema = z.object({
   contract: ContractNameSchema,
   network: NetworkNameSchema,
   address: AddressSchema,
+  notes: z.string().optional(),
 })
 
 export type Deployment = z.infer<typeof DeploymentSchema>
