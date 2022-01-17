@@ -8,7 +8,6 @@ import { Filename, getFiles } from '../util/filesystem'
 import { getShieldBalancesForBullAirdropFinal } from './util/parse'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
-import { BalanceBN } from '../models/BalanceBN'
 import { airdropRate, airdropStageDuration, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStageSuccessCount, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
@@ -19,6 +18,8 @@ import { ensure } from '../util/ensure'
 import { isNotBullSellerBalance } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
+import { ContextualValidator, validateWithContext } from '../util/validator'
+import { BalanceBN } from '../models/BalanceBN'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -26,7 +27,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   const { log } = context
   const validators = await importDefault(expectationsPath)
   const $claims = await getClaimsFromRequests(context)
-  const claims = await validateClaims($claims, validators, context)
+  const claims = await validateWithContext($claims, validators, context)
   if (!dry) await writeClaims(claims, out)
   if (dry) logDryRun(log)
 }
@@ -46,23 +47,7 @@ export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filen
   return optimizeForGasRefund(claims)
 }
 
-async function validateClaims(claims: BalanceBN[], validators: WriteClaimsValidator[], context: WriteClaimsContext) {
-  return validators.reduce(async function (result, validator) {
-    return validator(await result, context)
-  }, Promise.resolve(claims))
-  // const expectedBalances = getBalancesFromMap(validators.balances)
-  // const expectedTotalAmount = validators.totalAmount
-  // const expectedTotalAmountDelta = share(expectedTotalAmount, 5, 100)
-  // expectBalances(expectedBalances, claims)
-
-  // return claims
-}
-
-// export async function parseShieldBalancesCSV(data: CSVData) {
-//   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
-// }
-
-export type WriteClaimsValidator = (claims: BalanceBN[], context: WriteClaimsContext) => Promise<BalanceBN[]>
+export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
 
 interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
   // nextFolder: string
