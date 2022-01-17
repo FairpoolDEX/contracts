@@ -1,8 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
 import { maxFeePerGas, maxPriorityFeePerGas } from '../util/gas'
-import { BalancesMap, optimizeForGasRefund, readBalances } from '../util/balance'
-import { importExpectations } from '../util/expectation'
+import { BalancesMap, optimizeForGasRefund, readBalances, sumBalanceAmounts } from '../util/balance'
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
@@ -12,22 +11,23 @@ import { Address } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
+import { expect } from '../util/expect'
+import { airdropDistributedTokenAmountTotal } from '../test/support/BullToken.helpers'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
   const { contractName, contractAddress, claims: claimsFilename, expectations: expectationsFilename, dry, log, ethers } = context
-  const expectations: SetClaimsExpectationsMap = await importExpectations(expectationsFilename)
   log('Parsing balances')
-  const claims = await readBalances(claimsFilename)
+  const claims = await getClaims(claimsFilename)
   log(`Attaching to contract ${contractAddress}`)
   const Token = await ethers.getContractFactory(contractName)
   const token = await Token.attach(contractAddress)
   log('Setting claims')
-  await setClaims(token, claims, expectations, context)
+  await setClaims(token, claims, context)
   if (dry) logDryRun(log)
 }
 
-export async function setClaims(token: any, claims: BalanceBN[], expectations: SetClaimsExpectationsMap, context: SetClaimsContext): Promise<void> {
+export async function setClaims(token: any, claims: BalanceBN[], context: SetClaimsContext): Promise<void> {
   // const { network } = hre
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
@@ -47,6 +47,15 @@ export async function setClaims(token: any, claims: BalanceBN[], expectations: S
       log(`TX Hash: ${tx.hash}`)
     }
   }
+}
+
+async function getClaims(filename: Filename) {
+  return validateClaims(await readBalances(filename))
+}
+
+function validateClaims(claims: BalanceBN[]) {
+  expect(sumBalanceAmounts(claims)).to.be.lt(airdropDistributedTokenAmountTotal)
+  return claims
 }
 
 // export async function parseShieldBalancesCSV(data: CSVData) {

@@ -4,14 +4,14 @@ import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
-import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStageMaxCount, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
+import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStageFailureCount, airdropStageSuccessCount, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance, sumBalanceAmounts } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromShieldToken, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalances, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
@@ -77,13 +77,13 @@ describe('setClaimsBullToken', async () => {
   })
 
   fest('should allow the owner to set claims multiple times', async () => {
-    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
     const calClaim = await bullTokenWithOwner.claims(calAddress)
     expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
     expect(calClaim).to.equal(toTokenAmount('0'))
     await timeTravel(async () => {
-      await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
+      await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
       const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
       const calClaim = await bullTokenWithOwner.claims(calAddress)
       expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
@@ -93,7 +93,7 @@ describe('setClaimsBullToken', async () => {
 
   fest('should not allow the stranger to set claims', async () => {
     await expect(
-      setClaims(bullTokenWithStranger, balances, expectations, testSetClaimsContext),
+      setClaims(bullTokenWithStranger, balances, testSetClaimsContext),
     ).to.be.revertedWith('caller is not the owner')
     const aliceClaim = await bullTokenWithStranger.claims(aliceAddress)
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
@@ -103,7 +103,7 @@ describe('setClaimsBullToken', async () => {
     const strangerAmount = toTokenAmount('10000')
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
     const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, strangerBalances, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
@@ -114,7 +114,7 @@ describe('setClaimsBullToken', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
     const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, strangerBalances, strangerExpectations, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, strangerBalances, testSetClaimsContext)
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
@@ -122,11 +122,17 @@ describe('setClaimsBullToken', async () => {
         const testBalances = getBalancesFromMap(await getTestBalanceMap())
         const strangerTestBalances = mergeBalance(testBalances, balanceBN(strangerAddress, strangerAmount))
         const strangerTestExpectations = await getTestExpectations(strangerTestBalances, testSetClaimsContext)
-        await setClaims(bullTokenWithOwner, strangerTestBalances, strangerTestExpectations, testSetClaimsContext)
+        await setClaims(bullTokenWithOwner, strangerTestBalances, testSetClaimsContext)
         await bullTokenWithStranger.claim()
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
       }, airdropStartTimestampForTest + airdropStageDuration)
     }, airdropStartTimestampForTest)
+  })
+
+  fest(getDistributionDates.name, async () => {
+    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
+    const dates = await getDistributionDates(context)
+    expect(dates.length).to.equal(airdropStageFailureCount)
   })
 
   long(getClaimsFromBullToken.name, async () => {
@@ -137,7 +143,7 @@ describe('setClaimsBullToken', async () => {
     const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers)
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
     const claimsFromBullToken = await getClaimsFromBullToken(context)
-    expectTotalAmount(claimsFromBullToken, bullTotalSupply_2022_01_16)
+    expectTotalAmount(bullTotalSupply_2022_01_16, claimsFromBullToken)
   })
 
   long(getClaimsFromShieldToken.name, async () => {
@@ -147,13 +153,13 @@ describe('setClaimsBullToken', async () => {
     const sumClaimsFromBullToken = sumBalanceAmounts(claimsFromBullToken)
     const sumClaimsFromShieldToken = sumBalanceAmounts(claimsFromShieldToken)
     expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
-    expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(3))
-    expectBalances(claimsFromBullToken, validateBalancesBN([
-      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(2)),
-    ]))
-    expectBalances(claimsFromShieldToken, validateBalancesBN([
-      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageMaxCount)),
-    ]))
+    expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(airdropStageFailureCount))
+    expectBalances(validateBalancesBN([
+      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageSuccessCount)),
+    ]), claimsFromBullToken)
+    expectBalances(validateBalancesBN([
+      balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageFailureCount)),
+    ]), claimsFromShieldToken)
   })
 
 })

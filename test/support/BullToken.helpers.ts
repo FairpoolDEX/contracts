@@ -21,7 +21,9 @@ export const airdropStageDuration = 30 * days
 
 export const airdropStageMaxCount = 5 // stages
 
-export const airdropStageFirstMissedIndex = 2
+export const airdropStageSuccessCount = 1
+
+export const airdropStageFailureCount = airdropStageMaxCount - airdropStageSuccessCount
 
 export const airdropStageShareNumerator = 18 // 18% per stage
 
