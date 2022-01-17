@@ -1,8 +1,7 @@
 import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { BigNumber } from 'ethers'
 import { addBalances, getBalancesFromMap, optimizeForGasRefund, writeClaims } from '../util/balance'
-import { expectBalances, Expected, expectTotalAmount, importExpectations } from '../util/expectation'
+import { Expected, importDefault } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Filename, getFiles } from '../util/filesystem'
@@ -10,8 +9,7 @@ import { getShieldBalancesForBullAirdropFinal } from './util/parse'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { BalanceBN } from '../models/BalanceBN'
-import { AmountBN } from '../models/AmountBN'
-import { airdropRate, airdropStageDuration, airdropStageFirstMissedIndex, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
+import { airdropRate, airdropStageDuration, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStageSuccessCount, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
@@ -26,8 +24,9 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   const context = await getWriteClaimsContext(args, hre)
   const { expectations: expectationsPath, out, dry } = args
   const { log } = context
-  const claims = await getClaimsFromRequests(context)
-  await expectClaims(claims, await importExpectations(expectationsPath))
+  const validators = await importDefault(expectationsPath)
+  const $claims = await getClaimsFromRequests(context)
+  const claims = await validateClaims($claims, validators, context)
   if (!dry) await writeClaims(claims, out)
   if (dry) logDryRun(log)
 }
@@ -47,21 +46,23 @@ export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filen
   return optimizeForGasRefund(claims)
 }
 
-async function expectClaims(claims: BalanceBN[], expectations: WriteClaimsExpectationsMap) {
-  const expectedBalances = getBalancesFromMap(expectations.balances)
-  const expectedTotalAmount = expectations.totalAmount
-  expectBalances(claims, expectedBalances)
-  expectTotalAmount(claims, expectedTotalAmount)
+async function validateClaims(claims: BalanceBN[], validators: WriteClaimsValidator[], context: WriteClaimsContext) {
+  return validators.reduce(async function (result, validator) {
+    return validator(await result, context)
+  }, Promise.resolve(claims))
+  // const expectedBalances = getBalancesFromMap(validators.balances)
+  // const expectedTotalAmount = validators.totalAmount
+  // const expectedTotalAmountDelta = share(expectedTotalAmount, 5, 100)
+  // expectBalances(expectedBalances, claims)
+
+  // return claims
 }
 
 // export async function parseShieldBalancesCSV(data: CSVData) {
 //   return rewriteBalanceMap(shieldRewriteAddressMap, await parseBalancesCSV(data))
 // }
 
-export interface WriteClaimsExpectationsMap {
-  balances: { [address: string]: BigNumber },
-  totalAmount: AmountBN,
-}
+export type WriteClaimsValidator = (claims: BalanceBN[], context: WriteClaimsContext) => Promise<BalanceBN[]>
 
 interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
   // nextFolder: string
@@ -107,8 +108,8 @@ async function getDistributionBlockTags(context: WriteClaimsContext): Promise<Bl
   return blocks.map(b => b.number)
 }
 
-async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
-  const indexes = range(airdropStageFirstMissedIndex, airdropStageMaxCount)
+export async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
+  const indexes = range(airdropStageSuccessCount, airdropStageMaxCount)
   const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
   return timestamps.map(t => new Date(t))
 }

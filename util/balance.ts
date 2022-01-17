@@ -7,7 +7,7 @@ import { AddressSchema } from '../models/Address'
 import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
-import { BalanceBN, BalanceBNSchema, validateBalanceBN } from '../models/BalanceBN'
+import { BalanceBN, validateBalanceBN, validateBalancesBN } from '../models/BalanceBN'
 import { parseAmountBNCSV } from '../models/AmountBN/parseAmountBNCSV'
 
 export type BalancesMap = { [address: string]: AmountBN }
@@ -53,10 +53,10 @@ export async function writeClaims(balances: BalanceBN[], out: Filename) {
 
 export function decodeBalances(balances: unknown) {
   if (balances instanceof Array) {
-    return balances.map(b => BalanceBNSchema.parse({
+    return validateBalancesBN(balances.map(b => ({
       address: b[0],
       amount: b[1],
-    }))
+    })))
   } else {
     throw new Error('Balances must be an array')
   }

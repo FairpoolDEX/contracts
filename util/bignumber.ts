@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers'
+import { BigNumber, BigNumberish } from 'ethers'
 
 export type BigNumberRange = { min: BigNumber; max: BigNumber }
 
@@ -16,4 +16,8 @@ export function sumBigNumbers(nums: BigNumber[]) {
 
 export function neg(num: BigNumber) {
   return zero.sub(num)
+}
+
+export function share(value: BigNumber, numerator: BigNumberish, denominator: BigNumberish) {
+  return value.mul(numerator).div(denominator)
 }

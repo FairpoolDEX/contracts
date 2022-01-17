@@ -1,9 +1,9 @@
 import { AsyncFunc, Test } from 'mocha'
 
-export const testFilterRegExp: RegExp | undefined = process.env.TEST_FILTER ? new RegExp(process.env.TEST_FILTER) : undefined
+export const testFilterRegExp: RegExp | undefined = process.env.FILTER ? new RegExp(process.env.FILTER) : undefined
 
 export function long(name: string, fn: AsyncFunc): Test {
-  if (process.env.LONG_RUNNING_TESTS === 'true') {
+  if (process.env.LONG === 'true') {
     return fest(name, fn)
   } else {
     return it.skip(name, fn)
