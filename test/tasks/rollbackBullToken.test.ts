@@ -56,7 +56,7 @@ xdescribe('rollbackBullToken', async () => {
     balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
     balances = getBalancesFromMap(balancesMap)
     expectations = await getTestExpectations(balances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, balances, expectations, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
 
     const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken

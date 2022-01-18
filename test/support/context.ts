@@ -34,7 +34,6 @@ export const testSetClaimsTaskArguments: SetClaimsTaskArguments = {
   contractName: 'BullToken',
   contractAddress: '',
   claims: '',
-  expectations: '',
   airdropStageShareNumerator,
   airdropStageShareDenominator,
   airdropRate,
