@@ -8,10 +8,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 16.13.1
-      - run: npm install
-      - run: npm run build
-      - run: npm run lint
-      - run: npm run coverage # runs tests as well
+      - run: yarn install
+      - run: yarn build
+      - run: yarn lint
+      - run: yarn coverage # runs tests as well
 
 #      - name: Upload coverage to Codecov
 #        uses: codecov/codecov-action@v1
