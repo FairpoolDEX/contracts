@@ -21,6 +21,7 @@ export type BalanceBN = z.infer<typeof BalanceBNSchema>
 export type BalanceBNUid = z.infer<typeof BalanceBNUidSchema>
 
 export function validateBalanceBN(balance: BalanceBN): BalanceBN {
+  if (balance.address === '') throw new Error(`${JSON.stringify(balance)}`)
   return BalanceBNSchema.parse(balance)
 }
 

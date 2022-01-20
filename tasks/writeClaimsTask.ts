@@ -1,26 +1,22 @@
 import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { addBalances, getBalancesFromMap, optimizeForGasRefund, writeClaims } from '../util/balance'
+import { addBalances, writeClaims } from '../util/balance'
 import { Expected, importDefault } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
-import { Filename, getFiles } from '../util/filesystem'
-import { getShieldBalancesForBullAirdropFinal } from './util/parse'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
-import { airdropRate, airdropStageDuration, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStageSuccessCount, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
+import { airdropStageDuration, airdropStageMaxCount, airdropStageSuccessCount, airdropStartTimestamp, pausedAt } from '../test/support/BullToken.helpers'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
-import { unwrapSmartContractBalancesAtBlockTag } from './util/unwrapSmartContractBalancesAtBlockTag'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
-import { isBullSellerBalance } from '../data/allAddresses'
+import { isBullSellerBalance, oldDeployer } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
 import { BalanceBN } from '../models/BalanceBN'
 import { BlockNumber } from '../models/BlockNumber'
-import { impl } from '../util/todo'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -33,24 +29,24 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   if (dry) logDryRun(log)
 }
 
-export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, context: WriteClaimsContext) {
-  const { cache, log } = context
-  log('Parsing balances')
-  const nextFolderFiles = getFiles(nextFolder)
-  const prevFolderFiles = getFiles(prevFolder)
-  const retroFolderFiles = getFiles(retroFolder)
-  const blacklistFolderFiles = getFiles(blacklistFolder)
-  const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
-  const balancesOfAllMap = await getShieldBalancesForBullAirdropFinal(nextFolderFiles, prevFolderFiles, retroFolderFiles, blacklistFolderFiles)
-  const balancesOfAll = getBalancesFromMap(balancesOfAllMap)
-  const balancesOfHumans = await unwrapSmartContractBalancesAtBlockTag(balancesOfAll, getBlockTag(), context)
-  const claims = balancesOfHumans.map(b => ({ ...b, amount: multiply(b.amount) }))
-  return optimizeForGasRefund(claims)
-}
-
-function getBlockTag(): string {
-  throw impl()
-}
+// export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, context: WriteClaimsContext) {
+//   const { cache, log } = context
+//   log('Parsing balances')
+//   const nextFolderFiles = getFiles(nextFolder)
+//   const prevFolderFiles = getFiles(prevFolder)
+//   const retroFolderFiles = getFiles(retroFolder)
+//   const blacklistFolderFiles = getFiles(blacklistFolder)
+//   const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
+//   const balancesOfAllMap = await getShieldBalancesForBullAirdropFinal(nextFolderFiles, prevFolderFiles, retroFolderFiles, blacklistFolderFiles)
+//   const balancesOfAll = getBalancesFromMap(balancesOfAllMap)
+//   const balancesOfHumans = await unwrapSmartContractBalancesAtBlockTag(balancesOfAll, getBlockTag(), context)
+//   const claims = balancesOfHumans.map(b => ({ ...b, amount: multiply(b.amount) }))
+//   return optimizeForGasRefund(claims)
+// }
+//
+// function getBlockTag(): string {
+//   throw impl()
+// }
 
 export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
 
@@ -73,10 +69,18 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
 }
 
 export async function getClaimsViaRequests(context: WriteClaimsContext) {
+  const { deployerAddress: newDeployer } = context
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
   const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
-  return claims.filter(c => !isBullSellerBalance(c))
+  const claimsWithNewDeployer = claims.map(c => {
+    if (c.address === oldDeployer) {
+      return { ...c, address: newDeployer }
+    } else {
+      return c
+    }
+  })
+  return claimsWithNewDeployer.filter(c => !isBullSellerBalance(c))
 }
 
 export async function getClaimsFromBullToken(context: WriteClaimsContext) {

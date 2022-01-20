@@ -12,17 +12,17 @@ export function findClosestBlock(date: Date) {
   return allBlocks.find(b => Math.abs(b.timestamp.getTime() - date.getTime()) < minute)
 }
 
-addBlock({
+export const airdropStage1 = addBlock({
   number: 12568112,
   timestamp: new Date('2021-06-04T12:59:38.000Z'),
 })
 
-addBlock({
+export const airdropStage2 = addBlock({
   number: 12761166,
   timestamp: new Date('2021-07-04T12:59:38.000Z'),
 })
 
-addBlock({
+export const airdropStage3 = addBlock({
   number: 12952451,
   timestamp: new Date('2021-08-03T12:59:56.000Z'),
 })

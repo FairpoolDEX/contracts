@@ -28,7 +28,7 @@ export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, co
   const addressesPaginated = chunk(addresses, maxRequestsPerSecond / 2)
   const balances = flatten(await seqMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTagCached(addressPage, blockTag, contractAddress, ethers, cache)))
   const balancesWithoutZeros = balances.filter(b => !isZeroBalance(b))
-  return unwrapSmartContractBalancesAtBlockTag(balancesWithoutZeros, blockTag, context)
+  return unwrapSmartContractBalancesAtBlockTag(balancesWithoutZeros, blockTag, contractAddress, context)
 }
 
 // export async function getERC20BalancesAtBlockTag(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
@@ -46,7 +46,7 @@ export async function getERC20BalanceForAddressAtBlockTag(address: Address, bloc
   return validateBalanceBN({ address, amount })
 }
 
-async function getERC20BalanceForAddressAtBlockTagCached(address: Address, blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<BalanceBN> {
+export async function getERC20BalanceForAddressAtBlockTagCached(address: Address, blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<BalanceBN> {
   const cacheKey = getCacheKey(getERC20BalanceForAddressAtBlockTagCached, address, blockTag, contractAddress)
   const balanceCached = await cache.wrap<BalanceBN>(cacheKey, () => getERC20BalanceForAddressAtBlockTag(address, blockTag, contractAddress, ethers))
   return validateBalanceBN(balanceCached)
