@@ -10,15 +10,15 @@ import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../../util/balance'
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { validateAddress } from '../../models/Address'
+import { Address, validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
-import { marketing } from '../../data/allAddresses'
-import validators from '../expectations/writeClaims.rebrand'
+import { KS, marketing } from '../../data/allAddresses'
+import validators, { getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
 
 describe('setClaimsBullToken', async () => {
@@ -169,7 +169,21 @@ describe('setClaimsBullToken', async () => {
     await validateWithContext(claims, validators, context)
   })
 
+  long(getKSAmountFromBullToken.name, async () => {
+    const context = getRebrandWriteClaimsContext()
+    const expectedAmount = await getKSAmountFromBullToken()
+    const actualAmount = await getAmountFromBullToken(KS, context)
+    expect(expectedAmount).to.eq(actualAmount)
+  })
+
 })
+
+async function getAmountFromBullToken(address: Address, context: WriteClaimsContext) {
+  const claims = await getClaimsFromBullToken(context)
+  const claimsForAddress = claims.filter(c => c.address === address)
+  expect(claimsForAddress).to.have.length(1)
+  return claimsForAddress[0].amount
+}
 
 function getRebrandWriteClaimsContext(): WriteClaimsContext {
   return { ...testWriteClaimsContext, cacheKey: 'rebrand', networkName: 'mainnet' }
