@@ -43,6 +43,10 @@ export const bullSellers = nail(`
   0x46B8FfC41F26cd896E033942cAF999b78d10c277
 `).trim().split('\n').map(validateAddress)
 
-export function isNotBullSellerBalance(balance: BalanceBN) {
-  return !bullSellers.includes(balance.address)
+export function isBullSellerAddress(address: Address) {
+  return bullSellers.includes(address)
+}
+
+export function isBullSellerBalance(balance: BalanceBN) {
+  return isBullSellerAddress(balance.address)
 }

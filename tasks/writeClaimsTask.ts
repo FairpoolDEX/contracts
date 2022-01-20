@@ -14,7 +14,7 @@ import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
-import { isNotBullSellerBalance } from '../data/allAddresses'
+import { isBullSellerBalance } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
@@ -71,7 +71,7 @@ export async function getClaimsFromRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
   const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
-  return claims.filter(isNotBullSellerBalance)
+  return claims.filter(c => !isBullSellerBalance(c))
 }
 
 export async function getClaimsFromBullToken(context: WriteClaimsContext) {
