@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
 import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
-import { CS, Eddy, isBullSellerAddress, KS, oldDeployer, Van1sh } from '../../data/allAddresses'
+import { CS, Eddy, isBullSellerAddress, KS, NFTradePool, oldDeployer, Van1sh } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
@@ -17,6 +17,7 @@ import { packageDirectory } from '../../util/pkg-dir'
 import { readFile } from 'fs/promises'
 import { shieldDecimals } from '../support/ColiToken.helpers'
 import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
+import { expect } from '../../util/expect'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [oldDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -25,6 +26,12 @@ export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
 }
 
 const { balances: oldBalances } = oldExpectations
+
+const validateNoOldDeployer: WriteClaimsValidator = async function (claims, context) {
+  const oldDeployerClaim = claims.find(c => c.address === oldDeployer)
+  expect(oldDeployerClaim).not.to.exist
+  return claims
+}
 
 const validateBalances: WriteClaimsValidator = async function (claims, context) {
   const expectedBalances = getBalancesFromMap(await getRebrandBalances())
@@ -41,6 +48,7 @@ const validateTotalAmount: WriteClaimsValidator = async function (claims, contex
 }
 
 export default [
+  validateNoOldDeployer,
   validateBalances,
   validateTotalAmount,
 ]
@@ -100,7 +108,7 @@ async function getEddyBalance(): Promise<AmountBN> {
 async function getTotalBalanceFromTransfersCSV(address: Address, date: Date) {
   if (isBullSellerAddress(address)) return zero
   const totalBalanceFromBull = await getBullBalanceAt(address, airdropDistributionDates[0])
-  const transfers = await getTransfersFriendlyCSV(shieldDecimals, ShieldMainnet.address, address, date)
+  const transfers = await getTransfersCSV(shieldDecimals, ShieldMainnet.address, address, date)
   const balancesAtDistributionDates = await getBalancesAtDistributionDates(address, transfers)
   const totalBalanceFromShield = fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
   return totalBalanceFromBull.add(totalBalanceFromShield)
@@ -120,7 +128,7 @@ async function getBullBalanceAt(address: Address, date: Date) {
   }
 }
 
-async function getTransfersFriendlyCSV(decimals: number, tokenAddress: Address, userAddress: Address, date: Date): Promise<Transfer[]> {
+async function getTransfersCSV(decimals: number, tokenAddress: Address, userAddress: Address, date: Date): Promise<Transfer[]> {
   const data = await readFile(`${await packageDirectory()}/test/transfers/${tokenAddress}/${userAddress}/${date.toISOString()}.csv`)
   return parseTransfersCSV(decimals, data)
 }
@@ -137,11 +145,21 @@ function getAmountFromTransfers(address: Address, transfers: Transfer[]) {
   return transfers.reduce((total, transfer) => {
     switch (true) {
       case transfer.to === address:
-        return total.add(transfer.amount)
+        if (unwrappedSmartContractAddresses.includes(transfer.from)) {
+          return total
+        } else {
+          return total.add(transfer.amount)
+        }
       case transfer.from === address:
-        return total.sub(transfer.amount)
+        if (unwrappedSmartContractAddresses.includes(transfer.to)) {
+          return total
+        } else {
+          return total.sub(transfer.amount)
+        }
       default:
         throw new Error()
     }
   }, zero)
 }
+
+export const unwrappedSmartContractAddresses = [NFTradePool]

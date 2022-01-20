@@ -1,4 +1,4 @@
-import { ethers, upgrades } from 'hardhat'
+import hardhatRuntimeEnvironment, { ethers, upgrades } from 'hardhat'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { BullToken } from '../../typechain-types'
@@ -14,13 +14,16 @@ import { Address, validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken, getClaimsFromShieldToken, getClaimsViaRequests, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
-import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
+import { getERC20BalanceForAddressAtBlockTagCached, getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
-import { KS, marketing } from '../../data/allAddresses'
+import { CS, KS, marketing, NFTradePool } from '../../data/allAddresses'
 import validators, { getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
 import { createFsCache, getFsCachePath } from '../../util/cache'
+import { getRunnableContext } from '../../util/context'
+import { unwrapNFTradeBalanceAtBlockTag } from '../../tasks/util/unwrapSmartContractBalancesAtBlockTag'
+import { airdropStage3 } from '../../data/allBlocks'
 
 describe('setClaimsBullToken', async () => {
 
@@ -140,22 +143,29 @@ describe('setClaimsBullToken', async () => {
   long(getClaimsFromBullToken.name, async () => {
     const bullTotalSupply_2022_01_16 = BigNumber.from('1490403967926689867814673435496')
     const bullAddressesLength_2022_01_16 = 313
-    const context = getRebrandWriteClaimsContext()
+    const context = await getRebrandTestWriteClaimsContext()
     const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
     const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers, context.cache)
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
     const claimsFromBullToken = await getClaimsFromBullToken(context)
-    expectTotalAmount(bullTotalSupply_2022_01_16, claimsFromBullToken)
+    const unwrapSmartContractLuft = BigNumber.from(1)
+    expectTotalAmount(bullTotalSupply_2022_01_16.sub(unwrapSmartContractLuft), claimsFromBullToken)
   })
 
   long(getClaimsFromShieldToken.name, async () => {
-    const context = getRebrandWriteClaimsContext()
+    const context = await getRebrandTestWriteClaimsContext()
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     const claimsFromShieldToken = await getClaimsFromShieldToken(context)
     const sumClaimsFromBullToken = sumAmountsOf(claimsFromBullToken)
     const sumClaimsFromShieldToken = sumAmountsOf(claimsFromShieldToken)
+    /**
+     * Potential causes of luft:
+     * - Uniswap burned liquidity (unlikely - expect passed after unwrap)
+     * - mul-div truncation
+     */
+    const luft = BigNumber.from('18000')
     expect(sumClaimsFromShieldToken).to.be.gte(sumClaimsFromBullToken)
-    expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(airdropStageFailureCount))
+    expect(sumClaimsFromShieldToken).to.eq(airdropDistributedTokenAmountSingleStage.mul(airdropStageFailureCount).sub(luft))
     expectBalancesToMatch(validateBalancesBN([
       balanceBN(marketing, fromShieldToBull(toTokenAmount('155066079')).mul(airdropStageSuccessCount)),
     ]), claimsFromBullToken)
@@ -165,16 +175,36 @@ describe('setClaimsBullToken', async () => {
   })
 
   long(getClaimsViaRequests.name, async () => {
-    const context = getRebrandWriteClaimsContext()
+    const context = await getRebrandTestWriteClaimsContext()
     const claims = await getClaimsViaRequests(context)
     await validateWithContext(claims, validators, context)
   })
 
   long(getKSAmountFromBullToken.name, async () => {
-    const context = getRebrandWriteClaimsContext()
+    const context = await getRebrandTestWriteClaimsContext()
     const expectedAmount = await getKSAmountFromBullToken()
     const actualAmount = await getAmountFromBullToken(KS, context)
     expect(expectedAmount).to.eq(actualAmount)
+  })
+
+  long(unwrapNFTradeBalanceAtBlockTag.name, async () => {
+    const context = await getRebrandTestWriteClaimsContext()
+    const { cache, ethers } = context
+    const blockTag = airdropStage3.number
+    const shield = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
+    const balance = await getERC20BalanceForAddressAtBlockTagCached(NFTradePool, blockTag, shield.address, ethers, cache)
+    const balances = await unwrapNFTradeBalanceAtBlockTag(balance, blockTag, shield.address, context)
+    const everyBalanceIsPositive = balances.every(b => b.amount.gte(0))
+    const CSBalance = balances.find(b => b.address === CS)
+    const KSBalance = balances.find(b => b.address === KS)
+    expect(everyBalanceIsPositive).to.be.true
+    expect(balances.length).to.be.greaterThan(10)
+    expect(balance.amount).to.be.closeTo(sumAmountsOf(balances), 1)
+    expect(CSBalance).to.exist
+    expect(KSBalance).to.not.exist
+    expect(CSBalance?.amount).to.equal(toTokenAmount('1000000'))
+    // console.log('balances', balances)
+    // expect(expectedAmount).to.eq(actualAmount)
   })
 
 })
@@ -186,14 +216,14 @@ async function getAmountFromBullToken(address: Address, context: WriteClaimsCont
   return claimsForAddress[0].amount
 }
 
-function getRebrandWriteClaimsContext(): WriteClaimsContext {
-  const cacheKey = 'rebrand'
+async function getRebrandTestWriteClaimsContext(): Promise<WriteClaimsContext> {
+  const args = { cacheKey: 'rebrand', dry: true }
   return {
     ...testWriteClaimsContext,
-    cacheKey,
+    ...await getRunnableContext(args, hardhatRuntimeEnvironment),
     networkName: 'mainnet',
     cache: createFsCache({
-      path: getFsCachePath(`/${cacheKey}`),
+      path: getFsCachePath('/rebrand'),
     }),
   }
 }
