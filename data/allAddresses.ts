@@ -17,6 +17,10 @@ export const CS = addAddress('0x81DC6F15eE72F6E6d49CB6Ca44C0Bf8E63770027')
 
 export const KS = addAddress('0x86F7E1B163D8E7F85DEF9Ca6301Ce2B41f5c76ce')
 
+export const Van1sh = addAddress('0xAd05dD04eaa5BA87F84bCcBe10E0715cD2eda08c')
+
+export const Eddy = addAddress('0x9e8073406Ce51835E9A61398bEd71640ce6cC258')
+
 export const ChrSc = addAddress('0x53cC4422e3ADf3A75051D4D21069B704c46c91C6')
 
 export const DanDB = addAddress('0xeDB28Ab9B1b0ac1C37d01BCFB868580eFD20A8a4')
