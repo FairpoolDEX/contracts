@@ -5,7 +5,7 @@ import { BalanceBN, validateBalanceBN } from '../../models/BalanceBN'
 import { getGenericToken } from './getToken'
 import { getTransfersPaginatedCached } from './getTransfers'
 import { RunnableContext } from '../../util/context'
-import { unwrapSmartContractBalances } from './unwrapSmartContractBalances'
+import { unwrapSmartContractBalancesAtBlockTag } from './unwrapSmartContractBalancesAtBlockTag'
 import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { chunk, flatten, uniq } from 'lodash'
@@ -15,26 +15,24 @@ import { createFsCache, getCacheKey, getFsCachePath } from '../../util/cache'
 import { isZeroBalance } from '../../util/balance'
 import { Cache } from 'cache-manager'
 
-export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers): Promise<Address[]> {
+export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)
   const token = await getGenericToken(contractAddress, ethers)
-  const transfers = await getTransfersPaginatedCached(token, deployedAt, blockTag)
+  const transfers = await getTransfersPaginatedCached(token, deployedAt, blockTag, cache)
   return uniq(transfers.map(t => t.to))
 }
 
 export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
-  const { ethers } = context
-  const cache = createBalancesFsCache()
-  const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers)
+  const { ethers, cache } = context
+  const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers, cache)
   const addressesPaginated = chunk(addresses, maxRequestsPerSecond / 2)
   const balances = flatten(await seqMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTagCached(addressPage, blockTag, contractAddress, ethers, cache)))
   const balancesWithoutZeros = balances.filter(b => !isZeroBalance(b))
-  return unwrapSmartContractBalances(balancesWithoutZeros, context)
+  return unwrapSmartContractBalancesAtBlockTag(balancesWithoutZeros, blockTag, context)
 }
 
 // export async function getERC20BalancesAtBlockTag(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
 //   const { ethers } = context
-//   const cache = createBalancesFsCache()
 //   const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers)
 //   const balances = await getERC20BalancesForAddressesAtBlockTagCached(addresses, blockTag, contractAddress, ethers, cache)
 //   const balancesWithoutZeros = balances.filter(b => !isZeroBalance(b))

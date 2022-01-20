@@ -28,12 +28,11 @@ async function getTransfersCached(token: Contract, from: BlockTag, to: BlockTag,
   return transfersCached.map(validateTransfer)
 }
 
-export async function getTransfersPaginatedCached(token: Contract, from: BlockTag, to: BlockTag): Promise<Transfer[]> {
+export async function getTransfersPaginatedCached(token: Contract, from: BlockTag, to: BlockTag, cache: Cache): Promise<Transfer[]> {
   debug(__filename, getTransfersPaginatedCached, token.address, from, to)
   const $from = await getBlockNumber(token.provider, from)
   const $to = await getBlockNumber(token.provider, to)
   const blockNumbers = range($from, $to, maxBlocksPerQueryFilterRequest)
-  const cache = createTransfersFsCache()
   const transferEventsArray = await seqMap(blockNumbers, blockNumber => getTransfersCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest, cache))
   return flatten(transferEventsArray)
 }

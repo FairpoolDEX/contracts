@@ -20,6 +20,7 @@ import { findDeployment } from '../../data/allDeployments'
 import { KS, marketing } from '../../data/allAddresses'
 import validators, { getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
+import { createFsCache, getFsCachePath } from '../../util/cache'
 
 describe('setClaimsBullToken', async () => {
 
@@ -141,7 +142,7 @@ describe('setClaimsBullToken', async () => {
     const bullAddressesLength_2022_01_16 = 313
     const context = getRebrandWriteClaimsContext()
     const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
-    const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers)
+    const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers, context.cache)
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     expectTotalAmount(bullTotalSupply_2022_01_16, claimsFromBullToken)
@@ -186,5 +187,13 @@ async function getAmountFromBullToken(address: Address, context: WriteClaimsCont
 }
 
 function getRebrandWriteClaimsContext(): WriteClaimsContext {
-  return { ...testWriteClaimsContext, cacheKey: 'rebrand', networkName: 'mainnet' }
+  const cacheKey = 'rebrand'
+  return {
+    ...testWriteClaimsContext,
+    cacheKey,
+    networkName: 'mainnet',
+    cache: createFsCache({
+      path: getFsCachePath(`/${cacheKey}`),
+    }),
+  }
 }

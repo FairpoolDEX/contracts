@@ -5,10 +5,21 @@ import { Provider } from '@ethersproject/providers'
 import { RateLimiter } from 'limiter'
 import { impl } from './todo'
 import { Contract } from 'ethers'
+import { getCacheKey } from './cache'
+import { Cache } from 'cache-manager'
+import { validateContractCode } from '../models/ContractCode'
+import { debug } from './debug'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await removeTokens(ethers.provider, 1)
   return ethers.provider.getCode(address)
+}
+
+export async function getCodeCached(ethers: Ethers, cache: Cache, address: Address) {
+  debug(__filename, getCodeCached, address)
+  const cacheKey = getCacheKey(getCodeCached, address)
+  const code = await cache.wrap<string>(cacheKey, () => getCode(ethers, address))
+  return validateContractCode(code)
 }
 
 export async function getRateLimiter(provider: Provider): Promise<RateLimiter> {
