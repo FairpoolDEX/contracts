@@ -15,13 +15,16 @@ async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)
   debug(__filename, getTransfers, token.address, from, to)
   const events = await token.queryFilter({ topics: [TransferTopic] }, from, to)
-  return events.map(fromEventToTransfer)
+  const transfers = events.map(fromEventToTransfer)
+  debug(__filename, getTransfers, token.address, from, to, transfers.length)
+  return transfers
 }
 
 async function getTransfersCached(token: Contract, from: BlockTag, to: BlockTag, cache: Cache) {
   // debug(__filename, getTransferEventsCached, token.address, from, to)
   const cacheKey = getCacheKey(getTransfersCached, token.address, from, to)
   const transfersCached = await cache.wrap<Transfer[]>(cacheKey, () => getTransfers(token, from, to))
+  // const transfersCached = await getTransfers(token, from, to)
   return transfersCached.map(validateTransfer)
 }
 

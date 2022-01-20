@@ -50,10 +50,10 @@ const getRebrandBalances = async function (): Promise<BalancesMap> {
       [KS]: await getKSBalance(),
     }],
     ['1.0.2', {
-      [Van1sh]: await getVan1shBalance(),
-    }],
-    ['1.0.2', {
       [Eddy]: await getEddyBalance(),
+    }],
+    ['1.0.3', {
+      [Van1sh]: await getVan1shBalance(),
     }],
     ['1.0.5', {
       [CS]: oldBalances[CS].add(virtualSHLDBalancesFromCurrentBullBalances[CS]),
@@ -64,10 +64,20 @@ const getRebrandBalances = async function (): Promise<BalancesMap> {
   ])
 }
 
-async function getKSBalance() {
+function getKSTransferDummies() {
   const transfer19418 = ({ amount: toTokenAmount(19418), createdAt: 'May-27-2021 02:18:15 AM' })
   const transfer66750 = ({ amount: toTokenAmount(66750), createdAt: 'Aug-19-2021 06:00:24 AM' })
   const transfer56700 = ({ amount: toTokenAmount(56700), createdAt: 'Sep-02-2021 11:17:02 AM' })
+  return { transfer19418, transfer66750, transfer56700 }
+}
+
+export async function getKSAmountFromBullToken() {
+  const { transfer19418, transfer66750, transfer56700 } = getKSTransferDummies()
+  return fromShieldToBull(transfer19418.amount)
+}
+
+async function getKSBalance() {
+  const { transfer19418, transfer66750, transfer56700 } = getKSTransferDummies()
   const balancesAtDistributionDates = [
     sumAmountsOf([transfer19418]),
     sumAmountsOf([transfer19418]),

@@ -8,7 +8,7 @@
     "prepare": "husky install",
     "build": "yarn clean && yarn compile",
     "clean": "FEES=20:1 hardhat clean --show-stack-traces",
-    "compile": "FEES=20:1 hardhat compile --show-stack-traces",
+    "compile": "FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat compile --show-stack-traces",
     "typecheck": "tsc --noEmit",
     "fork": "FEES=20:1 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_MAINNET_API_KEY",
     "lint": "yarn lint:code && yarn lint:markdown",
