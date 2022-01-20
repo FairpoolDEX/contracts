@@ -14,6 +14,7 @@ import { Address } from '../models/Address'
 import { getTransfersPaginatedCached } from './util/getTransfers'
 import { Transfer as Tr } from '../models/Transfer'
 import { expectBalancesAreEqual } from '../models/BalanceBN/expectBalancesAreEqual'
+import { createFsCache } from '../util/cache'
 
 type FlaggedTransfer = Tr & {
   type: FlaggedTransferType
@@ -52,7 +53,8 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
 }
 
 export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
-  const transfers = await getTransfersPaginatedCached(token, from, to)
+  const cache = createFsCache()
+  const transfers = await getTransfersPaginatedCached(token, from, to, cache)
   const blockNumbers = map(transfers, 'blockNumber')
   expect(min(blockNumbers)).greaterThan(from)
   expect(max(blockNumbers)).lessThan(to)

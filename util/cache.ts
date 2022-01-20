@@ -31,17 +31,8 @@ export function createFsCache(options: FsHashStoreOptions = {}) {
 }
 
 export function getFsCachePath(suffix = '') {
-  return (process.env.CACHE_DIR ?? `${homedir()}/.cache/contracts`) + suffix
+  return (process.env.CACHE_DIR ?? `${homedir()}/.cache/shield-contracts`) + suffix
 }
-
-export const cache = cacheManager.caching({
-  store: fsStore,
-  options: {
-    path: process.env.CACHE_DIR ?? '/tmp/contracts-cache', // path for cached files
-    ttl: 7 * days / seconds, // time to life in seconds
-    subdirs: true, // create subdirectories to reduce the count of files in a single dir (default: false)
-  },
-})
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function getCacheKey(func: Function, ...args: unknown[]) {

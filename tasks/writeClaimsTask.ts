@@ -10,7 +10,7 @@ import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { airdropRate, airdropStageDuration, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStageSuccessCount, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
-import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
+import { unwrapSmartContractBalancesAtBlockTag } from './util/unwrapSmartContractBalancesAtBlockTag'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
@@ -20,6 +20,7 @@ import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
 import { BalanceBN } from '../models/BalanceBN'
 import { BlockNumber } from '../models/BlockNumber'
+import { impl } from '../util/todo'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -33,7 +34,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
 }
 
 export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, context: WriteClaimsContext) {
-  const { log } = context
+  const { cache, log } = context
   log('Parsing balances')
   const nextFolderFiles = getFiles(nextFolder)
   const prevFolderFiles = getFiles(prevFolder)
@@ -42,9 +43,13 @@ export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filen
   const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
   const balancesOfAllMap = await getShieldBalancesForBullAirdropFinal(nextFolderFiles, prevFolderFiles, retroFolderFiles, blacklistFolderFiles)
   const balancesOfAll = getBalancesFromMap(balancesOfAllMap)
-  const balancesOfHumans = await unwrapSmartContractBalances(balancesOfAll, context)
+  const balancesOfHumans = await unwrapSmartContractBalancesAtBlockTag(balancesOfAll, getBlockTag(), context)
   const claims = balancesOfHumans.map(b => ({ ...b, amount: multiply(b.amount) }))
   return optimizeForGasRefund(claims)
+}
+
+function getBlockTag(): string {
+  throw impl()
 }
 
 export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
