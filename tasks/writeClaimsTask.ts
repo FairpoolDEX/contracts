@@ -26,7 +26,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   const { expectations: expectationsPath, out, dry } = args
   const { log } = context
   const validators = await importDefault(expectationsPath)
-  const $claims = await getClaimsFromRequests(context)
+  const $claims = await getClaimsViaRequests(context)
   const claims = await validateWithContext($claims, validators, context)
   if (!dry) await writeClaims(claims, out)
   if (dry) logDryRun(log)
@@ -67,7 +67,7 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
   }
 }
 
-export async function getClaimsFromRequests(context: WriteClaimsContext) {
+export async function getClaimsViaRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
   const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))

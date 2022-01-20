@@ -11,6 +11,8 @@ import { BalanceBN } from '../../models/BalanceBN'
 import { days, seconds } from '../../util/time'
 import { validateBlockNumber } from '../../models/BlockNumber'
 
+export const bullDecimals = 18
+
 export const airdropStartTimestampForTest = Math.floor(Date.now() / 1000) + 5 * days
 
 export const airdropStartTimestamp = 1622811600 * seconds

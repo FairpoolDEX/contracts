@@ -4,7 +4,7 @@ import { validateBlockNumber } from '../../models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { days, seconds } from '../../util/time'
 
-export const decimals = 18
+export const shieldDecimals = 18
 
 export const releaseTime = 1621429200
 
