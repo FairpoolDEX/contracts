@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
 import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
-import { CS, Eddy, KS, oldDeployer, Van1sh } from '../../data/allAddresses'
+import { CS, Eddy, isBullSellerAddress, KS, oldDeployer, Van1sh } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
 import { airdropDistributedTokenAmountTotal, fromShieldToBull } from '../support/BullToken.helpers'
@@ -46,9 +46,9 @@ export default [
 
 const getRebrandBalances = async function (): Promise<BalancesMap> {
   return mergeVersionedRecords([
-    // ['1.0.1', {
-    //   [KS]: await getKSBalance(),
-    // }],
+    ['1.0.1', {
+      [KS]: await getKSBalance(),
+    }],
     ['1.0.2', {
       [Van1sh]: await getVan1shBalance(),
     }],
@@ -86,7 +86,8 @@ async function getEddyBalance(): Promise<AmountBN> {
   return getTotalBalanceFromTransfersCSV(Eddy, new Date('2022-01-20T02:55:44Z'))
 }
 
-async function getTotalBalanceFromTransfersCSV(address: string, date: Date) {
+async function getTotalBalanceFromTransfersCSV(address: Address, date: Date) {
+  if (isBullSellerAddress(address)) return zero
   const transfers = await getTransfersFriendlyCSV(decimals, ShieldMainnet.address, address, date)
   const balancesAtDistributionDates = await getBalancesAtDistributionDates(address, transfers)
   return fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
