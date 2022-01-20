@@ -8,6 +8,7 @@ export const ContractInfoSchema = z.object({
   vm: NetworkVMTypeSchema,
   code: ContractCodeSchema,
   type: ContractTypeSchema,
+  notes: z.string().optional(),
 })
 
 export type ContractInfo = z.infer<typeof ContractInfoSchema>

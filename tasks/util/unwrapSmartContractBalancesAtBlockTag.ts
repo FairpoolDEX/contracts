@@ -3,16 +3,16 @@ import { RunnableContext } from '../../util/context'
 import { addBalances } from '../../util/balance'
 import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
-import { impl } from '../../util/todo'
+import { todo } from '../../util/todo'
 import { isContract } from '../../util/contract'
 import { ensure } from '../../util/ensure'
 import { findNetwork } from '../../data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
-import { NFTrade, TeamFinance } from '../../models/ContractType'
-import { $zero } from '../../data/allAddresses'
+import { TeamFinance } from '../../models/ContractType'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { allMap } from '../../util/promise'
 import { getCodeCached } from '../../util/ethers'
+import { debug } from '../../util/debug'
 
 /** NOTES
  * Some smart contracts are multisigs, so the user can, technically, move the tokens
@@ -38,10 +38,8 @@ export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, b
       return [balance]
     case TeamFinance:
       return [{ ...balance, address: deployerAddress }]
-    case NFTrade:
-      return cacheKey.includes('dummy') ? [{ ...balance, address: $zero }] : [balance]
     default:
-      throw impl()
+      return todo([balance])
   }
 }
 
@@ -50,7 +48,10 @@ async function getAddressType(address: string, context: RunnableContext): Promis
   const code = await getCodeCached(ethers, cache, address)
   if (isContract(code)) {
     const network = ensure(findNetwork({ name: networkName }))
-    const contractInfo = ensure(findContractInfo({ vm: network.vm, code }), async () => { return new Error(`Cannot find contract info for network: ${networkName} and address ${address}`) })
+    const contractInfo = ensure(findContractInfo({ vm: network.vm, code }), async () => {
+      debug(__filename, getAddressType, 'codeNotFound', code)
+      return new Error(`Cannot find contract info for network: ${networkName} and address ${address} (https://etherscan.io/address/${address}#code)`)
+    })
     return contractInfo.type
   } else {
     return Human
