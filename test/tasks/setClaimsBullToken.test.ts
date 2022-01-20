@@ -11,7 +11,7 @@ import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromShieldToken, getClaimsViaRequests, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
@@ -163,9 +163,9 @@ describe('setClaimsBullToken', async () => {
     ]), claimsFromShieldToken)
   })
 
-  long(getClaimsFromRequests.name, async () => {
+  long(getClaimsViaRequests.name, async () => {
     const context = getRebrandWriteClaimsContext()
-    const claims = await getClaimsFromRequests(context)
+    const claims = await getClaimsViaRequests(context)
     await validateWithContext(claims, validators, context)
   })
 

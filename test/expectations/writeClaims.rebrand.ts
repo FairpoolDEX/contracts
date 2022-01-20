@@ -5,7 +5,7 @@ import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, Eddy, isBullSellerAddress, KS, oldDeployer, Van1sh } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
-import { airdropDistributedTokenAmountTotal, fromShieldToBull } from '../support/BullToken.helpers'
+import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
 import { share, sumBigNumbers, zero } from '../../util/bignumber'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 import { ShieldMainnet } from '../../data/allDeployments'
@@ -15,7 +15,8 @@ import { AmountBN } from '../../models/AmountBN'
 import { parseTransfersCSV } from '../../models/Transfer/parseTransfersCSV'
 import { packageDirectory } from '../../util/pkg-dir'
 import { readFile } from 'fs/promises'
-import { decimals } from '../support/ColiToken.helpers'
+import { shieldDecimals } from '../support/ColiToken.helpers'
+import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [oldDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -98,9 +99,25 @@ async function getEddyBalance(): Promise<AmountBN> {
 
 async function getTotalBalanceFromTransfersCSV(address: Address, date: Date) {
   if (isBullSellerAddress(address)) return zero
-  const transfers = await getTransfersFriendlyCSV(decimals, ShieldMainnet.address, address, date)
+  const totalBalanceFromBull = await getBullBalanceAt(address, airdropDistributionDates[0])
+  const transfers = await getTransfersFriendlyCSV(shieldDecimals, ShieldMainnet.address, address, date)
   const balancesAtDistributionDates = await getBalancesAtDistributionDates(address, transfers)
-  return fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
+  const totalBalanceFromShield = fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
+  return totalBalanceFromBull.add(totalBalanceFromShield)
+}
+
+async function getBullBalanceAt(address: Address, date: Date) {
+  switch (date.toISOString()) {
+    case '2021-06-04T13:00:00.000Z':
+      switch (address) {
+        case Van1sh:
+          return parseEtherscanAmountCSV(bullDecimals, '679,681.004489999091713627')
+        default:
+          throw new Error()
+      }
+    default:
+      throw new Error()
+  }
 }
 
 async function getTransfersFriendlyCSV(decimals: number, tokenAddress: Address, userAddress: Address, date: Date): Promise<Transfer[]> {
@@ -111,8 +128,8 @@ async function getTransfersFriendlyCSV(decimals: number, tokenAddress: Address, 
 async function getBalancesAtDistributionDates(address: Address, transfers: Transfer[]): Promise<AmountBN[]> {
   const blockNumbers = await getDistributionBlockNumbers()
   return blockNumbers.map(blockNumber => {
-    const transfersUntilDate = transfers.filter(t => t.blockNumber <= blockNumber)
-    return getAmountFromTransfers(address, transfersUntilDate)
+    const transfersUntilBlockNumber = transfers.filter(t => t.blockNumber <= blockNumber)
+    return getAmountFromTransfers(address, transfersUntilBlockNumber)
   })
 }
 
