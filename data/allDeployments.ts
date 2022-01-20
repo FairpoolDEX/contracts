@@ -9,7 +9,7 @@ export const addDeployment = getInserter('Deployment', DeploymentSchema, getDepl
 
 export const findDeployment = getFinder(getDeploymentUid, allDeployments)
 
-addDeployment({
+export const ShieldMainnet = addDeployment({
   contract: 'ShieldToken',
   network: 'mainnet',
   address: '0xd49EFA7BC0D339D74f487959C573d518BA3F8437',
@@ -18,7 +18,7 @@ addDeployment({
 addDeployment({
   contract: 'BullToken',
   network: 'mainnet',
-  address: '0x1bb022ab668085c6417b7d7007b0fbd53bacc383',
+  address: '0x1Bb022aB668085C6417B7d7007b0fbD53bACc383',
 })
 
 addDeployment({

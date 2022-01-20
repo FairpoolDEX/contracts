@@ -1,6 +1,8 @@
-import { defaultCollectionFindThrowback, Throwback } from './callback'
-
 export type EnsureException = Error
+
+export type Throwback = () => Promise<Error>
+
+export const defaultCollectionFindThrowback = () => { throw new Error('Can\'t find object in collection') }
 
 export function ensure<Obj, Res>(object: Obj | null | undefined, throwback: Throwback = defaultCollectionFindThrowback) {
   if (object === null || object === undefined) {
@@ -23,3 +25,5 @@ export function locate<Obj>(collection: Obj[], filter: Filter<Obj>, exception?: 
   }
   return object
 }
+
+export const tb = (err: Error) => async () => err

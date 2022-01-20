@@ -8,7 +8,7 @@ import { Filename } from './filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, validateBalanceBN, validateBalancesBN } from '../models/BalanceBN'
-import { parseAmountBNCSV } from '../models/AmountBN/parseAmountBNCSV'
+import { parseAmountCSV } from '../models/AmountBN/parseAmountCSV'
 
 export type BalancesMap = { [address: string]: AmountBN }
 
@@ -20,13 +20,13 @@ export async function parseBalancesCSV(data: RawCSVData): Promise<BalancesMap> {
     const amountRaw = rows[i]['Balance']
     // console.log('[addressRaw, amountRaw]', [addressRaw, amountRaw])
     const addressParsed = AddressSchema.parse(addressRaw)
-    const amountParsed = parseAmountBNCSV(amountRaw)
+    const amountParsed = parseAmountCSV(amountRaw)
     balancesMap[addressParsed] = amountParsed
   }
   return balancesMap
 }
 
-export function padAmount(amountRaw: string, decimals = 18) {
+export function padAmount(decimals: number, amountRaw: string) {
   const splinters = amountRaw.split('.')
   const whole = splinters[0]
   const fraction = splinters[1] ?? '0'

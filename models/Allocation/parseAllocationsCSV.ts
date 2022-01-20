@@ -2,7 +2,7 @@ import neatcsv from 'neat-csv'
 import { RawCSVData } from '../../util/csv'
 import { validateAllocation } from '../Allocation'
 import { validateVestingType } from '../VestingType'
-import { parseAmountBNCSV } from '../AmountBN/parseAmountBNCSV'
+import { parseAmountCSV } from '../AmountBN/parseAmountCSV'
 
 interface AllocationRow {
   Address: string
@@ -18,6 +18,6 @@ function parseAllocationRow(row: AllocationRow) {
   return validateAllocation({
     address: row.Address,
     type: validateVestingType(row.Vesting),
-    amount: parseAmountBNCSV(row.Total),
+    amount: parseAmountCSV(row.Total),
   })
 }

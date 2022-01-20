@@ -11,13 +11,15 @@ import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
 import { marketing } from '../../data/allAddresses'
+import validators from '../expectations/writeClaims.rebrand'
+import { validateWithContext } from '../../util/validator'
 
 describe('setClaimsBullToken', async () => {
 
@@ -130,15 +132,14 @@ describe('setClaimsBullToken', async () => {
   })
 
   fest(getDistributionDates.name, async () => {
-    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
-    const dates = await getDistributionDates(context)
+    const dates = await getDistributionDates()
     expect(dates.length).to.equal(airdropStageFailureCount)
   })
 
   long(getClaimsFromBullToken.name, async () => {
     const bullTotalSupply_2022_01_16 = BigNumber.from('1490403967926689867814673435496')
     const bullAddressesLength_2022_01_16 = 313
-    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
+    const context = getRebrandWriteClaimsContext()
     const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
     const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers)
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
@@ -147,7 +148,7 @@ describe('setClaimsBullToken', async () => {
   })
 
   long(getClaimsFromShieldToken.name, async () => {
-    const context: WriteClaimsContext = { ...testWriteClaimsContext, networkName: 'mainnet' }
+    const context = getRebrandWriteClaimsContext()
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     const claimsFromShieldToken = await getClaimsFromShieldToken(context)
     const sumClaimsFromBullToken = sumAmountsOf(claimsFromBullToken)
@@ -162,4 +163,14 @@ describe('setClaimsBullToken', async () => {
     ]), claimsFromShieldToken)
   })
 
+  long(getClaimsFromRequests.name, async () => {
+    const context = getRebrandWriteClaimsContext()
+    const claims = await getClaimsFromRequests(context)
+    await validateWithContext(claims, validators, context)
+  })
+
 })
+
+function getRebrandWriteClaimsContext(): WriteClaimsContext {
+  return { ...testWriteClaimsContext, cacheKey: 'rebrand', networkName: 'mainnet' }
+}

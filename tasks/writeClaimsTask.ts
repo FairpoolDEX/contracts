@@ -9,7 +9,6 @@ import { getShieldBalancesForBullAirdropFinal } from './util/parse'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
 import { airdropRate, airdropStageDuration, airdropStageMaxCount, airdropStageShareDenominator, airdropStageShareNumerator, airdropStageSuccessCount, airdropStartTimestamp, getMultiplier, pausedAt } from '../test/support/BullToken.helpers'
-import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { unwrapSmartContractBalances } from './util/unwrapSmartContractBalances'
 import { getClaimsFromBalances } from './util/balance'
@@ -20,6 +19,7 @@ import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
 import { BalanceBN } from '../models/BalanceBN'
+import { BlockNumber } from '../models/BlockNumber'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -81,19 +81,19 @@ export async function getClaimsFromBullToken(context: WriteClaimsContext) {
 
 export async function getClaimsFromShieldToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
-  const blockTags = await getDistributionBlockTags(context)
-  const balancesByDate = await seqMap(blockTags, tag => getERC20BalancesAtBlockTagPaginated(tag, deployment.address, context))
+  const blockNumbers = await getDistributionBlockNumbers()
+  const balancesByDate = await seqMap(blockNumbers, blockNumber => getERC20BalancesAtBlockTagPaginated(blockNumber, deployment.address, context))
   const balances = addBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }
 
-async function getDistributionBlockTags(context: WriteClaimsContext): Promise<BlockTag[]> {
-  const dates = await getDistributionDates(context)
+export async function getDistributionBlockNumbers(): Promise<BlockNumber[]> {
+  const dates = await getDistributionDates()
   const blocks = dates.map(date => ensure(findClosestBlock(date)))
   return blocks.map(b => b.number)
 }
 
-export async function getDistributionDates(context: WriteClaimsContext): Promise<Date[]> {
+export async function getDistributionDates(): Promise<Date[]> {
   const indexes = range(airdropStageSuccessCount, airdropStageMaxCount)
   const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
   return timestamps.map(t => new Date(t))
