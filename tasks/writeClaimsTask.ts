@@ -73,13 +73,13 @@ export async function getClaimsViaRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
   const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
-  const claimsWithNewDeployer = claims.map(c => {
+  const claimsWithNewDeployer = addBalances(claims.map(c => {
     if (c.address === oldDeployer) {
       return { ...c, address: newDeployer }
     } else {
       return c
     }
-  })
+  }))
   return claimsWithNewDeployer.filter(c => !isBullSellerBalance(c))
 }
 
