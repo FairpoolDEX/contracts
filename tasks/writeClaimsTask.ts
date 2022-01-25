@@ -6,19 +6,26 @@ import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Writable } from '../util/writable'
 import { logDryRun } from '../util/dry'
-import { airdropStageDuration, airdropStageMaxCount, airdropStageSuccessCount, airdropStartTimestamp, pausedAt } from '../test/support/BullToken.helpers'
+import { airdropStageDuration, airdropStageMaxCount, airdropStageSuccessCount, airdropStartTimestamp, fromShieldToBull, pausedAt } from '../test/support/BullToken.helpers'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
-import { isBullSellerBalance, oldDeployer } from '../data/allAddresses'
+import { isBullSellerBalance, Jordan, oldDeployer } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
-import { BalanceBN } from '../models/BalanceBN'
+import { balanceBN, BalanceBN } from '../models/BalanceBN'
 import { BlockNumber } from '../models/BlockNumber'
+import { impl } from '../util/todo'
+import { moveBalances } from '../models/BalanceBN/moveBalances'
+import { getJordanBalanceOfShieldToken } from '../test/expectations/writeClaims.rebrand'
+import { zero } from '../util/bignumber'
+import { getAddressRewriter } from '../models/BalanceBN/getAddressRewriter'
+import { Address } from '../models/Address'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  throw impl('Resolve security warnings from dependabot')
   const context = await getWriteClaimsContext(args, hre)
   const { expectations: expectationsPath, out, dry } = args
   const { log } = context
@@ -73,14 +80,9 @@ export async function getClaimsViaRequests(context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
   const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
-  const claimsWithNewDeployer = addBalances(claims.map(c => {
-    if (c.address === oldDeployer) {
-      return { ...c, address: newDeployer }
-    } else {
-      return c
-    }
-  }))
-  return claimsWithNewDeployer.filter(c => !isBullSellerBalance(c))
+  const claimsWithNewDeployer = addBalances(claims.map(getAddressRewriter(oldDeployer, newDeployer)))
+  const claimsWithJordan = setJordanClaims(claimsWithNewDeployer, newDeployer)
+  return claimsWithJordan.filter(c => !isBullSellerBalance(c))
 }
 
 export async function getClaimsFromBullToken(context: WriteClaimsContext) {
@@ -106,4 +108,11 @@ export async function getDistributionDates(): Promise<Date[]> {
   const indexes = range(airdropStageSuccessCount, airdropStageMaxCount)
   const timestamps = indexes.map(airdropStageIndex => airdropStartTimestamp + airdropStageDuration * airdropStageIndex)
   return timestamps.map(t => new Date(t))
+}
+
+function setJordanClaims(claims: BalanceBN[], from: Address) {
+  const to = Jordan
+  const amount = fromShieldToBull(getJordanBalanceOfShieldToken()).mul(3)
+  const $claims = concat(claims, [balanceBN(to, zero)])
+  return addBalances(moveBalances($claims, from, to, amount))
 }

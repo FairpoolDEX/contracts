@@ -18,7 +18,7 @@ import { getERC20BalanceForAddressAtBlockTagCached, getERC20HolderAddressesAtBlo
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
 import { CS, KS, marketing, NFTradePool } from '../../data/allAddresses'
-import validators, { getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
+import validators, { getJordanBalanceOfShieldToken, getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
 import { createFsCache, getFsCachePath } from '../../util/cache'
 import { getRunnableContext } from '../../util/context'
@@ -207,6 +207,9 @@ describe('setClaimsBullToken', async () => {
     // expect(expectedAmount).to.eq(actualAmount)
   })
 
+  fest(getJordanBalanceOfShieldToken.name, async () => {
+    expect(getJordanBalanceOfShieldToken()).to.eq(BigNumber.from('1376074283419820655650360'))
+  })
 })
 
 async function getAmountFromBullToken(address: Address, context: WriteClaimsContext) {
