@@ -9,7 +9,7 @@ import { findNetwork } from '../../data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
 import { NFTrade, TeamFinance, UniswapV2Pair, Unknown } from '../../models/ContractType'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
-import { allMap } from '../../util/promise'
+import { parMap } from '../../util/promise'
 import { getCodeCached } from '../../util/ethers'
 import { impl } from '../../util/todo'
 import { Address } from '../../models/Address'
@@ -32,7 +32,7 @@ import { expect } from '../../util/expect'
  * Implement a function from locker smart contract address to locked user balances?
  */
 export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[], blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
-  const balancesPerContract = await allMap(balances, unwrapSmartContractBalanceAtBlockTag, blockTag, tokenAddress, context)
+  const balancesPerContract = await parMap(balances, unwrapSmartContractBalanceAtBlockTag, blockTag, tokenAddress, context)
   return addBalances(flatten(balancesPerContract))
 }
 

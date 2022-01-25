@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
 import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
-import { CS, Eddy, isBullSellerAddress, KS, NFTradePool, oldDeployer, Van1sh } from '../../data/allAddresses'
+import { CS, Eddy, isBullSellerAddress, Jordan, KS, NFTradePool, oldDeployer, Van1sh } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
@@ -18,6 +18,7 @@ import { readFile } from 'fs/promises'
 import { shieldDecimals } from '../support/ColiToken.helpers'
 import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
 import { expect } from '../../util/expect'
+import { ensure } from '../../util/ensure'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [oldDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -27,9 +28,15 @@ export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
 
 const { balances: oldBalances } = oldExpectations
 
-const validateNoOldDeployer: WriteClaimsValidator = async function (claims, context) {
+const validateWithoutOldDeployer: WriteClaimsValidator = async function (claims, context) {
   const oldDeployerClaim = claims.find(c => c.address === oldDeployer)
   expect(oldDeployerClaim).not.to.exist
+  return claims
+}
+
+const validateWithJordan: WriteClaimsValidator = async function (claims, context) {
+  const JordanClaim = ensure(claims.find(c => c.address === Jordan))
+  expect(JordanClaim.amount).to.be.gt(fromShieldToBull(getJordanBalanceOfShieldToken()))
   return claims
 }
 
@@ -48,7 +55,8 @@ const validateTotalAmount: WriteClaimsValidator = async function (claims, contex
 }
 
 export default [
-  validateNoOldDeployer,
+  validateWithoutOldDeployer,
+  validateWithJordan,
   validateBalances,
   validateTotalAmount,
 ]
@@ -163,3 +171,7 @@ function getAmountFromTransfers(address: Address, transfers: Transfer[]) {
 }
 
 export const unwrappedSmartContractAddresses = [NFTradePool]
+
+export function getJordanBalanceOfShieldToken() {
+  return parseEtherscanAmountCSV(shieldDecimals, '1,376,074.28341982065565036')
+}
