@@ -23,11 +23,31 @@ addDeployment({
 
 addDeployment({
   contract: 'BullToken',
-  network: 'bsctestnet',
-  address: '0x7F606081f67fb119387C3300d2B7a4B51be0b199',
+  network: 'bscmainnet',
+  address: '0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100',
   notes: nail(`
-    export BULL_TOKEN_DEPLOYER=0x64D0991Bcc3cD7B6dB859793Fe156704E372663D
-    export BULL_TOKEN_PROXY_ADDRESS=0x7F606081f67fb119387C3300d2B7a4B51be0b199
-    export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0xc378C2d780bf8583CdeC91a0292E3B2B1894F19e
+    export BULL_TOKEN_DEPLOYER=0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D
+    export BULL_TOKEN_PROXY_ADDRESS=0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100
+    export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0x3707ac9Ecf32ac683E31aD625D78772Ed113D664
   `),
+})
+
+// addDeployment({
+//   contract: 'BullToken',
+//   network: 'bsctestnet',
+//   address: '0x7F606081f67fb119387C3300d2B7a4B51be0b199',
+//   notes: nail(`
+//     export BULL_TOKEN_DEPLOYER=0x64D0991Bcc3cD7B6dB859793Fe156704E372663D
+//     export BULL_TOKEN_PROXY_ADDRESS=0x7F606081f67fb119387C3300d2B7a4B51be0b199
+//     export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0xc378C2d780bf8583CdeC91a0292E3B2B1894F19e
+//   `),
+// })
+
+/**
+ * oldSoftwareDeployer
+ */
+addDeployment({
+  contract: 'BullToken',
+  network: 'bsctestnet',
+  address: '0x4c18040E8E28F2B15d3C936AE81Fca91A22791ba',
 })
