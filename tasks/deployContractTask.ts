@@ -28,11 +28,11 @@ export async function deployContractTask(args: DeployGenericTokenTaskArguments, 
     console.info(`export ${envVarContract}_PROXY_ADDRESS=${proxyAddress}`) // eslint-disable-line no-console
     const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
     console.info(`export ${envVarContract}_IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
+    console.info(`IMPORTANT: Verify proxy manually using ${getProxyCheckerUrl(proxyAddress, contract.signer)}`)
     await verify(run, {
       address: implementationAddress,
       // constructorArgs not needed since the implementation contract constructor has zero arguments
     })
-    console.info(`IMPORTANT: Verify proxy manually using ${getProxyCheckerUrl(proxyAddress, contract.signer)}`)
     return { upgradeable, proxyAddress, implementationAddress }
   } else {
     const contract = await factory.deploy(...constructorArgs, {
