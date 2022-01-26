@@ -10,7 +10,7 @@ import 'hardhat-dependency-compiler'
 import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask'
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
-import { claimBullTokenTask } from './tasks/claimBullTokenTask'
+import { claimManyBullTokenTask } from './tasks/claimManyBullTokenTask'
 import { upgradeTokenTask } from './tasks/upgradeTokenTask'
 import { rollbackBullTokenTask } from './tasks/rollbackBullTokenTask'
 import { deployMCPTask } from './tasks/deployMCPTask'
@@ -244,11 +244,11 @@ task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(setClaimsTask)
 
-task('claim', 'Call claim() on BULL token contract')
+task('claimManyBullToken', 'Call claimMany() on BULL token contract')
   .addParam('token', 'BULL token contract address')
   .addParam('claimer', 'Claim transaction sender address')
   .addParam('claims', 'CSV file with addresses')
-  .setAction(claimBullTokenTask)
+  .setAction(claimManyBullTokenTask)
 
 task('rollback', 'Change the balances of BullToken back to certain date')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
