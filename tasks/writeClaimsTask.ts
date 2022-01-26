@@ -11,7 +11,7 @@ import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { getClaimsFromBalances } from './util/balance'
 import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
-import { isBullSellerBalance, Jordan, oldDeployer } from '../data/allAddresses'
+import { isBullSellerBalance, Jordan, oldSoftwareDeployer } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
 import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
@@ -21,16 +21,20 @@ import { impl } from '../util/todo'
 import { moveBalances } from '../models/BalanceBN/moveBalances'
 import { getJordanBalanceOfShieldToken } from '../test/expectations/writeClaims.rebrand'
 import { zero } from '../util/bignumber'
-import { getAddressRewriter } from '../models/BalanceBN/getAddressRewriter'
 import { Address } from '../models/Address'
+import { Filename } from '../util/filesystem'
+import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile'
+import { Rewrite } from '../models/Rewrite'
+import { applyRewrites } from '../models/Rewrite/applyRewrites'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   throw impl('Resolve security warnings from dependabot')
   const context = await getWriteClaimsContext(args, hre)
-  const { expectations: expectationsPath, out, dry } = args
+  const { rewrites: rewritesPath, expectations: expectationsPath, out, dry } = args
   const { log } = context
+  const rewrites = await getRewritesFromCSVFile(rewritesPath)
   const validators = await importDefault(expectationsPath)
-  const $claims = await getClaimsViaRequests(context)
+  const $claims = await getClaimsFromRequests(rewrites, context)
   const claims = await validateWithContext($claims, validators, context)
   if (!dry) await writeClaims(claims, out)
   if (dry) logDryRun(log)
@@ -58,10 +62,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
 export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
 
 interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
-  // nextFolder: string
-  // prevFolder: string
-  // retroFolder: string
-  // blacklistFolder: string
+  rewrites: Filename
 }
 
 export interface WriteClaimsContext extends WriteClaimsTaskArguments, RunnableContext {
@@ -75,14 +76,14 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
   }
 }
 
-export async function getClaimsViaRequests(context: WriteClaimsContext) {
-  const { deployerAddress: newDeployer } = context
+export async function getClaimsFromRequests(rewrites: Rewrite[], context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
   const claimsFromShieldToken = await getClaimsFromShieldToken(context)
-  const claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
-  const claimsWithNewDeployer = addBalances(claims.map(getAddressRewriter(oldDeployer, newDeployer)))
-  const claimsWithJordan = setJordanClaims(claimsWithNewDeployer, newDeployer)
-  return claimsWithJordan.filter(c => !isBullSellerBalance(c))
+  let claims: BalanceBN[] = []
+  claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
+  claims = addBalances(setJordanClaims(claims, oldSoftwareDeployer))
+  claims = addBalances(applyRewrites(rewrites, claims))
+  return claims.filter(c => !isBullSellerBalance(c))
 }
 
 export async function getClaimsFromBullToken(context: WriteClaimsContext) {
@@ -114,5 +115,5 @@ function setJordanClaims(claims: BalanceBN[], from: Address) {
   const to = Jordan
   const amount = fromShieldToBull(getJordanBalanceOfShieldToken()).mul(3)
   const $claims = concat(claims, [balanceBN(to, zero)])
-  return addBalances(moveBalances($claims, from, to, amount))
+  return moveBalances($claims, from, to, amount)
 }

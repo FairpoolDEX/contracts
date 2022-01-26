@@ -6,7 +6,7 @@ import { Chunkable } from './chunkable'
 import { pick } from 'lodash'
 import { RunnableTaskArguments } from './task'
 import { RunTaskFunction } from 'hardhat/types/runtime'
-import { createFsCache, getFsCachePath } from './cache'
+import { createFsCache, getFsCachePathForContracts } from './cache'
 import { Cache } from 'cache-manager'
 
 export interface RunnableContext extends RunnableTaskArguments, HardhatRuntimeEnvironment {
@@ -22,7 +22,7 @@ export async function getRunnableContext<Args extends RunnableTaskArguments>(arg
   const { cacheKey } = args
   const networkName = NetworkNameSchema.parse(network.name)
   const [deployer] = await ethers.getSigners()
-  const cache = createFsCache({ path: getFsCachePath(`/${cacheKey}`) })
+  const cache = createFsCache({ path: getFsCachePathForContracts(`/${cacheKey}`) })
   return {
     ...hre,
     ...args,
