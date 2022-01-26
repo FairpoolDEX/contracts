@@ -73,3 +73,26 @@ interface DeployGenericTokenTaskNonUpgradeableOutput {
   upgradeable: false
   address: Address
 }
+
+/**
+ * Deploy Bull token
+ * - Modify deployContractTask to support hardware wallets
+ * - Deploy from the old deployer address + change ownership
+ *  - Faster
+ *  - But may need to change it back
+ *  - But need to rewrite the claims from old deployer to T deployer (easy)
+ */
+
+/**
+ * Modify deployContractTask to support hardware wallets
+ *
+ * Options:
+ * - Use Frame: https://github.com/nomiclabs/hardhat/issues/1159#issuecomment-789310120
+ *  - But how to deploy upgradeable contracts?
+ *    - Pass a signer
+ *      - But need to implement a signer
+ * - Use trezor-signer: https://github.com/weidex-team/weidex-trezor-signer-ethers/blob/master/lib/index.ts
+ * - Implement trezor-signer
+ *  - Use https://www.npmjs.com/package/@anders-t/ethers-ledger
+ *
+ */

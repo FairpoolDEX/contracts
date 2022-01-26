@@ -11,19 +11,20 @@ import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../
 import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromShieldToken, getClaimsViaRequests, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20BalanceForAddressAtBlockTagCached, getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
 import { ensure } from '../../util/ensure'
 import { findDeployment } from '../../data/allDeployments'
-import { CS, KS, marketing, NFTradePool } from '../../data/allAddresses'
+import { CS, KS, marketing, newHardwareDeployer, NFTradePool, oldSoftwareDeployer } from '../../data/allAddresses'
 import validators, { getJordanBalanceOfShieldToken, getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
-import { createFsCache, getFsCachePath } from '../../util/cache'
+import { createFsCache, getFsCachePathForContracts } from '../../util/cache'
 import { getRunnableContext } from '../../util/context'
 import { unwrapNFTradeBalanceAtBlockTag } from '../../tasks/util/unwrapSmartContractBalancesAtBlockTag'
 import { airdropStage3 } from '../../data/allBlocks'
+import { validateRewrites } from '../../models/Rewrite'
 
 describe('setClaimsBullToken', async () => {
 
@@ -174,9 +175,10 @@ describe('setClaimsBullToken', async () => {
     ]), claimsFromShieldToken)
   })
 
-  long(getClaimsViaRequests.name, async () => {
+  long(getClaimsFromRequests.name, async () => {
     const context = await getRebrandTestWriteClaimsContext()
-    const claims = await getClaimsViaRequests(context)
+    const rewrites = validateRewrites([{ from: oldSoftwareDeployer, to: newHardwareDeployer }])
+    const claims = await getClaimsFromRequests(rewrites, context)
     await validateWithContext(claims, validators, context)
   })
 
@@ -226,7 +228,7 @@ async function getRebrandTestWriteClaimsContext(): Promise<WriteClaimsContext> {
     ...await getRunnableContext(args, hardhatRuntimeEnvironment),
     networkName: 'mainnet',
     cache: createFsCache({
-      path: getFsCachePath('/rebrand'),
+      path: getFsCachePathForContracts('/rebrand'),
     }),
   }
 }

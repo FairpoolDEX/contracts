@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { ContractTypeSchema } from './ContractType'
+import { toUidFromSchema, Uid } from './Uid'
+import { getDuplicatesRefinement } from '../util/zod'
 import { NetworkVMTypeSchema } from './NetworkVM'
-import { toUid } from '../util/uid'
 import { ContractCodeSchema } from './ContractCode'
+import { ContractTypeSchema } from './ContractType'
 
 export const ContractInfoSchema = z.object({
   vm: NetworkVMTypeSchema,
@@ -11,18 +12,26 @@ export const ContractInfoSchema = z.object({
   notes: z.string().optional(),
 })
 
+export const ContractInfosSchema = z.array(ContractInfoSchema)
+  .superRefine(getDuplicatesRefinement('ContractInfo', getContractInfoUid))
+
+export const ContractInfoUidSchema = ContractInfoSchema.pick({
+  vm: true,
+  code: true,
+})
+
 export type ContractInfo = z.infer<typeof ContractInfoSchema>
 
-// function getUidField<T>(keys: Array<keyof T>) {
-//   return z.union(keys.map(k => z.literal(k as string)))
-// }
+export type ContractInfoUid = z.infer<typeof ContractInfoUidSchema>
 
-// export const ContractInfoUidField = getUidField<ContractInfo>(['vm', 'code'])
-
-export function validateContractInfo(info: ContractInfo) {
+export function validateContractInfo(info: ContractInfo): ContractInfo {
   return ContractInfoSchema.parse(info)
 }
 
-export function getContractInfoUid(info: Pick<ContractInfo, 'vm' | 'code'>): string {
-  return toUid(info, 'vm', 'code')
+export function validateContractInfos(infos: ContractInfo[]): ContractInfo[] {
+  return ContractInfosSchema.parse(infos)
+}
+
+export function getContractInfoUid(infoUid: ContractInfoUid): Uid {
+  return toUidFromSchema(infoUid, ContractInfoUidSchema)
 }

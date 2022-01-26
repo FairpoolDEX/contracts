@@ -3,7 +3,7 @@ import { ensure } from '../util/ensure'
 import { AddressSchema } from './Address'
 import { NetworkName, NetworkNameSchema } from './NetworkName'
 import { ContractNameSchema } from './ContractName'
-import { toUid } from '../util/uid'
+import { toUid } from './Uid'
 
 export const DeploymentSchema = z.object({
   contract: ContractNameSchema,

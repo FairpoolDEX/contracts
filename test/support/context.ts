@@ -7,7 +7,7 @@ import hardhatRuntimeEnvironment from 'hardhat'
 import { RunnableTaskArguments } from '../../util/task'
 import { WriteClaimsContext } from '../../tasks/writeClaimsTask'
 import { tmpdir } from 'os'
-import { createFsCache, getFsCachePath } from '../../util/cache'
+import { createFsCache, getFsCachePathForContracts } from '../../util/cache'
 
 export const testRunnableTaskArguments: RunnableTaskArguments = {
   cacheKey: '',
@@ -24,7 +24,7 @@ export const testRunnableContext: RunnableContext = {
   networkName: 'hardhat',
   deployerAddress: '',
   cache: createFsCache({
-    path: getFsCachePath('/test'),
+    path: getFsCachePathForContracts('/test'),
   }),
   log: identity,
   run: () => Promise.resolve(),
@@ -52,6 +52,7 @@ export const testSetClaimsContext: SetClaimsContext = {
 
 export const testWriteClaimsContext: WriteClaimsContext = {
   out: `${tmpdir()}/testWriteClaims.json`,
+  rewrites: '',
   expectations: '',
   ...testRunnableContext,
 }

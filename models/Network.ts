@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { NetworkNameSchema } from './NetworkName'
 import { NetworkVMTypeSchema } from './NetworkVM'
-import { toUid } from '../util/uid'
+import { toUid } from './Uid'
 
 export const NetworkSchema = z.object({
   name: NetworkNameSchema,
