@@ -5,7 +5,7 @@ import { BullToken, QuoteToken, UniswapV2Factory, UniswapV2Router02, WETH9 } fro
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
-import { claimBullToken } from '../../tasks/claimBullTokenTask'
+import { claimManyBullToken } from '../../tasks/claimManyBullTokenTask'
 import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
@@ -75,8 +75,8 @@ xdescribe('rollbackBullToken', async () => {
   // https://etherscan.io/address/0x1bb022ab668085c6417b7d7007b0fbd53bacc383
   fest('should download marked transfers', async () => {
     await timeTravel(async () => {
-      await claimBullToken(bullTokenWithStranger, addresses, ethers)
-      await claimBullToken(bullTokenWithAlice, addresses, ethers)
+      await claimManyBullToken(bullTokenWithStranger, addresses, ethers)
+      await claimManyBullToken(bullTokenWithAlice, addresses, ethers)
       const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, ethers)
 
       await bullTokenWithStranger.transfer(alice.address, toTokenAmount('10'))
@@ -100,8 +100,8 @@ xdescribe('rollbackBullToken', async () => {
   fest('should allow to claim the tokens', async () => {
     // TODO: Sells and buys should only be reflected on the next airdrop
     await timeTravel(async () => {
-      await claimBullToken(bullTokenWithStranger, addresses, ethers)
-      await claimBullToken(bullTokenWithAlice, addresses, ethers)
+      await claimManyBullToken(bullTokenWithStranger, addresses, ethers)
+      await claimManyBullToken(bullTokenWithAlice, addresses, ethers)
       await timeTravel(async () => {
         await bullTokenWithStranger.claim()
         const pair = await deployUniswapPair(uniswapV2Factory, bullTokenWithOwner as Contract, quoteTokenWithOwner as Contract, ethers)

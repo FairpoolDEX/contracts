@@ -7,7 +7,7 @@ import type { Ethers } from '../util/types'
 import { Contract } from 'ethers'
 import { Address, validateAddress } from '../models/Address'
 
-export async function claimBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function claimManyBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { token: tokenAddress, claimer: claimerAddress, claims: claimsPath } = args
   const { ethers } = hre
   const [signer] = await ethers.getSigners()
@@ -19,10 +19,10 @@ export async function claimBullTokenTask(args: TaskArguments, hre: HardhatRuntim
   const Token = await ethers.getContractFactory('BullToken')
   const token = await Token.attach(tokenAddress)
   console.info('[INFO] Claiming $BULL')
-  await claimBullToken(token, addresses, ethers, console.info.bind(console))
+  await claimManyBullToken(token, addresses, ethers, console.info.bind(console))
 }
 
-export async function claimBullToken(token: Contract, addresses: Address[], ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
+export async function claimManyBullToken(token: Contract, addresses: Address[], ethers: Ethers, info: ((msg: any) => void) | void): Promise<void> {
   if (addresses.length > 300) {
     throw new Error('Can\'t claim if addresses array is longer than 300 elements')
   }
