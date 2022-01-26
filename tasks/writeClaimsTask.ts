@@ -17,7 +17,6 @@ import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util/validator'
 import { balanceBN, BalanceBN } from '../models/BalanceBN'
 import { BlockNumber } from '../models/BlockNumber'
-import { impl } from '../util/todo'
 import { moveBalances } from '../models/BalanceBN/moveBalances'
 import { getJordanBalanceOfShieldToken } from '../test/expectations/writeClaims.rebrand'
 import { zero } from '../util/bignumber'
@@ -28,7 +27,6 @@ import { Rewrite } from '../models/Rewrite'
 import { applyRewrites } from '../models/Rewrite/applyRewrites'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  throw impl('Resolve security warnings from dependabot')
   const context = await getWriteClaimsContext(args, hre)
   const { rewrites: rewritesPath, expectations: expectationsPath, out, dry } = args
   const { log } = context
