@@ -1,4 +1,4 @@
-# Shield Finance contracts
+# Coliquidity contracts
 
 ## Setup
 
