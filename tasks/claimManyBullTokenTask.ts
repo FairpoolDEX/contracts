@@ -1,17 +1,18 @@
 import fs from 'fs'
-import { strict as assert } from 'assert'
 import { uniq } from 'lodash'
 import neatcsv from 'neat-csv'
-import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import type { Ethers } from '../util/types'
 import { Contract } from 'ethers'
-import { Address, validateAddress } from '../models/Address'
+import { Address, AddressSchema, validateAddress } from '../models/Address'
+import { ensure } from '../util/ensure'
+import { z } from 'zod'
 
-export async function claimManyBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { token: tokenAddress, claimer: claimerAddress, claims: claimsPath } = args
+export async function claimManyBullTokenTask(args: claimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+  const { token: tokenAddress, claimer: claimerAddress, claims: claimsPath } = validateClaimManyBullTokenTaskArguments(args)
   const { ethers } = hre
-  const [signer] = await ethers.getSigners()
-  assert.equal(signer.address.toLowerCase(), claimerAddress.toLowerCase())
+  const signers = await ethers.getSigners()
+  const signer = ensure(signers.find(s => s.address === claimerAddress))
   console.info(`[INFO] Claiming with ${signer.address}`)
   console.info(`[INFO] Reading addresses from ${claimsPath}`)
   const addresses = await parseAddresses(fs.readFileSync(claimsPath))
@@ -33,4 +34,16 @@ export async function claimManyBullToken(token: Contract, addresses: Address[], 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {
   const rows = await neatcsv(data)
   return uniq(rows.map((row) => validateAddress(row['Address'])))
+}
+
+const claimManyBullTokenTaskArgumentsSchema = z.object({
+  token: AddressSchema,
+  claimer: AddressSchema,
+  claims: z.string(), // Filename
+})
+
+type claimManyBullTokenTaskArguments = z.infer<typeof claimManyBullTokenTaskArgumentsSchema>
+
+function validateClaimManyBullTokenTaskArguments(args: claimManyBullTokenTaskArguments) {
+  return claimManyBullTokenTaskArgumentsSchema.parse(args)
 }
