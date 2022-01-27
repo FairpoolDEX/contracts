@@ -26,7 +26,9 @@ addDeployment({
   network: 'bscmainnet',
   address: '0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100',
   notes: nail(`
+    # NOTE: ProxyAdmin ownership has been changed to newHardwareDeployer
     export BULL_TOKEN_DEPLOYER=0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D
+    export BULL_TOKEN_PROXY_ADMIN_ADDRESS=0xd197ABdd388f63ce3401dE64CE6794FFFFBF1E30
     export BULL_TOKEN_PROXY_ADDRESS=0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100
     export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0x3707ac9Ecf32ac683E31aD625D78772Ed113D664
   `),

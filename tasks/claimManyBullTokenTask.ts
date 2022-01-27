@@ -18,7 +18,7 @@ export async function claimManyBullTokenTask(args: claimManyBullTokenTaskArgumen
   const addresses = await parseAddresses(fs.readFileSync(claimsPath))
   console.info(`[INFO] Attaching to contract ${tokenAddress}`)
   const Token = await ethers.getContractFactory('BullToken')
-  const token = await Token.attach(tokenAddress)
+  const token = await Token.attach(tokenAddress).connect(signer)
   console.info('[INFO] Claiming $BULL')
   await claimManyBullToken(token, addresses, ethers, console.info.bind(console))
 }
