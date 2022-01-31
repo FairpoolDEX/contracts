@@ -1,7 +1,7 @@
 import { Contract } from 'ethers'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { TransferTopic } from '../../util/topic'
-import { createFsCache, getCacheKey, getFsCachePathForContracts } from '../../util/cache'
+import { getCacheKey } from '../../util/cache'
 import { Event } from '@ethersproject/contracts/src.ts/index'
 import { flatten, range } from 'lodash'
 import { maxBlocksPerQueryFilterRequest, rateLimiter } from '../../util/getblock'
@@ -35,10 +35,6 @@ export async function getTransfersPaginatedCached(token: Contract, from: BlockTa
   const blockNumbers = range($from, $to, maxBlocksPerQueryFilterRequest)
   const transferEventsArray = await seqMap(blockNumbers, blockNumber => getTransfersCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest, cache))
   return flatten(transferEventsArray)
-}
-
-function createTransfersFsCache() {
-  return createFsCache({ path: getFsCachePathForContracts('/transfers') })
 }
 
 export function fromEventToTransfer(e: Event) {

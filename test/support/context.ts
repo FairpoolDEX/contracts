@@ -1,58 +1,54 @@
 import { identity } from 'lodash'
-import { RunnableContext } from '../../util/context'
+import { getRunnableContext, RunnableContext } from '../../util/context'
 import { Chunkable } from '../../util/chunkable'
 import { SetClaimsContext, SetClaimsTaskArguments } from '../../tasks/setClaimsTask'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from './BullToken.helpers'
 import hardhatRuntimeEnvironment from 'hardhat'
 import { RunnableTaskArguments } from '../../util/task'
-import { WriteClaimsContext } from '../../tasks/writeClaimsTask'
-import { tmpdir } from 'os'
-import { createFsCache, getFsCachePathForContracts } from '../../util/cache'
 
-export const testRunnableTaskArguments: RunnableTaskArguments = {
-  cacheKey: '',
-  dry: false,
+export async function getTestRunnableTaskArguments(): Promise<RunnableTaskArguments> {
+  return {
+    cacheKey: '',
+    dry: false,
+  }
 }
 
-export const testChunkableTaskArguments: Chunkable = {
-  chunkSize: 325,
+export async function getTestRunnableContext<Args extends RunnableTaskArguments>(args: Args): Promise<RunnableContext & Args> {
+  return {
+    ...await getRunnableContext(args, hardhatRuntimeEnvironment),
+    log: identity,
+    run: () => Promise.resolve(),
+  }
 }
 
-export const testRunnableContext: RunnableContext = {
-  ...hardhatRuntimeEnvironment,
-  ...testRunnableTaskArguments,
-  networkName: 'hardhat',
-  deployerAddress: '',
-  cache: createFsCache({
-    path: getFsCachePathForContracts('/test'),
-  }),
-  log: identity,
-  run: () => Promise.resolve(),
+export async function getTestChunkableTaskArguments(): Promise<Chunkable> {
+  return {
+    chunkSize: 325,
+  }
 }
 
-export const testChunkableContext: Chunkable = {
-  ...testChunkableTaskArguments,
+export async function getTestChunkableContext(): Promise<Chunkable> {
+  return {
+    ...await getTestChunkableTaskArguments(),
+  }
 }
 
-export const testSetClaimsTaskArguments: SetClaimsTaskArguments = {
-  contractName: 'BullToken',
-  contractAddress: '',
-  claims: '',
-  airdropStageShareNumerator,
-  airdropStageShareDenominator,
-  airdropRate,
-  ...testRunnableTaskArguments,
-  ...testChunkableTaskArguments,
+export async function getTestSetClaimsTaskArguments(): Promise<SetClaimsTaskArguments> {
+  return {
+    contractName: 'BullToken',
+    contractAddress: '',
+    claims: '',
+    airdropStageShareNumerator,
+    airdropStageShareDenominator,
+    airdropRate,
+    ...await getTestRunnableTaskArguments(),
+    ...await getTestChunkableTaskArguments(),
+    cacheKey: 'rebrand',
+    dry: false,
+    chunkSize: 250,
+  }
 }
 
-export const testSetClaimsContext: SetClaimsContext = {
-  ...testSetClaimsTaskArguments,
-  ...testRunnableContext,
-}
-
-export const testWriteClaimsContext: WriteClaimsContext = {
-  out: `${tmpdir()}/testWriteClaims.json`,
-  rewrites: '',
-  expectations: '',
-  ...testRunnableContext,
+export async function getTestSetClaimsContext(): Promise<SetClaimsContext> {
+  return getTestRunnableContext(await getTestSetClaimsTaskArguments())
 }

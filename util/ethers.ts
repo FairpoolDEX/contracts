@@ -4,7 +4,7 @@ import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { Provider } from '@ethersproject/providers'
 import { RateLimiter } from 'limiter'
 import { impl } from './todo'
-import { Contract } from 'ethers'
+import { Contract, Signer } from 'ethers'
 import { getCacheKey } from './cache'
 import { Cache } from 'cache-manager'
 import { validateContractCode } from '../models/ContractCode'
@@ -47,4 +47,9 @@ function isBlockNumber(tag: BlockTag): tag is number {
 export async function getContract(ethers: Ethers, contractName: string, contractAddress: Address): Promise<Contract> {
   const token = await ethers.getContractFactory(contractName)
   return token.attach(contractAddress)
+}
+
+export async function getContractForSigner(ethers: Ethers, contractName: string, contractAddress: Address, signer: Signer): Promise<Contract> {
+  const contract = await getContract(ethers, contractName, contractAddress)
+  return contract.connect(signer)
 }

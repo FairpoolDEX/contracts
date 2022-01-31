@@ -180,6 +180,8 @@ export const config: HardhatUserConfig = {
   // },
 }
 
+Error.stackTraceLimit = Infinity
+
 function fromNetwork(network: Network, config: NetworkUserConfig): NetworkUserConfig {
   return {
     blockGasLimit: network.blockGasLimit,

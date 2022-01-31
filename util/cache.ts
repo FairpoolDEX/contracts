@@ -3,6 +3,7 @@ import fsStore from 'cache-manager-fs-hash'
 import { days, seconds } from './time'
 import { toString } from 'lodash'
 import { homedir } from 'os'
+import mkdirp from 'mkdirp'
 
 export type CacheKey = string
 
@@ -17,15 +18,17 @@ interface FsHashStoreOptions {
   zip?: boolean | undefined;
 }
 
-export function createFsCache(options: FsHashStoreOptions = {}) {
+export function createFsCache($options: FsHashStoreOptions = {}) {
+  const options = {
+    path: getFsCachePathForContracts(), // path for cached files
+    ttl: 7 * days / seconds, // time to life in seconds
+    subdirs: true, // create subdirectories to reduce the count of files in a single dir (default: false)
+    ...$options,
+  }
+  mkdirp.sync(options.path)
   return cacheManager.caching({
     store: fsStore,
-    options: {
-      path: getFsCachePathForContracts(), // path for cached files
-      ttl: 7 * days / seconds, // time to life in seconds
-      subdirs: true, // create subdirectories to reduce the count of files in a single dir (default: false)
-      ...options,
-    },
+    options,
   })
 
 }

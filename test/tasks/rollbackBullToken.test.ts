@@ -10,7 +10,7 @@ import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
-import { testSetClaimsContext } from '../support/context'
+import { getTestSetClaimsContext } from '../support/context'
 import { BalanceBN } from '../../models/BalanceBN'
 import { fest } from '../../util/mocha'
 
@@ -55,8 +55,8 @@ xdescribe('rollbackBullToken', async () => {
     addresses = await getTestAddresses()
     balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
     balances = getBalancesFromMap(balancesMap)
-    expectations = await getTestExpectations(balances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
+    expectations = await getTestExpectations(balances, await getTestSetClaimsContext())
+    await setClaims(bullTokenWithOwner, balances, await getTestSetClaimsContext())
 
     const quoteTokenFactory = await ethers.getContractFactory('QuoteToken')
     quoteTokenWithOwner = await quoteTokenFactory.deploy() as QuoteToken

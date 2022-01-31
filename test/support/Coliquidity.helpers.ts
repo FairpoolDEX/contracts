@@ -1,0 +1,1 @@
+export const OfferCreatedTopic = '0xd219cfd25914f132495270765bf331d19a2d0ed94cff788aebff0cfa278e6d4a'

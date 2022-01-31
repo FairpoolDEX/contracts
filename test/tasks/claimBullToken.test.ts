@@ -9,7 +9,7 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTes
 import { claimManyBullToken } from '../../tasks/claimManyBullTokenTask'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
-import { testSetClaimsContext } from '../support/context'
+import { getTestSetClaimsContext } from '../support/context'
 import { fest } from '../../util/mocha'
 
 describe('claimBullToken', async () => {
@@ -49,8 +49,8 @@ describe('claimBullToken', async () => {
     addresses = await getTestAddresses()
     balancesMap = await setDefaultAmounts(await getTestBalanceMap(), addresses, defaultAmount)
     const balances = getBalancesFromMap(balancesMap)
-    expectations = await getTestExpectations(balances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
+    expectations = await getTestExpectations(balances, await getTestSetClaimsContext())
+    await setClaims(bullTokenWithOwner, balances, await getTestSetClaimsContext())
   })
 
   fest('should allow to claim the tokens', async () => {
