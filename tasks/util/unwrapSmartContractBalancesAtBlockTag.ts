@@ -37,10 +37,10 @@ export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[
 }
 
 export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
-  const { cacheKey, deployerAddress, networkName, ethers } = context
+  const { cacheKey, signer, networkName, ethers } = context
   const { address } = balance
   const type = await getAddressType(address, context)
-  const balances = await unwrapSmartContractBalanceAtBlockTagByType(type, balance, deployerAddress, blockTag, tokenAddress, context)
+  const balances = await unwrapSmartContractBalanceAtBlockTagByType(type, balance, signer.address, blockTag, tokenAddress, context)
   expect(balance.amount).to.be.closeTo(sumAmountsOf(balances), 10)
   return balances
 }

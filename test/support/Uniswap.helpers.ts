@@ -15,7 +15,7 @@ export const uniswapMinimumLiquidity = BigNumber.from(1000) // see MINIMUM_LIQUI
 export async function deployUniswapPair(factory: UniswapV2Factory, token0: Contract, token1: Contract, ethers: Ethers) {
   await factory.createPair(token0.address, token1.address)
   const pairAddress = await factory.getPair(token0.address, token1.address)
-  return await ethers.getContractAt('UniswapV2Pair' /* UniswapV2PairJSON.abi */, pairAddress)
+  return await getUniswapV2Pair(ethers, pairAddress)
 }
 
 export async function getUniswapV2FactoryContractFactory(ethers: Ethers): Promise<ContractFactory> {
@@ -34,6 +34,10 @@ export async function getUniswapV2PairContractFactory(ethers: Ethers): Promise<C
 
 export async function getWETH9ContractFactory(ethers: Ethers): Promise<ContractFactory> {
   return ethers.getContractFactory('WETH9') // ethers.getContractFactory(WETH9JSON.abi, WETH9JSON.bytecode)
+}
+
+export async function getUniswapV2Pair(ethers: Ethers, address: Address) {
+  return ethers.getContractAt('UniswapV2Pair', address)
 }
 
 export function toAmountAfterFee(amount: BigNumber) {

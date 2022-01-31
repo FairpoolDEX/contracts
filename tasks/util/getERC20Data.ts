@@ -11,7 +11,7 @@ import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { chunk, flatten, uniq } from 'lodash'
 import { maxRequestsPerSecond } from '../../util/getblock'
 import { seqMap } from '../../util/promise'
-import { createFsCache, getCacheKey, getFsCachePathForContracts } from '../../util/cache'
+import { getCacheKey } from '../../util/cache'
 import { isZeroBalance } from '../../util/balance'
 import { Cache } from 'cache-manager'
 
@@ -54,8 +54,4 @@ export async function getERC20BalanceForAddressAtBlockTagCached(address: Address
 
 async function getERC20BalancesForAddressesAtBlockTagCached(addresses: Address[], blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
   return Promise.all(addresses.map(address => getERC20BalanceForAddressAtBlockTagCached(address, blockTag, contractAddress, ethers, cache)))
-}
-
-function createBalancesFsCache() {
-  return createFsCache({ path: getFsCachePathForContracts('/balances') })
 }

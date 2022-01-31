@@ -8,7 +8,7 @@ import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdrop
 import { BigNumber } from 'ethers'
 import { expect } from '../../util/expect'
 import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../../util/balance'
-import { testSetClaimsContext, testWriteClaimsContext } from '../support/context'
+import { getTestSetClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
 import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
@@ -25,6 +25,7 @@ import { getRunnableContext } from '../../util/context'
 import { unwrapNFTradeBalanceAtBlockTag } from '../../tasks/util/unwrapSmartContractBalancesAtBlockTag'
 import { airdropStage3 } from '../../data/allBlocks'
 import { validateRewrites } from '../../models/Rewrite'
+import { tmpdir } from 'os'
 
 describe('setClaimsBullToken', async () => {
 
@@ -65,7 +66,7 @@ describe('setClaimsBullToken', async () => {
 
     balancesMap = await getTestBalanceMap()
     balances = getBalancesFromMap(balancesMap)
-    expectations = await getTestExpectations(balances, testSetClaimsContext)
+    expectations = await getTestExpectations(balances, await getTestSetClaimsContext())
   })
 
   fest('should parse the CSV export', async () => {
@@ -84,13 +85,13 @@ describe('setClaimsBullToken', async () => {
   })
 
   fest('should allow the owner to set claims multiple times', async () => {
-    await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
+    await setClaims(bullTokenWithOwner, balances, await getTestSetClaimsContext())
     const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
     const calClaim = await bullTokenWithOwner.claims(calAddress)
     expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
     expect(calClaim).to.equal(toTokenAmount('0'))
     await timeTravel(async () => {
-      await setClaims(bullTokenWithOwner, balances, testSetClaimsContext)
+      await setClaims(bullTokenWithOwner, balances, await getTestSetClaimsContext())
       const aliceClaim = await bullTokenWithOwner.claims(aliceAddress)
       const calClaim = await bullTokenWithOwner.claims(calAddress)
       expect(aliceClaim).to.equal(toTokenAmount('132814.914153007'))
@@ -100,7 +101,7 @@ describe('setClaimsBullToken', async () => {
 
   fest('should not allow the stranger to set claims', async () => {
     await expect(
-      setClaims(bullTokenWithStranger, balances, testSetClaimsContext),
+      setClaims(bullTokenWithStranger, balances, await getTestSetClaimsContext()),
     ).to.be.revertedWith('caller is not the owner')
     const aliceClaim = await bullTokenWithStranger.claims(aliceAddress)
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
@@ -109,8 +110,8 @@ describe('setClaimsBullToken', async () => {
   fest('should allow the stranger to claim BULL', async () => {
     const strangerAmount = toTokenAmount('10000')
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
-    const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, strangerBalances, testSetClaimsContext)
+    const strangerExpectations = await getTestExpectations(strangerBalances, await getTestSetClaimsContext())
+    await setClaims(bullTokenWithOwner, strangerBalances, await getTestSetClaimsContext())
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
@@ -120,16 +121,16 @@ describe('setClaimsBullToken', async () => {
   fest('should allow multiple stages', async () => {
     const strangerAmount = BigNumber.from(maxSupply)
     const strangerBalances = mergeBalance(balances, balanceBN(strangerAddress, strangerAmount))
-    const strangerExpectations = await getTestExpectations(strangerBalances, testSetClaimsContext)
-    await setClaims(bullTokenWithOwner, strangerBalances, testSetClaimsContext)
+    const strangerExpectations = await getTestExpectations(strangerBalances, await getTestSetClaimsContext())
+    await setClaims(bullTokenWithOwner, strangerBalances, await getTestSetClaimsContext())
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
       await timeTravel(async () => {
         const testBalances = getBalancesFromMap(await getTestBalanceMap())
         const strangerTestBalances = mergeBalance(testBalances, balanceBN(strangerAddress, strangerAmount))
-        const strangerTestExpectations = await getTestExpectations(strangerTestBalances, testSetClaimsContext)
-        await setClaims(bullTokenWithOwner, strangerTestBalances, testSetClaimsContext)
+        const strangerTestExpectations = await getTestExpectations(strangerTestBalances, await getTestSetClaimsContext())
+        await setClaims(bullTokenWithOwner, strangerTestBalances, await getTestSetClaimsContext())
         await bullTokenWithStranger.claim()
         expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
       }, airdropStartTimestampForTest + airdropStageDuration)
@@ -224,11 +225,13 @@ async function getAmountFromBullToken(address: Address, context: WriteClaimsCont
 async function getRebrandTestWriteClaimsContext(): Promise<WriteClaimsContext> {
   const args = { cacheKey: 'rebrand', dry: true }
   return {
-    ...testWriteClaimsContext,
     ...await getRunnableContext(args, hardhatRuntimeEnvironment),
     networkName: 'mainnet',
     cache: createFsCache({
       path: getFsCachePathForContracts('/rebrand'),
     }),
+    out: `${tmpdir()}/testWriteClaims.json`,
+    rewrites: '',
+    expectations: '',
   }
 }

@@ -1,4 +1,3 @@
-import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { Logger } from './log'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
@@ -8,26 +7,29 @@ import { RunnableTaskArguments } from './task'
 import { RunTaskFunction } from 'hardhat/types/runtime'
 import { createFsCache, getFsCachePathForContracts } from './cache'
 import { Cache } from 'cache-manager'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 export interface RunnableContext extends RunnableTaskArguments, HardhatRuntimeEnvironment {
   run: RunTaskFunction,
-  deployerAddress: Address
+  signer: SignerWithAddress
   networkName: NetworkName
   cache: Cache
   log: Logger
 }
 
-export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext> {
+export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext & Args> {
   const { ethers, network } = hre
   const { cacheKey } = args
   const networkName = NetworkNameSchema.parse(network.name)
-  const [deployer] = await ethers.getSigners()
-  const cache = createFsCache({ path: getFsCachePathForContracts(`/${cacheKey}`) })
+  const [signer] = await ethers.getSigners()
+  const cache = createFsCache({
+    path: getFsCachePathForContracts(`/${cacheKey}`),
+  })
   return {
     ...hre,
     ...args,
     networkName,
-    deployerAddress: deployer.address,
+    signer,
     cache,
     log: console.info.bind(console),
   }
