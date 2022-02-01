@@ -4,8 +4,11 @@ import { days, seconds } from './time'
 import { toString } from 'lodash'
 import { homedir } from 'os'
 import mkdirp from 'mkdirp'
+import { z } from 'zod'
 
-export type CacheKey = string
+export const CacheKeySchema = z.string()
+
+export type CacheKey = z.infer<typeof CacheKeySchema>
 
 /**
  * Copied because it's not exported

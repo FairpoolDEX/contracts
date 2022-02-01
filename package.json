@@ -27,6 +27,7 @@
     "rebrand:writeClaims:mainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces writeClaims --network mainnet --rewrites ~/rebrand/rewrites.csv --expectations test/expectations/writeClaims.rebrand.ts --out ~/rebrand/balances.json --cache-key rebrand",
     "rebrand:setClaims:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims ~/rebrand/balances.json --cache-key rebrand",
     "rebrand:setClaims:bscmainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bscmainnet --claims ~/rebrand/balances.json --cache-key rebrand",
+    "rebrand:claimMany:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces claimMany --network bsctestnet --claims test/fixtures/claims.csv",
     "rebrand:deployColiToken:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces deployColiToken --network bsctestnet --from-network mainnet --allocations ~/shield-contracts-data/Shield\\ Frozen\\ Wallets\\ -\\ Wallets.csv --expectations test/expectations/deployColiToken.rebrand.ts --cache-key rebrand"
   },
   "engines": {
