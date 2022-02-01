@@ -21,6 +21,15 @@ addDeployment({
   address: '0x1Bb022aB668085C6417B7d7007b0fbD53bACc383',
 })
 
+/**
+ * oldSoftwareDeployer
+ */
+addDeployment({
+  contract: 'BullToken',
+  network: 'bsctestnet',
+  address: '0x4c18040E8E28F2B15d3C936AE81Fca91A22791ba',
+})
+
 addDeployment({
   contract: 'BullToken',
   network: 'bscmainnet',
@@ -44,12 +53,3 @@ addDeployment({
 //     export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0xc378C2d780bf8583CdeC91a0292E3B2B1894F19e
 //   `),
 // })
-
-/**
- * oldSoftwareDeployer
- */
-addDeployment({
-  contract: 'BullToken',
-  network: 'bsctestnet',
-  address: '0x4c18040E8E28F2B15d3C936AE81Fca91A22791ba',
-})
