@@ -6,7 +6,7 @@ import { BullToken } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
-import { claimManyBullToken } from '../../tasks/claimManyBullTokenTask'
+import { claimMany } from '../../tasks/claimManyTask'
 import { BalancesMap, getBalancesFromMap } from '../../util/balance'
 import { Address } from '../../models/Address'
 import { getTestSetClaimsContext } from '../support/context'
@@ -55,7 +55,7 @@ describe('claimBullToken', async () => {
 
   fest('should allow to claim the tokens', async () => {
     await timeTravel(async () => {
-      await claimManyBullToken(bullTokenWithStranger, addresses, ethers)
+      await claimMany(bullTokenWithStranger, addresses, ethers)
       for (let i = 0; i < addresses.length; i++) {
         expect(await bullTokenWithStranger.balanceOf(addresses[i])).to.equal(defaultAmount)
       }

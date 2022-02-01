@@ -1,6 +1,9 @@
 import { Address } from '../../models/Address'
 import { Ethers } from '../../util/types'
 import { BullToken, ColiToken, GenericToken } from '../../typechain-types'
+import { NetworkName } from '../../models/NetworkName'
+import { ensure } from '../../util/ensure'
+import { findDeployment } from '../../data/allDeployments'
 
 export async function getGenericToken(address: Address, ethers: Ethers) {
   return (await ethers.getContractAt('GenericToken', address)) as unknown as GenericToken
@@ -12,4 +15,9 @@ export async function getColiToken(address: Address, ethers: Ethers) {
 
 export async function getBullToken(address: Address, ethers: Ethers) {
   return (await ethers.getContractAt('BullToken', address)) as unknown as BullToken
+}
+
+export async function getBullTokenFromDeployment(networkName: NetworkName, ethers: Ethers) {
+  const deployment = ensure(findDeployment({ contract: 'BullToken', network: networkName }))
+  return getBullToken(deployment.address, ethers)
 }

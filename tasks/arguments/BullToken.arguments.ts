@@ -2,7 +2,9 @@ import { airdropClaimDuration, airdropStageDuration, burnRateDenominator, burnRa
 import { seconds } from '../../util/time'
 import { DateTime } from 'luxon'
 
-const airdropStartTimestamp = DateTime.utc().startOf('day').set({ hour: 13 }).toJSDate().getTime()
+// const airdropStartTimestamp = DateTime.utc().startOf('day').set({ hour: 13 }).toJSDate().getTime()
+
+const airdropStartTimestamp = DateTime.utc().startOf('second').toJSDate().getTime()
 
 export default [
   airdropStartTimestamp / seconds,

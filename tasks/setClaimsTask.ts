@@ -12,19 +12,16 @@ import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { expect } from '../util/expect'
 import { airdropDistributedTokenAmountTotal } from '../test/support/BullToken.helpers'
-import { ensure } from '../util/ensure'
-import { findDeployment } from '../data/allDeployments'
-import { getBullToken } from './util/getToken'
+import { getBullTokenFromDeployment } from './util/getToken'
 import { BullToken } from '../typechain-types'
 import { getOverrides } from '../util/network'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
   const { contractName, contractAddress, claims: claimsFilename, networkName, dry, log, ethers } = context
-  const deployment = ensure(findDeployment({ contract: 'BullToken', network: networkName }))
+  const token = await getBullTokenFromDeployment(networkName, ethers)
   const claims = await getValidatedClaims(claimsFilename)
-  const token = await getBullToken(deployment.address, ethers)
-  await setClaims(token, claims, context)
+  if (!dry) await setClaims(token, claims, context)
   if (dry) logDryRun(log)
 }
 

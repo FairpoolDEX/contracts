@@ -1,6 +1,13 @@
-import { CacheKey } from './cache'
+import { z } from 'zod'
+import { CacheKeySchema } from './cache'
 
-export interface RunnableTaskArguments {
-  cacheKey: CacheKey
-  dry: boolean
+export const RunnableTaskArgumentsSchema = z.object({
+  cacheKey: CacheKeySchema,
+  dry: z.boolean(),
+})
+
+export type RunnableTaskArguments = z.infer<typeof RunnableTaskArgumentsSchema>
+
+export function validateRunnableTaskArguments(args: RunnableTaskArguments): RunnableTaskArguments {
+  return RunnableTaskArgumentsSchema.parse(args)
 }

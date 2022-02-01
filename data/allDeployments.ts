@@ -21,13 +21,15 @@ addDeployment({
   address: '0x1Bb022aB668085C6417B7d7007b0fbD53bACc383',
 })
 
-/**
- * oldSoftwareDeployer
- */
 addDeployment({
   contract: 'BullToken',
   network: 'bsctestnet',
-  address: '0x4c18040E8E28F2B15d3C936AE81Fca91A22791ba',
+  address: '0xf90f44fB0896367242724EbF1BA9e523FD907120',
+  notes: nail(`
+    export BULL_TOKEN_DEPLOYER=0x64D0991Bcc3cD7B6dB859793Fe156704E372663D
+    export BULL_TOKEN_PROXY_ADDRESS=0xf90f44fB0896367242724EbF1BA9e523FD907120
+    export BULL_TOKEN_IMPLEMENTATION_ADDRESS=0xaf510d7ADdb583E2e506DA660Bf49320600211ca
+  `),
 })
 
 addDeployment({
@@ -35,7 +37,7 @@ addDeployment({
   network: 'bscmainnet',
   address: '0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100',
   notes: nail(`
-    # NOTE: ProxyAdmin ownership has been changed to newHardwareDeployer
+    # ProxyAdmin ownership has been changed to newHardwareDeployer
     export BULL_TOKEN_DEPLOYER=0x7DCbeFB3b9A12b58af8759e0eB8Df05656dB911D
     export BULL_TOKEN_PROXY_ADMIN_ADDRESS=0xd197ABdd388f63ce3401dE64CE6794FFFFBF1E30
     export BULL_TOKEN_PROXY_ADDRESS=0xEFB7311cc5d66b19FeD6a19148A3Ecf801e65100
@@ -43,6 +45,20 @@ addDeployment({
   `),
 })
 
+// /**
+//  * oldSoftwareDeployer
+//  * Unclaimed
+//  */
+// addDeployment({
+//   contract: 'BullToken',
+//   network: 'bsctestnet',
+//   address: '0x4c18040E8E28F2B15d3C936AE81Fca91A22791ba',
+// })
+
+// /**
+//  * newSoftwareDeployer
+//  * Unclaimed
+//  */
 // addDeployment({
 //   contract: 'BullToken',
 //   network: 'bsctestnet',
