@@ -1,3 +1,5 @@
+import { upperCase } from 'lodash'
+
 export function nail(str: string): string {
   const spacesAtLineStart = str.match(/\n(\s+)/m)
   if (spacesAtLineStart) {
@@ -11,4 +13,8 @@ export type Stringable = string | {toString: () => string}
 
 export function toString(s: Stringable) {
   return typeof s === 'string' ? s : s.toString()
+}
+
+export function toUpperSnakeCase(str: string) {
+  return upperCase(str).replace(/\s/g, '_')
 }

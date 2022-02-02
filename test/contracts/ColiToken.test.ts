@@ -1,4 +1,4 @@
-import { ethers, upgrades } from 'hardhat'
+import hardhatRuntimeEnvironment, { ethers, upgrades } from 'hardhat'
 import { expect } from '../../util/expect'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
@@ -7,6 +7,13 @@ import { ColiToken } from '../../typechain-types'
 import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { fest } from '../../util/mocha'
+import { getRunnableContext } from '../../util/context'
+import { upgradeContract, UpgradeContractContext } from '../../tasks/upgradeContractTask'
+import { Address } from '../../models/Address'
+import { ContractName } from '../../models/ContractName'
+import { DeployGenericTokenTaskUpgradeableOutput } from '../../tasks/deployContractTask'
+import { impl } from '../../util/todo'
+import { getColiToken } from '../../tasks/util/getToken'
 
 describe('ColiToken', async () => {
 
@@ -474,4 +481,29 @@ describe('ColiToken', async () => {
     })
   })
 
+  fest.skip('Should upgrade to ColiToken', async () => {
+    const ShieldTokenDeployment = await deployShieldToken()
+    const contractAddress = ShieldTokenDeployment.proxyAddress
+    const upgradeColiContext = await getRebrandTestUpgradeContractContext('ShieldToken', contractAddress)
+    const ColiTokenUpgrade = await upgradeContract(upgradeColiContext)
+    const token = await getColiToken(contractAddress, ethers)
+    const name = await token.name()
+    const symbol = await token.symbol()
+    expect(name).to.equal('ColiToken')
+    expect(symbol).to.equal('COLI')
+  })
+
 })
+
+async function getRebrandTestUpgradeContractContext(contractName: ContractName, contractAddress: Address): Promise<UpgradeContractContext> {
+  return getRunnableContext({
+    contractName,
+    contractAddress,
+    cacheKey: 'rebrand',
+    dry: false,
+  }, hardhatRuntimeEnvironment)
+}
+
+async function deployShieldToken(): Promise<DeployGenericTokenTaskUpgradeableOutput> {
+  throw impl()
+}

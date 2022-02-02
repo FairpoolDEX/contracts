@@ -3,7 +3,7 @@ import { Logger } from './log'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { Chunkable } from './chunkable'
 import { pick } from 'lodash'
-import { RunnableTaskArguments } from './task'
+import { RunnableTaskArguments, validateRunnableTaskArguments } from './task'
 import { RunTaskFunction } from 'hardhat/types/runtime'
 import { createFsCache, getFsCachePathForContracts } from './cache'
 import { Cache } from 'cache-manager'
@@ -19,7 +19,7 @@ export interface RunnableContext extends RunnableTaskArguments, HardhatRuntimeEn
 
 export async function getRunnableContext<Args extends RunnableTaskArguments>(args: Args, hre: HardhatRuntimeEnvironment): Promise<RunnableContext & Args> {
   const { ethers, network } = hre
-  const { cacheKey } = args
+  const { cacheKey } = validateRunnableTaskArguments(args)
   const networkName = NetworkNameSchema.parse(network.name)
   const [signer] = await ethers.getSigners()
   const cache = createFsCache({

@@ -1,7 +1,7 @@
 import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { addBalances, writeClaims } from '../util/balance'
-import { Expected, importDefault } from '../util/expectation'
+import { Expected } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Writable } from '../util/writable'
@@ -25,6 +25,7 @@ import { Filename } from '../util/filesystem'
 import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile'
 import { Rewrite } from '../models/Rewrite'
 import { applyRewrites } from '../models/Rewrite/applyRewrites'
+import { importDefault } from '../util/import'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)

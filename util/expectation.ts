@@ -4,13 +4,10 @@ import { Filename } from './filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { sumAmountsOf } from './balance'
+import { getAbsoluteFilename } from './import'
 
-export async function importExpectations(expectationsPath: Filename) {
-  return (await import(`${process.cwd()}/${expectationsPath}`)).expectations
-}
-
-export async function importDefault(filename: Filename) {
-  return (await import(`${process.cwd()}/${filename}`)).default
+export async function importExpectations(filename: Filename) {
+  return (await import(getAbsoluteFilename(filename))).expectations
 }
 
 export function expectBalancesToMatch(expectedBalances: BalanceBN[], actualBalances: BalanceBN[]) {

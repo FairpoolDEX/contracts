@@ -5,7 +5,6 @@ import { getChunkableContext, getRunnableContext, RunnableContext } from '../uti
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
 import { logDryRun } from '../util/dry'
-import { ContractName } from '../util/contract'
 import { Address } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
@@ -15,6 +14,7 @@ import { airdropDistributedTokenAmountTotal } from '../test/support/BullToken.he
 import { getBullTokenFromDeployment } from './util/getToken'
 import { BullToken } from '../typechain-types'
 import { getOverrides } from '../util/network'
+import { ContractName } from '../models/ContractName'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
@@ -52,7 +52,7 @@ async function getValidatedClaims(filename: Filename) {
 }
 
 function validateClaims(claims: BalanceBN[]) {
-  expect(sumAmountsOf(claims)).to.be.lt(airdropDistributedTokenAmountTotal)
+  expect(sumAmountsOf(claims)).to.be.lte(airdropDistributedTokenAmountTotal)
   return claims
 }
 
