@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const ContractNameSchema = z.enum(['ShieldToken', 'ColiToken', 'BullToken', 'MCP', 'Coliquidity'])
+export const ContractNameSchema = z.enum(['ShieldToken', 'ColiToken', 'BullToken', 'GenericToken', 'MCP', 'Coliquidity'])
 
 export type ContractName = z.infer<typeof ContractNameSchema>
 

@@ -12,7 +12,7 @@ import { RunnableTaskArgumentsSchema } from '../util/task'
 import { getRunnableContext } from '../util/context'
 import { logDryRun } from '../util/dry'
 
-export async function claimManyTask(args: claimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getRunnableContext(args, hre)
   const { claimer: claimerAddress, claims: claimsPath, ethers, networkName, log, dry } = context
   const signers = await ethers.getSigners()
@@ -42,8 +42,8 @@ const claimManyBullTokenTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend
   claims: z.string(), // Filename
 })
 
-type claimManyBullTokenTaskArguments = z.infer<typeof claimManyBullTokenTaskArgumentsSchema>
+type ClaimManyBullTokenTaskArguments = z.infer<typeof claimManyBullTokenTaskArgumentsSchema>
 
-function validateClaimManyBullTokenTaskArguments(args: claimManyBullTokenTaskArguments) {
+function validateClaimManyBullTokenTaskArguments(args: ClaimManyBullTokenTaskArguments) {
   return claimManyBullTokenTaskArgumentsSchema.parse(args)
 }

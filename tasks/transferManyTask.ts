@@ -8,11 +8,11 @@ import { expect } from '../util/expect'
 import { map } from 'lodash'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from '../test/support/BullToken.helpers'
 import { network } from 'hardhat'
-import { ContractName } from '../util/contract'
 import { importExpectations } from '../util/expectation'
 import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { getOverrides } from '../util/network'
+import { ContractName } from '../models/ContractName'
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args

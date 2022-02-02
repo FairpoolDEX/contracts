@@ -11,7 +11,7 @@ import { transferManyShieldTokenTask } from './tasks/transferManyShieldTokenTask
 import { addAllocationsShieldTokenTask } from './tasks/addAllocationsShieldTokenTask'
 import { deployBullTokenTask } from './tasks/deployBullTokenTask'
 import { claimManyTask } from './tasks/claimManyTask'
-import { upgradeTokenTask } from './tasks/upgradeTokenTask'
+import { upgradeContractTask } from './tasks/upgradeContractTask'
 import { rollbackBullTokenTask } from './tasks/rollbackBullTokenTask'
 import { deployMCPTask } from './tasks/deployMCPTask'
 import { deployContractTask } from './tasks/deployContractTask'
@@ -261,10 +261,10 @@ task('rollback', 'Change the balances of BullToken back to certain date')
   .addParam('expectations', 'TypeScript file with test expectations')
   .setAction(rollbackBullTokenTask)
 
-task('upgradeToken', 'Upgrade a token contract')
-  .addParam('name', 'Contract name')
-  .addParam('address', 'Contract proxy address')
-  .setAction(upgradeTokenTask)
+task('upgradeContract', 'Upgrade a contract')
+  .addParam('contractName', 'Contract name')
+  .addParam('contractAddress', 'Contract proxy address')
+  .setAction(upgradeContractTask)
 
 task('transferMany', 'Upgrade a token contract')
   .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)

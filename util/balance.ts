@@ -9,6 +9,7 @@ import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, validateBalanceBN, validateBalancesBN } from '../models/BalanceBN'
 import { parseAmountCSV } from '../models/AmountBN/parseAmountCSV'
+import { importDefault } from './import'
 
 export type BalancesMap = { [address: string]: AmountBN }
 
@@ -63,7 +64,7 @@ export function decodeBalances(balances: unknown) {
 }
 
 export async function readBalances(balancesFilename: Filename) {
-  return decodeBalances((await import(balancesFilename.toString())).default)
+  return decodeBalances(await importDefault(balancesFilename))
 }
 
 export function mergeBalance(balances: BalanceBN[], balance: BalanceBN) {
