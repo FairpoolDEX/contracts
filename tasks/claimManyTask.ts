@@ -10,11 +10,11 @@ import { z } from 'zod'
 import { getBullTokenFromDeployment } from './util/getToken'
 import { RunnableTaskArgumentsSchema } from '../util/task'
 import { getRunnableContext } from '../util/context'
-import { logDryRun } from '../util/dry'
+import { Logger, logNoop } from '../util/log'
 
 export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getRunnableContext(args, hre)
-  const { claimer: claimerAddress, claims: claimsPath, ethers, networkName, log, dry } = context
+  const { claimer: claimerAddress, claims: claimsPath, ethers, networkName, log } = context
   const signers = await ethers.getSigners()
   const signer = claimerAddress ? ensure(signers.find(s => s.address === claimerAddress)) : signers[0]
   log(`[INFO] Set claimer to ${signer.address}`)
@@ -22,14 +22,13 @@ export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: 
   log(`[INFO] Read addresses from ${claimsPath}`)
   const token = await getBullTokenFromDeployment(networkName, ethers)
   log(`[INFO] Attached to contract ${token.address}`)
-  if (!dry) await claimMany(token, addresses, ethers, log)
-  if (dry) logDryRun(log)
+  await claimMany(token, addresses, ethers, log)
 }
 
-export async function claimMany(token: Contract, addresses: Address[], ethers: Ethers, log: ((msg: any) => void) | void): Promise<void> {
+export async function claimMany(token: Contract, addresses: Address[], ethers: Ethers, log: Logger = logNoop): Promise<void> {
   if (addresses.length > 300) throw new Error('Can\'t claim if addresses array is longer than 300 elements')
   const tx = await token.claimMany(addresses)
-  log && log(`[INFO] Set ${claimMany.name} transaction ${tx.hash}`)
+  log(`[INFO] Set ${claimMany.name} transaction ${tx.hash}`)
 }
 
 export async function parseAddresses(data: Buffer | string): Promise<Address[]> {

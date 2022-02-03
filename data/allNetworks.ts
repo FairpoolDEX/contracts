@@ -11,6 +11,15 @@ export const findNetwork = getFinder(getNetworkUid, allNetworks)
 
 export const findNetworkByChainId = (chainId: number) => allNetworks.find(n => n.chainId === chainId)
 
+/**
+ * https://hardhat.org/hardhat-network/reference/#config
+ */
+export const hardhat = addEVMNetwork({
+  name: 'hardhat',
+  chainId: 31337,
+  blockGasLimit: 30000000,
+})
+
 export const mainnet = addEVMNetwork({
   name: 'mainnet',
   chainId: 1,

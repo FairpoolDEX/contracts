@@ -1,6 +1,5 @@
 import { Address } from '../models/Address'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { logDryRun } from '../util/dry'
 import { RunnableTaskArguments } from '../util/task'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { AmountBN } from '../models/AmountBN'
@@ -15,10 +14,8 @@ import { ensure } from '../util/ensure'
 
 export async function createPoolViaColiquidityTask(args: CreatePoolViaColiquidityTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getCreatePoolViaColiquidityContext(args, hre)
-  const { dry } = args
   const { log } = context
-  if (!dry) await createPoolViaColiquidity(context)
-  if (dry) logDryRun(log)
+  await createPoolViaColiquidity(context)
 }
 
 export async function createPoolViaColiquidity(context: CreatePoolViaColiquidityContext): Promise<Address> {

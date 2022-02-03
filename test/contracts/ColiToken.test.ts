@@ -1,19 +1,18 @@
-import hardhatRuntimeEnvironment, { ethers, upgrades } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from '../../util/expect'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { ColiToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
+import { allocationsForTest, releaseTime, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { fest } from '../../util/mocha'
-import { getRunnableContext } from '../../util/context'
-import { upgradeContract, UpgradeContractContext } from '../../tasks/upgradeContractTask'
+import { upgradeContract, UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
 import { Address } from '../../models/Address'
 import { ContractName } from '../../models/ContractName'
-import { DeployGenericTokenTaskUpgradeableOutput } from '../../tasks/deployContractTask'
-import { impl } from '../../util/todo'
+import { DeployContractContext, deployUpgradeableContract, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
 import { getColiToken } from '../../tasks/util/getToken'
+import { getTestRunnableContext } from '../support/context'
 
 describe('ColiToken', async () => {
 
@@ -481,29 +480,35 @@ describe('ColiToken', async () => {
     })
   })
 
-  fest.skip('Should upgrade to ColiToken', async () => {
-    const ShieldTokenDeployment = await deployShieldToken()
+  fest('upgradeColiToken', async () => {
+    const deployShieldContext = await getRebrandTestDeployContractContext('ShieldToken')
+    const ShieldTokenDeployment = await deployUpgradeableContract(deployShieldContext)
     const contractAddress = ShieldTokenDeployment.proxyAddress
-    const upgradeColiContext = await getRebrandTestUpgradeContractContext('ShieldToken', contractAddress)
+    const upgradeColiContext = await getRebrandTestUpgradeContractContext('ColiToken', contractAddress)
     const ColiTokenUpgrade = await upgradeContract(upgradeColiContext)
     const token = await getColiToken(contractAddress, ethers)
     const name = await token.name()
     const symbol = await token.symbol()
-    expect(name).to.equal('ColiToken')
+    expect(name).to.equal('Coliquidity Token')
     expect(symbol).to.equal('COLI')
   })
 
 })
 
-async function getRebrandTestUpgradeContractContext(contractName: ContractName, contractAddress: Address): Promise<UpgradeContractContext> {
-  return getRunnableContext({
+async function getRebrandTestDeployContractContext(contractName: ContractName): Promise<DeployContractContext> {
+  return getTestRunnableContext(validateDeployContractTaskArguments({
     contractName,
-    contractAddress,
+    constructorArgsParams: [releaseTime.toString()],
+    verify: false,
     cacheKey: 'rebrand',
-    dry: false,
-  }, hardhatRuntimeEnvironment)
+  }))
 }
 
-async function deployShieldToken(): Promise<DeployGenericTokenTaskUpgradeableOutput> {
-  throw impl()
+async function getRebrandTestUpgradeContractContext(contractName: ContractName, contractAddress: Address): Promise<UpgradeContractContext> {
+  return getTestRunnableContext(validateUpgradeContractTaskArguments({
+    contractName,
+    contractAddress,
+    verify: false,
+    cacheKey: 'rebrand',
+  }))
 }

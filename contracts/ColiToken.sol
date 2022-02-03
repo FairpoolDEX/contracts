@@ -64,6 +64,14 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
     }
 
+    function name() public view virtual override returns (string memory) {
+        return "Coliquidity Token";
+    }
+
+    function symbol() public view virtual override returns (string memory) {
+        return "COLI";
+    }
+
     function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
         require(releaseTime + lockDaysPeriod > block.timestamp, "This lock period is over already");
 

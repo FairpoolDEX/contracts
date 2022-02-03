@@ -9,7 +9,6 @@ import { RunnableTaskArguments } from '../../util/task'
 export async function getTestRunnableTaskArguments(): Promise<RunnableTaskArguments> {
   return {
     cacheKey: '',
-    dry: false,
   }
 }
 
@@ -17,7 +16,6 @@ export async function getTestRunnableContext<Args extends RunnableTaskArguments>
   return {
     ...await getRunnableContext(args, hardhatRuntimeEnvironment),
     log: identity,
-    run: () => Promise.resolve(),
   }
 }
 
@@ -44,7 +42,6 @@ export async function getTestSetClaimsTaskArguments(): Promise<SetClaimsTaskArgu
     ...await getTestRunnableTaskArguments(),
     ...await getTestChunkableTaskArguments(),
     cacheKey: 'rebrand',
-    dry: false,
     chunkSize: 250,
   }
 }

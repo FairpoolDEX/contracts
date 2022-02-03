@@ -15,6 +15,17 @@ export const ShieldMainnet = addDeployment({
   address: '0xd49EFA7BC0D339D74f487959C573d518BA3F8437',
 })
 
+export const ShieldRopsten = addDeployment({
+  contract: 'ShieldToken',
+  network: 'ropsten',
+  address: '0x60bEe47CD5e37496f7acc7ece76f92Ed664b4416',
+  notes: nail(`
+    export SHIELD_TOKEN_DEPLOYER=0x64D0991Bcc3cD7B6dB859793Fe156704E372663D
+    export SHIELD_TOKEN_PROXY_ADDRESS=0x60bEe47CD5e37496f7acc7ece76f92Ed664b4416
+    export SHIELD_TOKEN_IMPLEMENTATION_ADDRESS=0xD75158c70BD9a15c61DE394AA2c81F621eEd6866
+  `),
+})
+
 addDeployment({
   contract: 'BullToken',
   network: 'mainnet',

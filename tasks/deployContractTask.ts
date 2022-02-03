@@ -1,87 +1,103 @@
-import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { getOverrides } from '../util/network'
 import { Address } from '../models/Address'
-import { verify } from '../util/verify'
-import { getProxyCheckerUrl } from '../util/url'
+import { getConstructorArgs, verifyWithWorkaround } from '../util/verifyWithWorkaround'
 import { toUpperSnakeCase } from '../util/string'
+import { RunnableTaskArgumentsSchema } from '../util/task'
+import { z } from 'zod'
+import { getRunnableContext, RunnableContext } from '../util/context'
+import { getProxyCheckerUrl } from '../util/url'
+import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 
-export async function deployContractTask(args: DeployGenericTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployGenericTokenTaskOutput> {
-  const { ethers, upgrades, network, run } = hre
-  const { contract: contractName, upgradeable, constructorArgsModule, constructorArgsParams } = args
-  const [deployer] = await ethers.getSigners()
-  const contractNameEnvVar = toUpperSnakeCase(contractName)
-  const constructorArgs: unknown[] = await run('verify:get-constructor-arguments', {
-    constructorArgsModule,
-    constructorArgsParams,
-  })
-  console.info(`NETWORK = ${network.name}`)
-  console.info(`export ${contractNameEnvVar}_DEPLOYER=${deployer.address}`)
+export async function deployNonUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
+  const context = await getDeployContractContext(args, hre)
+  return deployNonUpgradeableContract(context)
+}
+
+export async function deployUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
+  const context = await getDeployContractContext(args, hre)
+  return deployUpgradeableContract(context)
+}
+
+export async function deployNonUpgradeableContract(context: DeployContractContext): Promise<DeployNonUpgradeableContractOutput> {
+  const { contractName, constructorArgsModule, constructorArgsParams, verify, signer, ethers, network, log, run } = context
 
   const factory = await ethers.getContractFactory(contractName)
-  let addressToVerify: string
+  const contractNameEnvVar = toUpperSnakeCase(contractName)
+  const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
+  log(`NETWORK = ${network.name}`)
+  log(`export ${contractNameEnvVar}_DEPLOYER=${signer.address}`)
 
-  if (upgradeable) {
-    const contract = await upgrades.deployProxy(factory, constructorArgs)
-    await contract.deployed()
-    const proxyAddress = contract.address
-    console.info(`export ${contractNameEnvVar}_PROXY_ADDRESS=${proxyAddress}`) // eslint-disable-line no-console
-    const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
-    console.info(`export ${contractNameEnvVar}_IMPLEMENTATION_ADDRESS=${implementationAddress}`) // eslint-disable-line no-console
-    console.info(`IMPORTANT: Verify proxy manually using ${await getProxyCheckerUrl(proxyAddress, contract.signer)}`)
-    await verify(run, {
-      address: implementationAddress,
-      // constructorArgs not needed since the implementation contract constructor has zero arguments
-    })
-    return { upgradeable, proxyAddress, implementationAddress }
-  } else {
-    const contract = await factory.deploy(...constructorArgs, {
-      ...await getOverrides(deployer),
-      // TODO: Fix "transaction type not supported" when deploying to legacy chains (e.g. BSC)
-      // maxPriorityFeePerGas: BigNumber.from("2500000000"),
-      // maxFeePerGas: BigNumber.from(network.config.gasPrice),
-    })
-    await contract.deployed()
-    const address = contract.address
-    console.info(`export ${contractNameEnvVar}_ADDRESS=${address}`) // eslint-disable-line no-console
-    await verify(run, {
-      address,
-      constructorArgs: constructorArgsModule,
-      constructorArgsParams,
-    })
-    return { upgradeable, address }
-  }
+  const contract = await factory.deploy(...constructorArgs, {
+    ...await getOverrides(signer),
+  })
+  await contract.deployed()
+  const address = contract.address
+  log(`export ${contractNameEnvVar}_ADDRESS=${address}`)
+
+  if (verify) await verifyWithWorkaround(run, {
+    address,
+    constructorArgs: constructorArgsModule,
+    constructorArgsParams,
+  })
+
+  return { address }
+}
+
+export async function deployUpgradeableContract(context: DeployContractContext): Promise<DeployUpgradeableContractOutput> {
+  const { contractName, constructorArgsModule, constructorArgsParams, verify, signer, ethers, upgrades, network, log, run } = context
+
+  const factory = await ethers.getContractFactory(contractName)
+  const contractNameEnvVar = toUpperSnakeCase(contractName)
+  const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
+  log(`NETWORK = ${network.name}`)
+  log(`export ${contractNameEnvVar}_DEPLOYER=${signer.address}`)
+
+  const contract = await upgrades.deployProxy(factory, constructorArgs)
+  await contract.deployed()
+  const proxyAddress = contract.address
+  log(`export ${contractNameEnvVar}_PROXY_ADDRESS=${proxyAddress}`)
+  const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
+  log(`export ${contractNameEnvVar}_IMPLEMENTATION_ADDRESS=${implementationAddress}`)
+  log(`IMPORTANT: Verify proxy manually using ${await getProxyCheckerUrl(proxyAddress, contract.signer)}`)
+
+  if (verify) await verifyWithWorkaround(run, {
+    address: implementationAddress,
+    // constructorArgs not needed since the implementation contract constructor has zero arguments
+  })
+
+  return { proxyAddress, implementationAddress }
+}
+
+const DeployContractTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
+  contractName: z.string(),
+  constructorArgsModule: z.string().optional(),
+  constructorArgsParams: z.array(z.string()).default([]),
+  verify: z.boolean().default(true),
+})
+
+export type DeployContractTaskArguments = z.infer<typeof DeployContractTaskArgumentsSchema>
+
+export function validateDeployContractTaskArguments(args: DeployContractTaskArguments): DeployContractTaskArguments {
+  return DeployContractTaskArgumentsSchema.parse(args)
+}
+
+export interface DeployContractContext extends DeployContractTaskArguments, RunnableContext {
 
 }
 
-interface DeployGenericTokenTaskArguments {
-  contract: string
-  upgradeable: boolean
-  constructorArgsModule?: string
-  constructorArgsParams: string[]
+export async function getDeployContractContext(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment): Promise<DeployContractContext> {
+  return getRunnableContext(validateDeployContractTaskArguments(args), hre)
 }
 
-export type DeployGenericTokenTaskOutput = DeployGenericTokenTaskUpgradeableOutput | DeployGenericTokenTaskNonUpgradeableOutput
-
-export interface DeployGenericTokenTaskUpgradeableOutput {
-  upgradeable: true
+export interface DeployUpgradeableContractOutput {
   proxyAddress: Address
   implementationAddress: Address
 }
 
-export interface DeployGenericTokenTaskNonUpgradeableOutput {
-  upgradeable: false
+export interface DeployNonUpgradeableContractOutput {
   address: Address
 }
-
-/**
- * Deploy Bull token
- * - Modify deployContractTask to support hardware wallets
- * - Deploy from the old deployer address + change ownership
- *  - Faster
- *  - But may need to change it back
- *  - But need to rewrite the claims from old deployer to T deployer (easy)
- */
 
 /**
  * Modify deployContractTask to support hardware wallets

@@ -11,7 +11,6 @@ import { getContract } from '../util/ethers'
 import { isTestnet, NetworkName } from '../models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
-import { DeployGenericTokenTaskOutput } from './deployContractTask'
 import { Allocation, isFinished } from '../models/Allocation'
 import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
@@ -26,10 +25,11 @@ import { expectBalancesOnToken } from '../util/expectBalancesOnToken'
 import { sumAmountsOf } from '../util/balance'
 import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 import { toTokenAmount } from '../test/support/all.helpers'
+import { deployUpgradeableContract } from './deployContractTask'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
-  const { fromNetwork, isPaused, expectations: expectationsPath, dry, networkName: toNetwork, ethers } = context
+  const { fromNetwork, isPaused, expectations: expectationsPath, networkName: toNetwork, ethers } = context
   if (!(isPaused || isTestnet(toNetwork))) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
 
   const fromDeployment = ensure(findDeployment({ contract: 'ShieldToken', network: fromNetwork }))
@@ -57,7 +57,6 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   await expectDeployColiToken(expectations, toToken)
 
   // await rollbackBullToken(fromToken, from, to, poolAddresses, holderAddresses, expectations, ethers, dry, console.info.bind(console))
-  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
 }
 
 async function expectDeployColiToken(expectations: DeployColiTokenExpectationsMap, token: ColiToken) {
@@ -68,16 +67,14 @@ async function expectDeployColiToken(expectations: DeployColiTokenExpectationsMa
 async function deployColiToken(context: DeployColiTokenContext): Promise<ColiToken> {
   const { ethers, run } = context
   const constructorArgsModule = await realpath(`${__dirname}/arguments/ColiToken.arguments.ts`)
-  const result = await run('deployContract', {
-    contract: 'ColiToken',
+  const result = await deployUpgradeableContract({
+    contractName: 'ColiToken',
     constructorArgsModule,
-    upgradeable: true,
-  }) as DeployGenericTokenTaskOutput
-  if (result.upgradeable) {
-    return await getContract(ethers, 'ColiToken', result.proxyAddress) as unknown as ColiToken
-  } else {
-    throw new Error()
-  }
+    constructorArgsParams: [],
+    verify: true,
+    ...context,
+  })
+  return await getContract(ethers, 'ColiToken', result.proxyAddress) as unknown as ColiToken
 }
 
 function expectAllocations(allocations: Allocation[]) {
