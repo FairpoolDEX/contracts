@@ -14,7 +14,7 @@ import { claimManyTask } from './tasks/claimManyTask'
 import { upgradeContractTask } from './tasks/upgradeContractTask'
 import { rollbackBullTokenTask } from './tasks/rollbackBullTokenTask'
 import { deployMCPTask } from './tasks/deployMCPTask'
-import { deployContractTask } from './tasks/deployContractTask'
+import { deployNonUpgradeableContractTask, deployUpgradeableContractTask } from './tasks/deployContractTask'
 import { transferManyTask } from './tasks/transferManyTask'
 import { HardhatUserConfig } from 'hardhat/types'
 import { maxFeePerGas as gasPrice } from './util/gas'
@@ -206,12 +206,25 @@ task('deployMCP', 'Deploy MCP contract')
   .addParam('feeDivisorMin', 'Minimal fee divisor', 100, types.int)
   .setAction(deployMCPTask)
 
-task('deployContract', 'Deploy a contract')
-  .addParam('contract', 'Contract name', undefined, types.string)
-  .addOptionalParam('upgradeable', 'Deploy with upgradeable proxy', false, types.boolean)
+task('deployNonUpgradeableContract', 'Deploy a non-upgradeable contract')
+  .addParam('contractName', 'Contract name', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
-  .setAction(deployContractTask)
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
+  .setAction(deployNonUpgradeableContractTask)
+
+task('deployUpgradeableContract', 'Deploy a non-upgradeable contract')
+  .addParam('contractName', 'Contract name', undefined, types.string)
+  .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
+  .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
+  .setAction(deployUpgradeableContractTask)
+
+task('upgradeContract', 'Upgrade a contract')
+  .addParam('contractName', 'Contract name')
+  .addParam('contractAddress', 'Contract proxy address')
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
+  .setAction(upgradeContractTask)
 
 task('transferManyShieldToken', 'Call transferManyShield for allocations without lockup period')
   .addParam('token', 'SHLD token contract address')
@@ -225,7 +238,6 @@ task('addAllocations', 'Call addAllocations() for allocations with lockup period
   .setAction(addAllocationsShieldTokenTask)
 
 task('writeClaims', 'Call setClaims() on BULL token contract')
-  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
   // .addParam('contractName', 'Contract name', '', types.string)
   // .addParam('contractAddress', 'Contract address', '', types.string)
   // .addParam('nextFolder', 'Folder with CSV files containing next SHLD balances (mult by 3)', '', types.string)
@@ -239,7 +251,6 @@ task('writeClaims', 'Call setClaims() on BULL token contract')
   .setAction(writeClaimsTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')
-  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
   .addParam('claims', 'JSON file with claim balances', '', types.string)
   // .addParam('expectations', 'TypeScript file with test expectations')
   .addParam('chunkSize', 'Number of addresses in a single transaction', 400, types.int)
@@ -252,7 +263,6 @@ task('claimMany', 'Call claimMany() on BULL token contract')
   .setAction(claimManyTask)
 
 task('rollback', 'Change the balances of BullToken back to certain date')
-  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
   .addParam('contractAddress', 'BULL token contract address')
   .addParam('from', 'From block number', undefined, types.int, false)
   .addParam('to', 'To block number', undefined, types.int, false)
@@ -261,13 +271,7 @@ task('rollback', 'Change the balances of BullToken back to certain date')
   .addParam('expectations', 'TypeScript file with test expectations')
   .setAction(rollbackBullTokenTask)
 
-task('upgradeContract', 'Upgrade a contract')
-  .addParam('contractName', 'Contract name')
-  .addParam('contractAddress', 'Contract proxy address')
-  .setAction(upgradeContractTask)
-
 task('transferMany', 'Upgrade a token contract')
-  .addParam('dry', 'Dry-run: display planned actions but don\'t execute them', false, types.boolean, true)
   .addParam('contractName', 'Contract name')
   .addParam('contractAddress', 'Contract address')
   .addParam('balances', 'File with balances (download from blockchain explorer)')

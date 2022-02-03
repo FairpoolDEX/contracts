@@ -84,7 +84,7 @@ export async function rollbackBullToken(token: Contract, from: BlockTag, to: Blo
   }
   // console.info("Flagged events:")
   // console.table(transfersRF.map((t) => Object.assign({}, t, { amount: fromTokenAmount(t.amount) })))
-  if (!dry) {
+  {
     const minConfirmations = 3
 
     // const irrevertableTransferReports = []

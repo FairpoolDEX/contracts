@@ -3,7 +3,6 @@ import { CacheKeySchema } from './cache'
 
 export const RunnableTaskArgumentsSchema = z.object({
   cacheKey: CacheKeySchema,
-  dry: z.boolean(),
 })
 
 export type RunnableTaskArguments = z.infer<typeof RunnableTaskArgumentsSchema>

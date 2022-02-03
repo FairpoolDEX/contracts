@@ -5,7 +5,6 @@ import { Expected } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context'
 import { RunnableTaskArguments } from '../util/task'
 import { Writable } from '../util/writable'
-import { logDryRun } from '../util/dry'
 import { airdropStageDuration, airdropStageMaxCount, airdropStageSuccessCount, airdropStartTimestamp, fromShieldToBull, pausedAt } from '../test/support/BullToken.helpers'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
 import { getClaimsFromBalances } from './util/balance'
@@ -29,14 +28,12 @@ import { importDefault } from '../util/import'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
-  const { rewrites: rewritesPath, expectations: expectationsPath, out, dry } = args
-  const { log } = context
+  const { rewrites: rewritesPath, expectations: expectationsPath, out, log } = context
   const rewrites = await getRewritesFromCSVFile(rewritesPath)
   const validators = await importDefault(expectationsPath)
   const $claims = await getClaimsFromRequests(rewrites, context)
   const claims = await validateWithContext($claims, validators, context)
-  if (!dry) await writeClaims(claims, out)
-  if (dry) logDryRun(log)
+  await writeClaims(claims, out)
 }
 
 // export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, context: WriteClaimsContext) {

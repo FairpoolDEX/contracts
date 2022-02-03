@@ -8,13 +8,18 @@ export const addNetworkExplorer = getInserter('NetworkExplorer', NetworkExplorer
 export const findNetworkExplorer = getFinder(getNetworkExplorerUid, allNetworkExplorers)
 
 addNetworkExplorer({
+  name: 'hardhat',
+  url: 'hardhat://',
+})
+
+addNetworkExplorer({
   name: 'mainnet',
   url: 'https://etherscan.io',
 })
 
 addNetworkExplorer({
   name: 'ropsten',
-  url: 'https://ropsten.etherscan.io/',
+  url: 'https://ropsten.etherscan.io',
 })
 
 addNetworkExplorer({

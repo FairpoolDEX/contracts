@@ -4,7 +4,6 @@ import { BalancesMap, optimizeForGasRefund, readBalances, sumAmountsOf } from '.
 import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
 import { Chunkable } from '../util/chunkable'
 import { RunnableTaskArguments } from '../util/task'
-import { logDryRun } from '../util/dry'
 import { Address } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
@@ -18,11 +17,10 @@ import { ContractName } from '../models/ContractName'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
-  const { contractName, contractAddress, claims: claimsFilename, networkName, dry, log, ethers } = context
+  const { contractName, contractAddress, claims: claimsFilename, networkName, log, ethers } = context
   const token = await getBullTokenFromDeployment(networkName, ethers)
   const claims = await getValidatedClaims(claimsFilename)
-  if (!dry) await setClaims(token, claims, context)
-  if (dry) logDryRun(log)
+  await setClaims(token, claims, context)
 }
 
 export async function setClaims(token: BullToken, claims: BalanceBN[], context: SetClaimsContext): Promise<void> {
@@ -30,7 +28,7 @@ export async function setClaims(token: BullToken, claims: BalanceBN[], context: 
   // const blockGasLimits = { ropsten: 8000000, mainnet: 30000000 }
   // const blockGasLimit = network.name === "ropsten" || network.name === "mainnet" ? blockGasLimits[network.name] : null
   // if (!blockGasLimit) throw new Error("Undefined blockGasLimit")
-  const { chunkSize, dry, log } = context
+  const { chunkSize, log } = context
   const claimsOptimized = optimizeForGasRefund(claims)
   const claimsChunks = chunk(claimsOptimized, chunkSize)
   for (let i = 0; i < claimsChunks.length; i++) {
@@ -40,7 +38,7 @@ export async function setClaims(token: BullToken, claims: BalanceBN[], context: 
     // log(fromPairs(entriesForDisplay))
     const addresses = claimsChunk.map(b => b.address)
     const amounts = claimsChunk.map(b => b.amount)
-    if (!dry) {
+    {
       const tx = await token.setClaims(addresses, amounts, await getOverrides(token.signer))
       log(`TX Hash: ${tx.hash}`)
     }

@@ -1,4 +1,4 @@
-import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { BigNumber, Signer } from 'ethers'
 import { BalancesMap, parseBalancesCSV } from '../util/balance'
 import fs from 'fs'
@@ -13,9 +13,11 @@ import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { getOverrides } from '../util/network'
 import { ContractName } from '../models/ContractName'
+import { RunnableTaskArguments } from '../util/task'
+import { Filename } from '../util/filesystem'
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath, dry } = args
+  const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath } = args
   const { network, ethers } = hre
   const [deployer] = await ethers.getSigners()
   const balancesCSV = fs.readFileSync(balancesPath)
@@ -27,11 +29,10 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const contract = await ContractFactory.attach(contractAddress)
   console.info('Calling transferMany')
   const networkName = NetworkNameSchema.parse(network.name)
-  await transferMany(contract, balances, expectations, 400, networkName, deployer, dry, console.info.bind(console))
-  if (dry) console.info('Dry run completed, no transactions were sent. Remove the \'--dry true\' flag to send transactions.')
+  await transferMany(contract, balances, expectations, 400, networkName, deployer, console.info.bind(console))
 }
 
-export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, dry = false, log?: Logger): Promise<void> {
+export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
@@ -44,10 +45,8 @@ export async function transferMany(contract: any, balances: BalancesMap, expecta
     const addresses = map(entries, 0)
     const amounts = (map(entries, 1) as BigNumber[]).map((amount: BigNumber) => amount.mul(airdropStageShareNumerator).div(airdropStageShareDenominator).mul(airdropRate))
     // totalBULLAmount = amounts.reduce((acc, amount) => acc.add(amount), totalBULLAmount)
-    if (!dry) {
-      const tx = await contract.transferMany(addresses, amounts, await getOverrides(deployer))
-      log && log(`TX Hash: ${tx.hash}`)
-    }
+    const tx = await contract.transferMany(addresses, amounts, await getOverrides(deployer))
+    log && log(`TX Hash: ${tx.hash}`)
   }
 
   // TODO: Ensure balances don't contain smart contract addresses
@@ -55,9 +54,11 @@ export async function transferMany(contract: any, balances: BalancesMap, expecta
   // TODO: Ensure specific balances amounts (smoke test)
 }
 
-interface TransferManyTaskArguments extends TaskArguments {
+interface TransferManyTaskArguments extends RunnableTaskArguments {
   contractName: ContractName
   contractAddress: Address
+  balances: Filename
+  expectations: Filename
 }
 
 export interface TransferManyExpectationsMap {
