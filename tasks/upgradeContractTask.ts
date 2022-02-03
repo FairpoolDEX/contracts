@@ -14,9 +14,11 @@ export async function upgradeContractTask(args: UpgradeContractTaskArguments, hr
 
 export async function upgradeContract(context: UpgradeContractContext) {
   const { contractName, contractAddress, verify, ethers, upgrades, log, run } = context
+  log(`Upgrading ${contractName}`)
   const Token = await ethers.getContractFactory(contractName)
   const token = await upgrades.upgradeProxy(contractAddress, Token)
-  log(`${contractName} upgraded`)
+  log(`Waiting for upgrade TX: ${token.deployTransaction.hash}`)
+  await token.deployTransaction.wait(1)
   const contractNameEnvVar = toUpperSnakeCase(contractName)
   const implementationAddress = await getImplementationAddress(ethers.provider, token.address)
   log(`export ${contractNameEnvVar}_IMPLEMENTATION_ADDRESS=${implementationAddress}`)

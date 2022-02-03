@@ -59,12 +59,15 @@ export async function deployUpgradeableContract(context: DeployContractContext):
   log(`export ${contractNameEnvVar}_PROXY_ADDRESS=${proxyAddress}`)
   const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
   log(`export ${contractNameEnvVar}_IMPLEMENTATION_ADDRESS=${implementationAddress}`)
-  log(`IMPORTANT: Verify proxy manually using ${await getProxyCheckerUrl(proxyAddress, contract.signer)}`)
 
-  if (verify) await verifyWithWorkaround(run, {
-    address: implementationAddress,
-    // constructorArgs not needed since the implementation contract constructor has zero arguments
-  })
+  try {
+    if (verify) await verifyWithWorkaround(run, {
+      address: implementationAddress,
+      // constructorArgs not needed since the implementation contract constructor has zero arguments
+    })
+  } finally {
+    log(`IMPORTANT: Verify proxy manually using ${await getProxyCheckerUrl(proxyAddress, contract.signer)}`)
+  }
 
   return { proxyAddress, implementationAddress }
 }

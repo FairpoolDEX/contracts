@@ -30,6 +30,11 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
+    // NOTE: the following fields must be left in the contract to ensure that the storage layout stays the same between upgrades
+    // anti-sniping bot defense
+    uint256 public burnBeforeBlockNumber;
+    bool public burnBeforeBlockNumberDisabled;
+
     event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime) public initializer {
