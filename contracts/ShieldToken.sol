@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
@@ -30,6 +30,10 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
+    // anti-sniping bot defense
+    uint256 public burnBeforeBlockNumber;
+    bool public burnBeforeBlockNumberDisabled;
+
     event TransferBurned(address indexed wallet, uint256 amount);
 
     function initialize(uint256 _releaseTime) public initializer {
@@ -41,6 +45,9 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         __ERC20Pausable_init_unchained();
 
         setReleaseTime(_releaseTime);
+
+        // explicitly set burnBeforeBlockNumberDisabled to false
+        burnBeforeBlockNumberDisabled = false;
 
         // Mint all supply to the owner
         // no addition minting is available after initialization
@@ -112,6 +119,10 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         frozenWallets[wallet] = frozenWallet;
     }
 
+    // this function returns upper rounded amount of months.
+    // 0 - locked
+    // 1 - unlock initial amount (vesting not available yet)
+    // x... - months since lockup period is over (vesting months == x - 1)
     function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
         uint256 unlockTime = releaseTime + lockDaysPeriod;
 
@@ -143,17 +154,6 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         return totalTransferableAmount;
     }
 
-    function getLockedAmount(address sender) public view returns (uint256) {
-        uint256 unlockedAmount = getUnlockedAmount(sender);
-        return frozenWallets[sender].totalAmount - unlockedAmount;
-    }
-
-    function getTransferableAmount(address sender) public view returns (uint256) {
-        uint256 balance = balanceOf(sender);
-        uint256 lockedAmount = getLockedAmount(sender);
-        return balance - lockedAmount;
-    }
-
     function transferMany(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
         uint256 amountsLength = amounts.length;
         uint256 recipientsLength = recipients.length;
@@ -174,6 +174,11 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
 
             super._transfer(msg.sender, recipient, amount);
         }
+    }
+
+    function getLockedAmount(address sender) public view returns (uint256) {
+        uint256 unlockedAmount = getUnlockedAmount(sender);
+        return frozenWallets[sender].totalAmount - unlockedAmount;
     }
 
     // Transfer control
@@ -201,6 +206,17 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
+        if (isTransferDisabled()) {
+            // anti-sniping bot defense is on
+            // burn tokens instead of transferring them >:]
+            super._burn(sender, amount);
+            emit TransferBurned(sender, amount);
+        } else {
+            super._transfer(sender, recipient, amount);
+        }
+    }
+
     function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
@@ -225,7 +241,27 @@ contract ShieldToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         if (releaseTime > 0) {
             require(releaseTime > block.timestamp, "Can't change after release");
         }
+        require(_releaseTime > block.timestamp, "Release time should be in future");
         releaseTime = _releaseTime;
     }
 
+    // anti-sniping bot defense
+
+    function isTransferDisabled() public view returns (bool) {
+        if (_msgSender() == owner()) {
+            // owner always can transfer
+            return false;
+        }
+        return (!burnBeforeBlockNumberDisabled && (block.number < burnBeforeBlockNumber));
+    }
+
+    function disableTransfers(uint256 blocksDuration) public onlyOwner {
+        require(!burnBeforeBlockNumberDisabled, "Bot defense is disabled");
+        burnBeforeBlockNumber = block.number + blocksDuration;
+    }
+
+    function disableBurnBeforeBlockNumber() public onlyOwner {
+        burnBeforeBlockNumber = 0;
+        burnBeforeBlockNumberDisabled = true;
+    }
 }
