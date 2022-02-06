@@ -8,12 +8,12 @@ import { Address, AddressSchema, validateAddress } from '../models/Address'
 import { ensure } from '../util/ensure'
 import { z } from 'zod'
 import { getBullTokenFromDeployment } from './util/getToken'
-import { RunnableTaskArgumentsSchema } from '../util/task'
-import { getRunnableContext } from '../util/context'
+import { RunnableTaskArgumentsSchema } from '../util/RunnableTaskArguments'
+import { getRunnableContext } from '../util/context/getRunnableContext'
 import { Logger, logNoop } from '../util/log'
 
 export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
-  const context = await getRunnableContext(args, hre)
+  const context = await getClaimManyBullTokenContext(args, hre)
   const { claimer: claimerAddress, claims: claimsPath, ethers, networkName, log } = context
   const signers = await ethers.getSigners()
   const signer = claimerAddress ? ensure(signers.find(s => s.address === claimerAddress)) : signers[0]
@@ -36,13 +36,20 @@ export async function parseAddresses(data: Buffer | string): Promise<Address[]> 
   return uniq(rows.map((row) => validateAddress(row['Address'])))
 }
 
-const claimManyBullTokenTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
+const ClaimManyBullTokenTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
   claimer: AddressSchema.optional(),
   claims: z.string(), // Filename
 })
 
-type ClaimManyBullTokenTaskArguments = z.infer<typeof claimManyBullTokenTaskArgumentsSchema>
+type ClaimManyBullTokenTaskArguments = z.infer<typeof ClaimManyBullTokenTaskArgumentsSchema>
 
 function validateClaimManyBullTokenTaskArguments(args: ClaimManyBullTokenTaskArguments) {
-  return claimManyBullTokenTaskArgumentsSchema.parse(args)
+  return ClaimManyBullTokenTaskArgumentsSchema.parse(args)
+}
+
+async function getClaimManyBullTokenContext(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment) {
+  return {
+    ...validateClaimManyBullTokenTaskArguments(args),
+    ...await getRunnableContext(args, hre),
+  }
 }

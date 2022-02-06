@@ -500,7 +500,6 @@ async function getRebrandTestDeployContractContext(contractName: ContractName): 
     contractName,
     constructorArgsParams: [releaseTime.toString()],
     verify: false,
-    cacheKey: 'rebrand',
   }))
 }
 
@@ -509,6 +508,5 @@ async function getRebrandTestUpgradeContractContext(contractName: ContractName, 
     contractName,
     contractAddress,
     verify: false,
-    cacheKey: 'rebrand',
   }))
 }

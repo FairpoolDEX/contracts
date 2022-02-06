@@ -4,7 +4,6 @@ import { Ethers } from '../../util/types'
 import { BalanceBN, validateBalanceBN } from '../../models/BalanceBN'
 import { getGenericToken } from './getToken'
 import { getTransfersPaginatedCached } from './getTransfers'
-import { RunnableContext } from '../../util/context'
 import { unwrapSmartContractBalancesAtBlockTag } from './unwrapSmartContractBalancesAtBlockTag'
 import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
@@ -14,6 +13,7 @@ import { seqMap } from '../../util/promise'
 import { getCacheKey } from '../../util/cache'
 import { isZeroBalance } from '../../util/balance'
 import { Cache } from 'cache-manager'
+import { CachedRunnableContext } from '../../util/context/getCachedContext'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)
@@ -22,8 +22,8 @@ export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, cont
   return uniq(transfers.map(t => t.to))
 }
 
-export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, contractAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
-  const { ethers, cache } = context
+export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, contractAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
+  const { cache, ethers } = context
   const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers, cache)
   const addressesPaginated = chunk(addresses, maxRequestsPerSecond / 2)
   const balances = flatten(await seqMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTagCached(addressPage, blockTag, contractAddress, ethers, cache)))

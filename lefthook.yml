@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint-code:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: yarn lint:code {staged_files}
+    lint-markdown-text:
+      glob: "*.md"
+      run: yarn lint:markdown:text {staged_files} && git update-index -g
+    lint-markdown-links:
+      glob: "*.md"
+      run: yarn lint:markdown:links {all_files} # lint all files, because renames may introduce broken links
+    test:
+      run: yarn test
+
+#    TODO: Re-enable when type errors are fixed in typechain and ethers
+#    typecheck:
+#      glob: "*.{ts,tsx}"
+#      run: yarn typecheck

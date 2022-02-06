@@ -5,16 +5,18 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky install",
+    "postinstall": "lefthook install",
     "build": "yarn clean && yarn compile",
     "clean": "FEES=20:1 hardhat clean --show-stack-traces",
     "compile": "FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat compile --show-stack-traces",
     "typecheck": "tsc --noEmit",
     "fork": "FEES=20:1 hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_MAINNET_API_KEY",
-    "lint": "yarn lint:code && yarn lint:markdown",
-    "lint:code": "solhint --fix contracts/*.sol && eslint .",
-    "lint:markdown": "markdownlint --fix --ignore node_modules **/*.md",
-    "format": "prettier --check \"contracts/**/*.sol\" \"**/*.ts\" \"**/*.md\" \"**/*.yml\"",
+    "lint:all": "yarn lint:code:all && yarn lint:markdown:all",
+    "lint:code": "eslint --fix --ignore-path .gitignore --max-warnings=0",
+    "lint:code:all": "yarn lint:code .",
+    "lint:markdown:all": "yarn lint:markdown:text . && yarn lint:markdown:links .",
+    "lint:markdown:text": "markdownlint --fix --ignore-path .gitignore",
+    "lint:markdown:links": "remark --use remark-validate-links --use remark-lint-no-dead-urls --ignore-path .gitignore -q -f",
     "test": "FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test",
     "test:watch": "nodemon -x 'FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat --show-stack-traces test'",
     "coverage": "FEES=20:1 yarn build && FEES=20:1 hardhat coverage --temp artifacts",
@@ -93,6 +95,7 @@
     "zod": "^3.11.6"
   },
   "devDependencies": {
+    "@arkweid/lefthook": "^0.7.7",
     "@types/chai": "^4.2.20",
     "@types/chai-as-promised": "^7.1.4",
     "@types/debug": "^4.1.7",
@@ -106,6 +109,9 @@
     "eslint-plugin-import": "^2.25.2",
     "hardhat-dependency-compiler": "^1.1.1",
     "markdownlint": "^0.22.0",
-    "markdownlint-cli": "^0.26.0"
+    "markdownlint-cli": "^0.26.0",
+    "remark-cli": "^10.0.1",
+    "remark-lint-no-dead-urls": "^1.1.0",
+    "remark-validate-links": "^11.0.2"
   }
 }

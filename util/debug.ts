@@ -6,7 +6,7 @@ export function getDebug(filename: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function debug(filename: string, func: Function, ...args: [any, ...any[]]) {
+export function debug(filename: string, func: Function, ...args: [unknown, ...unknown[]]) {
   const d = getDebug(filename).extend(func.name)
   return d.apply(d, args)
 }

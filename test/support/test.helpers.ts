@@ -38,11 +38,11 @@ export async function getLatestBlockTimestamp(ethers: Ethers) {
   return (await getLatestBlock(ethers)).timestamp
 }
 
-export async function getSnapshot(params: any[] = []) {
+export async function getSnapshot(params: unknown[] = []) {
   return ethers.provider.send('evm_snapshot', params)
 }
 
-export async function revertToSnapshot(params: any[] = []) {
+export async function revertToSnapshot(params: unknown[] = []) {
   return ethers.provider.send('evm_revert', params)
 }
 

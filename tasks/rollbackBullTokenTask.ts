@@ -15,6 +15,7 @@ import { getTransfersPaginatedCached } from './util/getTransfers'
 import { Transfer as Tr } from '../models/Transfer'
 import { expectBalancesAreEqual } from '../models/BalanceBN/expectBalancesAreEqual'
 import { createFsCache } from '../util/cache'
+import { Logger } from '../util/log'
 
 type FlaggedTransfer = Tr & {
   type: FlaggedTransferType
@@ -52,7 +53,7 @@ export async function splitFlaggedTransfers(flaggedTransfers: FlaggedTransfer[])
   }
 }
 
-export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: ((...msg: any) => void) | void): Promise<void> {
+export async function rollbackBullToken(token: Contract, from: BlockTag, to: BlockTag, poolAddresses: Address[], holderAddresses: Address[], expectations: RollbackBullTokenExpectationsMap, ethers: Ethers, dry = false, info: Logger): Promise<void> {
   const cache = createFsCache()
   const transfers = await getTransfersPaginatedCached(token, from, to, cache)
   const blockNumbers = map(transfers, 'blockNumber')
@@ -154,7 +155,7 @@ export async function expectBalancesMatchExpectations(token: Contract, expectati
 
 export async function rollbackBullTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { token: tokenAddress, from, to, pools: poolAddressesString, holders: holderAddressesPath, expectations: expectationsPath, dry } = args
-  const { ethers, network } = hre
+  const { ethers } = hre
   console.info(`Attaching to contract ${tokenAddress}`)
   const Token = await ethers.getContractFactory('BullToken')
   const token = await Token.attach(tokenAddress)

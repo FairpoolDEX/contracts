@@ -2,8 +2,8 @@ import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { addBalances, writeClaims } from '../util/balance'
 import { Expected } from '../util/expectation'
-import { getRunnableContext, RunnableContext } from '../util/context'
-import { RunnableTaskArguments } from '../util/task'
+import { getRunnableContext, RunnableContext } from '../util/context/getRunnableContext'
+import { RunnableTaskArguments } from '../util/RunnableTaskArguments'
 import { Writable } from '../util/writable'
 import { airdropStageDuration, airdropStageMaxCount, airdropStageSuccessCount, airdropStartTimestamp, fromShieldToBull, pausedAt } from '../test/support/BullToken.helpers'
 import { getERC20BalancesAtBlockTagPaginated } from './util/getERC20Data'
@@ -25,6 +25,7 @@ import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile
 import { Rewrite } from '../models/Rewrite'
 import { applyRewrites } from '../models/Rewrite/applyRewrites'
 import { importDefault } from '../util/import'
+import { CachedContext, CachedTaskArguments, getCachedContext } from '../util/context/getCachedContext'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -57,17 +58,18 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
 
 export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
 
-interface WriteClaimsTaskArguments extends RunnableTaskArguments, Writable, Expected {
+interface WriteClaimsTaskArguments extends RunnableTaskArguments, CachedTaskArguments, Writable, Expected {
   rewrites: Filename
 }
 
-export interface WriteClaimsContext extends WriteClaimsTaskArguments, RunnableContext {
+export interface WriteClaimsContext extends WriteClaimsTaskArguments, CachedContext, RunnableContext {
 
 }
 
 export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<WriteClaimsContext> {
   return {
     ...args,
+    ...await getCachedContext(args, hre),
     ...await getRunnableContext(args, hre),
   }
 }
@@ -113,3 +115,8 @@ function setJordanClaims(claims: BalanceBN[], from: Address) {
   const $claims = concat(claims, [balanceBN(to, zero)])
   return moveBalances($claims, from, to, amount)
 }
+
+/**
+ * Using a large number because the transfers & balances at specific blocks are static data (can be persisted indefinitely)
+ */
+export const writeClaimsTaskCacheTtl = Number.MAX_SAFE_INTEGER

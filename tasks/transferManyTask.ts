@@ -13,8 +13,9 @@ import { Address } from '../models/Address'
 import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { getOverrides } from '../util/network'
 import { ContractName } from '../models/ContractName'
-import { RunnableTaskArguments } from '../util/task'
+import { RunnableTaskArguments } from '../util/RunnableTaskArguments'
 import { Filename } from '../util/filesystem'
+import { ColiToken } from '../typechain-types'
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath } = args
@@ -26,13 +27,13 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const balances = await parseBalancesCSV(balancesCSV)
   console.info(`Attaching to ${contractName} contract at ${contractAddress}`)
   const ContractFactory = await hre.ethers.getContractFactory(contractName)
-  const contract = await ContractFactory.attach(contractAddress)
+  const contract = await ContractFactory.attach(contractAddress) as unknown as ColiToken
   console.info('Calling transferMany')
   const networkName = NetworkNameSchema.parse(network.name)
   await transferMany(contract, balances, expectations, 400, networkName, deployer, console.info.bind(console))
 }
 
-export async function transferMany(contract: any, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, log?: Logger): Promise<void> {
+export async function transferMany(contract: ColiToken, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
