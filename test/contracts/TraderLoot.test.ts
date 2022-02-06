@@ -37,7 +37,7 @@ xdescribe('TraderLoot', async function () {
 
   let now: Date
 
-  let snapshot: any
+  let snapshot: unknown
 
   const debug = $debug(this.title)
 

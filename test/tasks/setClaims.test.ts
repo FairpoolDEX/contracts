@@ -11,7 +11,7 @@ import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../
 import { getTestSetClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext, writeClaimsTaskCacheTtl } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20BalanceForAddressAtBlockTagCached, getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
@@ -20,12 +20,12 @@ import { findDeployment } from '../../data/allDeployments'
 import { CS, KS, marketing, newHardwareDeployer, NFTradePool, oldSoftwareDeployer } from '../../data/allAddresses'
 import validators, { getJordanBalanceOfShieldToken, getKSAmountFromBullToken } from '../expectations/writeClaims.rebrand'
 import { validateWithContext } from '../../util/validator'
-import { createFsCache, getFsCachePathForContracts } from '../../util/cache'
-import { getRunnableContext } from '../../util/context'
+import { getRunnableContext } from '../../util/context/getRunnableContext'
 import { unwrapNFTradeBalanceAtBlockTag } from '../../tasks/util/unwrapSmartContractBalancesAtBlockTag'
 import { airdropStage3 } from '../../data/allBlocks'
 import { validateRewrites } from '../../models/Rewrite'
 import { tmpdir } from 'os'
+import { getCachedContext } from '../../util/context/getCachedContext'
 
 describe('setClaimsBullToken', async () => {
 
@@ -223,13 +223,11 @@ async function getAmountFromBullToken(address: Address, context: WriteClaimsCont
 }
 
 async function getRebrandTestWriteClaimsContext(): Promise<WriteClaimsContext> {
-  const args = { cacheKey: 'rebrand', dry: true }
+  const args = { cacheKey: 'rebrand', cacheTtl: writeClaimsTaskCacheTtl }
   return {
     ...await getRunnableContext(args, hardhatRuntimeEnvironment),
+    ...await getCachedContext(args, hardhatRuntimeEnvironment),
     networkName: 'mainnet',
-    cache: createFsCache({
-      path: getFsCachePathForContracts('/rebrand'),
-    }),
     out: `${tmpdir()}/testWriteClaims.json`,
     rewrites: '',
     expectations: '',

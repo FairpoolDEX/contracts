@@ -1,8 +1,6 @@
 import { z } from 'zod'
-import { CacheKeySchema } from './cache'
 
 export const RunnableTaskArgumentsSchema = z.object({
-  cacheKey: CacheKeySchema,
 })
 
 export type RunnableTaskArguments = z.infer<typeof RunnableTaskArgumentsSchema>

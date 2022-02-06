@@ -1,5 +1,4 @@
 import { BalanceBN } from '../../models/BalanceBN'
-import { RunnableContext } from '../../util/context'
 import { addBalances, BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
 import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
@@ -20,6 +19,7 @@ import { getGenericToken } from './getToken'
 import { AmountBN } from '../../models/AmountBN'
 import { zero } from '../../util/bignumber'
 import { expect } from '../../util/expect'
+import { CachedRunnableContext } from '../../util/context/getCachedContext'
 
 /** NOTES
  * Some smart contracts are multisigs, so the user can, technically, move the tokens
@@ -31,13 +31,13 @@ import { expect } from '../../util/expect'
  * NFTrade staking contract
  * Implement a function from locker smart contract address to locked user balances?
  */
-export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[], blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
+export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[], blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
   const balancesPerContract = await parMap(balances, unwrapSmartContractBalanceAtBlockTag, blockTag, tokenAddress, context)
   return addBalances(flatten(balancesPerContract))
 }
 
-export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
-  const { cacheKey, signer, networkName, ethers } = context
+export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
+  const { signer, networkName, ethers } = context
   const { address } = balance
   const type = await getAddressType(address, context)
   const balances = await unwrapSmartContractBalanceAtBlockTagByType(type, balance, signer.address, blockTag, tokenAddress, context)
@@ -45,7 +45,7 @@ export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, b
   return balances
 }
 
-async function unwrapSmartContractBalanceAtBlockTagByType(type: AddressType, balance: BalanceBN, deployerAddress: string, blockTag: string | number, tokenAddress: string, context: RunnableContext) {
+async function unwrapSmartContractBalanceAtBlockTagByType(type: AddressType, balance: BalanceBN, deployerAddress: string, blockTag: string | number, tokenAddress: string, context: CachedRunnableContext) {
   switch (type) {
     case Human:
       return [balance]
@@ -62,7 +62,7 @@ async function unwrapSmartContractBalanceAtBlockTagByType(type: AddressType, bal
   }
 }
 
-async function unwrapUniswapV2PairBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
+async function unwrapUniswapV2PairBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
   const { ethers, cache } = context
   const { address: uniswapPairAddress, amount: uniswapPairAmount } = balance
   const liquidityProviderBalances = await getERC20BalancesAtBlockTagPaginated(blockTag, uniswapPairAddress, context)
@@ -73,7 +73,7 @@ async function unwrapUniswapV2PairBalanceAtBlockTag(balance: BalanceBN, blockTag
   }))
 }
 
-export async function unwrapNFTradeBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: RunnableContext): Promise<BalanceBN[]> {
+export async function unwrapNFTradeBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
   const { ethers, cache } = context
   const token = await getGenericToken(tokenAddress, ethers)
   const transfers = await getTransfersPaginatedCached(token, deployedAt, blockTag, cache)
@@ -94,7 +94,7 @@ export async function unwrapNFTradeBalanceAtBlockTag(balance: BalanceBN, blockTa
   return getBalancesFromMap(balanceMap)
 }
 
-async function getAddressType(address: string, context: RunnableContext): Promise<AddressType> {
+async function getAddressType(address: string, context: CachedRunnableContext): Promise<AddressType> {
   const { networkName, ethers, cache, log } = context
   const code = await getCodeCached(ethers, cache, address)
   if (isContract(code)) {

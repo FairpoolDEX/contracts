@@ -1,9 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
 import { BalancesMap, optimizeForGasRefund, readBalances, sumAmountsOf } from '../util/balance'
-import { getChunkableContext, getRunnableContext, RunnableContext } from '../util/context'
-import { Chunkable } from '../util/chunkable'
-import { RunnableTaskArguments } from '../util/task'
+import { getRunnableContext, RunnableContext } from '../util/context/getRunnableContext'
+import { RunnableTaskArguments } from '../util/RunnableTaskArguments'
 import { Address } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
@@ -14,6 +13,7 @@ import { getBullTokenFromDeployment } from './util/getToken'
 import { BullToken } from '../typechain-types'
 import { getOverrides } from '../util/network'
 import { ContractName } from '../models/ContractName'
+import { Chunked, getChunkedContext } from '../util/context/getChunkedContext'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
@@ -63,7 +63,7 @@ export interface SetClaimsExpectationsMap {
   totalAmount: AmountBN,
 }
 
-export interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunkable {
+export interface SetClaimsTaskArguments extends RunnableTaskArguments, Chunked {
   contractName: ContractName
   contractAddress: Address
   claims: Filename
@@ -80,6 +80,6 @@ export async function getSetClaimsContext(args: SetClaimsTaskArguments, hre: Har
   return {
     ...args,
     ...await getRunnableContext(args, hre),
-    ...await getChunkableContext(args, hre),
+    ...await getChunkedContext(args, hre),
   }
 }

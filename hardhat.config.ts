@@ -20,7 +20,7 @@ import { HardhatUserConfig } from 'hardhat/types'
 import { maxFeePerGas as gasPrice } from './util/gas'
 import { mnemonic } from './util/config'
 import { setClaimsTask } from './tasks/setClaimsTask'
-import { writeClaimsTask } from './tasks/writeClaimsTask'
+import { writeClaimsTask, writeClaimsTaskCacheTtl } from './tasks/writeClaimsTask'
 // import 'longjohn'
 import { hours, minutes } from './util/time'
 import { getJsonRpcUrl } from './util/ethereum'
@@ -210,20 +210,17 @@ task('deployNonUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addParam('contractName', 'Contract name', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
-  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(deployNonUpgradeableContractTask)
 
 task('deployUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addParam('contractName', 'Contract name', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
-  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(deployUpgradeableContractTask)
 
 task('upgradeContract', 'Upgrade a contract')
   .addParam('contractName', 'Contract name')
   .addParam('contractAddress', 'Contract proxy address')
-  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(upgradeContractTask)
 
 task('transferManyShieldToken', 'Call transferManyShield for allocations without lockup period')
@@ -248,13 +245,13 @@ task('writeClaims', 'Call setClaims() on BULL token contract')
   .addParam('out', 'Filename for writing the balances', undefined, types.string)
   .addParam('expectations', 'TypeScript file with test expectations')
   .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
+  .addParam('cacheTtl', 'Cache ttl (in seconds)', writeClaimsTaskCacheTtl, types.int)
   .setAction(writeClaimsTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('claims', 'JSON file with claim balances', '', types.string)
   // .addParam('expectations', 'TypeScript file with test expectations')
   .addParam('chunkSize', 'Number of addresses in a single transaction', 400, types.int)
-  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .setAction(setClaimsTask)
 
 task('claimMany', 'Call claimMany() on BULL token contract')
