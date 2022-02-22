@@ -9,14 +9,14 @@ export const addDeployment = getInserter('Deployment', DeploymentSchema, getDepl
 
 export const findDeployment = getFinder(getDeploymentUid, allDeployments)
 
-export const ShieldMainnet = addDeployment({
-  contract: 'ShieldToken',
+export const ColiMainnet = addDeployment({
+  contract: 'ColiToken',
   network: 'mainnet',
   address: '0xd49EFA7BC0D339D74f487959C573d518BA3F8437',
 })
 
-export const ShieldRopsten = addDeployment({
-  contract: 'ShieldToken',
+export const ColiRopsten = addDeployment({
+  contract: 'ColiToken',
   network: 'ropsten',
   address: '0x60bEe47CD5e37496f7acc7ece76f92Ed664b4416',
   notes: nail(`

@@ -8,7 +8,7 @@ import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expect
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
 import { share, sumBigNumbers, zero } from '../../util/bignumber'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
-import { ShieldMainnet } from '../../data/allDeployments'
+import { ColiMainnet } from '../../data/allDeployments'
 import { Address } from '../../models/Address'
 import { Transfer } from '../../models/Transfer'
 import { AmountBN } from '../../models/AmountBN'
@@ -118,7 +118,7 @@ async function getEddyBalance(): Promise<AmountBN> {
 async function getTotalBalanceFromTransfersCSV(address: Address, date: Date) {
   if (isBullSellerAddress(address)) return zero
   const totalBalanceFromBull = await getBullBalanceAt(address, airdropDistributionDates[0])
-  const transfers = await getTransfersFromCSVFile(shieldDecimals, ShieldMainnet.address, address, date)
+  const transfers = await getTransfersFromCSVFile(shieldDecimals, ColiMainnet.address, address, date)
   const balancesAtDistributionDates = await getBalancesAtDistributionDates(address, transfers)
   const totalBalanceFromShield = fromShieldToBull(sumBigNumbers(balancesAtDistributionDates))
   return totalBalanceFromBull.add(totalBalanceFromShield)
