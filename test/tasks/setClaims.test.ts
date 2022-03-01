@@ -11,7 +11,7 @@ import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../
 import { getTestSetClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
-import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromShieldToken, getDistributionDates, WriteClaimsContext, writeClaimsTaskCacheTtl } from '../../tasks/writeClaimsTask'
+import { getClaimsFromBullToken, getClaimsFromRequests, getClaimsFromColiToken, getDistributionDates, WriteClaimsContext, writeClaimsTaskCacheTtl } from '../../tasks/writeClaimsTask'
 import { fest, long } from '../../util/mocha'
 import { expectBalancesToMatch, expectTotalAmount } from '../../util/expectation'
 import { getERC20BalanceForAddressAtBlockTagCached, getERC20HolderAddressesAtBlockTag } from '../../tasks/util/getERC20Data'
@@ -154,10 +154,10 @@ describe('setClaimsBullToken', async () => {
     expectTotalAmount(bullTotalSupply_2022_01_16.sub(unwrapSmartContractLuft), claimsFromBullToken)
   })
 
-  long(getClaimsFromShieldToken.name, async () => {
+  long(getClaimsFromColiToken.name, async () => {
     const context = await getRebrandTestWriteClaimsContext()
     const claimsFromBullToken = await getClaimsFromBullToken(context)
-    const claimsFromShieldToken = await getClaimsFromShieldToken(context)
+    const claimsFromShieldToken = await getClaimsFromColiToken(context)
     const sumClaimsFromBullToken = sumAmountsOf(claimsFromBullToken)
     const sumClaimsFromShieldToken = sumAmountsOf(claimsFromShieldToken)
     /**
@@ -194,7 +194,7 @@ describe('setClaimsBullToken', async () => {
     const context = await getRebrandTestWriteClaimsContext()
     const { cache, ethers } = context
     const blockTag = airdropStage3.number
-    const shield = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
+    const shield = ensure(findDeployment({ contract: 'ColiToken', network: context.networkName }))
     const balance = await getERC20BalanceForAddressAtBlockTagCached(NFTradePool, blockTag, shield.address, ethers, cache)
     const balances = await unwrapNFTradeBalanceAtBlockTag(balance, blockTag, shield.address, context)
     const everyBalanceIsPositive = balances.every(b => b.amount.gte(0))

@@ -32,7 +32,7 @@ export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hr
   const { fromNetwork, isPaused, expectations: expectationsPath, networkName: toNetwork, ethers } = context
   if (!(isPaused || isTestnet(toNetwork))) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
 
-  const fromDeployment = ensure(findDeployment({ contract: 'ShieldToken', network: fromNetwork }))
+  const fromDeployment = ensure(findDeployment({ contract: 'ColiToken', network: fromNetwork }))
   const fromToken = await getContract(ethers, 'ColiToken', fromDeployment.address) as unknown as ColiToken
   const toToken = await deployColiToken(context)
   // const pauseTx = await pauseContract(fromToken, true)
