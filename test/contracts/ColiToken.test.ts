@@ -481,7 +481,7 @@ describe('ColiToken', async () => {
   })
 
   fest('upgradeColiToken', async () => {
-    const deployShieldContext = await getRebrandTestDeployContractContext('ShieldToken')
+    const deployShieldContext = await getRebrandTestDeployContractContext('ColiToken')
     const ShieldTokenDeployment = await deployUpgradeableContract(deployShieldContext)
     const contractAddress = ShieldTokenDeployment.proxyAddress
     const upgradeColiContext = await getRebrandTestUpgradeContractContext('ColiToken', contractAddress)

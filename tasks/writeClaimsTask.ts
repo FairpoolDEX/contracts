@@ -35,6 +35,8 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   const $claims = await getClaimsFromRequests(rewrites, context)
   const claims = await validateWithContext($claims, validators, context)
   await writeClaims(claims, out)
+  // const claimsReplaced = claims.map(c => ({ ...c, amount: zero }))
+  // await writeClaims(claimsReplaced, out)
 }
 
 // export async function getClaimsFromFiles(nextFolder: Filename, prevFolder: Filename, retroFolder: Filename, blacklistFolder: Filename, context: WriteClaimsContext) {
@@ -76,7 +78,7 @@ export async function getWriteClaimsContext(args: WriteClaimsTaskArguments, hre:
 
 export async function getClaimsFromRequests(rewrites: Rewrite[], context: WriteClaimsContext) {
   const claimsFromBullToken = await getClaimsFromBullToken(context)
-  const claimsFromShieldToken = await getClaimsFromShieldToken(context)
+  const claimsFromShieldToken = await getClaimsFromColiToken(context)
   let claims: BalanceBN[] = []
   claims = addBalances(concat(claimsFromBullToken, claimsFromShieldToken))
   claims = addBalances(setJordanClaims(claims, oldSoftwareDeployer))
@@ -89,8 +91,8 @@ export async function getClaimsFromBullToken(context: WriteClaimsContext) {
   return getERC20BalancesAtBlockTagPaginated(pausedAt + 1, deployment.address, context)
 }
 
-export async function getClaimsFromShieldToken(context: WriteClaimsContext) {
-  const deployment = ensure(findDeployment({ contract: 'ShieldToken', network: context.networkName }))
+export async function getClaimsFromColiToken(context: WriteClaimsContext) {
+  const deployment = ensure(findDeployment({ contract: 'ColiToken', network: context.networkName }))
   const blockNumbers = await getDistributionBlockNumbers()
   const balancesByDate = await seqMap(blockNumbers, blockNumber => getERC20BalancesAtBlockTagPaginated(blockNumber, deployment.address, context))
   const balances = addBalances(flatten(balancesByDate))
