@@ -34,9 +34,9 @@
     "deploy:bull:bscmainnet": "FEES=5:1 hardhat deployUpgradeableContract --contract-name BullToken --constructor-args-module tasks/arguments/BullToken.test.arguments.ts --network bscmainnet",
     "rebrand:writeClaims:mainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces writeClaims --network mainnet --rewrites ~/rebrand/rewrites.csv --expectations test/expectations/writeClaims.rebrand.ts --out ~/rebrand/claims.json --cache-key rebrand",
     "rebrand:writeClaimsToZero:mainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces writeClaimsToZero --network mainnet --rewrites ~/rebrand/rewrites.csv --expectations test/expectations/writeClaims.rebrand.ts --out ~/rebrand/claims.json --cache-key rebrand",
-    "rebrand:setClaims:bsctestnet:allToDeployer": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims test/fixtures/claims.allToDeployer.json --cache-key rebrand",
-    "rebrand:setClaims:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims ~/rebrand/claims.json --cache-key rebrand",
-    "rebrand:setClaims:bscmainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bscmainnet --claims ~/rebrand/claims.json --cache-key rebrand",
+    "rebrand:setClaims:bsctestnet:allToDeployer": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims test/fixtures/claims.allToDeployer.json",
+    "rebrand:setClaims:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims ~/rebrand/claims.json",
+    "rebrand:setClaims:bscmainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bscmainnet --claims ~/rebrand/claims.json",
     "rebrand:claimMany:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces claimMany --network bsctestnet --claims test/fixtures/claims.csv",
     "rebrand:deployColiToken:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces deployColiToken --network bsctestnet --from-network mainnet --allocations ~/shield-contracts-data/Shield\\ Frozen\\ Wallets\\ -\\ Wallets.csv --expectations test/expectations/deployColiToken.rebrand.ts --cache-key rebrand"
   },
