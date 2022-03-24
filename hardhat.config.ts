@@ -28,6 +28,7 @@ import { deployColiTokenTask } from './tasks/deployColiTokenTask'
 import { bscmainnet, bsctestnet, mainnet, ropsten } from './data/allNetworks'
 import { Network } from './models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
+import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -234,19 +235,21 @@ task('addAllocations', 'Call addAllocations() for allocations with lockup period
   .addParam('allocations', 'JSON with allocations')
   .setAction(addAllocationsShieldTokenTask)
 
-task('writeClaims', 'Call setClaims() on BULL token contract')
-  // .addParam('contractName', 'Contract name', '', types.string)
-  // .addParam('contractAddress', 'Contract address', '', types.string)
-  // .addParam('nextFolder', 'Folder with CSV files containing next SHLD balances (mult by 3)', '', types.string)
-  // .addParam('prevFolder', 'Folder with CSV files containing prev SHLD balances (to set their claims to 0 if they don\'t hold SHLD anymore)', '', types.string)
-  // .addParam('retroFolder', 'Folder with CSV files containing next SHLD balances (mult by 1)', '', types.string)
-  // .addParam('blacklistFolder', 'Folder with CSV files containing blacklist SHLD balances (to set their claims to 0 always)', '', types.string)
+task('writeClaims', 'Write claims for the BULL token contract')
   .addParam('rewrites', 'CSV with address rewrites', undefined, types.string)
   .addParam('out', 'Filename for writing the balances', undefined, types.string)
   .addParam('expectations', 'TypeScript file with test expectations')
   .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
   .addParam('cacheTtl', 'Cache ttl (in seconds)', writeClaimsTaskCacheTtl, types.int)
   .setAction(writeClaimsTask)
+
+task('writeClaimsToZero', 'Write claims for the BULL token contract')
+  .addParam('rewrites', 'CSV with address rewrites', undefined, types.string)
+  .addParam('out', 'Filename for writing the balances', undefined, types.string)
+  .addParam('expectations', 'TypeScript file with test expectations')
+  .addParam('cacheKey', 'Cache key (should be unique for each run group)', undefined, types.string)
+  .addParam('cacheTtl', 'Cache ttl (in seconds)', writeClaimsTaskCacheTtl, types.int)
+  .setAction(writeClaimsToZeroTask)
 
 task('setClaims', 'Call setClaims() on BULL token contract')
   .addParam('claims', 'JSON file with claim balances', '', types.string)

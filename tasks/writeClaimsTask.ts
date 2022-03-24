@@ -60,7 +60,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
 
 export type WriteClaimsValidator = ContextualValidator<BalanceBN[], WriteClaimsContext>
 
-interface WriteClaimsTaskArguments extends RunnableTaskArguments, CachedTaskArguments, Writable, Expected {
+export interface WriteClaimsTaskArguments extends RunnableTaskArguments, CachedTaskArguments, Writable, Expected {
   rewrites: Filename
 }
 
