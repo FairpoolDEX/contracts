@@ -1,7 +1,7 @@
 import { z } from 'zod'
+import { getDuplicatesRefinement } from '../util/zod'
 import { NetworkNameSchema } from './NetworkName'
 import { NetworkVMTypeSchema } from './NetworkVM'
-import { toUid } from './Uid'
 
 export const NetworkSchema = z.object({
   name: NetworkNameSchema,
@@ -10,16 +10,25 @@ export const NetworkSchema = z.object({
   vm: NetworkVMTypeSchema,
 })
 
+export const NetworksSchema = z.array(NetworkSchema)
+  .superRefine(getDuplicatesRefinement('Network', parseNetworkUid))
+
+export const NetworkUidSchema = NetworkSchema.pick({
+  name: true,
+})
+
 export type Network = z.infer<typeof NetworkSchema>
 
-export function validateNetwork(network: Network) {
+export type NetworkUid = z.infer<typeof NetworkUidSchema>
+
+export function parseNetwork(network: Network): Network {
   return NetworkSchema.parse(network)
 }
 
-export function getNetworkUid(network: Pick<Network, 'name'>): string {
-  return toUid(network, 'name')
+export function parseNetworks(networks: Network[]): Network[] {
+  return NetworksSchema.parse(networks)
 }
 
-export function getNetworkChainIdUid(network: Pick<Network, 'chainId'>): string {
-  return toUid(network, 'chainId')
+export function parseNetworkUid(networkUid: NetworkUid): NetworkUid {
+  return NetworkUidSchema.parse(networkUid)
 }

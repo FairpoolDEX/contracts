@@ -1,13 +1,13 @@
-import { Deployment, DeploymentSchema, getDeploymentUid } from '../models/Deployment'
+import { Deployment, DeploymentSchema, parseDeploymentUid } from '../models/Deployment'
 import { getFinder, getInserter } from '../util/zod'
 import { BullToken } from '../models/ContractName'
 import { nail } from '../util/string'
 
 export const allDeployments: Deployment[] = []
 
-export const addDeployment = getInserter('Deployment', DeploymentSchema, getDeploymentUid, allDeployments)
+export const addDeployment = getInserter('Deployment', DeploymentSchema, parseDeploymentUid, allDeployments)
 
-export const findDeployment = getFinder(getDeploymentUid, allDeployments)
+export const findDeployment = getFinder(parseDeploymentUid, allDeployments)
 
 export const ColiMainnet = addDeployment({
   contract: 'ColiToken',

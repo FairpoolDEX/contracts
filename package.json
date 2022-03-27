@@ -38,7 +38,9 @@
     "rebrand:setClaims:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bsctestnet --claims ~/rebrand/claims.json",
     "rebrand:setClaims:bscmainnet": "FEES=5:1 DEBUG=app:* hardhat --show-stack-traces setClaims --network bscmainnet --claims ~/rebrand/claims.json",
     "rebrand:claimMany:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces claimMany --network bsctestnet --claims test/fixtures/claims.csv",
-    "rebrand:deployColiToken:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces deployColiToken --network bsctestnet --from-network mainnet --allocations ~/shield-contracts-data/Shield\\ Frozen\\ Wallets\\ -\\ Wallets.csv --expectations test/expectations/deployColiToken.rebrand.ts --cache-key rebrand"
+    "rebrand:deployColiToken:bsctestnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces deployColiToken --network bsctestnet --from-network mainnet --allocations ~/shield-contracts-data/Shield\\ Frozen\\ Wallets\\ -\\ Wallets.csv --expectations test/expectations/deployColiToken.rebrand.ts --cache-key rebrand",
+    "lte:writeTotals:round1:mainnet": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces writeTotals --network mainnet --addressables /tmp/submissions.csv --timestamp 2022-03-24T07:00:00Z --out /tmp/totals.json",
+    "lte:writeTotals:round1:mainnet:test": "FEES=20:1 DEBUG=app:* hardhat --show-stack-traces writeTotals --network mainnet --addressables /tmp/submissions.test.csv --timestamp 2022-03-24T07:00:00Z --out /tmp/totals.json"
   },
   "engines": {
     "node": "^16.13.0"

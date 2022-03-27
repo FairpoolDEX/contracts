@@ -1,13 +1,13 @@
-import { getNetworkUid, Network, NetworkSchema } from '../models/Network'
+import { Network, NetworkSchema, parseNetworkUid } from '../models/Network'
 import { getFinder, getInserter } from '../util/zod'
 
 export const allNetworks: Network[] = []
 
-export const addNetwork = getInserter('Network', NetworkSchema, getNetworkUid, allNetworks)
+export const addNetwork = getInserter('Network', NetworkSchema, parseNetworkUid, allNetworks)
 
 export const addEVMNetwork = (network: Omit<Network, 'vm'>) => addNetwork({ ...network, vm: 'EVM' })
 
-export const findNetwork = getFinder(getNetworkUid, allNetworks)
+export const findNetwork = getFinder(parseNetworkUid, allNetworks)
 
 export const findNetworkByChainId = (chainId: number) => allNetworks.find(n => n.chainId === chainId)
 

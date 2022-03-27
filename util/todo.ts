@@ -1,6 +1,9 @@
-// allows to implement partial functions & leave a message for another developer
 export function todo<V>(value: V, message?: string): V {
   return value
+}
+
+export function stub<V>(message?: string): V {
+  throw impl(message)
 }
 
 export function impl(message?: string) {
