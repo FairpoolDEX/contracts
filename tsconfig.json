@@ -5,7 +5,6 @@
     "strict": true,
     "baseUrl": ".",
     "skipLibCheck": true,
-    "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "outDir": "dist",
     "resolveJsonModule": true,

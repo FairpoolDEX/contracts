@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { writeClaims } from '../util/balance'
+import { writeBalances } from '../util/balance'
 import { validateWithContext } from '../util/validator'
 import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile'
 import { importDefault } from '../util/import'
@@ -19,7 +19,7 @@ export async function writeClaimsToZeroTask(args: WriteClaimsTaskArguments, hre:
   const claimsFromValidation = await validateWithContext(claimsFromRequests, validators, context)
   const claimsFiltered = claimsFromValidation.filter(c => !exceptions.includes(c.address))
   const claims = await setToZero(claimsFiltered)
-  await writeClaims(claims, out)
+  await writeBalances(claims, out)
 }
 
 async function setToZero(claims: BalanceBN[]): Promise<BalanceBN[]> {

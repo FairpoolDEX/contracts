@@ -29,6 +29,8 @@ import { bscmainnet, bsctestnet, mainnet, ropsten } from './data/allNetworks'
 import { Network } from './models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
+import { writeTotalsTask } from './tasks/writeTotalsTask'
+import { timestamp } from './util/hardhat'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -105,7 +107,7 @@ export const config: HardhatUserConfig = {
       timeout: 2 * minutes,
     }),
     bscmainnet: fromNetwork(bscmainnet, {
-      url: 'https://bsc-dataseed.binance.org/',
+      url: getJsonRpcUrl('bscmainnet'), // 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
@@ -113,7 +115,7 @@ export const config: HardhatUserConfig = {
       timeout: 24 * hours,
     }),
     bsctestnet: fromNetwork(bsctestnet, {
-      url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+      url: getJsonRpcUrl('bsctestnet'), // 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
@@ -277,3 +279,9 @@ task('transferMany', 'Upgrade a token contract')
   .addParam('balances', 'File with balances (download from blockchain explorer)')
   .addParam('expectations', 'TypeScript file with test expectations')
   .setAction(transferManyTask)
+
+task('writeTotals', 'Write totals for specific addresses')
+  .addParam('addressables', 'CSV with addresses', undefined, types.string)
+  .addParam('timestamp', 'Timestamp as number or string in ISO format', undefined, timestamp)
+  .addParam('out', 'Filename for writing the totals', undefined, types.string)
+  .setAction(writeTotalsTask)

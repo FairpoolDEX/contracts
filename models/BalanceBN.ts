@@ -1,13 +1,12 @@
 import { z } from 'zod'
 import { Address, AddressSchema } from './Address'
-import { BigNumber } from 'ethers'
 import { AmountBN, AmountBNSchema } from './AmountBN'
 import { getDuplicatesRefinement } from '../util/zod'
 import { toUidFromSchema, Uid } from './Uid'
 
 export const BalanceBNSchema = z.object({
   address: AddressSchema,
-  amount: z.preprocess((arg: unknown) => BigNumber.from(arg), AmountBNSchema),
+  amount: AmountBNSchema,
 })
 
 export const BalancesBNSchema = z.array(BalanceBNSchema).superRefine(getDuplicatesRefinement('BalanceBN', getBalanceBNUid))

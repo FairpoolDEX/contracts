@@ -1,9 +1,8 @@
 import { z } from 'zod'
-import { ensure } from '../util/ensure'
-import { AddressSchema } from './Address'
-import { NetworkName, NetworkNameSchema } from './NetworkName'
+import { getDuplicatesRefinement } from '../util/zod'
 import { ContractNameSchema } from './ContractName'
-import { toUid } from './Uid'
+import { NetworkNameSchema } from './NetworkName'
+import { AddressSchema } from './Address'
 
 export const DeploymentSchema = z.object({
   contract: ContractNameSchema,
@@ -12,16 +11,26 @@ export const DeploymentSchema = z.object({
   notes: z.string().optional(),
 })
 
+export const DeploymentsSchema = z.array(DeploymentSchema)
+  .superRefine(getDuplicatesRefinement('Deployment', parseDeploymentUid))
+
+export const DeploymentUidSchema = DeploymentSchema.pick({
+  contract: true,
+  network: true,
+})
+
 export type Deployment = z.infer<typeof DeploymentSchema>
 
-export function validateDeployment(deployment: Deployment) {
+export type DeploymentUid = z.infer<typeof DeploymentUidSchema>
+
+export function parseDeployment(deployment: Deployment): Deployment {
   return DeploymentSchema.parse(deployment)
 }
 
-export function getDeploymentUid(deployment: Pick<Deployment, 'contract' | 'network'>): string {
-  return toUid(deployment, 'contract', 'network')
+export function parseDeployments(deployments: Deployment[]): Deployment[] {
+  return DeploymentsSchema.parse(deployments)
 }
 
-export function getDeploymentByNetwork(deployments: Deployment[], network: NetworkName) {
-  return ensure(deployments.find(d => d.network === network))
+export function parseDeploymentUid(deploymentUid: DeploymentUid): DeploymentUid {
+  return DeploymentUidSchema.parse(deploymentUid)
 }

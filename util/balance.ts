@@ -48,7 +48,7 @@ export function encodeBalances(balances: BalanceBN[]) {
   return balances.map(b => [b.address, b.amount.toString()])
 }
 
-export async function writeClaims(balances: BalanceBN[], out: Filename) {
+export async function writeBalances(balances: BalanceBN[], out: Filename) {
   return writeFile(out, JSON.stringify(encodeBalances(balances)))
 }
 
