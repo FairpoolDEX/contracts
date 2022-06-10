@@ -31,6 +31,7 @@ import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
 import { writeTotalsTask } from './tasks/writeTotalsTask'
 import { timestamp } from './util/hardhat'
+import { addVestingTypesTask } from './tasks/addVestingTypes'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -285,3 +286,8 @@ task('writeTotals', 'Write totals for specific addresses')
   .addParam('timestamp', 'Timestamp as number or string in ISO format', undefined, timestamp)
   .addParam('out', 'Filename for writing the totals', undefined, types.string)
   .setAction(writeTotalsTask)
+
+task('addVestingTypes', 'Add vesting types')
+  .addParam('vestingTypes', 'TS file with vesting types', undefined, types.string)
+  .addParam('contractAddress', 'Token contract address', undefined, types.string)
+  .setAction(addVestingTypesTask)

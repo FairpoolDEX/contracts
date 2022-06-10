@@ -30,7 +30,7 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
-    function initialize(string memory name_, string memory symbol_, uint totalSupply_, address owner_, uint256 releaseTime_) public initializer {
+    function initialize(string memory name_, string memory symbol_, uint totalSupply_, uint256 releaseTime_) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -38,8 +38,7 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         __Pausable_init_unchained();
         __ERC20Pausable_init_unchained();
 
-        transferOwnership(owner_);
-        _mint(owner_, totalSupply_);
+        _mint(owner(), totalSupply_);
         setReleaseTime(releaseTime_);
     }
 
