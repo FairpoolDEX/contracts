@@ -48,8 +48,15 @@ export function encodeBalances(balances: BalanceBN[]) {
   return balances.map(b => [b.address, b.amount.toString()])
 }
 
-export async function writeBalances(balances: BalanceBN[], out: Filename) {
+export async function writeBalancesJSON(balances: BalanceBN[], out: Filename) {
   return writeFile(out, JSON.stringify(encodeBalances(balances)))
+}
+
+export async function writeBalancesCSV(balances: BalanceBN[], out: Filename) {
+  const balancesCSV = balances.map(b => ([b.address, b.amount.toString()]))
+  const lines = balancesCSV.map(t => t.join(','))
+  const content = lines.join('\n')
+  return writeFile(out, content)
 }
 
 export function decodeBalances(balances: unknown) {

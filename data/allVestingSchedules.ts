@@ -1,7 +1,7 @@
 import { getVestingScheduleUid, VestingSchedule, VestingScheduleSchema } from '../models/VestingSchedule'
 import { getFinder, getInserter } from '../util/zod'
 import { HundredPercent } from '../models/SmartContractPercentage'
-import { VestingType } from '../models/VestingType'
+import { VestingName } from '../models/VestingName.js'
 import { getReleasePeriodsElapsed } from '../test/support/ColiToken.helpers'
 import { ensure } from '../util/ensure'
 
@@ -72,16 +72,16 @@ function getPartial<Key, Value>(map: Map<Key, Value>, key: Key) {
 
 export function getFinishedVestingTypes() {
   const periods = getReleasePeriodsElapsed(new Date())
-  const map = new Map<number, VestingType[]>([
+  const map = new Map<number, VestingName[]>([
     [8, withDefaultFinishedVestingTypes(['Private'])],
   ])
   return getPartial(map, periods)
 }
 
-export function withDefaultFinishedVestingTypes(types: VestingType[]): VestingType[] {
+export function withDefaultFinishedVestingTypes(types: VestingName[]): VestingName[] {
   return getDefaultFinishedVestingTypes().concat(types)
 }
 
-export function getDefaultFinishedVestingTypes(): VestingType[] {
+export function getDefaultFinishedVestingTypes(): VestingName[] {
   return allVestingSchedules.filter(s => s.initialUnlock?.eq(HundredPercent)).map(s => s.type)
 }

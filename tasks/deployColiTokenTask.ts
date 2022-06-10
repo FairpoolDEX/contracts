@@ -15,7 +15,7 @@ import { Allocation, isFinished } from '../models/Allocation'
 import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
 import { flatten, uniq } from 'lodash'
-import { VestingType } from '../models/VestingType'
+import { VestingName } from '../models/VestingName.js'
 import { findVestingSchedule } from '../data/allVestingSchedules'
 import { getOverrides } from '../util/network'
 import { expect } from '../util/expect'
@@ -91,7 +91,7 @@ async function getAllocations(context: DeployColiTokenContext) {
 }
 
 async function setAllocations(allocations: Allocation[], token: ColiToken) {
-  const types = uniq<VestingType>(allocations.map(a => a.type))
+  const types = uniq<VestingName>(allocations.map(a => a.type))
   const groupedTxes = await Promise.all(types.map(async (type) => {
     const allocationsByType = allocations.filter(a => a.type === type)
     const addresses = allocationsByType.map(a => a.address)

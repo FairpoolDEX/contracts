@@ -10,7 +10,7 @@ import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
 import { days, seconds } from '../../util/time'
 import { validateBlockNumber } from '../../models/BlockNumber'
-import { BullToken } from '../../typechain-types'
+import { Contract } from 'ethers'
 
 export const bullDecimals = 18
 
@@ -60,7 +60,7 @@ export const claims: Claims = {
   '0x3a10757948BeAeA4e0D76bF7adc676A17E35ACc5': toTokenAmountString('400'),
 }
 
-export async function getClaims(token: BullToken, claimers: string[]): Promise<Claims> {
+export async function getClaims(token: Contract, claimers: string[]): Promise<Claims> {
   const _claims: Claims = {}
   for (let i = 0; i < claimers.length; i++) {
     _claims[claimers[i]] = (await token.claims(claimers[i])).toString()
