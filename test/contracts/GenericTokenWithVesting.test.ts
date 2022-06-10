@@ -12,7 +12,7 @@ import { Address } from '../../models/Address'
 import { ContractName } from '../../models/ContractName'
 import { DeployContractContext, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
 import { getTestRunnableContext } from '../support/context'
-import { toTokenVestingType } from '../support/Vesting.helpers'
+import { addVestingTypes } from '../support/Vesting.helpers'
 
 describe('GenericTokenWithVesting', async () => {
 
@@ -26,16 +26,14 @@ describe('GenericTokenWithVesting', async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
     const tokenFactory = await ethers.getContractFactory('GenericTokenWithVesting')
-    token = (await upgrades.deployProxy(tokenFactory, ['Generic', 'GEN', toTokenAmount(1000000), owner.address, releaseTimeTest])) as unknown as GenericTokenWithVesting
+    token = (await upgrades.deployProxy(tokenFactory, ['Generic', 'GEN', toTokenAmount(1000000), releaseTimeTest])) as unknown as GenericTokenWithVesting
     await token.deployed()
 
     nonOwnerToken = token.connect(nonOwner)
 
     // add vesting types
-    for (const type of vestingTypesForTest) {
-      const { monthlyRate, initialRate, lockDaysPeriod } = toTokenVestingType(type)
-      await token.addVestingType(monthlyRate, initialRate, lockDaysPeriod)
-    }
+    const vestingTypes = vestingTypesForTest
+    await addVestingTypes(token, vestingTypes)
 
     // add allocations
     for (const [vestingTypeIndex, allocation] of Object.entries(allocationsForTest)) {
