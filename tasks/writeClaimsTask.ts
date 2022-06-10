@@ -1,6 +1,6 @@
 import { concat, flatten, range } from 'lodash'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { addBalances, writeBalances } from '../util/balance'
+import { addBalances, writeBalancesJSON } from '../util/balance'
 import { Expected } from '../util/expectation'
 import { getRunnableContext, RunnableContext } from '../util/context/getRunnableContext'
 import { RunnableTaskArguments } from '../util/RunnableTaskArguments'
@@ -34,7 +34,7 @@ export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: Hardh
   const validators = await importDefault(expectationsPath)
   const $claims = await getClaimsFromRequests(rewrites, context)
   const claims = await validateWithContext($claims, validators, context)
-  await writeBalances(claims, out)
+  await writeBalancesJSON(claims, out)
   // const claimsReplaced = claims.map(c => ({ ...c, amount: zero }))
   // await writeClaims(claimsReplaced, out)
 }

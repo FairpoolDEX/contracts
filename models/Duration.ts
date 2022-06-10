@@ -8,3 +8,5 @@ export const BigDurationSchema = z.instanceof(BigNumber).refine(value => !value 
 export type Duration = z.infer<typeof DurationSchema>;
 
 export type BigDuration = z.infer<typeof BigDurationSchema>;
+
+export const toSeconds = (duration: Duration) => Math.trunc(duration / 1000)

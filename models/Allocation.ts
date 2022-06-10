@@ -2,13 +2,13 @@ import { z } from 'zod'
 import { toUidFromSchema, Uid } from './Uid'
 import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
-import { VestingTypeSchema } from './VestingType'
+import { VestingNameSchema } from './VestingName'
 import { getFinishedVestingTypes } from '../data/allVestingSchedules'
 
 export const AllocationSchema = z.object({
   address: AddressSchema,
   amount: AmountBNSchema,
-  type: VestingTypeSchema,
+  type: VestingNameSchema,
 })
 
 export const AllocationUidSchema = AllocationSchema.pick({

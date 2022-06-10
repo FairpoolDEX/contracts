@@ -2,7 +2,9 @@ import { toTokenAmount } from './all.helpers'
 import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
 import { validateBlockNumber } from '../../models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
-import { days, seconds } from '../../util/time'
+import { days, month, seconds } from '../../util/time'
+import { parseVestingTypes } from '../../models/VestingType'
+import { scaledShare, vestingTypeRateScale } from './Vesting.helpers'
 
 export const shieldDecimals = 18
 
@@ -17,6 +19,65 @@ export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 export const deployedAt = validateBlockNumber(12463796)
 
 export const releaseTimeTest = dateToTimestampSeconds(new Date('2022.01.01 13:00:00 UTC'))
+
+export const vestingTypesForTest = parseVestingTypes([
+  {
+    // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
+    name: 'Seed',
+    initialShare: scaledShare(5 * vestingTypeRateScale),
+    monthlyShare: scaledShare(105556),
+    cliff: month,
+  },
+  {
+    // Private:	10% at listing, then equal parts of 15% over total of 6 months
+    name: 'Private',
+    initialShare: scaledShare(10 * vestingTypeRateScale),
+    monthlyShare: scaledShare(15 * vestingTypeRateScale),
+    cliff: 0,
+  },
+  {
+    // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
+    name: 'Advisory',
+    initialShare: scaledShare(4 * vestingTypeRateScale),
+    monthlyShare: scaledShare(4 * vestingTypeRateScale),
+    cliff: month,
+  },
+  {
+    // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
+    name: 'Team',
+    initialShare: scaledShare(8 * vestingTypeRateScale),
+    monthlyShare: scaledShare(76667),
+    cliff: 12 * month,
+  },
+  {
+    // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
+    name: 'Development',
+    initialShare: scaledShare(3 * vestingTypeRateScale),
+    monthlyShare: scaledShare(26945),
+    cliff: 6 * month,
+  },
+  {
+    // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
+    name: 'Marketing',
+    initialShare: scaledShare(2 * vestingTypeRateScale),
+    monthlyShare: scaledShare(20417),
+    cliff: 3 * month,
+  },
+  {
+    // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
+    name: 'Liquidity mining',
+    initialShare: scaledShare(8 * vestingTypeRateScale),
+    monthlyShare: scaledShare(76667),
+    cliff: 0,
+  },
+  {
+    // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
+    name: 'General Reserve',
+    initialShare: scaledShare(2 * vestingTypeRateScale),
+    monthlyShare: scaledShare(16334),
+    cliff: 6 * month,
+  },
+])
 
 // @note: All values is set without decimals
 export const allocationsForTest: { [index: string]: { [index: string]: number } } = {

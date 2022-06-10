@@ -16,75 +16,31 @@ struct FrozenWallet {
     bool scheduled;
 }
 
-/**
- * IMPORTANT: monthlyRate and initialRate have different scales:
- * - monthlyRate has scale = 10000
- * - initialRate has scale = 1
- *
- * For example, if vesting has 12.7337% monthly unlock and 5% initial unlock, then
- * - monthlyRate = 12.7337 * 10000 = 127337
- * - initialRate = 5 * 1 = 5
- *
- * Yes, it's weird.
- */
 struct VestingType {
-    uint256 monthlyRate; // Important: see note above
+    uint256 monthlyRate;
+    //Should be set in percents with 4 trailing digits. i.e. 12.7337% value should be 127337
     uint256 initialRate;
     uint256 lockDaysPeriod;
 }
 
 
-contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
+contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable {
     // a single wallet can belong only to a single vesting type
     mapping(address => FrozenWallet) public frozenWallets;
     VestingType[] public vestingTypes;
     uint256 public releaseTime;
 
-    // NOTE: the following fields must be left in the contract to ensure that the storage layout stays the same between upgrades
-    // anti-sniping bot defense
-    uint256 public burnBeforeBlockNumber;
-    bool public burnBeforeBlockNumberDisabled;
-
-    event TransferBurned(address indexed wallet, uint256 amount);
-
-    function initialize(uint256 _releaseTime) public initializer {
+    function initialize(string memory name_, string memory symbol_, uint totalSupply_, address owner_, uint256 releaseTime_) public initializer {
         // https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ERC20_init_unchained("Coliquidity Token", "COLI");
+        __ERC20_init_unchained(name_, symbol_);
         __Pausable_init_unchained();
         __ERC20Pausable_init_unchained();
 
-        setReleaseTime(_releaseTime);
-
-        // Mint all supply to the owner
-        // no addition minting is available after initialization
-        _mint(owner(), 969_163_000 * 10 ** 18);
-
-        // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
-        vestingTypes.push(VestingType(105556, 5, 30 days));
-        // Private:	10% at listing, then equal parts of 15% over total of 6 months
-        vestingTypes.push(VestingType(150000, 10, 0));
-        // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
-        vestingTypes.push(VestingType(40000, 4, 30 days));
-        // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
-        vestingTypes.push(VestingType(76667, 8, 12 * 30 days));
-        // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
-        vestingTypes.push(VestingType(26945, 3, 6 * 30 days));
-        // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
-        vestingTypes.push(VestingType(20417, 2, 3 * 30 days));
-        // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
-        vestingTypes.push(VestingType(76667, 8, 0));
-        // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
-        vestingTypes.push(VestingType(16334, 2, 6 * 30 days));
-    }
-
-    function name() public view virtual override returns (string memory) {
-        return "Coliquidity Token";
-    }
-
-    function symbol() public view virtual override returns (string memory) {
-        return "COLI";
+        transferOwnership(owner_);
+        _mint(owner_, totalSupply_);
+        setReleaseTime(releaseTime_);
     }
 
     function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
@@ -101,7 +57,6 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-        uint256 addressesLength = addresses.length;
 
         for (uint256 i = 0; i < addressesLength; i++) {
             address _address = addresses[i];

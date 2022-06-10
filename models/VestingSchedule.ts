@@ -1,10 +1,10 @@
 import { z } from 'zod'
 import { toUidFromSchema, Uid } from './Uid'
-import { VestingTypeSchema } from './VestingType'
+import { VestingNameSchema } from './VestingName'
 import { SmartContractPercentageSchema } from './SmartContractPercentage'
 
 export const VestingScheduleSchema = z.object({
-  type: VestingTypeSchema,
+  type: VestingNameSchema,
   smartContractIndex: z.number().optional(),
   initialUnlock: SmartContractPercentageSchema.optional(),
 })

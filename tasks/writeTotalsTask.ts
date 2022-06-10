@@ -1,12 +1,11 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { writeBalances } from '../util/balance'
+import { writeBalancesCSV } from '../util/balance'
 import { getRunnableContext, RunnableContext } from '../util/context/getRunnableContext'
 import { RunnableTaskArguments } from '../util/RunnableTaskArguments'
 import { Writable } from '../util/writable'
 import { BalanceBN, validateBalanceBN } from '../models/BalanceBN'
 import { Filename } from '../util/filesystem'
 import { Address } from '../models/Address'
-import { getAddressesFromCSVFile } from '../models/Address/getAddressesFromCSVFile'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
 import { NetworkName, validateNetworkName } from '../models/NetworkName'
 import { parMap } from '../util/promise'
@@ -20,43 +19,29 @@ import { TokenInfo } from '../models/TokenInfo'
 import { getProvider } from '../util/hardhat'
 import { Timestamp } from '../util/types'
 import { sum } from '../test/support/all.helpers'
-import { impl } from '../util/todo'
-import { expect } from '../util/expect'
-
-const FeDEAddress = '0x86322fA388F9A9f7438A6639f00457b6915FFeDE'
-
-function validateTotalsRound1(addresses: Address[], totals: BalanceBN[]) {
-  expect(totals).to.have.length(addresses.length)
-  const FeDE = ensure(totals.find(t => t.address === FeDEAddress))
-  return totals
-}
-
-const validateTotals = (timestamp: number, addresses: Address[], totals: BalanceBN[]) => {
-  switch (timestamp) {
-    case round1StartedAtTimestamp:
-      return validateTotalsRound1(addresses, totals)
-    default:
-      throw impl()
-  }
-}
+import { getSubmissionsFromCSVFile } from '../models/LearnToEarn/Submission/getSubmissionsFromCSVFile'
+import { stub } from '../util/todo'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
   const { timestamp } = context
   const networks = ['mainnet', 'bscmainnet'].map(validateNetworkName)
-  const { addressables: addressablesPath, out, log } = context
-  const addresses = await getAddressesFromCSVFile(addressablesPath)
-  const $totals = await getTotals(addresses, networks, context)
-  const totals = validateTotals(timestamp, addresses, $totals)
-  totals.map(t => ([t.address, t.amount.toString()])).map(t => t.join(',')).forEach(t => console.log(t))
-  await writeBalances(totals, out)
-  // const claimsReplaced = claims.map(c => ({ ...c, amount: zero }))
-  // await writeClaims(claimsReplaced, out)
+  const { submissions: submissionsPath, out, log } = context
+  const submissions = await getSubmissionsFromCSVFile(submissionsPath)
+  const playerAddresses = submissions.map(s => s.playerAddress)
+  const leaderAddresses = submissions.map(s => s.leaderAddress)
+  const playerTotals = await getPlayerTotals(playerAddresses, networks, context)
+  const teamTotals = await getTeamTotals(leaderAddresses, networks, context)
+  // TODO:
+  // const winningLeaderAddress = getWinningTeam(teamTotals)
+  // const filteredPlayerTotals = playerTotals.filter(t => t.leaderAddress = winningLeaderAddress)
+  // const winningPlayerAddress = getWinningPlayer(filteredPlayerTotals)
+  await writeBalancesCSV(playerTotals, out)
 }
 
 export interface WriteTotalsTaskArguments extends RunnableTaskArguments, Writable {
   timestamp: Timestamp
-  addressables: Filename
+  submissions: Filename
 }
 
 export interface WriteTotalsContext extends WriteTotalsTaskArguments, RunnableContext {
@@ -71,8 +56,16 @@ export async function getWriteTotalsContext(args: WriteTotalsTaskArguments, hre:
   }
 }
 
-async function getTotals(addresses: Address[], networks: NetworkName[], context: WriteTotalsContext): Promise<BalanceBN[]> {
+async function getPlayerTotals(addresses: Address[], networks: NetworkName[], context: WriteTotalsContext): Promise<BalanceBN[]> {
   return parMap(addresses, getFrontendTotalsForAddress, networks, context)
+}
+
+async function getTeamTotals(leaderAddresses: string[], networks: NetworkName[], context: WriteTotalsContext) {
+  return stub<BalanceBN[]>()
+}
+
+function getWinningTeam(teamTotals: BalanceBN[]) {
+  return stub<Address>()
 }
 
 async function getFrontendTotalsForAddress(address: Address, networks: NetworkName[], context: WriteTotalsContext) {
@@ -128,6 +121,7 @@ const relevantTokenInfos = [
 ]
 
 async function getBlockNumber(timestamp: Timestamp, networkName: NetworkName) {
+  // NOTE: "The snapshot for capital calculation is taken on the next block after the round starts." This is important for whales who can withdraw & re-deposit to show their capital
   const map = ensure(blockNumberMap.get(timestamp))
   return ensure(map.get(networkName))
 }
