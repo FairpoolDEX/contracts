@@ -1,6 +1,6 @@
 import neatcsv from 'neat-csv'
 import { RawCSVData } from '../../util/csv'
-import { validateAllocation } from '../Allocation'
+import { validateNamedAllocation } from '../NamedAllocation'
 import { validateVestingName } from '../VestingName'
 import { parseAmountCSV } from '../AmountBN/parseAmountCSV'
 
@@ -15,7 +15,7 @@ export async function parseAllocationsCSV(data: RawCSVData) {
 }
 
 function parseAllocationRow(row: AllocationRow) {
-  return validateAllocation({
+  return validateNamedAllocation({
     address: row.Address,
     type: validateVestingName(row.Vesting),
     amount: parseAmountCSV(row.Total),

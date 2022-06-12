@@ -1,33 +1,32 @@
 import { z } from 'zod'
-import { toUidFromSchema, Uid } from './Uid'
+import { getDuplicatesRefinement } from '../util/zod'
 import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
-import { VestingNameSchema } from './VestingName'
-import { getFinishedVestingTypes } from '../data/allVestingSchedules'
 
 export const AllocationSchema = z.object({
   address: AddressSchema,
   amount: AmountBNSchema,
-  type: VestingNameSchema,
-})
+}).describe('Allocation')
+
+export const AllocationsSchema = z.array(AllocationSchema)
+  .superRefine(getDuplicatesRefinement('Allocation', parseAllocationUid))
 
 export const AllocationUidSchema = AllocationSchema.pick({
   address: true,
-  vestingType: true,
 })
 
 export type Allocation = z.infer<typeof AllocationSchema>
 
 export type AllocationUid = z.infer<typeof AllocationUidSchema>
 
-export function validateAllocation(allocation: Allocation): Allocation {
+export function parseAllocation(allocation: Allocation): Allocation {
   return AllocationSchema.parse(allocation)
 }
 
-export function getAllocationUid(allocationUid: AllocationUid): Uid {
-  return toUidFromSchema(allocationUid, AllocationUidSchema)
+export function parseAllocations(allocations: Allocation[]): Allocation[] {
+  return AllocationsSchema.parse(allocations)
 }
 
-export function isFinished(allocation: Allocation) {
-  return getFinishedVestingTypes().includes(allocation.type)
+export function parseAllocationUid(allocationUid: AllocationUid): AllocationUid {
+  return AllocationUidSchema.parse(allocationUid)
 }

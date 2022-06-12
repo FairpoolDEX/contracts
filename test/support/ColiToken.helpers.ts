@@ -4,7 +4,7 @@ import { validateBlockNumber } from '../../models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { days, month, seconds } from '../../util/time'
 import { parseVestingTypes } from '../../models/VestingType'
-import { scaledShare, vestingTypeRateScale } from './Vesting.helpers'
+import { normalShare, scaledShare, vestingTypeRateDenominator, zeroShare } from './Vesting.helpers'
 
 export const shieldDecimals = 18
 
@@ -24,57 +24,65 @@ export const vestingTypesForTest = parseVestingTypes([
   {
     // Seed:	Locked for 1 month, 5% on first release, then equal parts of 10.556% over total of 9 months
     name: 'Seed',
-    initialShare: scaledShare(5 * vestingTypeRateScale),
+    initialShare: normalShare(5),
     monthlyShare: scaledShare(105556),
+    dailyShare: zeroShare(),
     cliff: month,
   },
   {
     // Private:	10% at listing, then equal parts of 15% over total of 6 months
     name: 'Private',
-    initialShare: scaledShare(10 * vestingTypeRateScale),
-    monthlyShare: scaledShare(15 * vestingTypeRateScale),
+    initialShare: normalShare(10),
+    monthlyShare: scaledShare(15 * vestingTypeRateDenominator),
+    dailyShare: zeroShare(),
     cliff: 0,
   },
   {
     // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
     name: 'Advisory',
-    initialShare: scaledShare(4 * vestingTypeRateScale),
-    monthlyShare: scaledShare(4 * vestingTypeRateScale),
+    initialShare: normalShare(4),
+    monthlyShare: scaledShare(4 * vestingTypeRateDenominator),
+    dailyShare: zeroShare(),
     cliff: month,
   },
   {
     // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
     name: 'Team',
-    initialShare: scaledShare(8 * vestingTypeRateScale),
+    initialShare: normalShare(8),
     monthlyShare: scaledShare(76667),
+    dailyShare: zeroShare(),
     cliff: 12 * month,
   },
   {
     // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
     name: 'Development',
-    initialShare: scaledShare(3 * vestingTypeRateScale),
+    initialShare: normalShare(3),
     monthlyShare: scaledShare(26945),
+    dailyShare: zeroShare(),
     cliff: 6 * month,
   },
   {
     // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
     name: 'Marketing',
-    initialShare: scaledShare(2 * vestingTypeRateScale),
+    initialShare: normalShare(2),
     monthlyShare: scaledShare(20417),
+    dailyShare: zeroShare(),
     cliff: 3 * month,
   },
   {
     // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
     name: 'Liquidity mining',
-    initialShare: scaledShare(8 * vestingTypeRateScale),
+    initialShare: normalShare(8),
     monthlyShare: scaledShare(76667),
+    dailyShare: zeroShare(),
     cliff: 0,
   },
   {
     // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
     name: 'General Reserve',
-    initialShare: scaledShare(2 * vestingTypeRateScale),
+    initialShare: normalShare(2),
     monthlyShare: scaledShare(16334),
+    dailyShare: zeroShare(),
     cliff: 6 * month,
   },
 ])
