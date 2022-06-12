@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "lefthook install",
-    "build": "yarn clean && yarn compile",
+    "build": "export FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 && yarn clean && yarn compile",
     "clean": "FEES=20:1 hardhat clean --show-stack-traces",
     "compile": "FEES=20:1 TS_NODE_TRANSPILE_ONLY=1 hardhat compile --show-stack-traces",
     "typecheck": "tsc --noEmit",

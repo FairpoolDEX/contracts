@@ -4,12 +4,13 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-
+import "hardhat/console.sol";
 
 /* mythx-disable SWC-116 */
 struct FrozenWallet {
     address wallet;
     uint256 totalAmount;
+    uint256 dailyAmount;
     uint256 monthlyAmount;
     uint256 initialAmount;
     uint256 lockDaysPeriod;
@@ -17,6 +18,7 @@ struct FrozenWallet {
 }
 
 struct VestingType {
+    uint256 dailyRate;
     uint256 monthlyRate;
     //Should be set in percents with 4 trailing digits. i.e. 12.7337% value should be 127337
     uint256 initialRate;
@@ -42,10 +44,10 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         setReleaseTime(releaseTime_);
     }
 
-    function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
+    function addVestingType(uint256 dailyRate, uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
         require(releaseTime + lockDaysPeriod > block.timestamp, "This lock period is over already");
 
-        vestingTypes.push(VestingType(monthlyRate, initialRate, lockDaysPeriod));
+        vestingTypes.push(VestingType(dailyRate, monthlyRate, initialRate, lockDaysPeriod));
         return vestingTypes.length - 1;
     }
 
@@ -61,17 +63,18 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
             address _address = addresses[i];
 
             uint256 totalAmount = totalAmounts[i] * 10 ** 18;
+            uint256 dailyAmount = totalAmounts[i] * vestingType.dailyRate * 10 ** 14 / 100;
             uint256 monthlyAmount = totalAmounts[i] * vestingType.monthlyRate * 10 ** 14 / 100;
             uint256 initialAmount = totalAmounts[i] * vestingType.initialRate * 10 ** 18 / 100;
             uint256 lockDaysPeriod = vestingType.lockDaysPeriod;
 
-            addFrozenWallet(_address, totalAmount, monthlyAmount, initialAmount, lockDaysPeriod);
+            addFrozenWallet(_address, totalAmount, dailyAmount, monthlyAmount, initialAmount, lockDaysPeriod);
         }
 
         return true;
     }
 
-    function addFrozenWallet(address wallet, uint totalAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
+    function addFrozenWallet(address wallet, uint totalAmount, uint dailyAmount, uint monthlyAmount, uint initialAmount, uint lockDaysPeriod) internal {
         require(!frozenWallets[wallet].scheduled, "Wallet already frozen");
 
         super._transfer(msg.sender, wallet, totalAmount);
@@ -80,6 +83,7 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         FrozenWallet memory frozenWallet = FrozenWallet(
             wallet,
             totalAmount,
+            dailyAmount,
             monthlyAmount,
             initialAmount,
             lockDaysPeriod,
@@ -90,35 +94,33 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         frozenWallets[wallet] = frozenWallet;
     }
 
-    function getMonths(uint256 lockDaysPeriod) public view returns (uint256) {
-        uint256 unlockTime = releaseTime + lockDaysPeriod;
+    function isLocked(uint256 lockPeriod) public view returns (bool) {
+        uint256 unlockTime = releaseTime + lockPeriod;
+        return block.timestamp < unlockTime;
+    }
 
-        if (block.timestamp < unlockTime) {
-            return 0;
-        }
-
-        uint256 diff = block.timestamp - unlockTime;
-        uint256 months = diff / 30 days + 1;
-
-        return months;
+    function getPeriodOffset(uint256 period, uint256 lockPeriod) public view returns (uint256) {
+        if (isLocked(lockPeriod)) return 0;
+        uint256 unlockTime = releaseTime + lockPeriod;
+        uint256 elapsed = block.timestamp - unlockTime;
+        return elapsed / period + 1;
     }
 
     function getUnlockedAmount(address sender) public view returns (uint256) {
-        uint256 months = getMonths(frozenWallets[sender].lockDaysPeriod);
+        uint256 day = getPeriodOffset(1 days, frozenWallets[sender].lockDaysPeriod);
+        uint256 month = getPeriodOffset(30 days, frozenWallets[sender].lockDaysPeriod);
 
-        // lockup period
-        if (months == 0) {
-            return 0;
-        }
+        if (day == 0 || month == 0) return 0;
 
-        uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (months - 1);
-        uint256 totalTransferableAmount = sumMonthlyTransferableAmount + frozenWallets[sender].initialAmount;
+        uint256 sumDailyTransferableAmount = frozenWallets[sender].dailyAmount * (day - 1);
+        uint256 sumMonthlyTransferableAmount = frozenWallets[sender].monthlyAmount * (month - 1);
+        uint256 totalTransferableAmount = frozenWallets[sender].initialAmount + sumDailyTransferableAmount + sumMonthlyTransferableAmount;
 
         if (totalTransferableAmount > frozenWallets[sender].totalAmount) {
             return frozenWallets[sender].totalAmount;
+        } else {
+            return totalTransferableAmount;
         }
-
-        return totalTransferableAmount;
     }
 
     function getLockedAmount(address sender) public view returns (uint256) {

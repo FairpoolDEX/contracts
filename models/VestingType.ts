@@ -5,6 +5,7 @@ import { DurationSchema } from './Duration'
 
 export const VestingTypeSchema = z.object({
   name: z.string().min(1),
+  dailyShare: ShareSchema,
   monthlyShare: ShareSchema,
   initialShare: ShareSchema,
   cliff: DurationSchema,

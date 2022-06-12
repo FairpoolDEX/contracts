@@ -6,7 +6,7 @@ import { CS, Eddy, isBullSellerAddress, Jordan, KS, newHardwareDeployer, NFTrade
 import { mergeVersionedRecords } from '../../util/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
-import { share, sumBigNumbers, zero } from '../../util/bignumber'
+import { getShare, sumBigNumbers, zero } from '../../util/bignumber'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 import { ColiMainnet } from '../../data/allDeployments'
 import { Address } from '../../models/Address'
@@ -49,7 +49,7 @@ const validateBalances: WriteClaimsValidator = async function (claims, context) 
 
 const validateTotalAmount: WriteClaimsValidator = async function (claims, context) {
   const expectedTotalAmount = airdropDistributedTokenAmountTotal
-  const expectedTotalAmountDelta = share(expectedTotalAmount, 5, 100)
+  const expectedTotalAmountDelta = getShare(expectedTotalAmount, 5, 100)
   // NOTE: It will take too much time to calculate the delta precisely
   // const bannedAddressesTokenAmount = todo(BigNumber.from(0))
   // const unclaimedTokenAmount = todo(BigNumber.from(0))

@@ -11,7 +11,7 @@ import { getContract } from '../util/ethers'
 import { isTestnet, NetworkName } from '../models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
-import { Allocation, isFinished } from '../models/Allocation'
+import { isFinished, NamedAllocation } from '../models/NamedAllocation'
 import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
 import { flatten, uniq } from 'lodash'
@@ -77,7 +77,7 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
   return await getContract(ethers, 'ColiToken', result.proxyAddress) as unknown as ColiToken
 }
 
-function expectAllocations(allocations: Allocation[]) {
+function expectAllocations(allocations: NamedAllocation[]) {
   const sum = sumAmountsOf(allocations)
   expect(sum.lt(maxSupplyTokenAmount)).to.be.true
   expect(sum.gt(toTokenAmount(1))).to.be.true
@@ -90,7 +90,7 @@ async function getAllocations(context: DeployColiTokenContext) {
   return allocations.filter(a => !isFinished(a))
 }
 
-async function setAllocations(allocations: Allocation[], token: ColiToken) {
+async function setAllocations(allocations: NamedAllocation[], token: ColiToken) {
   const types = uniq<VestingName>(allocations.map(a => a.type))
   const groupedTxes = await Promise.all(types.map(async (type) => {
     const allocationsByType = allocations.filter(a => a.type === type)
