@@ -5,6 +5,9 @@ import { CLIArgumentType } from 'hardhat/types/runtime'
 import { ERRORS } from 'hardhat/internal/core/errors-list'
 import { HardhatError } from 'hardhat/internal/core/errors'
 import { Timestamp } from './types'
+import { AmountBN } from '../models/AmountBN'
+import { toTokenAmount } from '../test/support/all.helpers'
+import { BigNumber } from 'ethers'
 
 export const getProvider = (hre: HardhatRuntimeEnvironment) => async (networkName: NetworkName) => {
   const { ethers, config: { networks } } = hre
@@ -37,12 +40,26 @@ export const timestamp: CLIArgumentType<Timestamp> = {
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, { value, name, type: timestamp.name })
     }
   },
-  parse(argName: string, strValue: string): Timestamp {
+  parse(argName: string, strValue: string) {
     const parseAsTimestampResult = parseInt(strValue, 10)
     if (parseAsTimestampResult.toString() === strValue) {
       return parseAsTimestampResult
     } else {
       return new Date(strValue).getTime()
     }
+  },
+}
+
+export const amount: CLIArgumentType<AmountBN> = {
+  name: 'amount',
+  validate: (name: string, value: unknown): void => {
+    if (!(value instanceof BigNumber)) {
+      throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, { value, name, type: amount.name })
+    }
+  },
+  parse(argName: string, strValue: string) {
+    const int = parseInt(strValue, 10)
+    if (int.toString() !== strValue) throw new Error(`Cannot parse argument: ${argName}`)
+    return toTokenAmount(int)
   },
 }

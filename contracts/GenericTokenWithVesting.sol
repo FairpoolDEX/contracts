@@ -51,7 +51,7 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         return vestingTypes.length - 1;
     }
 
-    function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external payable onlyOwner returns (bool) {
+    function addAllocations(address[] memory addresses, uint[] memory totalAmounts, uint vestingTypeIndex) external onlyOwner returns (bool) {
         uint addressesLength = addresses.length;
 
         require(addressesLength == totalAmounts.length, "Array lengths must be same");
@@ -180,6 +180,9 @@ contract GenericTokenWithVesting is OwnableUpgradeable, ERC20PausableUpgradeable
         require(canTransfer(sender, amount), "Wait for vesting day!");
         super._beforeTokenTransfer(sender, recipient, amount);
     }
+
+    // for testing the `withdraw` function (recover wrongly sent ETH)
+    function deposit() external payable {}
 
     function withdraw(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Address: insufficient balance");

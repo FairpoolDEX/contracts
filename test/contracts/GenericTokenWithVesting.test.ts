@@ -15,11 +15,11 @@ import { getTestRunnableContext } from '../support/context'
 import { addVestingType, addVestingTypes, dayInSeconds, monthInSeconds, normalShare, scaledShare } from '../support/Vesting.helpers'
 import { months } from '../../util/time'
 import { parseVestingType } from '../../models/VestingType'
-import { parseAllocation } from '../../models/Allocation'
-import { addAllocations } from '../support/Allocation.helpers'
-import { bn, sumBigNumbers, zero } from '../../util/bignumber'
+import { setAllocations } from '../support/Allocation.helpers'
+import { sumBigNumbers, zero } from '../../util/bignumber'
 import { toSeconds } from '../../models/Duration'
 import { getShare } from '../../models/Share'
+import { parseCustomNamedAllocation } from '../../models/CustomNamedAllocation'
 
 describe('GenericTokenWithVesting', async () => {
 
@@ -103,7 +103,7 @@ describe('GenericTokenWithVesting', async () => {
     fest('should withdraw ETH', async () => {
       const amount = 1
       // send some ETH to token's address using payable addAllocations func
-      await token.addAllocations([], [], '0', { value: amount })
+      await token.deposit({ value: amount })
 
       await expect(await token.provider.getBalance(token.address)).to.equal(amount)
       await expect(
@@ -535,19 +535,18 @@ describe('GenericTokenWithVesting', async () => {
         dailyShare: scaledShare(3),
         monthlyShare: scaledShare(75541),
         cliff: 2 * months,
+        smartContractIndex: vestingTypesForTest.length,
       })
       const { initialShare, dailyShare, monthlyShare } = extra
       const cliff = toSeconds(extra.cliff)
-      const allocation = parseAllocation({
+      const allocation = parseCustomNamedAllocation({
         address: '0xE081B7D9c9eEC19C79b9574697B35dF5d2984651',
-        amount: bn(200), // NOTE: amount must be a regular number that user sees in frontend (do not use toTokenAmount)
+        amount: toTokenAmount(200),
+        vesting: extra.name,
       })
-      const { address } = allocation
-      const amount = toTokenAmount(allocation.amount)
+      const { address, amount } = allocation
       await addVestingType(token)(extra)
-      const prevIndex = vestingTypesForTest.length - 1
-      const extraIndex = prevIndex + 1
-      await addAllocations(token, extraIndex, [allocation])
+      await setAllocations([extra], token, [allocation])
       const frozenWallet = await token.frozenWallets(address)
       // console.log('frozenWallet', renderNewFrozenWallet(frozenWallet))
       // console.log('amount', amount.toString())

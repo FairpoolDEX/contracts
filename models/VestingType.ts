@@ -9,6 +9,7 @@ export const VestingTypeSchema = z.object({
   monthlyShare: ShareSchema,
   initialShare: ShareSchema,
   cliff: DurationSchema,
+  smartContractIndex: z.number(),
   notes: z.string().optional(),
 }).describe('VestingType')
 

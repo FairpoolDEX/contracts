@@ -20,6 +20,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(36 * months),
     monthlyShare: monthlyShare(0),
     cliff: 12 * months,
+    smartContractIndex: 0,
   },
   {
     name: 'Ecosystem',
@@ -27,6 +28,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(60 * months),
     monthlyShare: monthlyShare(0),
     cliff: 6 * months,
+    smartContractIndex: 1,
   },
   {
     name: 'Reserve',
@@ -34,6 +36,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(60 * months),
     monthlyShare: monthlyShare(0),
     cliff: 18 * months,
+    smartContractIndex: 2,
   },
   {
     name: 'Seed',
@@ -41,6 +44,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(9 * months),
     monthlyShare: monthlyShare(0),
     cliff: month,
+    smartContractIndex: 3,
   },
   {
     name: 'Private',
@@ -48,6 +52,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(6 * months),
     monthlyShare: monthlyShare(0),
     cliff: 0,
+    smartContractIndex: 4,
   },
   {
     name: 'Public',
@@ -55,6 +60,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(4 * months),
     monthlyShare: monthlyShare(0),
     cliff: 0,
+    smartContractIndex: 5,
   },
   // Liquidity vesting type is not included because it's 100% unlocked at TGE
   {
@@ -63,6 +69,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(36 * months),
     monthlyShare: monthlyShare(0),
     cliff: 2 * months,
+    smartContractIndex: 6,
   },
   {
     name: 'Development',
@@ -70,6 +77,7 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(60 * months),
     monthlyShare: monthlyShare(0),
     cliff: 10 * months,
+    smartContractIndex: 7,
   },
   {
     name: 'Advisors',
@@ -77,5 +85,6 @@ export default parseVestingTypes([
     dailyShare: dailyShareDuration(24 * months),
     monthlyShare: monthlyShare(0),
     cliff: 2 * months,
+    smartContractIndex: 8,
   },
 ])

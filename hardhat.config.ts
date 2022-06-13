@@ -30,8 +30,9 @@ import { Network } from './models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
 import { writeTotalsTask } from './tasks/writeTotalsTask'
-import { timestamp } from './util/hardhat'
+import { amount, timestamp } from './util/hardhat'
 import { addVestingTypesTask } from './tasks/addVestingTypes'
+import { addAllocationsTask } from './tasks/addAllocations'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -235,7 +236,7 @@ task('transferManyShieldToken', 'Call transferManyShield for allocations without
   .addParam('chunk', 'Number of recipients in one chunk. Default value is 100.', 100, types.int)
   .setAction(transferManyShieldTokenTask)
 
-task('addAllocations', 'Call addAllocations() for allocations with lockup period')
+task('addAllocationsShieldToken', 'Call addAllocations() for allocations with lockup period')
   .addParam('token', 'SHLD token contract address')
   .addParam('allocations', 'JSON with allocations')
   .setAction(addAllocationsShieldTokenTask)
@@ -293,3 +294,10 @@ task('addVestingTypes', 'Add vesting types')
   .addParam('vestingTypes', 'TS file with vesting types', undefined, types.string)
   .addParam('contractAddress', 'Token contract address', undefined, types.string)
   .setAction(addVestingTypesTask)
+
+task('addAllocations', 'Add allocations')
+  .addParam('allocations', 'CSV file with allocations', undefined, types.string)
+  .addParam('vestingTypes', 'TS file with vesting types', undefined, types.string)
+  .addParam('contractAddress', 'Token contract address', undefined, types.string)
+  .addParam('totalAmount', 'Total amount of allocations', undefined, amount)
+  .setAction(addAllocationsTask)

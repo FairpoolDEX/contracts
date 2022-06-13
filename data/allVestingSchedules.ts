@@ -11,6 +11,8 @@ export const addVestingSchedule = getInserter('VestingSchedule', VestingSchedule
 
 export const findVestingSchedule = getFinder(getVestingScheduleUid, allVestingSchedules)
 
+// TODO: vestingTypesForTest supersedes this data
+
 addVestingSchedule({
   type: 'Seed',
   smartContractIndex: 0,

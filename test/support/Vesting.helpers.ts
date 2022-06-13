@@ -62,7 +62,6 @@ export function renderTokenVestingType(type: TokenVestingType) {
 
 export const addVestingType = (token: GenericTokenWithVesting) => async (type: VestingType) => {
   const tokenVestingType = toTokenVestingType(type)
-  console.log('tokenVestingType', renderTokenVestingType(tokenVestingType))
   const { dailyRate, monthlyRate, initialRate, lockDaysPeriod } = tokenVestingType
   return token.addVestingType(dailyRate, monthlyRate, initialRate, lockDaysPeriod)
 }
