@@ -3,12 +3,18 @@ import { GenericTokenWithVesting } from '../../typechain-types'
 
 import { releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { addVestingTypes } from '../support/Vesting.helpers'
-import { maxSupplyTokenAmount, name, symbol } from '../../test/support/MarsToken.helpers'
-import MarsTokenVestingTypes, { dailyShareDuration } from '../../tasks/arguments/MarsToken.vestingTypes'
+import { addVestingTypes, dayInSeconds, monthInSeconds } from '../support/Vesting.helpers'
+import { allocationsForTest, maxSupplyTokenAmount, name, symbol, vestingTypesForTest } from '../../test/support/MarsToken.helpers'
+import { dailyShareDuration } from '../../tasks/arguments/MarsToken.vestingTypes'
 import { fest } from '../../util/mocha'
 import { months } from '../../util/time'
 import { expect } from '../../util/expect'
+import { setAllocations } from '../support/Allocation.helpers'
+import { sumBigNumbers, zero } from '../../util/bignumber'
+import { timeTravel } from '../support/test.helpers'
+import { ensure } from '../../util/ensure'
+import { toSeconds } from '../../models/Duration'
+import { toTokenAmount } from '../support/all.helpers'
 
 describe('MarsToken', async () => {
 
@@ -27,12 +33,85 @@ describe('MarsToken', async () => {
 
     nonOwnerToken = token.connect(nonOwner)
 
-    await addVestingTypes(token, MarsTokenVestingTypes)
+    await addVestingTypes(token, vestingTypesForTest)
   })
 
   fest(dailyShareDuration.name, async () => {
     const vesting36months = dailyShareDuration(36 * months)
     expect(vesting36months.numerator).to.equal(925)
+  })
+
+  fest('Team vesting must be correct', async () => {
+    await setAllocations(vestingTypesForTest, token, allocationsForTest)
+    const vesting = ensure(vestingTypesForTest.find(t => t.name === 'Team'))
+    const allocation = ensure(allocationsForTest.find(a => a.vesting === vesting.name))
+    const cliff = toSeconds(vesting.cliff)
+    const { address, amount } = allocation
+    const initialAmount = toTokenAmount(0)
+    const dailyAmount = toTokenAmount(75480) //  toTokenAmount(74384.68551)
+    const monthlyAmount = toTokenAmount(0)
+    const expectations = [
+      {
+        name: 'releaseTimeTest - 1',
+        timestamp: releaseTimeTest - 1,
+        amount: zero,
+      },
+      {
+        name: 'releaseTimeTest',
+        timestamp: releaseTimeTest,
+        amount: zero,
+      },
+      {
+        name: 'releaseTimeTest + cliff',
+        timestamp: releaseTimeTest + cliff,
+        amount: sumBigNumbers([
+          initialAmount,
+        ]),
+      },
+      {
+        name: 'releaseTimeTest + cliff + 1',
+        timestamp: releaseTimeTest + cliff + 1,
+        amount: sumBigNumbers([
+          initialAmount,
+        ]),
+      },
+      {
+        name: 'releaseTimeTest + cliff + dayInSeconds',
+        timestamp: releaseTimeTest + cliff + dayInSeconds,
+        amount: sumBigNumbers([
+          initialAmount,
+          dailyAmount,
+        ]),
+      },
+      {
+        name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
+        timestamp: releaseTimeTest + cliff + dayInSeconds + monthInSeconds,
+        amount: sumBigNumbers([
+          initialAmount,
+          dailyAmount,
+          monthlyAmount,
+          dailyAmount.mul(30),
+        ]),
+      },
+      {
+        name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
+        timestamp: releaseTimeTest + cliff + dayInSeconds * 5 + monthInSeconds * 3,
+        amount: sumBigNumbers([
+          initialAmount,
+          dailyAmount.mul(5),
+          monthlyAmount.mul(3),
+          dailyAmount.mul(30).mul(3),
+        ]),
+      },
+    ]
+    // NOTE: Using a for loop because timeTravel can't be run in parallel
+    for (const expectation of expectations) {
+      const { name, timestamp, amount } = expectation
+      // console.log('scenario', name)
+      await timeTravel(async () => {
+        expect(await token.getUnlockedAmount(address), name).to.equal(amount)
+      }, timestamp)
+    }
   })
 
 })

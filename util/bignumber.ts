@@ -1,5 +1,9 @@
 import { BigNumber, BigNumberish } from 'ethers'
 
+// BigNumber.prototype[inspect.custom] = function () {
+//   return this.toString()
+// }
+
 export type BigNumberRange = { min: BigNumber; max: BigNumber }
 
 export const zero = BigNumber.from(0)
@@ -7,6 +11,8 @@ export const zero = BigNumber.from(0)
 export const one = BigNumber.from(1)
 
 export const ten = BigNumber.from(10)
+
+export const tenPower18 = ten.pow(18)
 
 export const bn = BigNumber.from
 

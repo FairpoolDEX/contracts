@@ -28,6 +28,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(105556),
     dailyShare: zeroScaledShare(),
     cliff: month,
+    smartContractIndex: 0,
   },
   {
     // Private:	10% at listing, then equal parts of 15% over total of 6 months
@@ -36,6 +37,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(15 * scaledDenominator),
     dailyShare: zeroScaledShare(),
     cliff: 0,
+    smartContractIndex: 1,
   },
   {
     // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
@@ -44,6 +46,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(4 * scaledDenominator),
     dailyShare: zeroScaledShare(),
     cliff: month,
+    smartContractIndex: 2,
   },
   {
     // Team:	Locked for 12 months, 8% on first release, then equal parts of 7.667% over total of 12 months
@@ -52,6 +55,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(76667),
     dailyShare: zeroScaledShare(),
     cliff: 12 * month,
+    smartContractIndex: 3,
   },
   {
     // Development:	Locked for 6 months, 3% on first release, then equal parts of 2.694% over total of 36 months
@@ -60,6 +64,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(26945),
     dailyShare: zeroScaledShare(),
     cliff: 6 * month,
+    smartContractIndex: 4,
   },
   {
     // Marketing:	Locked for 3 months, 2% on first release, then equal parts of 2.041% over total of 48 months
@@ -68,6 +73,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(20417),
     dailyShare: zeroScaledShare(),
     cliff: 3 * month,
+    smartContractIndex: 5,
   },
   {
     // Liquidity mining:	8% at listing, then equal parts of 7.666% over total of 12 months
@@ -76,6 +82,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(76667),
     dailyShare: zeroScaledShare(),
     cliff: 0,
+    smartContractIndex: 6,
   },
   {
     // General Reserve:	Locked for 6 months, 2% on first release, then equal parts of 1.633% over total of 60 months
@@ -84,6 +91,7 @@ export const vestingTypesForTest = parseVestingTypes([
     monthlyShare: scaledShare(16334),
     dailyShare: zeroScaledShare(),
     cliff: 6 * month,
+    smartContractIndex: 7,
   },
 ])
 
