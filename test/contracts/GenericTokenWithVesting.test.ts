@@ -38,11 +38,8 @@ describe('GenericTokenWithVesting', async () => {
 
     nonOwnerToken = token.connect(nonOwner)
 
-    // add vesting types
-    const vestingTypes = vestingTypesForTest
-    await addVestingTypes(token, vestingTypes)
+    await addVestingTypes(token, vestingTypesForTest)
 
-    // add allocations
     for (const [vestingTypeIndex, allocation] of Object.entries(allocationsForTest)) {
       const addresses = Object.keys(allocation)
       const amounts = Object.values(allocation)

@@ -4,7 +4,7 @@ import { validateBlockNumber } from '../../models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { days, month, seconds } from '../../util/time'
 import { parseVestingTypes } from '../../models/VestingType'
-import { normalShare, scaledShare, vestingTypeRateDenominator, zeroShare } from './Vesting.helpers'
+import { normalShare, scaledDenominator, scaledShare, zeroScaledShare } from './Vesting.helpers'
 
 export const shieldDecimals = 18
 
@@ -26,23 +26,23 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'Seed',
     initialShare: normalShare(5),
     monthlyShare: scaledShare(105556),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: month,
   },
   {
     // Private:	10% at listing, then equal parts of 15% over total of 6 months
     name: 'Private',
     initialShare: normalShare(10),
-    monthlyShare: scaledShare(15 * vestingTypeRateDenominator),
-    dailyShare: zeroShare(),
+    monthlyShare: scaledShare(15 * scaledDenominator),
+    dailyShare: zeroScaledShare(),
     cliff: 0,
   },
   {
     // Advisory:	Locked for 1 month, 4% on first release, then equal parts of 4% over total of 24 months
     name: 'Advisory',
     initialShare: normalShare(4),
-    monthlyShare: scaledShare(4 * vestingTypeRateDenominator),
-    dailyShare: zeroShare(),
+    monthlyShare: scaledShare(4 * scaledDenominator),
+    dailyShare: zeroScaledShare(),
     cliff: month,
   },
   {
@@ -50,7 +50,7 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'Team',
     initialShare: normalShare(8),
     monthlyShare: scaledShare(76667),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: 12 * month,
   },
   {
@@ -58,7 +58,7 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'Development',
     initialShare: normalShare(3),
     monthlyShare: scaledShare(26945),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: 6 * month,
   },
   {
@@ -66,7 +66,7 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'Marketing',
     initialShare: normalShare(2),
     monthlyShare: scaledShare(20417),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: 3 * month,
   },
   {
@@ -74,7 +74,7 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'Liquidity mining',
     initialShare: normalShare(8),
     monthlyShare: scaledShare(76667),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: 0,
   },
   {
@@ -82,7 +82,7 @@ export const vestingTypesForTest = parseVestingTypes([
     name: 'General Reserve',
     initialShare: normalShare(2),
     monthlyShare: scaledShare(16334),
-    dailyShare: zeroShare(),
+    dailyShare: zeroScaledShare(),
     cliff: 6 * month,
   },
 ])
