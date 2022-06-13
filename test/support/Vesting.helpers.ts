@@ -5,6 +5,7 @@ import { toSeconds } from '../../models/Duration'
 import { VestingType } from '../../models/VestingType'
 import { GenericTokenWithVesting } from '../../typechain-types'
 import { day, month } from '../../util/time'
+import { parMap } from '../../util/promise'
 
 export interface TokenVestingType {
   dailyRate: BigNumber, // in 10000s of percentages
@@ -13,17 +14,25 @@ export interface TokenVestingType {
   lockDaysPeriod: BigNumber // in seconds
 }
 
-export const percentDenominator = 100
+export const periodShareScale = 10000
 
-const vestingTypeRateScale = 10000
+export const normalDenominator = 100
 
-export const vestingTypeRateDenominator = percentDenominator * vestingTypeRateScale
+export const scaledDenominator = normalDenominator * periodShareScale
 
-export const normalShare = (numerator: BigNumberish) => share(numerator, percentDenominator)
+export const normalShare = (numerator: BigNumberish) => share(numerator, normalDenominator)
 
-export const scaledShare = (numerator: BigNumberish) => share(numerator, vestingTypeRateDenominator)
+export const scaledShare = (numerator: BigNumberish) => share(numerator, scaledDenominator)
 
-export const zeroShare = () => share(0, vestingTypeRateDenominator)
+export const zeroNormalShare = () => share(0, normalDenominator)
+
+export const zeroScaledShare = () => share(0, scaledDenominator)
+
+export const initialShare = normalShare
+
+export const dailyShare = scaledShare
+
+export const monthlyShare = scaledShare
 
 export const dayInSeconds = toSeconds(day)
 
@@ -31,9 +40,9 @@ export const monthInSeconds = toSeconds(month)
 
 export function toTokenVestingType(type: VestingType): TokenVestingType {
   const { dailyShare, monthlyShare, initialShare, cliff } = type
-  assert(dailyShare.denominator.eq(BigNumber.from(vestingTypeRateDenominator)))
-  assert(monthlyShare.denominator.eq(BigNumber.from(vestingTypeRateDenominator)))
-  assert(initialShare.denominator.eq(BigNumber.from(percentDenominator)))
+  assert(dailyShare.denominator.eq(BigNumber.from(scaledDenominator)))
+  assert(monthlyShare.denominator.eq(BigNumber.from(scaledDenominator)))
+  assert(initialShare.denominator.eq(BigNumber.from(normalDenominator)))
   return {
     dailyRate: dailyShare.numerator,
     monthlyRate: monthlyShare.numerator,
@@ -42,11 +51,22 @@ export function toTokenVestingType(type: VestingType): TokenVestingType {
   }
 }
 
+export function renderTokenVestingType(type: TokenVestingType) {
+  return {
+    initialRate: type.initialRate.toString(),
+    dailyRate: type.dailyRate.toString(),
+    monthlyRate: type.monthlyRate.toString(),
+    lockDaysPeriod: type.lockDaysPeriod.toString(),
+  }
+}
+
 export const addVestingType = (token: GenericTokenWithVesting) => async (type: VestingType) => {
-  const { dailyRate, monthlyRate, initialRate, lockDaysPeriod } = toTokenVestingType(type)
+  const tokenVestingType = toTokenVestingType(type)
+  console.log('tokenVestingType', renderTokenVestingType(tokenVestingType))
+  const { dailyRate, monthlyRate, initialRate, lockDaysPeriod } = tokenVestingType
   return token.addVestingType(dailyRate, monthlyRate, initialRate, lockDaysPeriod)
 }
 
 export const addVestingTypes = async (token: GenericTokenWithVesting, vestingTypes: VestingType[]) => {
-  return Promise.all(vestingTypes.map(addVestingType(token)))
+  return parMap(vestingTypes, addVestingType(token))
 }
