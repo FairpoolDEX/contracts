@@ -5,7 +5,9 @@ import { toSeconds } from '../../models/Duration'
 import { VestingType } from '../../models/VestingType'
 import { GenericTokenWithVesting } from '../../typechain-types'
 import { day, month } from '../../util/time'
-import { parMap } from '../../util/promise'
+import { sendMultipleTransactions } from '../../util/ethers'
+import { RunnableContext } from '../../util/context/getRunnableContext'
+import { getOverrides } from '../../util/network'
 
 export interface TokenVestingType {
   dailyRate: BigNumber, // in 10000s of percentages
@@ -63,9 +65,10 @@ export function renderTokenVestingType(type: TokenVestingType) {
 export const addVestingType = (token: GenericTokenWithVesting) => async (type: VestingType) => {
   const tokenVestingType = toTokenVestingType(type)
   const { dailyRate, monthlyRate, initialRate, lockDaysPeriod } = tokenVestingType
-  return token.addVestingType(dailyRate, monthlyRate, initialRate, lockDaysPeriod)
+  const overrides = await getOverrides(token.signer)
+  return token.addVestingType(dailyRate, monthlyRate, initialRate, lockDaysPeriod, overrides)
 }
 
-export const addVestingTypes = async (token: GenericTokenWithVesting, vestingTypes: VestingType[]) => {
-  return parMap(vestingTypes, addVestingType(token))
+export const addVestingTypes = async (context: RunnableContext, token: GenericTokenWithVesting, vestingTypes: VestingType[]) => {
+  return sendMultipleTransactions(context, vestingTypes, addVestingType(token))
 }

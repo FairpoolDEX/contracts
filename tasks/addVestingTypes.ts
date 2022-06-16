@@ -7,7 +7,6 @@ import { importDefault } from '../util/import'
 import { addVestingTypes } from '../test/support/Vesting.helpers'
 import { getGenericTokenWithVesting } from './util/getToken'
 import { Address } from '../models/Address'
-import { logAndWaitForTransactions } from './util/transaction'
 import { sortBy } from 'lodash'
 
 export async function addVestingTypesTask(args: AddVestingTypesTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
@@ -15,9 +14,9 @@ export async function addVestingTypesTask(args: AddVestingTypesTaskArguments, hr
   const { contractAddress, ethers, log } = context
   const token = await getGenericTokenWithVesting(contractAddress, ethers)
   const vestingTypes = await getVestingTypes(context.vestingTypes)
-  const transactions = await addVestingTypes(token, vestingTypes)
-  const minConfirmations = 1
-  await logAndWaitForTransactions(context, minConfirmations, transactions)
+  const transactions = await addVestingTypes(context, token, vestingTypes)
+  // const minConfirmations = 1
+  // await logAndWaitForTransactions(context, minConfirmations, transactions)
 }
 
 async function getVestingTypes(filename: Filename) {

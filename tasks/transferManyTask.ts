@@ -30,11 +30,18 @@ export async function transferManyTask(args: TransferManyTaskArguments, hre: Har
   const contract = await ContractFactory.attach(contractAddress) as unknown as ColiToken
   console.info('Calling transferMany')
   const networkName = NetworkNameSchema.parse(network.name)
-  await transferMany(contract, balances, expectations, 400, networkName, deployer, console.info.bind(console))
+  await transferManyMap(contract, balances, expectations, 400, networkName, deployer, console.info.bind(console))
 }
 
-export async function transferMany(contract: ColiToken, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, log?: Logger): Promise<void> {
+export async function transferManyMap(contract: ColiToken, balances: BalancesMap, expectations: TransferManyExpectationsMap, chunkSize = 325, network: NetworkName, deployer: Signer, log?: Logger): Promise<void> {
   const balancesArr = Object.entries(balances)
+  await transferMany(balancesArr, chunkSize, expectations, log, contract, deployer)
+  // TODO: Ensure balances don't contain smart contract addresses
+  // TODO: Ensure sum(balances) = totalAmount
+  // TODO: Ensure specific balances amounts (smoke test)
+}
+
+async function transferMany(balancesArr: [string, BigNumber][], chunkSize: number, expectations: TransferManyExpectationsMap, log: ((...msgs: unknown[]) => void) | undefined, contract: ColiToken, deployer: Signer) {
   const balancesArrChunks = chunk(balancesArr, chunkSize)
   const totalAmount = balancesArr.reduce((acc, [address, amount]) => acc.add(amount), BigNumber.from(0))
   expect(totalAmount).to.be.equal(expectations.totalAmount)
@@ -49,10 +56,6 @@ export async function transferMany(contract: ColiToken, balances: BalancesMap, e
     const tx = await contract.transferMany(addresses, amounts, await getOverrides(deployer))
     log && log(`TX Hash: ${tx.hash}`)
   }
-
-  // TODO: Ensure balances don't contain smart contract addresses
-  // TODO: Ensure sum(balances) = totalAmount
-  // TODO: Ensure specific balances amounts (smoke test)
 }
 
 interface TransferManyTaskArguments extends RunnableTaskArguments {

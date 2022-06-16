@@ -15,13 +15,16 @@ import { getTestRunnableContext } from '../support/context'
 import { addVestingType, addVestingTypes, dayInSeconds, monthInSeconds, normalShare, scaledShare } from '../support/Vesting.helpers'
 import { months } from '../../util/time'
 import { parseVestingType } from '../../models/VestingType'
-import { setAllocations } from '../support/Allocation.helpers'
+import { addAllocationsByVestingTypeIndex } from '../support/Allocation.helpers'
 import { sumBigNumbers, zero } from '../../util/bignumber'
 import { toSeconds } from '../../models/Duration'
 import { getShare } from '../../models/Share'
 import { parseCustomNamedAllocation } from '../../models/CustomNamedAllocation'
+import { RunnableContext } from '../../util/context/getRunnableContext'
 
 describe('GenericTokenWithVesting', async () => {
+
+  let context: RunnableContext
 
   let owner: SignerWithAddress
   let nonOwner: SignerWithAddress
@@ -32,13 +35,15 @@ describe('GenericTokenWithVesting', async () => {
   beforeEach(async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
+    context = await getTestRunnableContext({})
+
     const tokenFactory = await ethers.getContractFactory('GenericTokenWithVesting')
     token = (await upgrades.deployProxy(tokenFactory, ['Generic', 'GEN', toTokenAmount(1000000), releaseTimeTest])) as unknown as GenericTokenWithVesting
     await token.deployed()
 
     nonOwnerToken = token.connect(nonOwner)
 
-    await addVestingTypes(token, vestingTypesForTest)
+    await addVestingTypes(context, token, vestingTypesForTest)
 
     for (const [vestingTypeIndex, allocation] of Object.entries(allocationsForTest)) {
       const addresses = Object.keys(allocation)
@@ -546,7 +551,7 @@ describe('GenericTokenWithVesting', async () => {
       })
       const { address, amount } = allocation
       await addVestingType(token)(extra)
-      await setAllocations([extra], token, [allocation])
+      await addAllocationsByVestingTypeIndex(token, extra.smartContractIndex, [allocation])
       const frozenWallet = await token.frozenWallets(address)
       // console.log('frozenWallet', renderNewFrozenWallet(frozenWallet))
       // console.log('amount', amount.toString())

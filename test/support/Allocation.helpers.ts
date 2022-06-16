@@ -11,12 +11,13 @@ import { CustomNamedAllocation } from '../../models/CustomNamedAllocation'
 import { Filename } from '../../util/filesystem'
 import { parseCustomNamedAllocationsCSV } from '../../models/CustomNamedAllocation/parseCustomNamedAllocationsCSV'
 import { VestingType } from '../../models/VestingType'
-import { parMap } from '../../util/promise'
 import { tenPower18 } from '../../util/bignumber'
+import { sendMultipleTransactions } from '../../util/ethers'
+import { RunnableContext } from '../../util/context/getRunnableContext'
 
 export const noVestingName = 'None'
 
-export async function addVestedAllocations(vestingTypeIndex: number, token: GenericTokenWithVesting, allocations: Allocation[]) {
+export async function addAllocationsByVestingTypeIndex(token: GenericTokenWithVesting, vestingTypeIndex: number, allocations: Allocation[]) {
   const addresses = allocations.map(a => a.address)
   const allocationAmounts = allocations.map(a => a.amount).map(toAllocationAmount)
   const overrides = await getOverrides(token.signer)
@@ -46,12 +47,12 @@ export function splitAllocations(allocations: CustomNamedAllocation[]) {
   return { vested, unvested }
 }
 
-export async function setAllocations(vestingTypes: VestingType[], token: GenericTokenWithVesting, allocations: CustomNamedAllocation[]) {
+export async function addVestedAllocations(context: RunnableContext, token: GenericTokenWithVesting, vestingTypes: VestingType[], allocations: CustomNamedAllocation[]) {
   const vestingNames = uniq(allocations.map(a => a.vesting))
-  return parMap(vestingNames, async (vestingName) => {
+  return sendMultipleTransactions(context, vestingNames, async (vestingName) => {
     const allocationsByType = allocations.filter(a => a.vesting === vestingName)
     const vesting = ensure(vestingTypes.find(t => t.name === vestingName))
-    return addVestedAllocations(vesting.smartContractIndex, token, allocationsByType)
+    return addAllocationsByVestingTypeIndex(token, vesting.smartContractIndex, allocationsByType)
   })
 }
 

@@ -9,14 +9,17 @@ import { dailyShareDuration } from '../../tasks/arguments/MarsToken.vestingTypes
 import { fest } from '../../util/mocha'
 import { months } from '../../util/time'
 import { expect } from '../../util/expect'
-import { setAllocations } from '../support/Allocation.helpers'
+import { addVestedAllocations } from '../support/Allocation.helpers'
 import { sumBigNumbers, zero } from '../../util/bignumber'
 import { timeTravel } from '../support/test.helpers'
 import { ensure } from '../../util/ensure'
 import { toSeconds } from '../../models/Duration'
 import { toTokenAmount } from '../support/all.helpers'
+import { RunnableContext } from '../../util/context/getRunnableContext'
+import { getTestRunnableContext } from '../support/context'
 
 describe('MarsToken', async () => {
+  let context: RunnableContext
 
   let owner: SignerWithAddress
   let nonOwner: SignerWithAddress
@@ -27,13 +30,15 @@ describe('MarsToken', async () => {
   beforeEach(async () => {
     [owner, nonOwner] = await ethers.getSigners()
 
+    context = await getTestRunnableContext({})
+
     const tokenFactory = await ethers.getContractFactory('GenericTokenWithVesting')
     token = (await upgrades.deployProxy(tokenFactory, [name, symbol, maxSupplyTokenAmount, releaseTimeTest])) as unknown as GenericTokenWithVesting
     await token.deployed()
 
     nonOwnerToken = token.connect(nonOwner)
 
-    await addVestingTypes(token, vestingTypesForTest)
+    await addVestingTypes(context, token, vestingTypesForTest)
   })
 
   fest(dailyShareDuration.name, async () => {
@@ -42,7 +47,7 @@ describe('MarsToken', async () => {
   })
 
   fest('Team vesting must be correct', async () => {
-    await setAllocations(vestingTypesForTest, token, allocationsForTest)
+    await addVestedAllocations(context, token, vestingTypesForTest, allocationsForTest)
     const vesting = ensure(vestingTypesForTest.find(t => t.name === 'Team'))
     const allocation = ensure(allocationsForTest.find(a => a.vesting === vesting.name))
     const cliff = toSeconds(vesting.cliff)

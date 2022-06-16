@@ -10,6 +10,10 @@ import { Cache } from 'cache-manager'
 import { validateContractCode } from '../models/ContractCode'
 import { rateLimiter } from './getblock'
 import { debug } from './debug'
+import { RunnableContext } from './context/getRunnableContext'
+import { seqMap } from './promise'
+import { ContractTransaction } from '@ethersproject/contracts'
+import { getTransactionUrl } from './url'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await rateLimiter.removeTokens(1)
@@ -52,4 +56,17 @@ export async function getContract(ethers: Ethers, contractName: string, contract
 export async function getContractForSigner(ethers: Ethers, contractName: string, contractAddress: Address, signer: Signer): Promise<Contract> {
   const contract = await getContract(ethers, contractName, contractAddress)
   return contract.connect(signer)
+}
+
+/**
+ * It's necessary to send transactions sequentially, otherwise ethers.js uses the same nonce for all of them
+ */
+export function sendMultipleTransactions<In, Out extends ContractTransaction, Args extends unknown[]>(context: RunnableContext, values: In[], mapper: (value: In, ...args: Args) => Promise<Out>, ...args: Args) {
+  const { log, signer } = context
+  return seqMap(values, async (value: In, ...args: Args) => {
+    const tx = await mapper(value, ...args)
+    log(await getTransactionUrl(tx, signer))
+    await tx.wait(1)
+    return tx
+  }, ...args)
 }
