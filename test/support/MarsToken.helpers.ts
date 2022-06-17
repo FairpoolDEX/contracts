@@ -11,7 +11,7 @@ export const maxSupply = 480000000
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
-export const releaseDate = new Date('2022-07-30')
+export const releaseDate = new Date('2022-08-15')
 
 export const releaseTime = dateToTimestampSeconds(releaseDate)
 
