@@ -2,9 +2,9 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { z } from 'zod'
 import { Address, AddressSchema } from '../models/Address'
-import { getRunnableContext, RunnableContext } from '../util/context/getRunnableContext'
-import { RunnableTaskArgumentsSchema } from '../util/RunnableTaskArguments'
-import { verifyWithWorkaround } from '../util/verifyWithWorkaround'
+import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
+import { RunnableTaskArgumentsSchema } from '../util-local/RunnableTaskArguments'
+import { verifyWithWorkaround } from '../util-local/verifyWithWorkaround'
 import { toUpperSnakeCase } from '../util/string'
 
 export async function upgradeContractTask(args: UpgradeContractTaskArguments, hre: HardhatRuntimeEnvironment): Promise<UpgradeContractTaskOutput> {

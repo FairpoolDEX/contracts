@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 import { expect } from './expect'
-import { Filename } from './filesystem'
+import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { sumAmountsOf } from './balance'

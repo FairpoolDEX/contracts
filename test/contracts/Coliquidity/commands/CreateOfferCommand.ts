@@ -1,7 +1,6 @@
-import { AmountNum, Timestamp } from '../../../../util/types'
+import { AmountNum, Timestamp } from '../../../../util-local/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
-import { demand } from '../../../../util/demand'
 import { Address } from '../../../../models/Address'
 
 export class CreateOfferCommand extends ColiquidityCommand<OfferIndex> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {

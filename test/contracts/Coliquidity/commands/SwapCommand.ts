@@ -1,4 +1,4 @@
-import { AmountNum } from '../../../../util/types'
+import { AmountNum } from '../../../../util-local/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { MaxUint256 } from '../../../support/all.helpers'

@@ -1,4 +1,4 @@
-import { RunnableContext } from '../../util/context/getRunnableContext'
+import { RunnableContext } from '../../util-local/context/getRunnableContext'
 import { ContractTransaction } from 'ethers'
 import { getTransactionUrl } from '../../util/url'
 

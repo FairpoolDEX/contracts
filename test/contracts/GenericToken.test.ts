@@ -1,11 +1,11 @@
-import { expect } from '../../util/expect'
+import { expect } from '../../util-local/expect'
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { GenericToken } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
-import { fest } from '../../util/mocha'
+import { fest } from '../../util-local/mocha'
 
 describe('GenericToken', async function () {
   let owner: SignerWithAddress

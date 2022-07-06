@@ -1,9 +1,9 @@
-import { RunnableContext } from '../../util/context/getRunnableContext'
+import { RunnableContext } from '../../util-local/context/getRunnableContext'
 import { GenericTokenWithVesting } from '../../typechain-types'
 import { BalanceBN } from '../../models/BalanceBN'
 import { chunk } from './all.helpers'
-import { sendMultipleTransactions } from '../../util/ethers'
-import { getOverrides } from '../../util/network'
+import { sendMultipleTransactions } from '../../util-local/ethers'
+import { getOverrides } from '../../util-local/network'
 
 export async function transferManyBalanceBN(context: RunnableContext, token: GenericTokenWithVesting, balances: BalanceBN[], chunkSize: number) {
   const balancesChunks = chunk(balances, chunkSize)

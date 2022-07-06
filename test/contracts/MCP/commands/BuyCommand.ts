@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { MCPCommand } from '../MCPCommand'
-import { expect } from '../../../../util/expect'
+import { expect } from '../../../../util-local/expect'
 import { MCPModel, MCPReal } from '../MCPBlockchainModel'
 import { Address } from '../../../../models/Address'
 import { AmountBN, PriceBN } from '../../../../models/AmountBN'

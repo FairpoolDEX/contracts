@@ -1,4 +1,4 @@
-import { Filename } from './filesystem'
+import { Filename } from '../util/filesystem'
 
 export async function importDefault(filename: Filename) {
   return (await import(getAbsoluteFilename(filename))).default

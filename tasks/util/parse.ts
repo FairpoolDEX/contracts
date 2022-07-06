@@ -1,5 +1,5 @@
 import { RawCSVData } from '../../util/csv'
-import { BalancesMap, parseBalancesCSV } from '../../util/balance'
+import { BalancesMap, parseBalancesCSV } from '../../util-local/balance'
 import { zero } from '../../util/bignumber'
 
 export async function getShieldBalancesForBullAirdropFinal(nextDatas: RawCSVData[], prevDatas: RawCSVData[], retroDatas: RawCSVData[], blacklistDatas: RawCSVData[]): Promise<BalancesMap> {

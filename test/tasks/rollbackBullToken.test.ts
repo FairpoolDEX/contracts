@@ -8,11 +8,11 @@ import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTes
 import { claimMany } from '../../tasks/claimManyTask'
 import { Contract, ContractFactory } from 'ethers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../support/Uniswap.helpers'
-import { BalancesMap, getBalancesFromMap } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
 import { getTestSetClaimsContext } from '../support/context'
 import { BalanceBN } from '../../models/BalanceBN'
-import { fest } from '../../util/mocha'
+import { fest } from '../../util-local/mocha'
 
 xdescribe('rollbackBullToken', async () => {
   let bullTokenFactory: ContractFactory

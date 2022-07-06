@@ -1,7 +1,7 @@
 import { Cache } from 'cache-manager'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { z } from 'zod'
-import { CacheKeySchema, createFsCache, getFsCachePathForContracts } from '../cache'
+import { CacheKeySchema, createFsCache, getFsCachePathForContracts } from '../../util/cache'
 import { RunnableContext } from './getRunnableContext'
 import { days, seconds } from '../time'
 

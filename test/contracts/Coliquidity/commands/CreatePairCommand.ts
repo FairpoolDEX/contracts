@@ -1,7 +1,7 @@
-import { AmountNum, Timestamp } from '../../../../util/types'
+import { AmountNum, Timestamp } from '../../../../util-local/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex, PoolIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
-import { demand } from '../../../../util/demand'
+import { demand } from '../../../../util-local/demand'
 import { getOrderedArray } from '../../../support/Uniswap.helpers'
 import { Address } from '../../../../models/Address'
 

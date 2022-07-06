@@ -1,4 +1,4 @@
-import { expect } from '../../util/expect'
+import { expect } from '../../util-local/expect'
 import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -24,8 +24,8 @@ import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { zero } from '../../util/bignumber'
-import { days, hours } from '../../util/time'
-import { fest } from '../../util/mocha'
+import { days, hours } from '../../util-local/time'
+import { fest } from '../../util-local/mocha'
 
 describe('Coliquidity', async function () {
   let signers: SignerWithAddress[]

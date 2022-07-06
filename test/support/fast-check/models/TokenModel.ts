@@ -1,4 +1,4 @@
-import { AmountNum } from '../../../../util/types'
+import { AmountNum } from '../../../../util-local/types'
 import { Address } from '../../../../models/Address'
 
 export interface TokenModel {

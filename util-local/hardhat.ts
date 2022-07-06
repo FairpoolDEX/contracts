@@ -1,6 +1,6 @@
 import { NetworkName } from '../models/NetworkName'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { ensure } from './ensure'
+import { ensure } from '../util/ensure'
 import { CLIArgumentType } from 'hardhat/types/runtime'
 import { ERRORS } from 'hardhat/internal/core/errors-list'
 import { HardhatError } from 'hardhat/internal/core/errors'

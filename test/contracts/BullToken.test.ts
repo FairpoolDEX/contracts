@@ -1,4 +1,4 @@
-import { expect } from '../../util/expect'
+import { expect } from '../../util-local/expect'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { toTokenAmount } from '../support/all.helpers'
@@ -7,7 +7,7 @@ import { BullToken, ColiToken } from '../../typechain-types'
 
 import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
-import { fest } from '../../util/mocha'
+import { fest } from '../../util-local/mocha'
 
 const claimers = Object.keys(claims)
 const amounts = claimers.map((address) => claims[address])
