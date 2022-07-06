@@ -1,5 +1,5 @@
 import { BigNumber, utils } from 'ethers'
-import { Ethers } from '../../util/types'
+import { Ethers } from '../../util-local/types'
 import { DateTime } from 'luxon'
 import { DurationInput } from 'luxon/src/duration'
 import Decimal from 'decimal.js'

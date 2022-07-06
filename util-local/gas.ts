@@ -1,7 +1,7 @@
-import { demandIntegerEnvVar } from './env'
+import { demandIntegerEnvVar } from '../util/env'
 import { gwei } from '../test/support/all.helpers'
 import { strict as assert } from 'assert'
-import { impl } from './todo'
+import { impl } from '../util/todo'
 import { NetworkName } from '../models/NetworkName'
 
 if (process.env.FEES) {

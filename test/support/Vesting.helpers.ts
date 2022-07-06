@@ -4,10 +4,10 @@ import { strict as assert } from 'assert'
 import { toSeconds } from '../../models/Duration'
 import { VestingType } from '../../models/VestingType'
 import { GenericTokenWithVesting } from '../../typechain-types'
-import { day, month } from '../../util/time'
-import { sendMultipleTransactions } from '../../util/ethers'
-import { RunnableContext } from '../../util/context/getRunnableContext'
-import { getOverrides } from '../../util/network'
+import { day, month } from '../../util-local/time'
+import { sendMultipleTransactions } from '../../util-local/ethers'
+import { RunnableContext } from '../../util-local/context/getRunnableContext'
+import { getOverrides } from '../../util-local/network'
 
 export interface TokenVestingType {
   dailyRate: BigNumber, // in 10000s of percentages

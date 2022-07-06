@@ -1,5 +1,5 @@
 import { NetworkName } from '../models/NetworkName'
-import { nail } from './string'
+import { nail } from '../util/string'
 
 export function getJsonRpcUrl(networkName: NetworkName) {
   switch (networkName) {

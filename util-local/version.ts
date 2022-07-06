@@ -1,6 +1,6 @@
 import pkg from '../package.json'
 import { gt, gte, parse, SemVer } from 'semver'
-import { ensure } from './ensure'
+import { ensure } from '../util/ensure'
 
 export type Version = string
 

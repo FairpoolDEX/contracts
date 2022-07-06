@@ -4,7 +4,7 @@ import { BigNumber } from 'ethers'
 import { beforeEach, Context } from 'mocha'
 import { ColiquiditySimulation } from '../support/Simulation/ColiquiditySimulation'
 import $debug from 'debug'
-import { fest } from '../../util/mocha'
+import { fest } from '../../util-local/mocha'
 
 describe('ColiquiditySimulation', async function () {
   let simulation: ColiquiditySimulation

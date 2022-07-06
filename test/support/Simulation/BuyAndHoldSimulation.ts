@@ -1,6 +1,6 @@
 import $debug from 'debug'
 import { MaxUint256 } from '../all.helpers'
-import { expect } from '../../../util/expect'
+import { expect } from '../../../util-local/expect'
 import { TradingSimulation } from './TradingSimulation'
 
 export class BuyAndHoldSimulation extends TradingSimulation {

@@ -1,10 +1,10 @@
-import { expect } from '../util/expect'
+import { expect } from '../util-local/expect'
 import { toTokenAmount } from './support/all.helpers'
 import Decimal from 'decimal.js'
 import { BigNumber } from 'ethers'
 import { getReleasePeriodsElapsed, releaseTime } from './support/ColiToken.helpers'
-import { seconds } from '../util/time'
-import { fest } from '../util/mocha'
+import { seconds } from '../util-local/time'
+import { fest } from '../util-local/mocha'
 
 fest('toTokenAmount', async () => {
   expect(toTokenAmount(new Decimal(10.1))).to.equal(BigNumber.from('10100000000000000000'))

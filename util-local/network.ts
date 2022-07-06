@@ -3,7 +3,7 @@ import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
 import { NetworkName } from '../models/NetworkName'
 import { Signer } from '@ethersproject/abstract-signer/src.ts/index'
-import { ensure } from './ensure'
+import { ensure } from '../util/ensure'
 import { findNetworkByChainId } from '../data/allNetworks'
 
 export interface NetworkInfo {

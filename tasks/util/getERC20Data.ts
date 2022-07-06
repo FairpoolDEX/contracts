@@ -1,6 +1,6 @@
 import { Address } from '../../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
-import { Ethers } from '../../util/types'
+import { Ethers } from '../../util-local/types'
 import { BalanceBN, validateBalanceBN } from '../../models/BalanceBN'
 import { getGenericToken } from './getToken'
 import { getTransfersPaginatedCached } from './getTransfers'
@@ -8,12 +8,12 @@ import { unwrapSmartContractBalancesAtBlockTag } from './unwrapSmartContractBala
 import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { chunk, flatten, uniq } from 'lodash'
-import { maxRequestsPerSecond } from '../../util/getblock'
+import { maxRequestsPerSecond } from '../../util-local/getblock'
 import { seqMap } from '../../util/promise'
 import { getCacheKey } from '../../util/cache'
-import { isZeroBalance } from '../../util/balance'
+import { isZeroBalance } from '../../util-local/balance'
 import { Cache } from 'cache-manager'
-import { CachedRunnableContext } from '../../util/context/getCachedContext'
+import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)

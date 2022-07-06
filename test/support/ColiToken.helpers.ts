@@ -1,8 +1,8 @@
 import { toTokenAmount } from './all.helpers'
-import { getRewriteAddressMap, RewriteAddressMap } from '../../util/address'
+import { getRewriteAddressMap, RewriteAddressMap } from '../../util-local/address'
 import { validateBlockNumber } from '../../models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
-import { days, month, seconds } from '../../util/time'
+import { days, month, seconds } from '../../util-local/time'
 import { parseVestingTypes } from '../../models/VestingType'
 import { normalShare, scaledDenominator, scaledShare, zeroScaledShare } from './Vesting.helpers'
 

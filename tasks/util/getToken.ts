@@ -1,5 +1,5 @@
 import { Address } from '../../models/Address'
-import { Ethers } from '../../util/types'
+import { Ethers } from '../../util-local/types'
 import { BullToken, ColiToken, GenericToken, GenericTokenWithVesting } from '../../typechain-types'
 import { NetworkName } from '../../models/NetworkName'
 import { ensure } from '../../util/ensure'

@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { StringAllocations } from '../util/types'
+import { StringAllocations } from '../util-local/types'
 
 export async function addAllocationsShieldTokenTask(args: TaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const allocations: StringAllocations = (await import(args.allocations)).default

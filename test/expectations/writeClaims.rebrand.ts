@@ -1,10 +1,10 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util/balance'
+import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util-local/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, Eddy, isBullSellerAddress, Jordan, KS, newHardwareDeployer, NFTradePool, oldSoftwareDeployer, Van1sh } from '../../data/allAddresses'
-import { mergeVersionedRecords } from '../../util/version'
-import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util/expectation'
+import { mergeVersionedRecords } from '../../util-local/version'
+import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util-local/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
 import { getShare, sumBigNumbers, zero } from '../../util/bignumber'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
@@ -13,11 +13,10 @@ import { Address } from '../../models/Address'
 import { Transfer } from '../../models/Transfer'
 import { AmountBN } from '../../models/AmountBN'
 import { parseTransfersCSV } from '../../models/Transfer/parseTransfersCSV'
-import { packageDirectory } from '../../util/pkg-dir'
 import { readFile } from 'fs/promises'
 import { shieldDecimals } from '../support/ColiToken.helpers'
 import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
-import { expect } from '../../util/expect'
+import { expect } from '../../util-local/expect'
 import { ensure } from '../../util/ensure'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
@@ -139,7 +138,7 @@ async function getBullBalanceAt(address: Address, date: Date) {
 }
 
 async function getTransfersFromCSVFile(decimals: number, tokenAddress: Address, userAddress: Address, date: Date): Promise<Transfer[]> {
-  const data = await readFile(`${await packageDirectory()}/test/transfers/${tokenAddress}/${userAddress}/${date.toISOString()}.csv`)
+  const data = await readFile(`${process.cwd()}/test/transfers/${tokenAddress}/${userAddress}/${date.toISOString()}.csv`)
   return parseTransfersCSV(decimals, data)
 }
 
