@@ -20,3 +20,5 @@ export function toFrontendAmount(amount: BigNumberFloat.Value, decimals: BigNumb
 export function toFrontendAmountBN(amount: BigNumberish, decimals: BigNumberFloat.Value): BigNumberFloat {
   return toFrontendAmount(amount.toString(), decimals)
 }
+
+export const toEthString = (amount: BigNumberish) => toFrontendAmountBN(amount, 18).toString()

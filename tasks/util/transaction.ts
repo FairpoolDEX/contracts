@@ -5,7 +5,15 @@ import { getTransactionUrl } from '../../util/url'
 export async function logAndWaitForTransactions(context: RunnableContext, minConfirmations: number, transactions: ContractTransaction[]) {
   const { log, signer } = context
   return Promise.all(transactions.map(async tx => {
-    log(await getTransactionUrl(tx, signer))
-    await tx.wait(minConfirmations)
+    const url = await getTransactionUrl(tx, signer)
+    log(url)
+    return tx.wait(minConfirmations)
   }))
+}
+
+export async function logAndWaitForTransaction(context: RunnableContext, minConfirmations: number, transaction: ContractTransaction) {
+  const { log, signer } = context
+  const url = await getTransactionUrl(transaction, signer)
+  log(url)
+  return transaction.wait(minConfirmations)
 }

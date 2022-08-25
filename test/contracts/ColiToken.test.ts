@@ -7,11 +7,10 @@ import { ColiToken } from '../../typechain-types'
 import { allocationsForTest, releaseTime, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { fest } from '../../util-local/mocha'
-import { upgradeContract, UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
+import { UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
 import { Address } from '../../models/Address'
 import { ContractName } from '../../models/ContractName'
-import { DeployContractContext, deployUpgradeableContract, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
-import { getColiToken } from '../../tasks/util/getToken'
+import { DeployContractContext, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
 import { getTestRunnableContext } from '../support/context'
 
 describe('ColiToken', async () => {
@@ -480,18 +479,18 @@ describe('ColiToken', async () => {
     })
   })
 
-  fest('upgradeColiToken', async () => {
-    const deployShieldContext = await getRebrandTestDeployContractContext('ColiToken')
-    const ShieldTokenDeployment = await deployUpgradeableContract(deployShieldContext)
-    const contractAddress = ShieldTokenDeployment.proxyAddress
-    const upgradeColiContext = await getRebrandTestUpgradeContractContext('ColiToken', contractAddress)
-    const ColiTokenUpgrade = await upgradeContract(upgradeColiContext)
-    const token = await getColiToken(contractAddress, ethers)
-    const name = await token.name()
-    const symbol = await token.symbol()
-    expect(name).to.equal('Coliquidity Token')
-    expect(symbol).to.equal('COLI')
-  })
+  // fest('upgradeColiToken', async () => {
+  //   const deployShieldContext = await getRebrandTestDeployContractContext('ColiToken')
+  //   const ShieldTokenDeployment = await deployUpgradeableContract(deployShieldContext)
+  //   const contractAddress = ShieldTokenDeployment.proxyAddress
+  //   const upgradeColiContext = await getRebrandTestUpgradeContractContext('ColiToken', contractAddress)
+  //   const ColiTokenUpgrade = await upgradeContract(upgradeColiContext)
+  //   const token = await getColiToken(contractAddress, ethers)
+  //   const name = await token.name()
+  //   const symbol = await token.symbol()
+  //   expect(name).to.equal('Coliquidity Token')
+  //   expect(symbol).to.equal('COLI')
+  // })
 
 })
 
