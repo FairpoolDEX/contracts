@@ -9,7 +9,8 @@ export const BalanceBNSchema = z.object({
   amount: AmountBNSchema,
 })
 
-export const BalancesBNSchema = z.array(BalanceBNSchema).superRefine(getDuplicatesRefinement('BalanceBN', getBalanceBNUid))
+export const BalancesBNSchema = z.array(BalanceBNSchema)
+  .superRefine(getDuplicatesRefinement('BalanceBN', getBalanceBNUid))
 
 export const BalanceBNUidSchema = BalanceBNSchema.pick({
   address: true,

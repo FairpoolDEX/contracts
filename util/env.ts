@@ -8,3 +8,12 @@ export function demandIntegerEnvVar(name: string, unit: string) {
   }
   return value
 }
+
+export function assumeIntegerEnvVar(name: string) {
+  const value = process.env[name]
+  if (value) {
+    return parseInt(value, 10)
+  } else {
+    return undefined
+  }
+}

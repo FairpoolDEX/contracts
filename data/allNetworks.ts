@@ -32,6 +32,12 @@ export const ropsten = addEVMNetwork({
   blockGasLimit: 8000000, // https://ropsten.etherscan.io/blocks
 })
 
+export const rinkeby = addEVMNetwork({
+  name: 'rinkeby',
+  chainId: 4,
+  blockGasLimit: 30000000, // https://rinkeby.etherscan.io/blocks
+})
+
 export const bscmainnet = addEVMNetwork({
   name: 'bscmainnet',
   chainId: 56,

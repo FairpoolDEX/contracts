@@ -1,5 +1,5 @@
 import { Overrides } from 'ethers'
-import { maxFeePerGas, maxPriorityFeePerGas } from './gas'
+import { getGasLimit, maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
 import { NetworkName } from '../models/NetworkName'
 import { Signer } from '@ethersproject/abstract-signer/src.ts/index'
@@ -28,9 +28,9 @@ export async function getFeeOverrides(signer: Signer): Promise<Pick<Overrides, '
 
 export async function getOverrides(signer: Signer): Promise<Overrides> {
   const feeOverrides = await getFeeOverrides(signer)
-  // const network = await getNetworkFromSigner(signer)
-  // const gasLimit = getGasLimit(network.name)
-  return { ...feeOverrides }
+  const network = await getNetworkFromSigner(signer)
+  const gasLimit = getGasLimit(network.name)
+  return { ...feeOverrides, gasLimit }
 }
 
 export async function getNetworkFromSigner(signer: Signer) {

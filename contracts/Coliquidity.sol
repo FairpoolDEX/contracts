@@ -179,9 +179,10 @@ contract Coliquidity is Ownable {
             Contribution storage contribution = contributions[contributionIndexes[i]];
             if (contribution.takerToken != takerToken) continue;
             uint takerAmountDiff = Math.min(takerAmountDeposited, contribution.takerAmount);
-            uint makerAmountDiff =
-            contribution.takerAmount -= takerAmountDiff;
-            takerAmountDeposited -= takerAmountDiff;
+//            TODO: makerAmountDiff was unused. This may be a coding error.
+//            uint makerAmountDiff =
+//            contribution.takerAmount -= takerAmountDiff;
+//            takerAmountDeposited -= takerAmountDiff;
             positions.push(
                 Position({offerIndex : offerIndex, maker : offer.maker, taker : contribution.taker, makerToken : offer.makerToken, takerToken : contribution.takerToken, makerAmount : makerAmountDeposited, takerAmount : takerAmountDiff, liquidityAmount : liquidityAmountReceived, lockedUntil : offer.lockedUntil})
             );

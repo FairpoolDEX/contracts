@@ -23,6 +23,11 @@ addNetworkExplorer({
 })
 
 addNetworkExplorer({
+  name: 'rinkeby',
+  url: 'https://rinkeby.etherscan.io',
+})
+
+addNetworkExplorer({
   name: 'bscmainnet',
   url: 'https://bscscan.com',
 })

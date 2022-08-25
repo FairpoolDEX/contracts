@@ -7,6 +7,8 @@ export function getJsonRpcUrl(networkName: NetworkName) {
       return `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`
     case 'ropsten':
       return `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_ROPSTEN_API_KEY}`
+    case 'rinkeby':
+      return `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_RINKEBY_API_KEY}`
     case 'bscmainnet':
       return `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API_KEY}/bsc/mainnet/archive`
     case 'bsctestnet':

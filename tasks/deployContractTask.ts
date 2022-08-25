@@ -8,14 +8,17 @@ import { z } from 'zod'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { getProxyCheckerUrl } from '../util/url'
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
+import { expect } from '../util-local/expect'
 
 export async function deployNonUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)
+  await ensureDeployer(context)
   return deployNonUpgradeableContract(context)
 }
 
 export async function deployUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)
+  await ensureDeployer(context)
   return deployUpgradeableContract(context)
 }
 
@@ -31,7 +34,7 @@ export async function deployNonUpgradeableContract(context: DeployContractContex
   const contract = await factory.deploy(...constructorArgs, {
     ...await getOverrides(signer),
   })
-  await contract.deployed()
+  await contract.deployTransaction.wait(5) // per hardhat recommendation
   const address = contract.address
   log(`export ${contractNameEnvVar}_ADDRESS=${address}`)
 
@@ -54,7 +57,7 @@ export async function deployUpgradeableContract(context: DeployContractContext):
   log(`export ${contractNameEnvVar}_DEPLOYER=${signer.address}`)
 
   const contract = await upgrades.deployProxy(factory, constructorArgs)
-  await contract.deployed()
+  await contract.deployTransaction.wait(5) // per hardhat recommendation
   const proxyAddress = contract.address
   log(`export ${contractNameEnvVar}_PROXY_ADDRESS=${proxyAddress}`)
   const implementationAddress = await getImplementationAddress(ethers.provider, contract.address)
@@ -72,12 +75,19 @@ export async function deployUpgradeableContract(context: DeployContractContext):
   return { proxyAddress, implementationAddress }
 }
 
+async function ensureDeployer(context: DeployContractContext) {
+  const { signer, deployer } = context
+  if (!deployer) return
+  expect(signer.address).to.equal(deployer, 'Signer address must be equal to deployer address')
+}
+
 const DeployContractTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
   contractName: z.string(),
   contractNameEnvVar: z.string().optional(),
   constructorArgsModule: z.string().optional(),
   constructorArgsParams: z.array(z.string()).default([]),
   verify: z.boolean().default(true),
+  deployer: z.string().min(1).optional(),
 })
 
 export type DeployContractTaskArguments = z.infer<typeof DeployContractTaskArgumentsSchema>

@@ -25,7 +25,7 @@ import { writeClaimsTask, writeClaimsTaskCacheTtl } from './tasks/writeClaimsTas
 import { hours, minutes } from './util-local/time'
 import { getJsonRpcUrl } from './util-local/ethereum'
 import { deployColiTokenTask } from './tasks/deployColiTokenTask'
-import { bscmainnet, bsctestnet, mainnet, ropsten } from './data/allNetworks'
+import { bscmainnet, bsctestnet, mainnet, rinkeby, ropsten } from './data/allNetworks'
 import { Network } from './models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
@@ -108,6 +108,13 @@ export const config: HardhatUserConfig = {
       accounts: { mnemonic },
       timeout: 2 * minutes,
     }),
+    rinkeby: fromNetwork(rinkeby, {
+      url: getJsonRpcUrl('rinkeby'),
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 2 * minutes,
+    }),
     bscmainnet: fromNetwork(bscmainnet, {
       url: getJsonRpcUrl('bscmainnet'), // 'https://bsc-dataseed.binance.org/',
       chainId: 56,
@@ -147,6 +154,7 @@ export const config: HardhatUserConfig = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       ropsten: process.env.ETHERSCAN_API_KEY,
+      rinkeby: process.env.ETHERSCAN_API_KEY,
 
       bsc: process.env.BSCSCAN_API_KEY,
       bscTestnet: process.env.BSCSCAN_API_KEY,
@@ -175,6 +183,7 @@ export const config: HardhatUserConfig = {
       '@uniswap/v2-core/contracts/UniswapV2Pair.sol',
       '@uniswap/v2-core/contracts/UniswapV2Factory.sol',
       '@uniswap/v2-periphery/contracts/UniswapV2Router02.sol',
+      '@uniswap/v2-periphery/contracts/test/WETH9.sol',
       '@uniswap/v2-periphery/contracts/test/WETH9.sol',
     ],
     // path: `${os.tmpdir()}/hardhat-dependency-compiler`,
@@ -216,6 +225,7 @@ task('deployNonUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addParam('contractNameEnvVar', 'Contract name for environment variable', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
+  .addOptionalParam('deployer', 'Deployer address', undefined, types.string)
   .setAction(deployNonUpgradeableContractTask)
 
 task('deployUpgradeableContract', 'Deploy a non-upgradeable contract')
@@ -223,6 +233,7 @@ task('deployUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addParam('contractNameEnvVar', 'Contract name for environment variable', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
+  .addOptionalParam('deployer', 'Deployer address', undefined, types.string)
   .setAction(deployUpgradeableContractTask)
 
 task('upgradeContract', 'Upgrade a contract')

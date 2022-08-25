@@ -345,6 +345,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function pluck(uint256 tokenId, string memory part, string[] memory sourceArray) internal view returns (string memory) {
+        sourceArray; // unused
         uint256 rand = random(string(abi.encodePacked(name(), part, toString(tokenId)))) % characters.length;
         if (tokenId == 666) {
             return string(abi.encodePacked("\u2020 ", lich_characters[part], " ", part));
@@ -354,7 +355,7 @@ contract TraderLoot is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     function tokenURI(uint256 tokenId) override public view returns (string memory) {
-        uint256 rand = random(string(abi.encodePacked(name(), toString(tokenId))));
+//        uint256 rand = random(string(abi.encodePacked(name(), toString(tokenId))));
 
         string memory header;
         if (tokenId == 666) {

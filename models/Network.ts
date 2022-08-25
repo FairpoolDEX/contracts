@@ -12,6 +12,7 @@ export const NetworkSchema = z.object({
 
 export const NetworksSchema = z.array(NetworkSchema)
   .superRefine(getDuplicatesRefinement('Network', parseNetworkUid))
+  .superRefine(getDuplicatesRefinement('Network', n => n.chainId))
 
 export const NetworkUidSchema = NetworkSchema.pick({
   name: true,

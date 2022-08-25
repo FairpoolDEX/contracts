@@ -5,7 +5,7 @@ import { Writable } from '../util-local/writable'
 import { Filename } from '../util/filesystem'
 import { importDefault } from '../util-local/import'
 import { addVestingTypes } from '../test/support/Vesting.helpers'
-import { getGenericTokenWithVesting } from './util/getToken'
+import { getGenericTokenWithVesting } from './util/getERC20Token'
 import { Address } from '../models/Address'
 import { sortBy } from 'lodash'
 
