@@ -38,36 +38,32 @@ import { addAllocationsTask } from './tasks/addAllocations'
 //   require('longjohn');
 // }
 
+const defaultSolcSettings = {
+  optimizer: {
+    enabled: true,
+    runs: 999999,
+  },
+}
+
 export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   solidity: {
     compilers: [
       {
+        version: '0.8.16',
+        settings: defaultSolcSettings,
+      },
+      {
         version: '0.8.4',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 999999,
-          },
-        },
+        settings: defaultSolcSettings,
       },
       {
         version: '0.5.16',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 999999,
-          },
-        },
+        settings: defaultSolcSettings,
       },
       {
         version: '0.6.6',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 999999,
-          },
-        },
+        settings: defaultSolcSettings,
       },
     ],
   },
