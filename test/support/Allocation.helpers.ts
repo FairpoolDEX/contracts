@@ -11,7 +11,7 @@ import { CustomNamedAllocation } from '../../models/CustomNamedAllocation'
 import { Filename } from '../../util/filesystem'
 import { parseCustomNamedAllocationsCSV } from '../../models/CustomNamedAllocation/parseCustomNamedAllocationsCSV'
 import { VestingType } from '../../models/VestingType'
-import { tenPower18 } from '../../util/bignumber'
+import { tenPow18 } from '../../util/bignumber'
 import { sendMultipleTransactions } from '../../util-local/ethers'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
 
@@ -64,7 +64,7 @@ export function validateAllocations(totalAmount: AmountBN, allocations: CustomNa
 
 function toAllocationAmount(amount: AmountBN) {
   // NOTE: It's multiplied in the contract by 10 ** 18
-  const allocationAmount = amount.div(tenPower18)
-  expect(allocationAmount.mul(tenPower18)).to.equal(amount)
+  const allocationAmount = amount.div(tenPow18)
+  expect(allocationAmount.mul(tenPow18)).to.equal(amount)
   return allocationAmount
 }

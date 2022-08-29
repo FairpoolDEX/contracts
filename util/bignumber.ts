@@ -12,7 +12,7 @@ export const one = BigNumber.from(1)
 
 export const ten = BigNumber.from(10)
 
-export const tenPower18 = ten.pow(18)
+export const tenPow18 = ten.pow(18)
 
 export const bn = BigNumber.from
 
