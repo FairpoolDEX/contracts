@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { uniq } from 'lodash'
+import { noop, uniq } from 'lodash'
 import neatcsv from 'neat-csv'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import type { Ethers } from '../util-local/types'
@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { getBullTokenFromDeployment } from './util/getERC20Token'
 import { RunnableTaskArgumentsSchema } from '../util-local/RunnableTaskArguments'
 import { getRunnableContext } from '../util-local/context/getRunnableContext'
-import { Logger, logNoop } from '../util-local/log'
+import { Logger } from '../util-local/log'
 
 export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getClaimManyBullTokenContext(args, hre)
@@ -25,7 +25,7 @@ export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: 
   await claimMany(token, addresses, ethers, log)
 }
 
-export async function claimMany(token: Contract, addresses: Address[], ethers: Ethers, log: Logger = logNoop): Promise<void> {
+export async function claimMany(token: Contract, addresses: Address[], ethers: Ethers, log: Logger = noop): Promise<void> {
   if (addresses.length > 300) throw new Error('Can\'t claim if addresses array is longer than 300 elements')
   const tx = await token.claimMany(addresses)
   log(`[INFO] Set ${claimMany.name} transaction ${tx.hash}`)

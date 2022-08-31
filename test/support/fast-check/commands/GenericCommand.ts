@@ -2,19 +2,11 @@ import { expect } from '../../../../util-local/expect'
 import { ImplementationError } from '../../../../util/todo'
 
 export abstract class GenericCommand<Model, Real, Result> {
-  toString(): string {
-    return `${this.constructor.name} ${JSON.stringify(this, undefined, 2)}`
-  }
-
   async run(model: Model, real: Real) {
-    await this.expectMatch(this.runModel(model), this.runReal(real))
+    await this.expectEqualResults(this.runModel(model), this.runReal(real))
   }
 
-  abstract runModel(model: Model): Promise<Result>
-
-  abstract runReal(real: Real): Promise<Result>
-
-  async expectMatch(modelTxPromise: Promise<Result>, realTxPromise: Promise<Result>) {
+  async expectEqualResults(modelTxPromise: Promise<Result>, realTxPromise: Promise<Result>) {
     const [modelResult, realResult] = await Promise.allSettled([modelTxPromise, realTxPromise])
     try {
       expect(modelResult.status).to.equal(realResult.status)
@@ -33,6 +25,16 @@ export abstract class GenericCommand<Model, Real, Result> {
       }
       throw e
     }
+  }
+
+  abstract check(model: Readonly<Model>): Promise<boolean>
+
+  abstract runModel(model: Model): Promise<Result>
+
+  abstract runReal(real: Real): Promise<Result>
+
+  toString(): string {
+    return `${this.constructor.name} ${(JSON.stringify(this, undefined, 2))}`
   }
 
 }

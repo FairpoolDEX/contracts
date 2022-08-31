@@ -6,13 +6,13 @@ import { expectSignerBalances, getLatestBlockTimestamp, getSnapshot, revertToSna
 import { BaseToken, MCP, QuoteToken } from '../../typechain-types'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { beforeEach } from 'mocha'
-import { TokenModel } from '../support/fast-check/models/TokenModel'
+import { ERC20Model } from '../support/fast-check/models/ERC20Model'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { hours } from '../../util-local/time'
 import { fest } from '../../util-local/mocha'
 
-describe('Market Crash Protection', async () => {
+describe.skip('Market Crash Protection', async () => {
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
   let mark: SignerWithAddress // MCP contract owner
@@ -38,8 +38,8 @@ describe('Market Crash Protection', async () => {
   let mcpAsSam: MCP
   let mcpAsBob: MCP
 
-  let baseTokenModel: TokenModel
-  let quoteTokenModel: TokenModel
+  let baseTokenModel: ERC20Model
+  let quoteTokenModel: ERC20Model
 
   let now: Date
 

@@ -21,7 +21,7 @@ export class CreateOfferCommand extends ColiquidityCommand<OfferIndex> implement
 
   async check(model: ColiquidityModel) {
     const balance = await this.getModelBalanceAmount(model, this.makerToken, this.maker)
-    return balance >= this.makerAmount
+    return balance.gte(this.makerAmount)
   }
 
   async runModel(model: ColiquidityModel) {

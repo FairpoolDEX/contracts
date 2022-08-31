@@ -3,13 +3,14 @@ import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } fro
 import { AsyncCommand } from 'fast-check'
 import { expect } from '../../../../util-local/expect'
 import { TokenReal } from '../../../support/fast-check/models/TokenReal'
-import { BalanceModel, TokenModel } from '../../../support/fast-check/models/TokenModel'
+import { ERC20Model } from '../../../support/fast-check/models/ERC20Model'
 import { sum } from 'lodash'
 import { UniswapV2Pair } from '../../../../typechain-types'
 import { OfferCreated } from '../models/Events'
 import { PairCreated } from '../../Uniswap/models/Events'
 import { impl } from '../../../../util/todo'
 import { Address } from '../../../../models/Address'
+import { BalanceBN } from '../../../../models/BalanceBN'
 
 export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   readonly users: Address[] = []
@@ -77,12 +78,12 @@ export class ReachDesiredStateCommand extends ColiquidityCommand<AmountNum> impl
     )
   }
 
-  async toTokenModel(token: TokenReal, addresses: Address[]): Promise<TokenModel> {
+  async toTokenModel(token: TokenReal, addresses: Address[]): Promise<ERC20Model> {
     return {
       address: token.address,
-      balances: await Promise.all(addresses.map(async (address): Promise<BalanceModel> => ({
+      balances: await Promise.all(addresses.map(async (address): Promise<BalanceBN> => ({
         address: address,
-        amount: (await token.balanceOf(address)).toNumber(),
+        amount: await token.balanceOf(address),
       }))),
     }
   }
