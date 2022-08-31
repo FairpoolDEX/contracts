@@ -43,5 +43,7 @@ abstract contract ERC20Enumerable is ERC20 {
         delete indexesOfHolders[holder];
     }
 
-
+    function holdersLength() public view returns (uint) {
+        return holders.length;
+    }
 }

@@ -4,7 +4,7 @@ import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { GenericTokenWithVesting } from '../../typechain-types'
 
-import { allocationsForTest, releaseTime, releaseTimeTest, vestingTypesForTest } from '../support/ColiToken.helpers'
+import { AllocationsForTest, getAllocationsForTest, releaseTime, releaseTimeTest, vestingTypesForTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { fest } from '../../util-local/mocha'
 import { UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
@@ -21,19 +21,30 @@ import { toSeconds } from '../../models/Duration'
 import { getShare } from '../../models/Share'
 import { parseCustomNamedAllocation } from '../../models/CustomNamedAllocation'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
+import { ensure } from '../../util/ensure'
 
 describe('GenericTokenWithVesting', async () => {
 
   let context: RunnableContext
 
+  let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let nonOwner: SignerWithAddress
+  let alice: SignerWithAddress
+  let bob: SignerWithAddress
+  let sam: SignerWithAddress
 
   let token: GenericTokenWithVesting
   let nonOwnerToken: GenericTokenWithVesting
 
+  let allocationsForTest: AllocationsForTest
+
   beforeEach(async () => {
-    [owner, nonOwner] = await ethers.getSigners()
+    signers = [owner, nonOwner] = await ethers.getSigners()
+
+    const addressesForAllocations = signers.slice(2).map(s => s.address)
+
+    allocationsForTest = getAllocationsForTest(addressesForAllocations)
 
     context = await getTestRunnableContext({})
 
@@ -69,9 +80,9 @@ describe('GenericTokenWithVesting', async () => {
       const wallets = (await ethers.getSigners()).slice(2)
       const amounts = wallets.map((wallet, i) => toTokenAmount(i + 1))
 
-      await expect(() => {
+      await expect(
         token.transferMany(wallets.map(i => i.address), amounts)
-      }).to.changeTokenBalances(token, wallets, amounts)
+      ).to.changeTokenBalances(token, wallets, amounts)
     })
 
     fest('should throw if wrong array length parameters', async () => {
@@ -99,7 +110,7 @@ describe('GenericTokenWithVesting', async () => {
 
       await expect(
         nonOwnerToken.transferMany([owner.address], [amount]),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -112,7 +123,7 @@ describe('GenericTokenWithVesting', async () => {
 
       await expect(await token.provider.getBalance(token.address)).to.equal(amount)
       await expect(
-        await token.withdraw(amount),
+        token.withdraw(amount),
       ).to.changeEtherBalances([owner], [amount])
       await expect(await token.provider.getBalance(token.address)).to.equal(0)
     })
@@ -122,20 +133,20 @@ describe('GenericTokenWithVesting', async () => {
       await token.transfer(token.address, amount)
 
       await expect(await token.balanceOf(token.address)).to.equal(amount)
-      await expect(() => {
+      await expect(
         token.withdrawToken(token.address, amount)
-      }).to.changeTokenBalances(token, [owner], [amount])
+      ).to.changeTokenBalances(token, [owner], [amount])
       await expect(await token.balanceOf(token.address)).to.equal(0)
     })
 
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.withdraw(1),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
 
       await expect(
         nonOwnerToken.withdrawToken(token.address, 1),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -162,15 +173,15 @@ describe('GenericTokenWithVesting', async () => {
       paused = await token.paused()
       expect(paused).to.be.equal(false)
 
-      await expect(() => {
+      await expect(
         nonOwnerToken.transfer(owner.address, amount)
-      }).to.changeTokenBalance(token, owner, amount)
+      ).to.changeTokenBalance(token, owner, amount)
     })
 
     fest('should pause / unpause only by owner', async () => {
       await expect(
         nonOwnerToken.pause(true),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -189,13 +200,13 @@ describe('GenericTokenWithVesting', async () => {
       expect(releaseTime).to.equal(newReleaseTime)
     })
 
-    fest('shouldn\'t be able to change release time by non owner', async () => {
+    fest('should not be able to change release time by non owner', async () => {
       await expect(
         token.connect(nonOwner).setReleaseTime(Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
-    fest('shouldn\'t be able to change release time after release', async () => {
+    fest('should not be able to change release time after release', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
       const newBlockTimestamp = releaseTimeTest + 3600
       await timeTravel(async () => {
@@ -296,7 +307,7 @@ describe('GenericTokenWithVesting', async () => {
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addVestingType(0, 40000, 4, 10 * 24 * 3600),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
     fest('should throw if lock period is over already', async () => {
@@ -374,7 +385,7 @@ describe('GenericTokenWithVesting', async () => {
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addAllocations([nonOwner.address], [10], '0'),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
     fest('should throw if invalid vestingType is passed', async () => {
@@ -404,7 +415,7 @@ describe('GenericTokenWithVesting', async () => {
 
     fest('should throw if total amount of allocations exceeds the current supply', async () => {
       const supply = await token.totalSupply()
-      const addresses = (await ethers.getSigners()).slice(2).map(i => i.address)
+      const addresses = (await ethers.getSigners()).slice(-2).map(i => i.address)
       const amounts = addresses.map(() => supply.div(addresses.length - 1))
       await expect(
         token.addAllocations(addresses, amounts, '0'),
@@ -442,14 +453,15 @@ describe('GenericTokenWithVesting', async () => {
       }
     })
 
-    fest('shouldn\'t transfer from frozen wallets', async () => {
+    fest('should not transfer from frozen wallets', async () => {
       for (const allocation of Object.values(allocationsForTest)) {
         for (const [address, amount] of Object.entries(allocation)) {
+          const signer = ensure(signers.find(s => s.address === address))
           const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
           expect(canTransfer).to.equal(false)
 
           await expect(
-            token.transferFrom(address, owner.address, toTokenAmount(amount)),
+            token.connect(signer).transfer(owner.address, toTokenAmount(amount)),
           ).to.be.revertedWith('Wait for vesting day!')
         }
       }
@@ -494,11 +506,12 @@ describe('GenericTokenWithVesting', async () => {
       const minuteAfterRelease = releaseTimeTest + 60
       await timeTravel(async () => {
         for (const [address, amount] of Object.entries(seedAllocation)) {
+          const signer = ensure(signers.find(s => s.address === address))
           const unlockedAmount = await token.getUnlockedAmount(address)
           expect(unlockedAmount).to.equal(0)
 
           await expect(
-            token.transferFrom(address, owner.address, toTokenAmount(amount)),
+            token.connect(signer).transfer(owner.address, toTokenAmount(amount)),
           ).to.be.revertedWith('Wait for vesting day!')
         }
       }, minuteAfterRelease)

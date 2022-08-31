@@ -4,7 +4,7 @@ import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { ColiToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTime, releaseTimeTest } from '../support/ColiToken.helpers'
+import { AllocationsForTest, getAllocationsForTest, releaseTime, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { fest } from '../../util-local/mocha'
 import { UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
@@ -12,17 +12,24 @@ import { Address } from '../../models/Address'
 import { ContractName } from '../../models/ContractName'
 import { DeployContractContext, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
 import { getTestRunnableContext } from '../support/context'
+import { ensure } from '../../util/ensure'
 
 describe('ColiToken', async () => {
 
+  let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let nonOwner: SignerWithAddress
 
   let token: ColiToken
   let nonOwnerToken: ColiToken
 
+  let allocationsForTest: AllocationsForTest
+
   beforeEach(async () => {
-    [owner, nonOwner] = await ethers.getSigners()
+    signers = [owner, nonOwner] = await ethers.getSigners()
+
+    const addressesForAllocations = signers.slice(2).map(s => s.address)
+    allocationsForTest = getAllocationsForTest(addressesForAllocations)
 
     const tokenFactory = await ethers.getContractFactory('ColiToken')
     token = (await upgrades.deployProxy(tokenFactory, [releaseTimeTest])) as unknown as ColiToken
@@ -55,9 +62,9 @@ describe('ColiToken', async () => {
       const wallets = (await ethers.getSigners()).slice(2)
       const amounts = wallets.map((wallet, i) => toTokenAmount(i + 1))
 
-      await expect(() => {
+      await expect(
         token.transferMany(wallets.map(i => i.address), amounts)
-      }).to.changeTokenBalances(token, wallets, amounts)
+      ).to.changeTokenBalances(token, wallets, amounts)
     })
 
     fest('should throw if wrong array length parameters', async () => {
@@ -85,7 +92,7 @@ describe('ColiToken', async () => {
 
       await expect(
         nonOwnerToken.transferMany([owner.address], [amount]),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -108,20 +115,20 @@ describe('ColiToken', async () => {
       await token.transfer(token.address, amount)
 
       await expect(await token.balanceOf(token.address)).to.equal(amount)
-      await expect(() => {
+      await expect(
         token.withdrawToken(token.address, amount)
-      }).to.changeTokenBalances(token, [owner], [amount])
+      ).to.changeTokenBalances(token, [owner], [amount])
       await expect(await token.balanceOf(token.address)).to.equal(0)
     })
 
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.withdraw(1),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
 
       await expect(
         nonOwnerToken.withdrawToken(token.address, 1),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -148,15 +155,15 @@ describe('ColiToken', async () => {
       paused = await token.paused()
       expect(paused).to.be.equal(false)
 
-      await expect(() => {
+      await expect(
         nonOwnerToken.transfer(owner.address, amount)
-      }).to.changeTokenBalance(token, owner, amount)
+      ).to.changeTokenBalance(token, owner, amount)
     })
 
     fest('should pause / unpause only by owner', async () => {
       await expect(
         nonOwnerToken.pause(true),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
 
@@ -175,13 +182,13 @@ describe('ColiToken', async () => {
       expect(releaseTime).to.equal(newReleaseTime)
     })
 
-    fest('shouldn\'t be able to change release time by non owner', async () => {
+    fest('should not be able to change release time by non owner', async () => {
       await expect(
         token.connect(nonOwner).setReleaseTime(Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
-    fest('shouldn\'t be able to change release time after release', async () => {
+    fest('should not be able to change release time after release', async () => {
       const newReleaseTime = Math.floor(new Date('2022.01.01 15:00:00 GMT').getTime() / 1000)
       const newBlockTimestamp = releaseTimeTest + 3600
       await timeTravel(async () => {
@@ -241,7 +248,7 @@ describe('ColiToken', async () => {
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addVestingType(40000, 4, 10 * 24 * 3600),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
     fest('should throw if lock period is over already', async () => {
@@ -319,7 +326,7 @@ describe('ColiToken', async () => {
     fest('should run only by owner', async () => {
       await expect(
         nonOwnerToken.addAllocations([nonOwner.address], [10], '0'),
-      ).to.be.revertedWith('caller is not the owner')
+      ).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
     fest('should throw if invalid vestingType is passed', async () => {
@@ -349,7 +356,7 @@ describe('ColiToken', async () => {
 
     fest('should throw if total amount of allocations exceeds the current supply', async () => {
       const supply = await token.totalSupply()
-      const addresses = (await ethers.getSigners()).slice(2).map(i => i.address)
+      const addresses = (await ethers.getSigners()).slice(-2).map(i => i.address)
       const amounts = addresses.map(() => supply.div(addresses.length - 1))
       await expect(
         token.addAllocations(addresses, amounts, '0'),
@@ -387,14 +394,15 @@ describe('ColiToken', async () => {
       }
     })
 
-    fest('shouldn\'t transfer from frozen wallets', async () => {
+    fest('should not transfer from frozen wallets', async () => {
       for (const allocation of Object.values(allocationsForTest)) {
         for (const [address, amount] of Object.entries(allocation)) {
+          const signer = ensure(signers.find(s => s.address === address))
           const canTransfer = await token.canTransfer(address, toTokenAmount(amount))
           expect(canTransfer).to.equal(false)
 
           await expect(
-            token.transferFrom(address, owner.address, toTokenAmount(amount)),
+            token.connect(signer).transfer(owner.address, toTokenAmount(amount)),
           ).to.be.revertedWith('Wait for vesting day!')
         }
       }
@@ -439,11 +447,12 @@ describe('ColiToken', async () => {
       const minuteAfterRelease = releaseTimeTest + 60
       await timeTravel(async () => {
         for (const [address, amount] of Object.entries(seedAllocation)) {
+          const signer = ensure(signers.find(s => s.address === address))
           const unlockedAmount = await token.getUnlockedAmount(address)
           expect(unlockedAmount).to.equal(0)
 
           await expect(
-            token.transferFrom(address, owner.address, toTokenAmount(amount)),
+            token.connect(signer).transfer(owner.address, toTokenAmount(amount)),
           ).to.be.revertedWith('Wait for vesting day!')
         }
       }, minuteAfterRelease)

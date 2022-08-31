@@ -14,6 +14,8 @@ export const ten = BigNumber.from(10)
 
 export const tenPow18 = ten.pow(18)
 
+export const uint256Max = BigNumber.from(2).pow(256).sub(1)
+
 export const bn = BigNumber.from
 
 export function sumBigNumbers(nums: BigNumber[]) {
@@ -26,4 +28,18 @@ export function neg(num: BigNumber) {
 
 export function getShare(value: BigNumberish, numerator: BigNumberish, denominator: BigNumberish) {
   return BigNumber.from(value).mul(numerator).div(denominator)
+}
+
+export function rangeBN(from: BigNumberish, to: BigNumberish, step: BigNumberish = one) {
+  let fromBN = bn(from)
+  const result: BigNumber[] = []
+  while (fromBN.lt(to)) {
+    result.push(fromBN)
+    fromBN = fromBN.add(step)
+  }
+  return result
+}
+
+export function rangeBNS(to: BigNumberish, step: BigNumberish = one) {
+  return rangeBN(0, to)
 }

@@ -27,7 +27,7 @@ import { validateRewrites } from '../../models/Rewrite'
 import { tmpdir } from 'os'
 import { getCachedContext } from '../../util-local/context/getCachedContext'
 
-describe('setClaimsBullToken', async () => {
+describe.skip('setClaimsBullToken', async () => {
 
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
@@ -102,7 +102,7 @@ describe('setClaimsBullToken', async () => {
   fest('should not allow the stranger to set claims', async () => {
     await expect(
       setClaims(bullTokenWithStranger, balances, await getTestSetClaimsContext()),
-    ).to.be.revertedWith('caller is not the owner')
+    ).to.be.revertedWith('Ownable: caller is not the owner')
     const aliceClaim = await bullTokenWithStranger.claims(aliceAddress)
     expect(aliceClaim).to.equal(fromShieldToBull(toTokenAmount('0')))
   })

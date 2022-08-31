@@ -1,5 +1,5 @@
-import { TokenModel } from './TokenModel'
+import { ERC20Model } from './ERC20Model'
 
 export interface BlockchainModel {
-  tokens: TokenModel[]
+  tokens: ERC20Model[]
 }

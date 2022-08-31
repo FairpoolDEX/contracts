@@ -5,7 +5,7 @@ import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { BullToken, ColiToken } from '../../typechain-types'
 
-import { allocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
+import { AllocationsForTest, getAllocationsForTest, releaseTimeTest } from '../support/ColiToken.helpers'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, claims, getClaims } from '../support/BullToken.helpers'
 import { fest } from '../../util-local/mocha'
 
@@ -23,6 +23,7 @@ const amounts = claimers.map((address) => claims[address])
 
 describe('BullToken', async () => {
 
+  let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
 
@@ -37,8 +38,13 @@ describe('BullToken', async () => {
 
   const strangerAmount = toTokenAmount('1000')
 
+  let allocationsForTest: AllocationsForTest
+
   beforeEach(async () => {
-    [owner, stranger] = await ethers.getSigners()
+    signers = [owner, stranger] = await ethers.getSigners()
+
+    const addressesForAllocations = signers.slice(2).map(s => s.address)
+    allocationsForTest = getAllocationsForTest(addressesForAllocations)
 
     strangerAddress = await stranger.getAddress()
     ownerAddress = await owner.getAddress()
@@ -71,18 +77,18 @@ describe('BullToken', async () => {
   fest('should not allow non-owner to set claims', async () => {
     await expect(
       bullTokenWithStranger.setClaims(claimers, amounts),
-    ).to.be.revertedWith('caller is not the owner')
+    ).to.be.revertedWith('Ownable: caller is not the owner')
   })
 
   fest('should allow any user to claim the tokens for his own address', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
+    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim before the airdrop is started')
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
       await bullTokenWithStranger.claim()
-      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
+      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim because this address has already claimed or didn\'t hold $SHLD at the snapshot time')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount)
     }, airdropStartTimestampForTest)
 
@@ -90,7 +96,7 @@ describe('BullToken', async () => {
       await bullTokenWithStranger.claim()
       await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
       await bullTokenWithStranger.claim()
-      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
+      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim because this address has already claimed or didn\'t hold $SHLD at the snapshot time')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(strangerAmount.mul(2))
     }, airdropStartTimestampForTest + airdropStageDuration)
   })
@@ -98,7 +104,7 @@ describe('BullToken', async () => {
   fest('should allow any user to claim tokens for other addresses', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim')
+    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim before the airdrop is started')
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
@@ -117,13 +123,13 @@ describe('BullToken', async () => {
   fest('should not allow the user to claim BULL tokens before or after the distribution stage finishes', async () => {
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
-    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim')
+    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim before the airdrop is started')
+    await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim before the airdrop is started')
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {
-      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
-      await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim')
+      await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim when not in distribution period')
+      await expect(bullTokenWithStranger.claimMany([strangerAddress])).to.be.revertedWith('Can\'t claim when not in distribution period')
       expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
     }, airdropStartTimestampForTest + airdropClaimDuration + 1)
   })
@@ -134,7 +140,7 @@ describe('BullToken', async () => {
 
     await bullTokenWithOwner.setClaims(claimers, amounts)
     await bullTokenWithOwner.setClaims([strangerAddress], [strangerAmount])
-    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim')
+    await expect(bullTokenWithStranger.claim()).to.be.revertedWith('Can\'t claim before the airdrop is started')
     expect(await bullTokenWithStranger.balanceOf(strangerAddress)).to.equal(0)
 
     await timeTravel(async () => {

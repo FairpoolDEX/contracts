@@ -1,7 +1,7 @@
 import { task, types } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-etherscan'
+import '@nomicfoundation/hardhat-chai-matchers'
 import '@typechain/hardhat'
 import 'hardhat-watcher'
 import 'solidity-coverage'
@@ -33,6 +33,7 @@ import { writeTotalsTask } from './tasks/writeTotalsTask'
 import { amount, timestamp } from './util-local/hardhat'
 import { addVestingTypesTask } from './tasks/addVestingTypes'
 import { addAllocationsTask } from './tasks/addAllocations'
+import { ensure } from './util/ensure'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -148,16 +149,21 @@ export const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      ropsten: process.env.ETHERSCAN_API_KEY,
-      rinkeby: process.env.ETHERSCAN_API_KEY,
+      mainnet: ensure(process.env.ETHERSCAN_API_KEY),
+      ropsten: ensure(process.env.ETHERSCAN_API_KEY),
+      rinkeby: ensure(process.env.ETHERSCAN_API_KEY),
 
-      bsc: process.env.BSCSCAN_API_KEY,
-      bscTestnet: process.env.BSCSCAN_API_KEY,
+      bsc: ensure(process.env.BSCSCAN_API_KEY),
+      bscTestnet: ensure(process.env.BSCSCAN_API_KEY),
 
-      avalanche: process.env.SNOWTRACE_API_KEY,
-      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+      avalanche: ensure(process.env.SNOWTRACE_API_KEY),
+      avalancheFujiTestnet: ensure(process.env.SNOWTRACE_API_KEY),
     },
+  },
+  mocha: {
+    parallel: true,
+    fullStackTrace: true,
+    fullTrace: true,
   },
   watcher: {
     run: {
@@ -166,6 +172,14 @@ export const config: HardhatUserConfig = {
         { command: 'compile', params: { quiet: true } },
         { command: 'test', params: { noCompile: true, testFiles: ['testfile.ts'] } },
       ],
+    },
+    // doesn't pass extra options (e.g. --grep)
+    test: {
+      tasks: [{ command: 'test', params: { grep: process.env.MOCHA_GREP } }],
+      files: ['./test/**/*', './contracts/**/*', './models/**/*', './data/**/*', './tasks/**/*', './util/**/*', './util-local/**/*'],
+      verbose: true,
+      clearOnStart: true,
+      runOnLaunch: true,
     },
   },
   typechain: {

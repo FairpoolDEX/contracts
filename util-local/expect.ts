@@ -1,8 +1,7 @@
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { waffleChai as solidity } from '@ethereum-waffle/chai'
+import '@nomicfoundation/hardhat-chai-matchers'
 
 chai.use(chaiAsPromised)
-chai.use(solidity)
 
 export const expect = chai.expect
