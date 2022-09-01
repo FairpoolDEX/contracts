@@ -13,7 +13,6 @@ import $debug from 'debug'
 import { assert, asyncModelRun, asyncProperty, boolean, commands, constantFrom, context, nat, oneof, record } from 'fast-check'
 import { TestMetronome } from '../support/Metronome'
 import { ColiquidityModel, ColiquidityReal } from './Coliquidity/ColiquidityCommand'
-import { amountNum } from '../support/fast-check.helpers'
 import { CreateOfferCommand } from './Coliquidity/commands/CreateOfferCommand'
 import { CreateContributionCommand } from './Coliquidity/commands/CreateContributionCommand'
 import { CreatePairCommand } from './Coliquidity/commands/CreatePairCommand'
@@ -28,6 +27,7 @@ import { fest } from '../../util-local/mocha'
 import { BalanceBN } from '../../models/BalanceBN'
 import { parseOffer, parseOfferFromContract } from '../../models/Coliquidity/Offer'
 import { parsePosition, parsePositionFromContract } from '../../models/Coliquidity/Position'
+import { amountNum } from '../support/fast-check/arbitraries/AmountNum'
 
 describe('Coliquidity', async function () {
   let signers: SignerWithAddress[]

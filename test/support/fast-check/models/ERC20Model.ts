@@ -2,6 +2,7 @@ import { Address } from '../../../../models/Address'
 import { ensure } from '../../../../util/ensure'
 import { zero } from '../../../../util/bignumber'
 import { BalanceBN } from '../../../../models/BalanceBN'
+import { removeByIndex } from '../../../../util/lodash'
 
 export interface ERC20Model {
   address: Address
@@ -10,6 +11,10 @@ export interface ERC20Model {
 
 export function findBalance(model: ERC20Model, address: Address) {
   return model.balances.find(b => b.address === address)
+}
+
+export function findBalanceIndex(model: ERC20Model, address: Address) {
+  return model.balances.findIndex(b => b.address === address)
 }
 
 export function ensureBalance(model: ERC20Model, address: Address) {
@@ -21,9 +26,14 @@ export function findBalanceDefault(model: ERC20Model, address: Address) {
 }
 
 export function upsertBalance(model: ERC20Model, balanceNew: BalanceBN) {
-  const balanceOld = findBalance(model, balanceNew.address)
+  const balanceOldIndex = findBalanceIndex(model, balanceNew.address)
+  const balanceOld = model.balances[balanceOldIndex]
   if (balanceOld) {
-    Object.assign(balanceOld, balanceNew)
+    if (balanceNew.amount.isZero()) {
+      model.balances = removeByIndex(model.balances, balanceOldIndex)
+    } else {
+      Object.assign(balanceOld, balanceNew)
+    }
   } else {
     model.balances.push(balanceNew)
   }
