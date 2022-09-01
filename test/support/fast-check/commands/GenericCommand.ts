@@ -19,6 +19,7 @@ export abstract class GenericCommand<Model, Real, Result> {
         }
       }
     } catch (e) {
+      console.log('e', e)
       if (e instanceof Error) {
         if (modelResult.status === 'rejected') e.message += '\n\nModel ' + modelResult.reason.stack
         if (realResult.status === 'rejected') e.message += '\n\nReal ' + realResult.reason.stack
@@ -34,7 +35,18 @@ export abstract class GenericCommand<Model, Real, Result> {
   abstract runReal(real: Real): Promise<Result>
 
   toString(): string {
-    return `${this.constructor.name} ${(JSON.stringify(this, undefined, 2))}`
+    return `${this.constructor.name} ${(JSON.stringify(this, this.replacerForObject, 2))}`
   }
 
+  /**
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#the_replacer_parameter
+   */
+  replacerForObject(key: string, value: unknown) {
+    if (key === '') return value // value is current object
+    return this.replacerForProperty(key, value)
+  }
+
+  replacerForProperty(key: string, value: unknown) {
+    return value
+  }
 }
