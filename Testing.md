@@ -4,9 +4,36 @@
 
 ### Write the test
 
+Main idea: generate "special cases" of state & transition arguments, then test the equality of results from:
+
+* Actual transition
+* Simplified transition applicable only in this special case
+
+Special cases are defined as a list of predicates over variables. For example:
+
+* variable = constant
+  * Get constants from type
+    * Get min value
+    * Get max value
+    * Get constants from type constructor
+      * Examples
+        * zero
+        * next another_variable
+  * Get constants from code ("magic values")
+* variable = variable
+
+Filter invalid cases (e.g. `a > b -> b > a`) (or use a non-contradictory generation)
+
+generate a list of pairs of (State, Transition), ensure it covers "interesting" cases (e.g. two variables of the same type being equal, or being less-than), compare the results of
+
 * [Define state](#define-state)
 * [Define pathfinder](#define-pathfinder)
-* TODOs
+* TODO
+
+Notes:
+
+* Do we need to express the liveness & fairness properties?
+  * For some [processes](#process), they are obvious
 
 ### Run the test
 
@@ -181,3 +208,9 @@ Notes:
 
 * Execution is needed for caching
   * It's expensive to derive the current State from Trajectory and initial State
+
+### Process
+
+```lean4
+def Process = Pair State Transitions
+```
