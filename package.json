@@ -95,7 +95,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.11",
     "semver": "^7.3.5",
     "solhint": "^3.3.6",
-    "solidity-coverage": "^0.7.14",
+    "solidity-coverage": "^0.7.21",
     "solmate": "transmissions11/solmate",
     "ts-generator": "^0.1.1",
     "ts-node": "^10.9.1",
