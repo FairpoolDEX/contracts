@@ -76,19 +76,39 @@ describe('ERC20Enumerable', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  /**
-   * For any initial state and trajectory
-   */
   fest('must add a new address to holders', async () => {
+    const newAddress = '0x2A20380DcA5bC24D052acfbf79ba23e988ad0050'
+    const commands = [
+      new TransferCommand(owner.address, newAddress, bn(10), ethers),
+    ]
+    const getTestPair = await get_getTestPair(token)
+    await asyncModelRun(getTestPair, commands)
+    const holders = await getHolders(token)
+    expect(holders).to.contain(newAddress)
+  })
+
+  fest('must remove address from holders after transferring full balance', async () => {
     const strangerBalanceOf = await token.balanceOf(stranger.address)
     const commands = [
-      new TransferCommand(owner.address, '0x2A20380DcA5bC24D052acfbf79ba23e988ad0050', bn(10), ethers),
       new TransferCommand(stranger.address, owner.address, strangerBalanceOf, ethers),
     ]
     const getTestPair = await get_getTestPair(token)
     await asyncModelRun(getTestPair, commands)
     const holders = await getHolders(token)
     expect(holders).not.to.contain(stranger.address)
+  })
+
+  fest('must not remove address from holders after transferring non-full balance', async () => {
+    const strangerBalanceOf = await token.balanceOf(stranger.address)
+    const amount = bn(1)
+    expect(strangerBalanceOf).to.be.greaterThan(amount)
+    const commands = [
+      new TransferCommand(stranger.address, owner.address, amount, ethers),
+    ]
+    const getTestPair = await get_getTestPair(token)
+    await asyncModelRun(getTestPair, commands)
+    const holders = await getHolders(token)
+    expect(holders).to.contain(stranger.address)
   })
 
   /**

@@ -1,13 +1,34 @@
 # Testing
 
+* Every large program can be reduced to a small program by applying conditions on the inputs
+  * Examples
+    * [getRootsFromQuadraticEquationCoefficients](#getrootsfromquadraticequationcoefficients) can be reduced to [getRootFromLinearEquationCoefficients](#getrootfromlinearequationcoefficients) by applying the condition `a = 0`
+    * [getGreetingFromFilename](#getgreetingfromfilename) can be reduced to [throwError](#throwerror) with a specific input "ENOENT" (Node.js-specific error code for "File not found") by applying the condition `!exists(filename)`
+* The general form of a condition is [Conditional](#conditional)
+* It is possible to get conditions from the program itself (see [Branches](#branches))
+* It is possible to get conditions by generating them from a list of inputs and their projections
+  * Examples
+    * Generate c = 0 for [getRootsFromQuadraticEquationCoefficients](#getrootsfromquadraticequationcoefficients)
+
 ## Listeners
+
+### Write "Write the test"
+
+Options:
+
+* Certified programming
+  * Write the State type as a proof-carrying type
+  * Require every transition to prove that the state is valid
+  * Write existentionals for each feature
+    * Existentional examples:
+      * Mint: there exists a transition t such that totalSupply increases after t
+* Generate branches, generate reduced programs for branches, ask the programmer if he agrees with them
+* Generate branches, ask the programmer to write the reduced programs
+* Ask the programmer to write the branches & the reduced programs
 
 ### Write the test
 
-Main idea: generate "special cases" of state & transition arguments, then test the equality of results from:
-
-* Actual transition
-* Simplified transition applicable only in this special case
+Main idea: generate "special cases" of state & transition arguments, then write "special transitions" for "special cases" (simplified versions of the original transition), the test the equality between results of original & simplified transition.
 
 Special cases are defined as a list of predicates over variables. For example:
 
@@ -34,6 +55,12 @@ Notes:
 
 * Do we need to express the liveness & fairness properties?
   * For some [processes](#process), they are obvious
+* Some [steps](#step) are "equivalent"
+  * Examples
+    * `def State = Nat`
+    * `def init : State = zero`
+    * `def inc : Transition State = succ`
+    * `def step1 : Step = ⟨init, inc, ⟩`
 
 ### Run the test
 
@@ -53,6 +80,8 @@ def run_one {State} {Error} (pathfinder : Pathfinder State) (state: State) : Lis
 
 Notes:
 
+* We need to generate new steps from the actual states, because most states are invalid
+  * If we generate the steps separately, without a valid state as input, then we may generate an invalid state
 * If you don't know how to implement a function efficiently, make it a parameter
   * Examples
     * isTerminal
@@ -108,7 +137,7 @@ Notes:
 
 ### Transition
 
-A function from State to State.
+`def Transition = State -> State`
 
 Use [TransitionBuilders](#transitionbuilder) to create parametrized transitions.
 
@@ -212,5 +241,183 @@ Notes:
 ### Process
 
 ```lean4
-def Process = Pair State Transitions
+structure Process where
+ state : State
+ transitions : List Transition
 ```
+
+### Step
+
+```lean4
+structure Step where
+  state : State
+  transition : Transition
+  params : TransitionParams
+```
+
+### Continuous operation
+
+Operations that use only induction and terminating recursion
+
+Examples:
+
+* add : Nat -> Nat -> Nat
+* concat (T : Type) : List T -> List T -> List T
+
+Decisions:
+
+* Is monus a continuous operation?
+  * Not really, because it breaks our intuition
+
+### Conditional
+
+```lean4
+structure Condition (A B C : Type) where
+  transformA : A -> C
+  transformB : B -> C
+  compare : C -> C -> bool
+  
+-- note that transformA & transformB may be more complex than just typecasts (example: transformA := length, so that we could generate lists with length > another input)
+def cond2bool {A B C : Type} (c : Condition A B C) (a : A) (b : B) := c.compare(c.transformA(a), c.transformB(b))
+```
+
+## Examples
+
+### getGreetingFromName
+
+```typescript
+function getGreetingFromName(name: string) {
+  if (name === '') {
+    throw new Error('Name cannot be empty')
+  } else {
+    return `Hello ${name}`
+  }
+}
+```
+
+### getGreetingFromFilename
+
+```typescript
+import { readFile } from 'fs/async'
+
+async function getGreetingFromFilename(filename: string) {
+  const name = await readFile(filename)  
+  return getGreetingFromName(name)
+}
+```
+
+### getRootsFromQuadraticEquationCoefficients
+
+```typescript
+// Equation: (a * x^2) + (b * x) + (c) = 0
+// This function is naive (doesn't check that argument of Math.sqrt is nonnegative)
+function getRootsFromQuadraticEquationCoefficients(a: number, b: number, c: number) {
+  const d = Math.sqrt(Math.pow(b, 2) - 4 * a * c)
+  const x1 = (-b + d) / (2 * a)
+  const x2 = (-b - d) / (2 * a)
+  return [x1, x2]
+}
+```
+
+### getRootFromLinearEquationCoefficients
+
+```typescript
+
+// Equation: (k * x) + (n) = 0
+// This function is naive (doesn't check that n is nonzero)
+function getRootFromLinearEquationCoefficients(k: number, n: number) {
+  return -n / k
+}
+```
+
+### throwError
+
+```typescript
+// This function is a simple wrapper for demonstration purposes
+function throwError(message?: string) {
+  throw new Error(message)
+}
+```
+
+## TODO
+
+### Ideas
+
+* Extract the relations from code
+  * Examples
+    * ERC20.transfer
+      * ERC20.transfer checks that amount <= balance
+      * We need to test two cases:
+        * amount <= balance
+        * !(amount <= balance)
+      * We need to generate two states
+        * amount = X, balance = X
+        * amount = X + 1, balance = X
+    * Division by zero
+      * Division checks that denominator is not zero
+      * We need to test two cases
+        * denominator == 0
+        * !(denominator == 0)
+  * Notes
+    * If the code checks for equality of two variables, extract equality
+    * If the code checks for lte of two variables, extract equality
+    * In general: extract every "fork" in the program path that leads to a qualitatively different result
+      * Include the "forks" of built-in operations (e.g. memory allocation - check for buffer overflows)
+
+### Finitism
+
+The following applies to classical computers:
+
+* Memory is finite
+* Every real data type is finite: it has a finite amount of bits
+* Every real data type has a nadir: its value with all bits set to zero
+* Every real data type has a zenith: its value with all bits set to one
+* Some abstract data types are infinite (e.g. natural numbers)
+* Some abstract operations are continuous
+
+### Branches
+
+* Most programs have branches
+  * Examples
+    * [getGreetingFromName](#getgreetingfromname) has two branches:
+      * name is ''
+      * name is not ''
+    * [getGreetingFromFilename](#getgreetingfromfilename) has three branches:
+      * file does not exist
+      * file is empty
+      * file is not empty
+    * getRootsFromQuadraticEquationCoefficients has multiple branches
+* Every branch can be written as a program which is simpler than the original program
+  * For some programs, there exist a pair of equal branches, but most of the time the branches are different
+* Also, it is possible to generate smaller programs for specific
+
+### Real data types
+
+#### 8-bit unsigned integer
+
+* Nadir: 0
+* Zenith: 255
+
+#### 32-bit floating point number defined by IEEE 754
+
+* Nadir: 0
+* Zenith: (2 − 2^−23) × 2^127 (see spec)
+
+#### C-style string
+
+* Nadir: '' (empty string)
+* Zenith: ?
+  * Length depends on available memory
+  * Visual representation depends on encoding (the same string is rendered with different characters in ASCII vs UTF-8)
+
+#### C-style array
+
+* Nadir: [] (empty array)
+* Zenith: ?
+  * Length depends on available memory
+  * Visual representation depends on element type
+
+#### JavaScript object
+
+* Nadir: {} (empty object)
+* Zenith: ?
