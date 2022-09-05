@@ -1,24 +1,24 @@
 import prand from 'pure-rand'
 import { Random } from 'fast-check'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { GenericState } from '../exploratory/GenericState'
-import { immutable, Transition } from '../exploratory/Transition'
+import { GenericState } from '../divide-and-conquer/GenericState'
+import { toTransition, Transition } from '../divide-and-conquer/Transition'
 import { Address } from '../../models/Address'
 import { AmountBN } from '../../models/AmountBN'
 import { $zero } from '../../data/allAddresses'
-import { step, Step } from '../exploratory/Step'
-import { Projection } from '../exploratory/Projection'
+import { step, Step } from '../divide-and-conquer/Step'
+import { Projection } from '../divide-and-conquer/Projection'
 import { address } from '../support/fast-check/arbitraries/Address'
-import { get_getRandomValue, GetRandomValue } from '../exploratory/GetRandomValue'
+import { get_getRandomValue, GetRandomValue } from '../divide-and-conquer/GetRandomValue'
 import { one, uint256Max, zero } from '../../util/bignumber'
 import { cloneDeep, set } from 'lodash'
-import { PropPath } from '../exploratory/PropPath'
+import { PropPath } from '../divide-and-conquer/PropPath'
 import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
-import { Plan, runTestWithPlans } from '../exploratory/runTest'
+import { Plan, runTestWithPlans } from '../divide-and-conquer/runTest'
 import { stub } from '../../util/todo'
 import { parMap } from '../../util/promise'
-import { runStepWithHandlers } from '../exploratory/runStepWithHandlers'
-import { handler, Handler } from '../exploratory/Handler'
+import { runStepWithHandlers } from '../divide-and-conquer/runStepWithHandlers'
+import { handler, Handler } from '../divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 
 export interface Data {
@@ -64,7 +64,7 @@ export type TransferParams = { from: Address, to: Address, amount: AmountBN }
 
 const emptyMintParams: MintParams = { to: $zero, amount: zero }
 
-export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> = ({ to, amount }) => immutable(async ({ data: { balances } }) => {
+export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> = ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
   balances.push({
     address: to,
     amount,
@@ -75,13 +75,13 @@ export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> =
 export const mintHandlers: Handler<MintParams, State>[] = [
   handler(
     ({ params: { to } }) => to === $zero,
-    ({ to, amount }) => immutable(async ({ data: { balances } }) => {
+    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
       return { error: Error.MintToZeroAddress }
     })
   ),
   handler(
     ({ state: { data: { balances } } }) => balances.length === 0,
-    ({ to, amount }) => immutable(async ({ data: { balances } }) => {
+    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
       balances.push({ address: to, amount })
       return { data: { balances } }
     })
@@ -89,7 +89,7 @@ export const mintHandlers: Handler<MintParams, State>[] = [
   // code duplication
   handler(
     ({ state: { data: { balances } }, params: { to } }) => balances.findIndex(b => b.address === to) != -1,
-    ({ to, amount }) => immutable(async ({ data: { balances } }) => {
+    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
       const index = balances.findIndex(b => b.address === to)
       balances[index].amount = balances[index].amount.add(amount)
       return { data: { balances } }

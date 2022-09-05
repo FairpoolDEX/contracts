@@ -196,6 +196,7 @@ export const config: HardhatUserConfig = {
       '@uniswap/v2-periphery/contracts/test/WETH9.sol',
       '@uniswap/v2-periphery/contracts/test/WETH9.sol',
     ],
+    keep: true,
     // path: `${os.tmpdir()}/hardhat-dependency-compiler`,
   },
   // paths: {

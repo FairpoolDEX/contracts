@@ -1,0 +1,9 @@
+{
+  "filter_paths": "lib",
+  "solc_remaps": [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "hardhat/=node_modules/hardhat/",
+    "solmate/=node_modules/solmate/",
+    "@uniswap/=node_modules/@uniswap/"
+  ]
+}

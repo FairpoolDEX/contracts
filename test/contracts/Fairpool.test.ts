@@ -6,12 +6,20 @@ import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
+import { fest } from '../../util-local/mocha'
+import { mainnet } from '../../data/allNetworks'
+import { bn } from '../../util/bignumber'
+import { MaxUint256, scale } from '../support/all.helpers'
+import { getScaledPercent } from '../../models/Share'
+import { parMap } from '../../util/promise'
+import { range } from 'lodash'
+import { assumeIntegerEnvVar } from '../../util/env'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
-  let owen: SignerWithAddress
+  let ben: SignerWithAddress
   let bob: SignerWithAddress
   let sam: SignerWithAddress
   let sally: SignerWithAddress
@@ -19,7 +27,7 @@ describe('Fairpool', async function () {
   let tara: SignerWithAddress
 
   let fairpool: Fairpool
-  let fairpoolAsOwen: Fairpool
+  let fairpoolAsOwner: Fairpool
   let fairpoolAsSam: Fairpool
   let fairpoolAsBob: Fairpool
   let fairpoolAsSally: Fairpool
@@ -77,14 +85,21 @@ describe('Fairpool', async function () {
    */
 
   before(async () => {
-    signers = [owner, stranger, owen, bob, sam, ted, sally, tara] = await ethers.getSigners()
+    signers = [owner, stranger, ben, bob, sam, ted, sally, tara] = await ethers.getSigners()
 
     const fairpoolFactory = await ethers.getContractFactory('Fairpool')
-    fairpoolAsOwen = (await fairpoolFactory.connect(owen).deploy()) as unknown as Fairpool
-    fairpool = fairpoolAsOwen.connect($zero)
-    fairpoolAsBob = fairpoolAsOwen.connect(bob)
-    fairpoolAsSam = fairpoolAsOwen.connect(sam)
-    fairpoolAsSally = fairpoolAsOwen.connect(sally)
+    fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
+      'Abraham Lincoln Token',
+      'ABRA',
+      scale.mul(bn(2)),
+      getScaledPercent(30),
+      [ben.address, bob.address],
+      [getScaledPercent(12), getScaledPercent(7)]
+    )) as unknown as Fairpool
+    fairpool = fairpoolAsOwner.connect($zero)
+    fairpoolAsBob = fairpoolAsOwner.connect(bob)
+    fairpoolAsSam = fairpoolAsOwner.connect(sam)
+    fairpoolAsSally = fairpoolAsOwner.connect(sally)
 
     // denominator = fairpool.denominator()
     // bid = await fairpoolAsBob.bid()
@@ -99,6 +114,36 @@ describe('Fairpool', async function () {
 
   afterEach(async () => {
     await revertToSnapshot([snapshot])
+  })
+
+  fest('must keep the sell() transaction under block gas limit', async () => {
+    const { blockGasLimit } = mainnet
+    const maxHoldersCount = assumeIntegerEnvVar('MAX_HOLDER_COUNT', 10)
+    const balanceQuoteTotal = await owner.getBalance()
+    const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(scale) })
+    const balanceBaseBeforeTransfers = await fairpoolAsOwner.balanceOf(owner.address)
+    console.log('balanceBase', balanceBaseBeforeTransfers.toString())
+    const sendTxes = await parMap(range(0, maxHoldersCount), async i => {
+      const wallet = ethers.Wallet.createRandom()
+      return fairpoolAsOwner.transfer(wallet.address, bn(1000))
+    })
+    const balanceBaseAfterTransfers = await fairpoolAsOwner.balanceOf(owner.address)
+    console.log('balanceBaseAfterTransfers.toString()', balanceBaseAfterTransfers.toString())
+    // const sellTxEstimateGasLimit = await fairpoolAsOwner.estimateGas.sell(balanceBaseAfterTransfers, 0, MaxUint256)
+    // console.log('sellTxEstimateGasLimit', sellTxEstimateGasLimit.toString())
+    const sellTx = await fairpoolAsOwner.sell(balanceBaseAfterTransfers, 0, MaxUint256)
+    const sellTxReceipt = await sellTx.wait(1)
+    console.log('sellTxReceipt', sellTxReceipt.gasUsed.toString())
+
+    //
+    // const strangerBalanceOf = await token.balanceOf(stranger.address)
+    // const commands = [
+    //   new TransferCommand(stranger.address, owner.address, strangerBalanceOf, ethers),
+    // ]
+    // const getTestPair = await get_getTestPair(token)
+    // await asyncModelRun(getTestPair, commands)
+    // const holders = await getHolders(token)
+    // expect(holders).not.to.contain(stranger.address)
   })
 
   // fest('must increase the price after buy', async () => {

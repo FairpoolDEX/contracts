@@ -1,4 +1,22 @@
-# Testing
+# Divide-And-Conquer Testing
+
+* Testing is writing small programs that match the large program for specific inputs
+  * The large program is called the "test target" (the program being tested)
+  * The small program is called the "test double" (the program used for testing)
+  * The test itself is a program that runs both the target & the double program, then compares their outputs
+    * The comparison may be any function from two inputs to boolean: ==, ===, >, <, >=, =<, isSubset, ...
+* Testing checks two things:
+  * Presence of features
+  * Absence of bugs
+* Bugs are unexpected consequences of the implementation details
+  * Examples of bug types
+    * Buffer overflow (the programmer didn't expect that `a + 1 === 0` where `a` is an unsigned integer)
+    * SQL injection (the programmer didn't expect that people will submit a `username` that contains a part of SQL query which deletes all records after being substituted in `SELECT * FROM users WHERE username = ${username}`)
+* Bugs can be found by manually comparing the actual output with the expected output for every possible input, but it would take a lot of time
+* Testing methodologies are different solutions to this problem
+* Divide-and-Conquer Testing (abbreviated as D&C Testing, DnC Testing) is a methodology that breaks a large program into multiple "branches" (small programs) according to conditions
+
+---
 
 * Every large program can be reduced to a small program by applying conditions on the inputs
   * Examples
@@ -25,6 +43,8 @@ Options:
 * Generate branches, generate reduced programs for branches, ask the programmer if he agrees with them
 * Generate branches, ask the programmer to write the reduced programs
 * Ask the programmer to write the branches & the reduced programs
+* Divide-and-Conquer
+  * Get a list of relations from the test target
 
 ### Write the test
 
@@ -279,6 +299,12 @@ structure Condition (A B C : Type) where
   
 -- note that transformA & transformB may be more complex than just typecasts (example: transformA := length, so that we could generate lists with length > another input)
 def cond2bool {A B C : Type} (c : Condition A B C) (a : A) (b : B) := c.compare(c.transformA(a), c.transformB(b))
+```
+
+### Relation
+
+```lean4
+def Relation (Value : Type) : Value -> Value -> Bool
 ```
 
 ## Examples
