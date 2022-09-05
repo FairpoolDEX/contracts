@@ -1,0 +1,11 @@
+{
+  "remappings": [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "hardhat/=node_modules/hardhat/",
+    "solmate/=node_modules/solmate/"
+  ],
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  }
+}

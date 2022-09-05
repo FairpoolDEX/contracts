@@ -12,7 +12,7 @@ export const emptyTransition = <Params, State>(params: Params) => async (state: 
 
 export type Update<State> = (state: State) => Promise<DeepPartial<State> | undefined>
 
-export function immutable<State>(update: Update<State>) {
+export function toTransition<State>(update: Update<State>) {
   return async ($state: State) => {
     const state = cloneDeep($state)
     const patch = await update(state)

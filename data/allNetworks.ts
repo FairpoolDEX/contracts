@@ -1,5 +1,6 @@
 import { Network, NetworkSchema, parseNetworkUid } from '../models/Network'
 import { getFinder, getInserter } from '../util/zod'
+import { min } from 'lodash'
 
 export const allNetworks: Network[] = []
 
@@ -10,6 +11,8 @@ export const addEVMNetwork = (network: Omit<Network, 'vm'>) => addNetwork({ ...n
 export const findNetwork = getFinder(parseNetworkUid, allNetworks)
 
 export const findNetworkByChainId = (chainId: number) => allNetworks.find(n => n.chainId === chainId)
+
+export const getMinBlockGasLimit = () => min(allNetworks.map(n => n.blockGasLimit))
 
 /**
  * https://hardhat.org/hardhat-network/reference/#config

@@ -1,13 +1,15 @@
 import { BalancesMap } from '../../util-local/balance'
 import { AmountBN } from '../../models/AmountBN'
 import { Error as ErrorERC20EnumerableSimple, MintParams, TransferParams } from './ERC20Enumerable.simple.test'
-import { GenericState } from '../exploratory/GenericState'
-import { immutable, Transition } from '../exploratory/Transition'
+import { GenericState } from '../divide-and-conquer/GenericState'
+import { toTransition, Transition } from '../divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
 import { MaxUint256 } from '../support/all.helpers'
 import { Address } from '../../models/Address'
 import { zero } from '../../util/bignumber'
-import { pull } from 'lodash'
+import { concat, pull } from 'lodash'
+import { FunctionDefinition, getPolymorphicDefinitions } from '../divide-and-conquer/FunctionDefinition'
+import { eq, neq } from '../divide-and-conquer/allFunctionDefinitions'
 
 export interface Data {
   totalSupply: AmountBN
@@ -23,7 +25,24 @@ const { MathSubUnderflow, MathAddUnderflow, MathAddOverflow, TransferAmountExcee
 
 type State = GenericState<Data, Output, Err>
 
-const mintSuperHandler: Transition<MintParams, State> = (params) => immutable(async (state) => {
+const constants = [
+  { value: '0', type: 'Uint256' },
+  { value: 'address(0)', type: 'Address' },
+]
+
+// TODO: Encode Beneficiary type
+const allTypes = ['Address', 'Uint256', 'Mapping Address Uint256', 'List Address', 'Beneficiary', 'List Beneficiary']
+
+const functions: FunctionDefinition[] = concat(
+  getPolymorphicDefinitions(eq, [
+    [['A', 'Address']],
+  ]),
+  getPolymorphicDefinitions(neq, [
+    [['A', 'Address']],
+  ])
+)
+
+const mintSuperHandler: Transition<MintParams, State> = (params) => toTransition(async (state) => {
   const { to, amount } = params
   const { data: { totalSupply, balances, holders } } = state
   if (to === $zero) {
@@ -72,7 +91,7 @@ const mintSuperHandler: Transition<MintParams, State> = (params) => immutable(as
 //   ),
 // ]
 
-const transferSuperHandler: Transition<TransferParams, State> = (params) => immutable(async (state) => {
+const transferSuperHandler: Transition<TransferParams, State> = (params) => toTransition(async (state) => {
   const { from, to, amount } = params
   const { data: { totalSupply, balances, holders } } = state
   if (from === $zero) {
