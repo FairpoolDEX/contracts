@@ -25,6 +25,8 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     // percentage of buy value that the contract distributes to the token holders & beneficiaries
     uint public tax;
 
+    uint private globalIndex;
+
     // NOTE: IMPORTANT: this value must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
     // NOTE: if you need to change this, you need to also override the decimals() function and return the _decimals constant from it
     uint8 public constant _decimals = 18;
@@ -41,6 +43,13 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
 
     uint internal constant maxShare = one;
 
+    // IMPORTANT: it must be a power of two, otherwise the wrap-around of globalIndex will not be fair
+    // Incremental holder cost is ~11000 gas (with preallocation optimization)
+    // Full distribution cost is 256 * 11000 = 2816000 gas
+    uint internal constant maxHoldersPerDistribution = 256;
+
+    uint internal constant minTotal = 1;
+
     /// Tax can't be greater or equal to maximum multiplier
     error TaxGteMaxMultiplier();
     error BeneficiaryAddressesLengthMustBeEqualToBeneficiarySharesLength();
@@ -54,9 +63,11 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     error BaseDeltaMustBeGreaterThanZero();
     error SenderMustBeBeneficiary();
     error NewTaxMustBeLessThanOldTax();
+    error NothingToWithdraw();
 
     event Buy(address addr, uint baseDelta, uint quoteDelta);
     event Sell(address addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
+    event Withdraw(address addr, uint quoteReceived);
     event SetTax(uint tax);
 
     // an address that receives a fee
@@ -66,6 +77,8 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     }
 
     Beneficiary[] public beneficiaries;
+
+    mapping(address => uint) public totals;
 
     constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaryAddrs_, uint[] memory beneficiaryShares_) ERC20(name_, symbol_) {
         if (tax_ >= maxMultiplier) revert TaxGteMaxMultiplier();
@@ -109,6 +122,14 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
     }
 
+    function withdraw() external nonReentrant {
+        uint total = totals[msg.sender];
+        if (total <= minTotal) revert NothingToWithdraw();
+        totals[msg.sender] = minTotal;
+        payable(msg.sender).transfer(total - minTotal);
+        emit Withdraw(msg.sender, total - minTotal);
+    }
+
     /**
      * IMPORTANT: the contract must not have a `setSpeed` function, because otherwise it would be possible to reach a state where some holders can't sell:
      * - Contract is drained of quote (quote amount on contract address is zero)
@@ -141,18 +162,39 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
      * Holders receive shares of profit remaining after beneficiaries
      */
     function distribute(uint profit) internal returns (uint remainder) {
+        uint beneficiariesLength = beneficiaries.length;
+        uint holdersLength = holders.length;
+        uint maxHolders = holders.length < maxHoldersPerDistribution ? holders.length : maxHoldersPerDistribution;
+        uint baseOffset = getRandom(profit) % holders.length; // 0 <= offset < holders.length
+        uint offset;
+        uint i;
+        uint total;
+        address holder;
+        console.log('baseOffset', baseOffset);
+        console.log('maxHolders', maxHolders);
+
         uint sumOfBeneficiaryTotals;
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            uint total = profit * beneficiaries[i].share / scale;
-            beneficiaries[i].addr.transfer(total);
+        for (i = 0; i < beneficiariesLength; i++) {
+            total = (profit * beneficiaries[i].share) / scale;
+            // NOTE: we should not check that send has succeeded because otherwise a malicious user would be able to brick the contract by deploying a contract with a reverting payable fallback function
+            totals[beneficiaries[i].addr] += total;
             sumOfBeneficiaryTotals += total;
         }
         profit -= sumOfBeneficiaryTotals;
 
+        // NOTE: It's OK to use a separate loop to calculate localTotalSupply because the gas cost is much lower if you access the same storage slot multiple times within transaction
+        uint localTotalSupply;
+        for (i = 0; i < maxHolders; i++) {
+            offset = addmod(baseOffset, i, holdersLength);
+            localTotalSupply += balanceOf(holders[offset]);
+        }
+
         uint sumOfHolderTotals;
-        for (uint i = 0; i < holders.length; i++) {
-            uint total = profit * balanceOf(holders[i]) / totalSupply();
-            payable(holders[i]).transfer(total);
+        for (i = 0; i < maxHolders; i++) {
+            offset = addmod(baseOffset, i, holdersLength);
+            holder = holders[offset];
+            total = (profit * balanceOf(holder)) / localTotalSupply;
+            totals[holder] += total; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
             sumOfHolderTotals += total;
         }
         profit -= sumOfHolderTotals;
@@ -189,6 +231,17 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         return beneficiaries.length;
     }
 
+    function totalOf(address account) public view returns (uint) {
+        return totals[account];
+    }
+
+    /**
+     * This PRNG is potentially insecure. However, it is only used to determine the base offset for the profit distribution. The only people who can benefit from gaming this function are current token holders (note that the seller is not included in the distribution because the _burn() is called before distribution()). Gaming this function requires collaboration between a miner and a seller, and only benefits multiple existing token holders. Therefore, we think that the risk of manipulation is low.
+     */
+    function getRandom(uint input) internal view returns (uint) {
+        return uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty, blockhash(block.number - 1), msg.sender, input)));
+    }
+
     /* Pure functions */
 
     /* Override functions */
@@ -202,6 +255,17 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         // source: https://ethereum.stackexchange.com/a/123679
         // slither-disable-next-line arbitrary-send-eth
         require(payable(to).send(0), "Fairpool: !payable(to)");
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
+        super._afterTokenTransfer(from, to, amount);
+        // preallocate the storage slot to save on gas in the distribute() loop
+        // minTotal is subtracted in withdraw()
+        if (totals[to] == 0) totals[to] = minTotal;
     }
 
     function decimals() public view virtual override returns (uint8) {

@@ -14,6 +14,7 @@ import { getScaledPercent } from '../../models/Share'
 import { parMap } from '../../util/promise'
 import { range } from 'lodash'
 import { assumeIntegerEnvVar } from '../../util/env'
+import { expect } from '../../util-local/expect'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -116,35 +117,44 @@ describe('Fairpool', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  fest('must keep the sell() transaction under block gas limit', async () => {
-    const { blockGasLimit } = mainnet
-    const maxHoldersCount = assumeIntegerEnvVar('MAX_HOLDER_COUNT', 10)
+  const getGasUsedForManyHolders = async (maxHoldersCount: number) => {
+    snapshot = await getSnapshot()
     const balanceQuoteTotal = await owner.getBalance()
     const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(scale) })
     const balanceBaseBeforeTransfers = await fairpoolAsOwner.balanceOf(owner.address)
-    console.log('balanceBase', balanceBaseBeforeTransfers.toString())
+    const totalSupply = await fairpoolAsOwner.totalSupply()
     const sendTxes = await parMap(range(0, maxHoldersCount), async i => {
       const wallet = ethers.Wallet.createRandom()
+      // preload the address with ETH to reduce the gas cost of send() in distribute()
+      // await owner.sendTransaction({
+      //   to: wallet.address,
+      //   value: 1,
+      // })
       return fairpoolAsOwner.transfer(wallet.address, bn(1000))
     })
     const balanceBaseAfterTransfers = await fairpoolAsOwner.balanceOf(owner.address)
-    console.log('balanceBaseAfterTransfers.toString()', balanceBaseAfterTransfers.toString())
-    // const sellTxEstimateGasLimit = await fairpoolAsOwner.estimateGas.sell(balanceBaseAfterTransfers, 0, MaxUint256)
-    // console.log('sellTxEstimateGasLimit', sellTxEstimateGasLimit.toString())
     const sellTx = await fairpoolAsOwner.sell(balanceBaseAfterTransfers, 0, MaxUint256)
     const sellTxReceipt = await sellTx.wait(1)
-    console.log('sellTxReceipt', sellTxReceipt.gasUsed.toString())
+    // console.log('sellTxReceipt', sellTxReceipt.gasUsed.toString())
+    await revertToSnapshot([snapshot])
+    return sellTxReceipt.gasUsed
+  }
 
-    //
-    // const strangerBalanceOf = await token.balanceOf(stranger.address)
-    // const commands = [
-    //   new TransferCommand(stranger.address, owner.address, strangerBalanceOf, ethers),
-    // ]
-    // const getTestPair = await get_getTestPair(token)
-    // await asyncModelRun(getTestPair, commands)
-    // const holders = await getHolders(token)
-    // expect(holders).not.to.contain(stranger.address)
+  fest('must keep the sell() transaction under block gas limit', async () => {
+    const { blockGasLimit } = mainnet
+    const maxHoldersCount = assumeIntegerEnvVar('MAX_HOLDER_COUNT', 500)
+    const gasUsed = await getGasUsedForManyHolders(maxHoldersCount)
+    expect(gasUsed).to.be.lte(blockGasLimit / 10)
   })
+
+  // fest('must get the gas per holder', async () => {
+  //   const maxHoldersCount1 = 50
+  //   const maxHoldersCount2 = 125
+  //   const gasUsed1 = await getBigSellGasUsed(maxHoldersCount1)
+  //   const gasUsed2 = await getBigSellGasUsed(maxHoldersCount2)
+  //   const gasPerHolder = (gasUsed2.sub(gasUsed1)).div(maxHoldersCount2 - maxHoldersCount1)
+  //   console.log('Gas per holder', gasPerHolder.toString())
+  // })
 
   // fest('must increase the price after buy', async () => {
   //   const amount = bn(10)
