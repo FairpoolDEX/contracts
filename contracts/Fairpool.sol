@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "solmate/src/utils/FixedPointMathLib.sol";
 import "hardhat/console.sol";
 import "./ERC20Enumerable.sol";
+import "./SharedOwnership.sol";
 
 /**
  * Notes:
@@ -16,7 +17,7 @@ import "./ERC20Enumerable.sol";
  * - Custom errors must be used over string descriptions because it costs less gas
  *   - Don't add parameters to errors if they are already available to the caller (e.g. don't add function arguments as parameters)
  */
-contract Fairpool is ERC20Enumerable, ReentrancyGuard {
+contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
     using FixedPointMathLib for uint;
 
     // multiplier in the formula for base amount
@@ -25,7 +26,8 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     // percentage of buy value that the contract distributes to the token holders & beneficiaries
     uint public tax;
 
-    uint private globalIndex;
+    // quote asset balances
+    mapping(address => uint) public totals;
 
     // NOTE: IMPORTANT: this value must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
     // NOTE: if you need to change this, you need to also override the decimals() function and return the _decimals constant from it
@@ -41,9 +43,6 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     // given uint a, uint b, uint max: if a < max and b < max and a * b does not overflow, then max is maxMultiplier
     uint internal constant maxMultiplier = type(uint).max / 2 - 1;
 
-    uint internal constant maxShare = one;
-
-    // IMPORTANT: it must be a power of two, otherwise the wrap-around of globalIndex will not be fair
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is 256 * 11000 = 2816000 gas
     uint internal constant maxHoldersPerDistribution = 256;
@@ -51,18 +50,15 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     uint internal constant minTotal = 1;
 
     /// Tax can't be greater or equal to maximum multiplier
-    error TaxGteMaxMultiplier();
-    error BeneficiaryAddressesLengthMustBeEqualToBeneficiarySharesLength();
-    error BeneficiaryShareMustBeGreaterThanZero(uint beneficiaryIndex);
-    error BeneficiaryShareMustBeLessThanOrEqualToMaxShare(uint beneficiaryIndex);
-    error SumOfBeneficiarySharesMustBeLessThanOrEqualToMaxShare();
+    error TaxMustBeLessThanMaxMultiplier();
+    error SpeedMustBeLessThanMaxMultiplier();
     error BlockTimestampMustBeLessThanOrEqualToDeadline();
     error PaymentRequired();
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
     error BaseDeltaMustBeGreaterThanZero();
-    error SenderMustBeBeneficiary();
     error NewTaxMustBeLessThanOldTax();
+    error SenderMustBeBeneficiary();
     error NothingToWithdraw();
 
     event Buy(address addr, uint baseDelta, uint quoteDelta);
@@ -70,31 +66,11 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     event Withdraw(address addr, uint quoteReceived);
     event SetTax(uint tax);
 
-    // an address that receives a fee
-    struct Beneficiary {
-        address payable addr;
-        uint share;
-    }
-
-    Beneficiary[] public beneficiaries;
-
-    mapping(address => uint) public totals;
-
-    constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaryAddrs_, uint[] memory beneficiaryShares_) ERC20(name_, symbol_) {
-        if (tax_ >= maxMultiplier) revert TaxGteMaxMultiplier();
-        if (beneficiaryAddrs_.length != beneficiaryShares_.length) revert BeneficiaryAddressesLengthMustBeEqualToBeneficiarySharesLength();
+    constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) {
+        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanMaxMultiplier();
+        if (speed_ >= maxMultiplier) revert SpeedMustBeLessThanMaxMultiplier();
         speed = speed_;
         tax = tax_;
-        uint sumOfShares;
-        for (uint i = 0; i < beneficiaryAddrs_.length; i++) {
-            address payable addr = beneficiaryAddrs_[i];
-            uint share = beneficiaryShares_[i];
-            if (share == 0) revert BeneficiaryShareMustBeGreaterThanZero(i);
-            if (share > maxShare) revert BeneficiaryShareMustBeLessThanOrEqualToMaxShare(i);
-            beneficiaries.push(Beneficiary(addr, share));
-            sumOfShares += share;
-        }
-        if (sumOfShares > maxShare) revert SumOfBeneficiarySharesMustBeLessThanOrEqualToMaxShare();
     }
 
     function buy(uint baseReceiveMin, uint deadline) external payable nonReentrant {
@@ -147,11 +123,12 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
     //        emit SetSpeed(_speed);
     //    }
 
-    function setTax(uint _tax) external {
-        if (!senderIsBeneficiary()) revert SenderMustBeBeneficiary();
-        if (_tax >= tax) revert NewTaxMustBeLessThanOldTax();
-        tax = _tax;
-        emit SetTax(_tax);
+    function setTax(uint tax_) external /* nonReentrant not needed because it has no external calls */ {
+        if (!isBeneficiary(msg.sender)) revert SenderMustBeBeneficiary();
+        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanMaxMultiplier();
+        if (tax_ >= tax) revert NewTaxMustBeLessThanOldTax();
+        tax = tax_;
+        emit SetTax(tax_);
     }
 
     /* Internal functions */
@@ -169,15 +146,14 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         uint offset;
         uint i;
         uint total;
-        address holder;
-        console.log('baseOffset', baseOffset);
-        console.log('maxHolders', maxHolders);
+        address recipient;
 
         uint sumOfBeneficiaryTotals;
         for (i = 0; i < beneficiariesLength; i++) {
-            total = (profit * beneficiaries[i].share) / scale;
+            recipient = beneficiaries[i];
+            total = getShareOf(profit, recipient);
             // NOTE: we should not check that send has succeeded because otherwise a malicious user would be able to brick the contract by deploying a contract with a reverting payable fallback function
-            totals[beneficiaries[i].addr] += total;
+            totals[recipient] += total;
             sumOfBeneficiaryTotals += total;
         }
         profit -= sumOfBeneficiaryTotals;
@@ -192,9 +168,9 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         uint sumOfHolderTotals;
         for (i = 0; i < maxHolders; i++) {
             offset = addmod(baseOffset, i, holdersLength);
-            holder = holders[offset];
-            total = (profit * balanceOf(holder)) / localTotalSupply;
-            totals[holder] += total; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
+            recipient = holders[offset];
+            total = (profit * balanceOf(recipient)) / localTotalSupply;
+            totals[recipient] += total; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
             sumOfHolderTotals += total;
         }
         profit -= sumOfHolderTotals;
@@ -218,18 +194,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard {
         return quoteAmount - quoteFinal;
     }
 
-    function senderIsBeneficiary() internal view returns (bool) {
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            if (beneficiaries[i].addr == msg.sender) return true;
-        }
-        return false;
-    }
-
     /* View functions */
-
-    function beneficiariesLength() external view returns (uint) {
-        return beneficiaries.length;
-    }
 
     function totalOf(address account) public view returns (uint) {
         return totals[account];

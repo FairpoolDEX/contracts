@@ -3,18 +3,20 @@
 * Testing is writing small programs that match the large program for specific inputs
   * The large program is called the "test target" (the program being tested)
   * The small program is called the "test double" (the program used for testing)
-  * The test itself is a program that runs both the target & the double program, then compares their outputs
-    * The comparison may be any function from two inputs to boolean: ==, ===, >, <, >=, =<, isSubset, ...
+  * The test itself is a program that ensures the double program matches the target
+    * Extensionally (by comparing their outputs)
+      * The comparison may be any function from two inputs to boolean: ==, ===, >, <, >=, =<, isSubset, ...
+    * Intensionally (by comparing their code)
 * Testing checks two things:
   * Presence of features
   * Absence of bugs
 * Bugs are unexpected consequences of the implementation details
   * Examples of bug types
-    * Buffer overflow (the programmer didn't expect that `a + 1 === 0` where `a` is an unsigned integer)
-    * SQL injection (the programmer didn't expect that people will submit a `username` that contains a part of SQL query which deletes all records after being substituted in `SELECT * FROM users WHERE username = ${username}`)
+    * Buffer overflow (the programmer didn't expect that `a + 1 === 0` where `a` is an unsigned integer with maximum value for its size)
+    * SQL injection (the programmer didn't expect that people would submit a `username` that contains a part of SQL query which deletes all records after being substituted in `SELECT * FROM users WHERE username = ${username}`)
 * Bugs can be found by manually comparing the actual output with the expected output for every possible input, but it would take a lot of time
-* Testing methodologies are different solutions to this problem
-* Divide-and-Conquer Testing (abbreviated as D&C Testing, DnC Testing) is a methodology that breaks a large program into multiple "branches" (small programs) according to conditions
+* Testing methodologies solve this problem in different ways
+* Divide-and-Conquer Testing (abbreviated as D&C Testing, DnC Testing) is a methodology that takes a large program and splits it into multiple "branches" (small simplified programs) for specific inputs
 
 ---
 
