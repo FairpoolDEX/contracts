@@ -50,8 +50,9 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
     uint internal constant minTotal = 1;
 
     /// Tax can't be greater or equal to maximum multiplier
-    error TaxMustBeLessThanMaxMultiplier();
+    error TaxMustBeLessThanScale();
     error SpeedMustBeLessThanMaxMultiplier();
+    error SpeedMustBeGreaterThanZero();
     error BlockTimestampMustBeLessThanOrEqualToDeadline();
     error PaymentRequired();
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
@@ -67,8 +68,10 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
     event SetTax(uint tax);
 
     constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) {
-        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanMaxMultiplier();
+        if (tax_ >= scale) revert TaxMustBeLessThanScale();
+        // if (tax == 0) it's ok
         if (speed_ >= maxMultiplier) revert SpeedMustBeLessThanMaxMultiplier();
+        if (speed_ == 0) revert SpeedMustBeGreaterThanZero();
         speed = speed_;
         tax = tax_;
     }
@@ -90,9 +93,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
         uint quoteDelta = getQuoteDeltaSell(baseDelta);
         _burn(msg.sender, baseDelta);
-        uint profit = (quoteDelta * tax) / scale;
-        uint remainder = distribute(profit);
-        uint quoteReceived = quoteDelta - profit + remainder;
+        uint quoteReceived;
+        if (tax != 0) {
+            uint profit = (quoteDelta * tax) / scale;
+            uint remainder = distribute(profit);
+            quoteReceived = quoteDelta - profit + remainder;
+        } else {
+            quoteReceived = quoteDelta;
+        }
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteDelta);
         payable(msg.sender).transfer(quoteReceived);
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
@@ -125,7 +133,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
 
     function setTax(uint tax_) external /* nonReentrant not needed because it has no external calls */ {
         if (!isBeneficiary(msg.sender)) revert SenderMustBeBeneficiary();
-        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanMaxMultiplier();
+        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanScale();
         if (tax_ >= tax) revert NewTaxMustBeLessThanOldTax();
         tax = tax_;
         emit SetTax(tax_);
