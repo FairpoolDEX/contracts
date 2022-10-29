@@ -21,7 +21,7 @@ import { ReachDesiredStateCommand } from './Coliquidity/commands/ReachDesiredSta
 import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
-import { bn, zero } from '../../util/bignumber'
+import { bn, zero } from '../../libs/bn/util'
 import { days, hours } from '../../util-local/time'
 import { fest } from '../../util-local/mocha'
 import { BalanceBN } from '../../models/BalanceBN'

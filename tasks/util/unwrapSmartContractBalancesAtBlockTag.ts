@@ -17,7 +17,7 @@ import { getTransfersPaginatedCached } from './getTransfers'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { getGenericToken } from './getERC20Token'
 import { AmountBN } from '../../models/AmountBN'
-import { zero } from '../../util/bignumber'
+import { zero } from '../../libs/bn/util'
 import { expect } from '../../util-local/expect'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
 

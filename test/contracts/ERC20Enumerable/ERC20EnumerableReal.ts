@@ -1,5 +1,5 @@
 import { ERC20Enumerable } from '../../../typechain-types'
-import { rangeBNS } from '../../../util/bignumber'
+import { rangeBNS } from '../../../libs/bn/util'
 import { chunk, flatten } from 'lodash'
 import { parMap } from '../../../util/promise'
 import { Address } from '../../../models/Address'

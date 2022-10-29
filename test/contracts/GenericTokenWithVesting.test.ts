@@ -16,7 +16,7 @@ import { addVestingType, addVestingTypes, dayInSeconds, monthInSeconds, normalSh
 import { months } from '../../util-local/time'
 import { parseVestingType } from '../../models/VestingType'
 import { addAllocationsByVestingTypeIndex } from '../support/Allocation.helpers'
-import { sumBigNumbers, zero } from '../../util/bignumber'
+import { sumBN, zero } from '../../libs/bn/util'
 import { toSeconds } from '../../models/Duration'
 import { getShare } from '../../models/Share'
 import { parseCustomNamedAllocation } from '../../models/CustomNamedAllocation'
@@ -585,21 +585,21 @@ describe('GenericTokenWithVesting', async () => {
         {
           name: 'releaseTimeTest + cliff',
           timestamp: releaseTimeTest + cliff,
-          amount: sumBigNumbers([
+          amount: sumBN([
             getShare(amount, initialShare),
           ]),
         },
         {
           name: 'releaseTimeTest + cliff + 1',
           timestamp: releaseTimeTest + cliff + 1,
-          amount: sumBigNumbers([
+          amount: sumBN([
             getShare(amount, initialShare),
           ]),
         },
         {
           name: 'releaseTimeTest + cliff + dayInSeconds',
           timestamp: releaseTimeTest + cliff + dayInSeconds,
-          amount: sumBigNumbers([
+          amount: sumBN([
             getShare(amount, initialShare),
             getShare(amount, dailyShare),
           ]),
@@ -607,7 +607,7 @@ describe('GenericTokenWithVesting', async () => {
         {
           name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
           timestamp: releaseTimeTest + cliff + dayInSeconds + monthInSeconds,
-          amount: sumBigNumbers([
+          amount: sumBN([
             getShare(amount, initialShare),
             getShare(amount, dailyShare),
             getShare(amount, monthlyShare),
@@ -617,7 +617,7 @@ describe('GenericTokenWithVesting', async () => {
         {
           name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
           timestamp: releaseTimeTest + cliff + dayInSeconds * 5 + monthInSeconds * 3,
-          amount: sumBigNumbers([
+          amount: sumBN([
             getShare(amount, initialShare),
             getShare(amount, dailyShare).mul(5),
             getShare(amount, monthlyShare).mul(3),

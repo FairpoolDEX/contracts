@@ -2,7 +2,7 @@ import { expect } from './expect'
 import neatcsv from 'neat-csv'
 import { RawCSVData } from '../util/csv'
 import { shuffle } from 'lodash'
-import { sumBigNumbers, zero } from '../util/bignumber'
+import { sumBN, zero } from '../libs/bn/util'
 import { AddressSchema } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { writeFile } from 'fs/promises'
@@ -37,7 +37,7 @@ export function padAmount(decimals: number, amountRaw: string) {
 }
 
 export function sumAmountsOf(amountables: { amount: AmountBN }[]) {
-  return sumBigNumbers(amountables.map(a => a.amount))
+  return sumBN(amountables.map(a => a.amount))
 }
 
 export function getBalancesFromMap(balanceMap: BalancesMap): BalanceBN[] {
