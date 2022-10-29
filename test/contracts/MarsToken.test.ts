@@ -10,7 +10,7 @@ import { fest } from '../../util-local/mocha'
 import { months } from '../../util-local/time'
 import { expect } from '../../util-local/expect'
 import { addVestedAllocations } from '../support/Allocation.helpers'
-import { sumBigNumbers, zero } from '../../util/bignumber'
+import { sumBN, zero } from '../../libs/bn/util'
 import { timeTravel } from '../support/test.helpers'
 import { ensure } from '../../util/ensure'
 import { toSeconds } from '../../models/Duration'
@@ -69,21 +69,21 @@ describe('MarsToken', async () => {
       {
         name: 'releaseTimeTest + cliff',
         timestamp: releaseTimeTest + cliff,
-        amount: sumBigNumbers([
+        amount: sumBN([
           initialAmount,
         ]),
       },
       {
         name: 'releaseTimeTest + cliff + 1',
         timestamp: releaseTimeTest + cliff + 1,
-        amount: sumBigNumbers([
+        amount: sumBN([
           initialAmount,
         ]),
       },
       {
         name: 'releaseTimeTest + cliff + dayInSeconds',
         timestamp: releaseTimeTest + cliff + dayInSeconds,
-        amount: sumBigNumbers([
+        amount: sumBN([
           initialAmount,
           dailyAmount,
         ]),
@@ -91,7 +91,7 @@ describe('MarsToken', async () => {
       {
         name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
         timestamp: releaseTimeTest + cliff + dayInSeconds + monthInSeconds,
-        amount: sumBigNumbers([
+        amount: sumBN([
           initialAmount,
           dailyAmount,
           monthlyAmount,
@@ -101,7 +101,7 @@ describe('MarsToken', async () => {
       {
         name: 'releaseTimeTest + cliff + dayInSeconds + monthInSeconds',
         timestamp: releaseTimeTest + cliff + dayInSeconds * 5 + monthInSeconds * 3,
-        amount: sumBigNumbers([
+        amount: sumBN([
           initialAmount,
           dailyAmount.mul(5),
           monthlyAmount.mul(3),

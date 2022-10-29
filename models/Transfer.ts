@@ -3,7 +3,7 @@ import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
 import { BlockNumberSchema } from './BlockNumber'
 import { TransactionHashSchema, zeroTransactionHash } from './TransactionHash'
-import { zero } from '../util/bignumber'
+import { zero } from '../libs/bn/util'
 import { $zero } from '../data/allAddresses'
 
 export const TransferSchema = z.object({

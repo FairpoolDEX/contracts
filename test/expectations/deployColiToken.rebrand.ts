@@ -1,7 +1,7 @@
 import { validateDeployColiTokenExpectationsMap } from '../../tasks/deployColiTokenTask'
 import { getBalancesFromMap } from '../../util-local/balance'
 import { CS, KS, oldSoftwareDeployer } from '../../data/allAddresses'
-import { bn } from '../../util/bignumber'
+import { bn } from '../../libs/bn/util'
 import { validateRawFrozenWallets } from '../../models/FrozenWallet'
 
 export const expectations = validateDeployColiTokenExpectationsMap({

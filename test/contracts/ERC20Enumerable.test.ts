@@ -17,7 +17,7 @@ import { amountBN, uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { addressFrom } from '../support/fast-check/arbitraries/Address'
 import { Address } from '../../models/Address'
 import { minutes } from '../../util-local/time'
-import { bn } from '../../util/bignumber'
+import { bn } from '../../libs/bn/util'
 import { expect } from '../../util-local/expect'
 
 describe('ERC20Enumerable', async function () {

@@ -1,6 +1,6 @@
 import { Address } from '../../../../models/Address'
 import { ensure } from '../../../../util/ensure'
-import { zero } from '../../../../util/bignumber'
+import { zero } from '../../../../libs/bn/util'
 import { BalanceBN } from '../../../../models/BalanceBN'
 import { removeByIndex } from '../../../../util/lodash'
 
