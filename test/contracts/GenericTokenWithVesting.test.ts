@@ -16,12 +16,13 @@ import { addVestingType, addVestingTypes, dayInSeconds, monthInSeconds, normalSh
 import { months } from '../../util-local/time'
 import { parseVestingType } from '../../models/VestingType'
 import { addAllocationsByVestingTypeIndex } from '../support/Allocation.helpers'
-import { sumBN, zero } from '../../libs/bn/util'
+import { sumBN } from '../../libs/bn/utils'
 import { toSeconds } from '../../models/Duration'
 import { getShare } from '../../models/Share'
 import { parseCustomNamedAllocation } from '../../models/CustomNamedAllocation'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
 import { ensure } from '../../util/ensure'
+import { zero } from '../../libs/bn/constants'
 
 describe('GenericTokenWithVesting', async () => {
 

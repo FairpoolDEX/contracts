@@ -6,7 +6,7 @@ import { CS, Eddy, isBullSellerAddress, Jordan, KS, newHardwareDeployer, NFTrade
 import { mergeVersionedRecords } from '../../util-local/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util-local/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
-import { getShare, sumBN, zero } from '../../libs/bn/util'
+import { getShare, sumBN } from '../../libs/bn/utils'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 import { ColiMainnet } from '../../data/allDeployments'
 import { Address } from '../../models/Address'
@@ -18,6 +18,7 @@ import { shieldDecimals } from '../support/ColiToken.helpers'
 import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
 import { expect } from '../../util-local/expect'
 import { ensure } from '../../util/ensure'
+import { zero } from '../../libs/bn/constants'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [oldSoftwareDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),

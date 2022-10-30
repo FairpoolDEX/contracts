@@ -1,5 +1,6 @@
-import { bn, tenPow18 } from '../../libs/bn/util'
+import { bn } from '../../libs/bn/utils'
 import { toBackendAmountBN } from '../../util-local/bignumber.convert'
+import { tenPow18 } from '../../libs/bn/constants'
 
 const scale = tenPow18
 

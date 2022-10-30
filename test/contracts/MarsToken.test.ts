@@ -10,13 +10,14 @@ import { fest } from '../../util-local/mocha'
 import { months } from '../../util-local/time'
 import { expect } from '../../util-local/expect'
 import { addVestedAllocations } from '../support/Allocation.helpers'
-import { sumBN, zero } from '../../libs/bn/util'
+import { sumBN } from '../../libs/bn/utils'
 import { timeTravel } from '../support/test.helpers'
 import { ensure } from '../../util/ensure'
 import { toSeconds } from '../../models/Duration'
 import { toTokenAmount } from '../support/all.helpers'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
 import { getTestRunnableContext } from '../support/context'
+import { zero } from '../../libs/bn/constants'
 
 describe('MarsToken', async () => {
   let context: RunnableContext

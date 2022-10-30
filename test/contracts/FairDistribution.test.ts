@@ -3,12 +3,13 @@ import { toTransition, Transition } from '../divide-and-conquer/Transition'
 import { BigNumber } from 'ethers'
 import { GenericState } from '../divide-and-conquer/GenericState'
 import { Err } from './ERC20Enumerable.full.test'
-import { bn, zero } from '../../libs/bn/util'
+import { bn } from '../../libs/bn/utils'
 import { AmountBN } from '../../models/AmountBN'
 import { BalancesMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
 import { stub } from '../../util/todo'
 import { DeepPartial } from '../../util/typescript'
+import { zero } from '../../libs/bn/constants'
 
 type ConstantUint256 = BigNumber
 

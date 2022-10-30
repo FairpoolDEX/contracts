@@ -21,13 +21,14 @@ import { ReachDesiredStateCommand } from './Coliquidity/commands/ReachDesiredSta
 import { getFee, subtractFee } from '../support/Coliquidity.calculation.helpers'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
-import { bn, zero } from '../../libs/bn/util'
+import { bn } from '../../libs/bn/utils'
 import { days, hours } from '../../util-local/time'
 import { fest } from '../../util-local/mocha'
 import { BalanceBN } from '../../models/BalanceBN'
 import { parseOffer, parseOfferFromContract } from '../../models/Coliquidity/Offer'
 import { parsePosition, parsePositionFromContract } from '../../models/Coliquidity/Position'
 import { amountNum } from '../support/fast-check/arbitraries/AmountNum'
+import { zero } from '../../libs/bn/constants'
 
 describe('Coliquidity', async function () {
   let signers: SignerWithAddress[]
