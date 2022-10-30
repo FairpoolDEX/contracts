@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { AmountBNSchema, validateAmountBN } from './AmountBN'
 import { BigNumberish } from 'ethers'
-import { getShare as getShareOriginal } from '../libs/bn/util'
+import { getShare as getShareOriginal } from '../libs/bn/utils'
 import { scale } from '../test/support/all.helpers'
 
 export const ShareSchema = z.object({

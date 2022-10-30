@@ -6,10 +6,10 @@ import { toTransition, Transition } from '../divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
 import { MaxUint256 } from '../support/all.helpers'
 import { Address } from '../../models/Address'
-import { zero } from '../../libs/bn/util'
 import { concat, pull } from 'lodash'
 import { FunctionDefinition, getPolymorphicDefinitions } from '../divide-and-conquer/FunctionDefinition'
 import { eq, neq } from '../divide-and-conquer/allFunctionDefinitions'
+import { zero } from '../../libs/bn/constants'
 
 export interface Data {
   totalSupply: AmountBN

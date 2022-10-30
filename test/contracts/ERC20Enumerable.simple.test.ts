@@ -10,7 +10,6 @@ import { step, Step } from '../divide-and-conquer/Step'
 import { Projection } from '../divide-and-conquer/Projection'
 import { address } from '../support/fast-check/arbitraries/Address'
 import { get_getRandomValue, GetRandomValue } from '../divide-and-conquer/GetRandomValue'
-import { one, uint256Max, zero } from '../../libs/bn/util'
 import { cloneDeep, set } from 'lodash'
 import { PropPath } from '../divide-and-conquer/PropPath'
 import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
@@ -20,6 +19,7 @@ import { parMap } from '../../util/promise'
 import { runStepWithHandlers } from '../divide-and-conquer/runStepWithHandlers'
 import { handler, Handler } from '../divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
+import { one, uint256Max, zero } from '../../libs/bn/constants'
 
 export interface Data {
   balances: BalanceBN[]

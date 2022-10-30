@@ -5,7 +5,7 @@ import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile
 import { importDefault } from '../util-local/import'
 import { getClaimsFromRequests, getWriteClaimsContext, WriteClaimsTaskArguments } from './writeClaimsTask'
 import { BalanceBN } from '../models/BalanceBN'
-import { zero } from '../libs/bn/util'
+import { zero } from '../libs/bn/constants'
 
 export async function writeClaimsToZeroTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)

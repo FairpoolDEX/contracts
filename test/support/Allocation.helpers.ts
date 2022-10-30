@@ -11,9 +11,9 @@ import { CustomNamedAllocation } from '../../models/CustomNamedAllocation'
 import { Filename } from '../../util/filesystem'
 import { parseCustomNamedAllocationsCSV } from '../../models/CustomNamedAllocation/parseCustomNamedAllocationsCSV'
 import { VestingType } from '../../models/VestingType'
-import { tenPow18 } from '../../libs/bn/util'
 import { sendMultipleTransactions } from '../../util-local/ethers'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
+import { tenPow18 } from '../../libs/bn/constants'
 
 export const noVestingName = 'None'
 

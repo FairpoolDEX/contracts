@@ -9,7 +9,6 @@ import { Address } from '../models/Address'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
 import { NetworkName, validateNetworkName } from '../models/NetworkName'
 import { parMap } from '../util/promise'
-import { ten, zero } from '../libs/bn/util'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
 import { GenericToken } from '../typechain-types'
@@ -21,6 +20,7 @@ import { Timestamp } from '../util-local/types'
 import { sum } from '../test/support/all.helpers'
 import { getSubmissionsFromCSVFile } from '../models/LearnToEarn/Submission/getSubmissionsFromCSVFile'
 import { stub } from '../util/todo'
+import { ten, zero } from '../libs/bn/constants'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
