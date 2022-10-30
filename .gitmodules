@@ -1,0 +1,3 @@
+[submodule "libs/bn"]
+	path = libs/bn
+	url = https://github.com/zenbox-org/bn.git
