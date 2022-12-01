@@ -1,14 +1,14 @@
 import { BalancesMap } from '../../util-local/balance'
 import { AmountBN } from '../../models/AmountBN'
 import { Error as ErrorERC20EnumerableSimple, MintParams, TransferParams } from './ERC20Enumerable.simple.test'
-import { GenericState } from '../divide-and-conquer/GenericState'
-import { toTransition, Transition } from '../divide-and-conquer/Transition'
+import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
 import { MaxUint256 } from '../support/all.helpers'
 import { Address } from '../../models/Address'
 import { concat, pull } from 'lodash'
-import { FunctionDefinition, getPolymorphicDefinitions } from '../divide-and-conquer/FunctionDefinition'
-import { eq, neq } from '../divide-and-conquer/allFunctionDefinitions'
+import { FunctionDefinition, getPolymorphicDefinitions } from '../../libs/divide-and-conquer/FunctionDefinition'
+import { eq, neq } from '../../libs/divide-and-conquer/allFunctionDefinitions'
 import { zero } from '../../libs/bn/constants'
 
 export interface Data {

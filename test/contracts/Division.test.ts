@@ -1,11 +1,11 @@
-import { GenericState } from '../divide-and-conquer/GenericState'
-import { Transition } from '../divide-and-conquer/Transition'
+import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { cloneDeep } from 'lodash'
 import { stub } from '../../util/todo'
-import { variator } from '../divide-and-conquer/Variator'
-import { getJavascriptIntegers } from '../divide-and-conquer/generators/getJavascriptIntegers'
-import { Step } from '../divide-and-conquer/Step'
-import { handler, Handler } from '../divide-and-conquer/Handler'
+import { variator } from '../../libs/divide-and-conquer/Variator'
+import { getJavascriptIntegers } from '../../libs/divide-and-conquer/generators/getJavascriptIntegers'
+import { Step } from '../../libs/divide-and-conquer/Step'
+import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 
 interface Data {
   a: number

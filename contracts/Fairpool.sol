@@ -16,8 +16,9 @@ import "./SharedOwnership.sol";
  * - Variables should use uint instead of smaller types because uint actually costs less gas
  * - Custom errors must be used over string descriptions because it costs less gas
  *   - Don't add parameters to errors if they are already available to the caller (e.g. don't add function arguments as parameters)
+ * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  */
-contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
+contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
     using FixedPointMathLib for uint;
 
     // multiplier in the formula for base amount
@@ -67,7 +68,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard {
     event Withdraw(address addr, uint quoteReceived);
     event SetTax(uint tax);
 
-    constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) {
+    constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
         if (tax_ >= scale) revert TaxMustBeLessThanScale();
         // if (tax == 0) it's ok
         if (speed_ >= maxMultiplier) revert SpeedMustBeLessThanMaxMultiplier();
