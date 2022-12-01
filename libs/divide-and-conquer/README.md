@@ -4,35 +4,39 @@
   * The large program is called the "test target" (the program being tested)
   * The small program is called the "test double" (the program used for testing)
   * The test itself is a program that ensures the double program matches the target
-    * Extensionally (by comparing their outputs)
-      * The comparison may be any function from two inputs to boolean: ==, ===, >, <, >=, =<, isSubset, ...
-    * Intensionally (by comparing their code)
 * Testing checks two things:
   * Presence of features
   * Absence of bugs
-* Bugs are unexpected consequences of the implementation details
-  * Examples of bug types
-    * Buffer overflow (the programmer didn't expect that `a + 1 === 0` where `a` is an unsigned integer with maximum value for its size)
-    * SQL injection (the programmer didn't expect that people would submit a `username` that contains a part of SQL query which deletes all records after being substituted in `SELECT * FROM users WHERE username = ${username}`)
+* Bugs are unexpected consequences of the features
+  * Bugs arise when the implementation is different from the definition
+  * [Bug types](#bug-types)
 * Bugs can be found by manually comparing the actual output with the expected output for every possible input, but it would take a lot of time
 * Testing methodologies solve this problem in different ways
 * Divide-and-Conquer Testing (abbreviated as D&C Testing, DnC Testing) is a methodology that takes a large program and splits it into multiple "branches" (small simplified programs) for specific inputs
 
----
+## General notes
 
+* Every [generalized input](#generalized-input) can be reduced to its own [partition](#partition) via the program
 * Every large program can be reduced to a small program by applying conditions on the inputs
   * Examples
     * [getRootsFromQuadraticEquationCoefficients](#getrootsfromquadraticequationcoefficients) can be reduced to [getRootFromLinearEquationCoefficients](#getrootfromlinearequationcoefficients) by applying the condition `a = 0`
     * [getGreetingFromFilename](#getgreetingfromfilename) can be reduced to [throwError](#throwerror) with a specific input "ENOENT" (Node.js-specific error code for "File not found") by applying the condition `!exists(filename)`
 * The general form of a condition is [Conditional](#conditional)
-* It is possible to get conditions from the program itself (see [Branches](#branches))
-* It is possible to get conditions by generating them from a list of inputs and their projections
+* Conditions can only be generated from the program itself (see [Branches](#branches))
+* Standard library functions may contain branching expressions, too
+* Program must be converted into pure form before decomposition
   * Examples
-    * Generate c = 0 for [getRootsFromQuadraticEquationCoefficients](#getrootsfromquadraticequationcoefficients)
+    * An `fs.readFile` call must be purified to ensure that the return type includes all possible constructors  
 
 ## Listeners
 
 ### Write "Write the test"
+
+Meta-options:
+
+* Write extensional test (compare the outputs of target and double)
+  * The comparison may be any function from two inputs to boolean: ==, ===, >, <, >=, =<, isSubset, ...
+* Write intensional test (compare the code of target and double)
 
 Options:
 
@@ -260,6 +264,18 @@ Notes:
 * Execution is needed for caching
   * It's expensive to derive the current State from Trajectory and initial State
 
+### Generalized input
+
+A structure that contains all inputs of the function as fields.
+
+Notes:
+
+* For stateful programs, the generalized input is equal to a pair of [state](#state) and a union of [transitions](#transition)
+
+### Partition
+
+A list of subsets whose union is the full set.
+
 ### Process
 
 ```lean4
@@ -279,7 +295,7 @@ structure Step where
 
 ### Continuous operation
 
-Operations that use only induction and terminating recursion
+Operation that only uses induction and terminating recursion
 
 Examples:
 
@@ -294,19 +310,19 @@ Decisions:
 ### Conditional
 
 ```lean4
-structure Condition (A B C : Type) where
+structure Conditional (A B C : Type) where
   transformA : A -> C
   transformB : B -> C
-  compare : C -> C -> bool
+  compare : C -> C -> Bool
   
 -- note that transformA & transformB may be more complex than just typecasts (example: transformA := length, so that we could generate lists with length > another input)
-def cond2bool {A B C : Type} (c : Condition A B C) (a : A) (b : B) := c.compare(c.transformA(a), c.transformB(b))
+def cond2bool {A B C : Type} (c : Conditional A B C) (a : A) (b : B) := c.compare(c.transformA(a), c.transformB(b))
 ```
 
 ### Relation
 
 ```lean4
-def Relation (Value : Type) : Value -> Value -> Bool
+def Relation {A : Type} : A -> A -> Bool
 ```
 
 ## Examples
@@ -405,6 +421,10 @@ The following applies to classical computers:
 
 ### Branches
 
+Branch is a program that is executed when a match expression evaluates to true.
+
+Notes:
+
 * Most programs have branches
   * Examples
     * [getGreetingFromName](#getgreetingfromname) has two branches:
@@ -449,3 +469,8 @@ The following applies to classical computers:
 
 * Nadir: {} (empty object)
 * Zenith: ?
+
+### Bug types
+
+* Buffer overflow (the programmer didn't expect that `a + 1 === 0` where `a` is an unsigned integer with maximum value for its size)
+* SQL injection (the programmer didn't expect that people would submit a `username` that contains a part of SQL query which deletes all records after being substituted in `SELECT * FROM users WHERE username = ${username}`)
