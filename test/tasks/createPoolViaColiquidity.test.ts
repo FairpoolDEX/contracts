@@ -10,7 +10,7 @@ import { validateAddress } from '../../models/Address'
 import { fest } from '../../util-local/mocha'
 import { createPoolViaColiquidity, CreatePoolViaColiquidityContext } from '../../tasks/createPoolViaColiquidityTask'
 import { getUniswapV2Pair } from '../support/Uniswap.helpers'
-import { impl } from '../../util/todo'
+import { impl } from 'zenbox-util/todo'
 
 describe('createPoolViaColiquidity', async () => {
 

@@ -11,10 +11,10 @@ import { mainnet } from '../../data/allNetworks'
 import { bn } from '../../libs/bn/utils'
 import { MaxUint256, scale } from '../support/all.helpers'
 import { getScaledPercent } from '../../models/Share'
-import { parMap } from '../../util/promise'
 import { range } from 'lodash'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
+import { mapAsync } from 'zenbox-util/promise'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -123,7 +123,7 @@ describe('Fairpool', async function () {
     const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(scale) })
     const balanceBaseBeforeTransfers = await fairpoolAsOwner.balanceOf(owner.address)
     const totalSupply = await fairpoolAsOwner.totalSupply()
-    const sendTxes = await parMap(range(0, maxHoldersCount), async i => {
+    const sendTxes = await mapAsync(range(0, maxHoldersCount), async i => {
       const wallet = ethers.Wallet.createRandom()
       // preload the address with ETH to reduce the gas cost of send() in distribute()
       // await owner.sendTransaction({

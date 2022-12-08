@@ -19,11 +19,11 @@ export interface Data {
 
 export type Output = undefined
 
-export type Err = ErrorERC20EnumerableSimple
+export type Error = ErrorERC20EnumerableSimple
 
 const { MathSubUnderflow, MathAddUnderflow, MathAddOverflow, TransferAmountExceedsBalance, MintToZeroAddress, TransferToZeroAddress, TransferFromZeroAddress } = ErrorERC20EnumerableSimple
 
-type State = GenericState<Data, Output, Err>
+type State = GenericState<Data, Output, Error>
 
 const constants = [
   { value: '0', type: 'Uint256' },
@@ -42,7 +42,7 @@ const functions: FunctionDefinition[] = concat(
   ])
 )
 
-const mintSuperHandler: Transition<MintParams, State> = (params) => toTransition(async (state) => {
+const mint: Transition<MintParams, State> = (params) => toTransition(async (state) => {
   const { to, amount } = params
   const { data: { totalSupply, balances, holders } } = state
   if (to === $zero) {

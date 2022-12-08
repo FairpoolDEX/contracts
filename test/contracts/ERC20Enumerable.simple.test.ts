@@ -14,12 +14,12 @@ import { cloneDeep, set } from 'lodash'
 import { PropPath } from '../../libs/divide-and-conquer/PropPath'
 import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { Plan, runTestWithPlans } from '../../libs/divide-and-conquer/runTest'
-import { stub } from '../../util/todo'
-import { parMap } from '../../util/promise'
 import { runStepWithHandlers } from '../../libs/divide-and-conquer/runStepWithHandlers'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 import { one, uint256Max, zero } from '../../libs/bn/constants'
+import { todo } from 'zenbox-util/todo'
+import { mapAsync } from 'zenbox-util/promise'
 
 export interface Data {
   balances: BalanceBN[]
@@ -86,7 +86,6 @@ export const mintHandlers: Handler<MintParams, State>[] = [
       return { data: { balances } }
     })
   ),
-  // code duplication
   handler(
     ({ state: { data: { balances } }, params: { to } }) => balances.findIndex(b => b.address === to) != -1,
     ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
@@ -139,14 +138,6 @@ async function doTest(random: Random) {
   // TODO: The next steps must be generated after exploring a specific state
 }
 
-// async function getPivots(state: State) {
-//   const { data } = state
-//   const balancesPivot: Pivot =
-//   return [
-//     balancesPivot
-//   ]
-// }
-
 const getStaticMintParamsArray = (gen: GetRandomValue) => async (state: State) => {
   const randomAddress = gen(address())
   const randomAmount = gen(uint256BN())
@@ -158,7 +149,7 @@ const getStaticMintParamsArray = (gen: GetRandomValue) => async (state: State) =
     // amount that is larger than uint256
     // TODO: one MintParams for each branch
   ]
-  return stub<MintParams[]>()
+  return todo<MintParams[]>()
 }
 
 describe('ERC20Enumerable.simple', async () => {
@@ -172,17 +163,17 @@ describe('ERC20Enumerable.simple', async () => {
       const handlers = mintHandlers
       const transition = incorrectMintWithoutExistenceCheck
       // TODO: if state has changed then explore again, else stop
-      await parMap(paramsArray, params => runStepWithHandlers(plans, handlers)(step(transition, params, state)))
+      await mapAsync(paramsArray, params => runStepWithHandlers(plans, handlers)(step(transition, params, state)))
     },
   }
   const burnPlan: Plan<State> = {
     explore: async (plans, state) => {
-      return stub<undefined>()
+      return todo<undefined>()
     },
   }
   const transferPlan: Plan<State> = {
     explore: async (plans, state) => {
-      return stub<undefined>()
+      return todo<undefined>()
     },
   }
   plans.push(mintPlan)

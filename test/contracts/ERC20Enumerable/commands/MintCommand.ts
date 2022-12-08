@@ -6,13 +6,15 @@ import { findBalanceDefault, upsertBalance } from '../../../support/fast-check/m
 import { $zero } from '../../../../data/allAddresses'
 import { ERC20EnumerableModel } from '../ERC20EnumerableModel'
 import { ERC20EnumerableReal } from '../ERC20EnumerableReal'
+import { Ethers } from '../../../../util-local/types'
 
 export class MintCommand extends ERC20EnumerableCommand<boolean> implements AsyncCommand<ERC20EnumerableModel, ERC20EnumerableReal, true> {
   constructor(
+    readonly ethers: Ethers,
     readonly to: Address,
     readonly amount: AmountBN,
   ) {
-    super()
+    super(ethers)
   }
 
   async check(model: ERC20EnumerableModel) {

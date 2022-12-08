@@ -8,7 +8,6 @@ import { Filename } from '../util/filesystem'
 import { Address } from '../models/Address'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
 import { NetworkName, validateNetworkName } from '../models/NetworkName'
-import { parMap } from '../util/promise'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
 import { GenericToken } from '../typechain-types'
@@ -19,8 +18,9 @@ import { getProvider } from '../util-local/hardhat'
 import { Timestamp } from '../util-local/types'
 import { sum } from '../test/support/all.helpers'
 import { getSubmissionsFromCSVFile } from '../models/LearnToEarn/Submission/getSubmissionsFromCSVFile'
-import { stub } from '../util/todo'
 import { ten, zero } from '../libs/bn/constants'
+import { todo } from 'zenbox-util/todo'
+import { promiseAllMap } from 'zenbox-util/promise'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
@@ -57,15 +57,15 @@ export async function getWriteTotalsContext(args: WriteTotalsTaskArguments, hre:
 }
 
 async function getPlayerTotals(addresses: Address[], networks: NetworkName[], context: WriteTotalsContext): Promise<BalanceBN[]> {
-  return parMap(addresses, getFrontendTotalsForAddress, networks, context)
+  return mapAsync(addresses, getFrontendTotalsForAddress, networks, context)
 }
 
 async function getTeamTotals(leaderAddresses: string[], networks: NetworkName[], context: WriteTotalsContext) {
-  return stub<BalanceBN[]>()
+  return todo<BalanceBN[]>()
 }
 
 function getWinningTeam(teamTotals: BalanceBN[]) {
-  return stub<Address>()
+  return todo<Address>()
 }
 
 async function getFrontendTotalsForAddress(address: Address, networks: NetworkName[], context: WriteTotalsContext) {
@@ -78,7 +78,7 @@ async function getFrontendTotalsForAddress(address: Address, networks: NetworkNa
     const nativeAssetDecimals = 18 // should be the same for every EVM-compatible blockchain
     const nativeAssetFrontendTotal = getFrontendTotal(nativeAssetBalance, nativeAssetPrice, 1, nativeAssetDecimals, priceDecimals)
     const tokenInfos = relevantTokenInfos.filter(ti => ti.network === networkName)
-    const tokenFrontendTotals = await parMap(tokenInfos, getTokenFrontendTotal, address, networkName, context)
+    const tokenFrontendTotals = await mapAsync(tokenInfos, getTokenFrontendTotal, address, networkName, context)
     const tokenFrontendTotalsSum = sum(tokenFrontendTotals)
     return (await total).add(nativeAssetFrontendTotal.add(tokenFrontendTotalsSum))
   }, Promise.resolve(zero))

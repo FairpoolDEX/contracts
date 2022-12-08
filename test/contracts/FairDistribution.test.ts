@@ -2,14 +2,14 @@ import { BalanceBN } from '../../models/BalanceBN'
 import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { BigNumber } from 'ethers'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
-import { Err } from './ERC20Enumerable.full.test'
+import { Error } from './ERC20Enumerable.full.test'
 import { bn } from '../../libs/bn/utils'
 import { AmountBN } from '../../models/AmountBN'
 import { BalancesMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
-import { stub } from '../../util/todo'
-import { DeepPartial } from '../../util/typescript'
 import { zero } from '../../libs/bn/constants'
+import { todo } from 'zenbox-util/todo'
+import { Partial } from 'ts-toolbelt/out/Object/Partial'
 
 type ConstantUint256 = BigNumber
 
@@ -26,7 +26,7 @@ export type Output = BalanceBN[]
 
 export type Error = undefined
 
-type State = GenericState<Data, Output, Err>
+type State = GenericState<Data, Output, Error>
 
 const WINDOW: ConstantUint256 = bn(100)
 
@@ -41,5 +41,5 @@ interface DistributeParams {
 }
 
 const distribute: Transition<DistributeParams, State> = (params) => toTransition(async (state) => {
-  return stub<DeepPartial<State>>()
+  return todo<Partial<State, 'deep'>>()
 })

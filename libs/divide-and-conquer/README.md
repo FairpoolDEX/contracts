@@ -7,12 +7,15 @@
 * Testing checks two things:
   * Presence of features
   * Absence of bugs
+* Presence of features can be ensured easily with static tests
+* Absence of bugs can't be ensured easily with static tests: bugs are by definition something that programmer does not expect (an unknown "unknown")
 * Bugs are unexpected consequences of the features
   * Bugs arise when the implementation is different from the definition
   * [Bug types](#bug-types)
 * Bugs can be found by manually comparing the actual output with the expected output for every possible input, but it would take a lot of time
 * Testing methodologies solve this problem in different ways
 * Divide-and-Conquer Testing (abbreviated as D&C Testing, DnC Testing) is a methodology that takes a large program and splits it into multiple "branches" (small simplified programs) for specific inputs
+  * This allows the developer to check every small program, ensuring that it still matches his expectations
 
 ## General notes
 
@@ -27,6 +30,10 @@
 * Program must be converted into pure form before decomposition
   * Examples
     * An `fs.readFile` call must be purified to ensure that the return type includes all possible constructors  
+* Rewriting each function in branching style is impossible: conditions may depend on the results of calculations
+  * Examples
+    * totalSupplyNew: `const totalSupplyNew = totalSupply.add(amount); if (totalSupplyNew.gt(MaxUint256)) { return { error: MathAddOverflow } } else { /* code that uses totalSupplyNew */ }`
+* Error handling is verbose without monads: need to check every return value for error
 
 ## Listeners
 

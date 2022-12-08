@@ -8,10 +8,10 @@ import { getCacheKey } from '../../util/cache'
 import { getERC721Token } from '../../tasks/util/getERC721Token'
 import { chunk, countBy, flatten, range, toPairs } from 'lodash'
 import { maxRequestsPerSecond } from '../../util-local/getblock'
-import { seqMap } from '../../util/promise'
 import { getERC721AToken } from '../../tasks/util/getERC721AToken'
 import { balanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { BigNumber } from 'ethers'
+import { sequentialMap } from 'zenbox-util/promise'
 
 export async function getERC721ABalances(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
   const owners = await getERC721AOwners(blockTag, contractAddress, ethers, cache)
@@ -24,7 +24,7 @@ export async function getERC721AOwners(blockTag: BlockTag, contractAddress: Addr
   const totalSupply = await token.totalSupply({ blockTag })
   const tokenIds = range(0, totalSupply.toNumber())
   const tokenIdsPaginated = chunk(tokenIds, maxRequestsPerSecond / 2)
-  const owners = flatten(await seqMap(tokenIdsPaginated, tokenIdPage => getERC721OwnersAtBlockTagCached(tokenIdPage, blockTag, contractAddress, ethers, cache)))
+  const owners = flatten(await sequentialMap(tokenIdsPaginated, tokenIdPage => getERC721OwnersAtBlockTagCached(tokenIdPage, blockTag, contractAddress, ethers, cache)))
   return owners
 }
 

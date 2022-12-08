@@ -12,7 +12,6 @@ import { findClosestBlock } from '../data/allBlocks'
 import { ensure } from '../util/ensure'
 import { isBullSellerBalance, Jordan, oldSoftwareDeployer } from '../data/allAddresses'
 import { findDeployment } from '../data/allDeployments'
-import { seqMap } from '../util/promise'
 import { ContextualValidator, validateWithContext } from '../util-local/validator'
 import { balanceBN, BalanceBN } from '../models/BalanceBN'
 import { BlockNumber } from '../models/BlockNumber'
@@ -26,6 +25,7 @@ import { applyRewrites } from '../models/Rewrite/applyRewrites'
 import { importDefault } from '../util-local/import'
 import { CachedContext, CachedTaskArguments, getCachedContext } from '../util-local/context/getCachedContext'
 import { zero } from '../libs/bn/constants'
+import { sequentialMap } from 'zenbox-util/promise'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)
@@ -94,7 +94,7 @@ export async function getClaimsFromBullToken(context: WriteClaimsContext) {
 export async function getClaimsFromColiToken(context: WriteClaimsContext) {
   const deployment = ensure(findDeployment({ contract: 'ColiToken', network: context.networkName }))
   const blockNumbers = await getDistributionBlockNumbers()
-  const balancesByDate = await seqMap(blockNumbers, blockNumber => getERC20BalancesAtBlockTagPaginated(blockNumber, deployment.address, context))
+  const balancesByDate = await sequentialMap(blockNumbers, blockNumber => getERC20BalancesAtBlockTagPaginated(blockNumber, deployment.address, context))
   const balances = addBalances(flatten(balancesByDate))
   return getClaimsFromBalances(balances)
 }

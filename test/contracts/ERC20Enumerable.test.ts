@@ -12,13 +12,13 @@ import { ERC20EnumerableModel } from './ERC20Enumerable/ERC20EnumerableModel'
 import { ERC20EnumerableReal, getBalancesFull, getHolders } from './ERC20Enumerable/ERC20EnumerableReal'
 import { ModelRunSetup } from 'fast-check/lib/types/check/model/ModelRunner'
 import { TransferCommand } from './ERC20Enumerable/commands/TransferCommand'
-import { parMap } from '../../util/promise'
 import { amountBN, uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { addressFrom } from '../support/fast-check/arbitraries/Address'
 import { Address } from '../../models/Address'
 import { minutes } from '../../util-local/time'
 import { bn } from '../../libs/bn/utils'
 import { expect } from '../../util-local/expect'
+import { mapAsync } from 'zenbox-util/promise'
 
 describe('ERC20Enumerable', async function () {
   let signers: SignerWithAddress[]
@@ -63,7 +63,7 @@ describe('ERC20Enumerable', async function () {
     tokenAsSally = tokenAsOwner.connect(sally)
 
     const otherSigners = signers.filter(s => s !== owner)
-    await parMap(otherSigners, s => tokenAsOwner.transfer(s.address, amountPerSigner))
+    await mapAsync(otherSigners, s => tokenAsOwner.transfer(s.address, amountPerSigner))
 
     now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
   })

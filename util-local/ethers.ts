@@ -3,7 +3,6 @@ import { Address } from '../models/Address'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { Provider } from '@ethersproject/providers'
 import { RateLimiter } from 'limiter'
-import { impl } from '../util/todo'
 import { Contract, Signer } from 'ethers'
 import { getCacheKey } from '../util/cache'
 import { Cache } from 'cache-manager'
@@ -11,9 +10,10 @@ import { validateContractCode } from '../models/ContractCode'
 import { rateLimiter } from './getblock'
 import { debug } from '../util/debug'
 import { RunnableContext } from './context/getRunnableContext'
-import { seqMap } from '../util/promise'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { getTransactionUrl } from '../util/url'
+import { impl } from 'zenbox-util/todo'
+import { sequentialMap } from 'zenbox-util/promise'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await rateLimiter.removeTokens(1)
@@ -63,7 +63,7 @@ export async function getContractForSigner(ethers: Ethers, contractName: string,
  */
 export function sendMultipleTransactions<In, Out extends ContractTransaction, Args extends unknown[]>(context: RunnableContext, values: In[], mapper: (value: In, ...args: Args) => Promise<Out>, ...args: Args) {
   const { log, signer } = context
-  return seqMap(values, async (value: In, ...args: Args) => {
+  return sequentialMap(values, async (value: In, ...args: Args) => {
     const tx = await mapper(value, ...args)
     log(await getTransactionUrl(tx, signer))
     await tx.wait(1)
