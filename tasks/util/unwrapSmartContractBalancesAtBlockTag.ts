@@ -8,9 +8,7 @@ import { findNetwork } from '../../data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
 import { NFTrade, TeamFinance, UniswapV2Pair, Unknown } from '../../models/ContractType'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
-import { parMap } from '../../util/promise'
 import { getCodeCached } from '../../util-local/ethers'
-import { impl } from '../../util/todo'
 import { Address } from '../../models/Address'
 import { getERC20BalancesAtBlockTagPaginated } from './getERC20Data'
 import { getTransfersPaginatedCached } from './getTransfers'
@@ -20,6 +18,7 @@ import { AmountBN } from '../../models/AmountBN'
 import { expect } from '../../util-local/expect'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
 import { zero } from '../../libs/bn/constants'
+import { mapAsync } from 'zenbox-util/promise'
 
 /** NOTES
  * Some smart contracts are multisigs, so the user can, technically, move the tokens
@@ -32,7 +31,7 @@ import { zero } from '../../libs/bn/constants'
  * Implement a function from locker smart contract address to locked user balances?
  */
 export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[], blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
-  const balancesPerContract = await parMap(balances, unwrapSmartContractBalanceAtBlockTag, blockTag, tokenAddress, context)
+  const balancesPerContract = await mapAsync(balances, unwrapSmartContractBalanceAtBlockTag, blockTag, tokenAddress, context)
   return addBalances(flatten(balancesPerContract))
 }
 

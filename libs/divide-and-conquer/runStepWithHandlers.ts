@@ -1,11 +1,11 @@
-import { expectEqualResults } from '../../util/expectations'
-import { stringify } from '../../util/JSON'
 import { Handler } from './Handler'
 import { Step } from './Step'
 import { Transition } from './Transition'
-import { impl } from '../../util/todo'
 import { Plan, runTestWithPlans } from './runTest'
 import { isEqual } from 'lodash'
+import { impl } from 'zenbox-util/todo'
+import { stringify } from 'zenbox-util/JSON'
+import { expectEqualResults } from 'zenbox-util/chai/expectEqualResults'
 
 const expectEqualResultsTest = expectEqualResults('Actual', 'Expected')
 

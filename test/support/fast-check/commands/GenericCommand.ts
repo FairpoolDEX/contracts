@@ -1,4 +1,4 @@
-import { expectEqualResults } from '../../../../util/expectations'
+import { expectEqualResults } from 'zenbox-util/chai/expectEqualResults'
 
 export abstract class GenericCommand<Model, Real, Result> {
   async run(model: Model, real: Real) {

@@ -9,11 +9,11 @@ import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { chunk, flatten, uniq } from 'lodash'
 import { maxRequestsPerSecond } from '../../util-local/getblock'
-import { seqMap } from '../../util/promise'
 import { getCacheKey } from '../../util/cache'
 import { isZeroBalance } from '../../util-local/balance'
 import { Cache } from 'cache-manager'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
+import { sequentialMap } from 'zenbox-util/promise'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)
@@ -26,7 +26,7 @@ export async function getERC20BalancesAtBlockTagPaginated(blockTag: BlockTag, co
   const { cache, ethers } = context
   const addresses = await getERC20HolderAddressesAtBlockTag(blockTag, contractAddress, ethers, cache)
   const addressesPaginated = chunk(addresses, maxRequestsPerSecond / 2)
-  const balances = flatten(await seqMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTagCached(addressPage, blockTag, contractAddress, ethers, cache)))
+  const balances = flatten(await sequentialMap(addressesPaginated, addressPage => getERC20BalancesForAddressesAtBlockTagCached(addressPage, blockTag, contractAddress, ethers, cache)))
   const balancesWithoutZeros = balances.filter(b => !isZeroBalance(b))
   return unwrapSmartContractBalancesAtBlockTag(balancesWithoutZeros, blockTag, contractAddress, context)
 }

@@ -1,9 +1,9 @@
 import { strict as assert } from 'assert'
 import { BlockchainModel } from '../models/BlockchainModel'
 import { BlockchainReal } from '../models/BlockchainReal'
-import { impl } from '../../../../util/todo'
 import { Address } from '../../../../models/Address'
 import { GenericCommand } from './GenericCommand'
+import { impl } from 'zenbox-util/todo'
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> extends GenericCommand<Model, Real, Result> {
   getModelContract(model: Model, tokenAddress: string) {

@@ -1,11 +1,11 @@
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { cloneDeep } from 'lodash'
-import { stub } from '../../util/todo'
 import { variator } from '../../libs/divide-and-conquer/Variator'
 import { getJavascriptIntegers } from '../../libs/divide-and-conquer/generators/getJavascriptIntegers'
 import { Step } from '../../libs/divide-and-conquer/Step'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
+import { todo } from 'zenbox-util/todo'
 
 interface Data {
   a: number
@@ -112,5 +112,5 @@ async function getStepsForSetAParamsAndState() {
     variator('params.value', getJavascriptIntegers),
   ]
 
-  return stub<Step<SetAParams, DivideState>[]>()
+  return todo<Step<SetAParams, DivideState>[]>()
 }

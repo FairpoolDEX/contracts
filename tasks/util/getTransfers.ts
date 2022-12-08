@@ -7,9 +7,9 @@ import { flatten, range } from 'lodash'
 import { maxBlocksPerQueryFilterRequest, rateLimiter } from '../../util-local/getblock'
 import { debug } from '../../util/debug'
 import { getBlockNumber } from '../../util-local/ethers'
-import { seqMap } from '../../util/promise'
 import { Cache } from 'cache-manager'
 import { Transfer, validateTransfer } from '../../models/Transfer'
+import { sequentialMap } from 'zenbox-util/promise'
 
 async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)
@@ -33,7 +33,7 @@ export async function getTransfersPaginatedCached(token: Contract, from: BlockTa
   const $from = await getBlockNumber(token.provider, from)
   const $to = await getBlockNumber(token.provider, to)
   const blockNumbers = range($from, $to, maxBlocksPerQueryFilterRequest)
-  const transferEventsArray = await seqMap(blockNumbers, blockNumber => getTransfersCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest, cache))
+  const transferEventsArray = await sequentialMap(blockNumbers, blockNumber => getTransfersCached(token, blockNumber, blockNumber + maxBlocksPerQueryFilterRequest, cache))
   return flatten(transferEventsArray)
 }
 

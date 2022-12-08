@@ -6,7 +6,6 @@ import { Writable } from '../util-local/writable'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { Expected, importExpectations } from '../util-local/expectation'
 import { ColiToken } from '../typechain-types'
-import { impl } from '../util/todo'
 import { getContract } from '../util-local/ethers'
 import { isTestnet, NetworkName } from '../models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
@@ -26,6 +25,7 @@ import { sumAmountsOf } from '../util-local/balance'
 import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 import { toTokenAmount } from '../test/support/all.helpers'
 import { deployUpgradeableContract } from './deployContractTask'
+import { impl } from 'zenbox-util/todo'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
