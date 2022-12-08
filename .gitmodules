@@ -1,3 +1,6 @@
 [submodule "libs/bn"]
 	path = libs/bn
 	url = https://github.com/zenbox-org/bn.git
+[submodule "libs/utils"]
+	path = libs/utils
+	url = https://github.com/zenbox-org/utils.git
