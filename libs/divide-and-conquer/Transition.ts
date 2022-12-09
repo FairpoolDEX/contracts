@@ -1,4 +1,4 @@
-import { cloneDeep, merge } from 'lodash'
+import { merge } from 'rambdax/immutable'
 import { Partial } from 'ts-toolbelt/out/Object/Partial'
 
 export type TransitionBase<State> = (state: State) => Promise<State | undefined>
@@ -11,13 +11,12 @@ export const emptyTransition = <Params, State>(params: Params) => async (state: 
 // export type PartialTransition<Params, State> = (params: Params) => (state: State) => Promise<State | undefined>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type Update<State extends object> = (state: State) => Promise<Partial<State, 'deep'> | undefined>
+export type Update<State extends object> = (state: Readonly<State>) => Promise<Partial<State, 'deep'> | undefined>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function toTransition<State extends object>(update: Update<State>) {
-  return async ($state: State) => {
-    const state = cloneDeep($state)
+  return async (state: State) => {
     const patch = await update(state)
-    if (patch) return merge(state, patch)
+    return patch ? merge(state, patch) : state
   }
 }

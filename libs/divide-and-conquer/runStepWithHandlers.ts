@@ -2,7 +2,7 @@ import { Handler } from './Handler'
 import { Step } from './Step'
 import { Transition } from './Transition'
 import { Plan, runTestWithPlans } from './runTest'
-import { isEqual } from 'lodash'
+import { equals } from 'rambdax'
 import { impl } from '../utils/todo'
 import { stringify } from '../utils/JSON'
 import { expectEqualResults } from '../utils/chai/expectEqualResults'
@@ -19,7 +19,7 @@ export const runStepWithHandlers = <Params, State>(plans: Plan<State>[], handler
       transitionOriginal(params)(state),
       transitionSimple(params)(state)
     )
-    if (stateNew && !isEqual(stateNew, state)) {
+    if (stateNew && !equals(stateNew, state)) {
       return runTestWithPlans(plans, stateNew)
     }
   } else {

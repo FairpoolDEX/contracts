@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash'
+import { clone } from 'rambdax'
 
 type Type = string
 
@@ -16,7 +16,7 @@ export type ReplacementArr = [string, string]
 
 export function getPolymorphicDefinitions(base: FunctionDefinition, replacementsArrays: ReplacementArr[][]) {
   return replacementsArrays.map(replacements => {
-    const def = cloneDeep(base)
+    const def = clone(base)
     def.types = def.types.map(type => {
       const replacement = replacements.find(r => r[0] === type)
       return replacement ? replacement[1] : type
