@@ -18,7 +18,8 @@ import { AmountBN } from '../../models/AmountBN'
 import { expect } from '../../util-local/expect'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
 import { zero } from '../../libs/bn/constants'
-import { mapAsync } from 'zenbox-util/promise'
+import { mapAsync } from 'libs/utils/promise'
+import { todo } from '../../libs/utils/todo'
 
 /** NOTES
  * Some smart contracts are multisigs, so the user can, technically, move the tokens
@@ -57,7 +58,7 @@ async function unwrapSmartContractBalanceAtBlockTagByType(type: AddressType, bal
     case Unknown:
       return [{ ...balance, address: deployerAddress }]
     default:
-      throw impl(`for ${type}`)
+      throw todo(`for ${type}`)
   }
 }
 

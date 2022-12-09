@@ -5,7 +5,7 @@ import { variator } from '../../libs/divide-and-conquer/Variator'
 import { getJavascriptIntegers } from '../../libs/divide-and-conquer/generators/getJavascriptIntegers'
 import { Step } from '../../libs/divide-and-conquer/Step'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
-import { todo } from 'zenbox-util/todo'
+import { todo } from 'libs/utils/todo'
 
 interface Data {
   a: number

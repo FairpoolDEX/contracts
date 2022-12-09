@@ -3,7 +3,7 @@ import { BlockchainModel } from '../models/BlockchainModel'
 import { BlockchainReal } from '../models/BlockchainReal'
 import { Address } from '../../../../models/Address'
 import { GenericCommand } from './GenericCommand'
-import { impl } from 'zenbox-util/todo'
+import { impl } from 'libs/utils/todo'
 
 export abstract class BlockchainCommand<Model extends BlockchainModel, Real extends BlockchainReal, Result> extends GenericCommand<Model, Real, Result> {
   getModelContract(model: Model, tokenAddress: string) {

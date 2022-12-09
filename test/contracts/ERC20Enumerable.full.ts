@@ -1,6 +1,5 @@
 import { BalancesMap } from '../../util-local/balance'
 import { AmountBN } from '../../models/AmountBN'
-import { Error as ErrorERC20EnumerableSimple, MintParams, TransferParams } from './ERC20Enumerable.simple.test'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
@@ -10,6 +9,7 @@ import { concat, pull } from 'lodash'
 import { FunctionDefinition, getPolymorphicDefinitions } from '../../libs/divide-and-conquer/FunctionDefinition'
 import { eq, neq } from '../../libs/divide-and-conquer/allFunctionDefinitions'
 import { zero } from '../../libs/bn/constants'
+import { ERC20EnumerableError, MintParams, TransferParams } from './ERC20EnumerableCommon'
 
 export interface Data {
   totalSupply: AmountBN
@@ -19,9 +19,9 @@ export interface Data {
 
 export type Output = undefined
 
-export type Error = ErrorERC20EnumerableSimple
+export type Error = ERC20EnumerableError
 
-const { MathSubUnderflow, MathAddUnderflow, MathAddOverflow, TransferAmountExceedsBalance, MintToZeroAddress, TransferToZeroAddress, TransferFromZeroAddress } = ErrorERC20EnumerableSimple
+const { MathSubUnderflow, MathAddUnderflow, MathAddOverflow, TransferAmountExceedsBalance, MintToZeroAddress, TransferToZeroAddress, TransferFromZeroAddress } = ERC20EnumerableError
 
 type State = GenericState<Data, Output, Error>
 
@@ -131,3 +131,10 @@ const transferSuperHandler: Transition<TransferParams, State> = (params) => toTr
   }
   return undefined
 })
+
+// describe('ERC20Enumerable.full', async () => {
+//   // required for mocha
+//
+//   fest('dummy test', async () => {
+//   })
+// })

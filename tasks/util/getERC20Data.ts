@@ -13,7 +13,7 @@ import { getCacheKey } from '../../util/cache'
 import { isZeroBalance } from '../../util-local/balance'
 import { Cache } from 'cache-manager'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
-import { sequentialMap } from 'zenbox-util/promise'
+import { sequentialMap } from 'libs/utils/promise'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)

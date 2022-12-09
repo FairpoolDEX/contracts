@@ -9,7 +9,7 @@ import { debug } from '../../util/debug'
 import { getBlockNumber } from '../../util-local/ethers'
 import { Cache } from 'cache-manager'
 import { Transfer, validateTransfer } from '../../models/Transfer'
-import { sequentialMap } from 'zenbox-util/promise'
+import { sequentialMap } from 'libs/utils/promise'
 
 async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)
