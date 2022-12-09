@@ -7269,6 +7269,11 @@ queue-microtask@^1.2.2:
   resolved "https://registry.yarnpkg.com/queue-microtask/-/queue-microtask-1.2.3.tgz#4929228bbc724dfac43e0efb058caf7b6cfb6243"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
+rambdax@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/rambdax/-/rambdax-9.0.0.tgz#503c75fbb83f8141ef04af00508fac0433615fc0"
+  integrity sha512-8vcixAlXoFNdCoa35nDzLqntyimVMiQpWUhQgMkOb/pdxZULN+8d9l2kosEQ6Aq0awpI2m+u973cSlg2UrAbyw==
+
 random@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/random/-/random-4.1.0.tgz#3e0fff0eea0d311e6a80fd2c91e72bb064dec363"

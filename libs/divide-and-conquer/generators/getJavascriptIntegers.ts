@@ -1,6 +1,6 @@
 import { GetValues, getValuesOfInductive, getValuesOfRange } from '../getValues'
-import { concat, identity, isInteger, uniqBy } from 'lodash'
 import { strict as assert } from 'assert'
+import { concat, uniq } from 'rambdax'
 
 // const JavascriptInteger: InductiveTypeInfo<number> & RangeTypeInfo<number> = {
 //   isInductive: true,
@@ -15,10 +15,10 @@ import { strict as assert } from 'assert'
  * Should we include -next()?
  */
 export const getJavascriptIntegers: GetValues<number> = (pivot) => {
-  assert(isInteger(pivot), 'pivot must be an integer')
-  const values = concat<number>(
+  assert(Number.isInteger(pivot), 'pivot must be an integer')
+  const values = concat(
     getValuesOfInductive(0, v => v + 1)(pivot),
     getValuesOfRange(-Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)(pivot)
   )
-  return uniqBy(values, identity)
+  return uniq(values)
 }
