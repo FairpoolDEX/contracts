@@ -1,5 +1,5 @@
 import { Transistor } from './Transistor'
-import { mapAsync } from 'zenbox-util/promise'
+import { mapAsync } from 'libs/utils/promise'
 
 export async function runTestWithTransistors<State>(transistors: Transistor<State>[], state: State) {
   return mapAsync(transistors, t => t(state))

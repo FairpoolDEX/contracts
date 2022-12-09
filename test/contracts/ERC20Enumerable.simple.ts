@@ -1,10 +1,7 @@
-import prand from 'pure-rand'
 import { Random } from 'fast-check'
-import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { BalanceBN, balanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { Address } from '../../models/Address'
-import { AmountBN } from '../../models/AmountBN'
 import { $zero } from '../../data/allAddresses'
 import { step, Step } from '../../libs/divide-and-conquer/Step'
 import { Projection } from '../../libs/divide-and-conquer/Projection'
@@ -13,13 +10,16 @@ import { get_getRandomValue, GetRandomValue } from '../../libs/divide-and-conque
 import { cloneDeep, set } from 'lodash'
 import { PropPath } from '../../libs/divide-and-conquer/PropPath'
 import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
-import { Plan, runTestWithPlans } from '../../libs/divide-and-conquer/runTest'
-import { runStepWithHandlers } from '../../libs/divide-and-conquer/runStepWithHandlers'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 import { one, uint256Max, zero } from '../../libs/bn/constants'
-import { todo } from 'zenbox-util/todo'
-import { mapAsync } from 'zenbox-util/promise'
+import { ERC20EnumerableError, MintParams } from './ERC20EnumerableCommon'
+import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { BN } from '../../libs/bn'
+import { todo } from '../../libs/utils/todo'
+import prand from 'pure-rand'
+import { Plan, runTestWithPlans } from '../../libs/divide-and-conquer/runTest'
+import { runStepWithHandlers } from '../../libs/divide-and-conquer/runStepWithHandlers'
 
 export interface Data {
   balances: BalanceBN[]
@@ -27,20 +27,9 @@ export interface Data {
 
 export type Output = undefined
 
-export enum Error {
-  MathSubOverflow = 'Math: ds-math-sub-overflow',
-  MathAddOverflow = 'Math: ds-math-add-overflow',
-  MathSubUnderflow = 'Math: ds-math-sub-underflow',
-  MathAddUnderflow = 'Math: ds-math-add-underflow',
-  TransferFromZeroAddress = 'ERC20: transfer from the zero address',
-  TransferToZeroAddress = 'ERC20: transfer to the zero address',
-  TransferAmountExceedsBalance = 'ERC20: transfer amount exceeds balance',
-  MintToZeroAddress = 'ERC20: mint to the zero address',
-  BurnFromZeroAddress = 'ERC20: burn from the zero address',
-  BurnAmountExceedsBalance = 'ERC20: burn amount exceeds balance'
-}
+export type Error = ERC20EnumerableError
 
-type State = GenericState<Data, Output, Error>
+export type State = GenericState<Data, Output, Error>
 
 const emptyData: Data = { balances: [] }
 
@@ -48,7 +37,7 @@ const emptyOutput = undefined
 
 const emptyError = undefined
 
-const emptyState: State = { data: emptyData, output: emptyOutput, error: emptyError }
+export const emptyState: State = { data: emptyData, output: emptyOutput, error: emptyError }
 
 const validateState: Filter<State> = (state) => {
   const mustHaveUniqueAddresses = validateBalancesBN
@@ -57,10 +46,6 @@ const validateState: Filter<State> = (state) => {
 }
 
 export const getHolders: Projection<State, Address[]> = (state: State) => state.data.balances.map(b => b.address)
-
-export type MintParams = { to: Address, amount: AmountBN }
-
-export type TransferParams = { from: Address, to: Address, amount: AmountBN }
 
 const emptyMintParams: MintParams = { to: $zero, amount: zero }
 
@@ -76,7 +61,7 @@ export const mintHandlers: Handler<MintParams, State>[] = [
   handler(
     ({ params: { to } }) => to === $zero,
     ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
-      return { error: Error.MintToZeroAddress }
+      return { error: ERC20EnumerableError.MintToZeroAddress }
     })
   ),
   handler(
@@ -126,7 +111,7 @@ const getStepsGen = (gen: GetRandomValue) => <Params, State>(base: Step<Params, 
   return statesTo
 }
 
-const emptyMintStep: Step<MintParams, State> = {
+export const emptyMintStep: Step<MintParams, State> = {
   state: emptyState,
   params: emptyMintParams,
   transition: incorrectMintWithoutExistenceCheck,
@@ -138,12 +123,12 @@ async function doTest(random: Random) {
   // TODO: The next steps must be generated after exploring a specific state
 }
 
-const getStaticMintParamsArray = (gen: GetRandomValue) => async (state: State) => {
+export const getStaticMintParamsArray = (gen: GetRandomValue) => async (state: State) => {
   const randomAddress = gen(address())
   const randomAmount = gen(uint256BN())
   const option1: MintParams[] = [
-    { to: $zero, amount: zero },
-    { to: $zero, amount: zero },
+    { to: $zero, amount: BN.from(0) },
+    { to: $zero, amount: BN.from(0) },
     // address that is present in balances
     // address that is not present in balances
     // amount that is larger than uint256
@@ -152,7 +137,7 @@ const getStaticMintParamsArray = (gen: GetRandomValue) => async (state: State) =
   return todo<MintParams[]>()
 }
 
-describe('ERC20Enumerable.simple', async () => {
+const firstArgumentOfDescribe = async () => {
   const random = new Random(prand.xoroshiro128plus(Date.now()))
   const gen = get_getRandomValue(random)
   const plans: Plan<State>[] = []
@@ -163,7 +148,7 @@ describe('ERC20Enumerable.simple', async () => {
       const handlers = mintHandlers
       const transition = incorrectMintWithoutExistenceCheck
       // TODO: if state has changed then explore again, else stop
-      await mapAsync(paramsArray, params => runStepWithHandlers(plans, handlers)(step(transition, params, state)))
+      await Promise.all(paramsArray.map(params => runStepWithHandlers(plans, handlers)(step(transition, params, state))))
     },
   }
   const burnPlan: Plan<State> = {
@@ -180,8 +165,4 @@ describe('ERC20Enumerable.simple', async () => {
   plans.push(burnPlan)
   plans.push(transferPlan)
   return runTestWithPlans(plans, emptyState)
-})
-
-const mintBranches = [
-
-]
+}

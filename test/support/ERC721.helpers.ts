@@ -11,7 +11,7 @@ import { maxRequestsPerSecond } from '../../util-local/getblock'
 import { getERC721AToken } from '../../tasks/util/getERC721AToken'
 import { balanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { BigNumber } from 'ethers'
-import { sequentialMap } from 'zenbox-util/promise'
+import { sequentialMap } from 'libs/utils/promise'
 
 export async function getERC721ABalances(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
   const owners = await getERC721AOwners(blockTag, contractAddress, ethers, cache)

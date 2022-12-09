@@ -19,8 +19,8 @@ import { Timestamp } from '../util-local/types'
 import { sum } from '../test/support/all.helpers'
 import { getSubmissionsFromCSVFile } from '../models/LearnToEarn/Submission/getSubmissionsFromCSVFile'
 import { ten, zero } from '../libs/bn/constants'
-import { todo } from 'zenbox-util/todo'
-import { promiseAllMap } from 'zenbox-util/promise'
+import { todo } from 'libs/utils/todo'
+import { mapAsync } from '../libs/utils/promise'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)

@@ -18,7 +18,7 @@ import { Address } from '../../models/Address'
 import { minutes } from '../../util-local/time'
 import { bn } from '../../libs/bn/utils'
 import { expect } from '../../util-local/expect'
-import { mapAsync } from 'zenbox-util/promise'
+import { mapAsync } from 'libs/utils/promise'
 
 describe('ERC20Enumerable', async function () {
   let signers: SignerWithAddress[]

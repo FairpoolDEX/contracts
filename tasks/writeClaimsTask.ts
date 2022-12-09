@@ -25,7 +25,7 @@ import { applyRewrites } from '../models/Rewrite/applyRewrites'
 import { importDefault } from '../util-local/import'
 import { CachedContext, CachedTaskArguments, getCachedContext } from '../util-local/context/getCachedContext'
 import { zero } from '../libs/bn/constants'
-import { sequentialMap } from 'zenbox-util/promise'
+import { sequentialMap } from 'libs/utils/promise'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)

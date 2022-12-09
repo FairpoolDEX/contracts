@@ -12,8 +12,8 @@ import { debug } from '../util/debug'
 import { RunnableContext } from './context/getRunnableContext'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { getTransactionUrl } from '../util/url'
-import { impl } from 'zenbox-util/todo'
-import { sequentialMap } from 'zenbox-util/promise'
+import { impl } from 'libs/utils/todo'
+import { sequentialMap } from 'libs/utils/promise'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await rateLimiter.removeTokens(1)

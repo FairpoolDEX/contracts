@@ -1,7 +1,7 @@
-import { Error as ErrorERC20EnumerableSimple } from './ERC20Enumerable.simple.test'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { BigNumber } from 'bignumber.js'
 import { Timestamp } from '../../util-local/types'
+import { ERC20EnumerableError as ErrorERC20EnumerableSimple } from './ERC20EnumerableCommon'
 
 type UserId = number
 

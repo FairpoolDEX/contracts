@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { impl } from 'zenbox-util/todo'
+import { impl } from 'libs/utils/todo'
 
 async function setBullClaims() {
   throw impl()

@@ -3,9 +3,9 @@ import { Step } from './Step'
 import { Transition } from './Transition'
 import { Plan, runTestWithPlans } from './runTest'
 import { isEqual } from 'lodash'
-import { impl } from 'zenbox-util/todo'
-import { stringify } from 'zenbox-util/JSON'
-import { expectEqualResults } from 'zenbox-util/chai/expectEqualResults'
+import { impl } from '../utils/todo'
+import { stringify } from '../utils/JSON'
+import { expectEqualResults } from '../utils/chai/expectEqualResults'
 
 const expectEqualResultsTest = expectEqualResults('Actual', 'Expected')
 

@@ -1,5 +1,4 @@
 import { ethers } from 'hardhat'
-import execa from 'execa'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { MaxUint256 } from './all.helpers'
 import { expect } from '../../util-local/expect'
@@ -66,10 +65,6 @@ export async function expectSignerBalance(addressable: Addressable, token: Contr
 
 export async function expectBalance(token: Contract, address: Address, amount: BigNumberish) {
   return expect(await token.balanceOf(address)).to.equal(amount)
-}
-
-export const hh = function (args?: readonly string[], options?: execa.Options): execa.ExecaChildProcess {
-  return execa(`${__dirname}/../../node_modules/.bin/hardhat`, args, options)
 }
 
 export async function addLiquidity(router: Contract, token0: Contract, token1: Contract, token0Amount: BigNumber, token1Amount: BigNumber, LPTokensReceivingAddress: string, deadline = Number.MAX_SAFE_INTEGER): Promise<void> {

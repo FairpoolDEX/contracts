@@ -3,7 +3,7 @@ import { rangeBNS } from '../../../libs/bn/utils'
 import { chunk, flatten } from 'lodash'
 import { Address } from '../../../models/Address'
 import { validateBalanceBN } from '../../../models/BalanceBN'
-import { mapAsync } from 'zenbox-util/promise'
+import { mapAsync } from 'libs/utils/promise'
 
 export type ERC20EnumerableReal = ERC20Enumerable
 

@@ -14,7 +14,7 @@ import { getScaledPercent } from '../../models/Share'
 import { range } from 'lodash'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
-import { mapAsync } from 'zenbox-util/promise'
+import { mapAsync } from 'libs/utils/promise'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
