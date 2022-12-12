@@ -1,4 +1,4 @@
-import { clone } from 'rambdax'
+import { clone } from 'remeda'
 
 type Type = string
 
