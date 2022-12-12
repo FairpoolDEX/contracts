@@ -12,11 +12,13 @@ interface Data {
   b: number
 }
 
-type Output = number
+type Out = number
 
-type Error = 'DivisionByZero'
+type Err = DivisionByZero
 
-type DivideState = GenericState<Data, Output, Error>
+class DivisionByZero extends Error {}
+
+type DivideState = GenericState<Data, Out, Err>
 
 const emptyData: Data = { a: 0, b: 0 }
 
@@ -47,7 +49,7 @@ export const setB: Transition<SetAParams, DivideState> = (params) => async ($sta
 export const divide: Transition<DivideParams, DivideState> = (params) => async ($state) => {
   const state = cloneDeep($state)
   if (state.data.b === 0) {
-    state.error = 'DivisionByZero'
+    state.error = new DivisionByZero()
   } else {
     state.output = state.data.a / state.data.b
   }
@@ -91,7 +93,7 @@ describe('Division', async () => {
     const handlers: Handler<DivideParams, DivideState>[] = [
       handler((step) => step.state.data.b === 0, (params) => async ($state) => {
         const state = cloneDeep($state)
-        state.error = 'DivisionByZero'
+        state.error = new DivisionByZero()
         return state
       }),
       handler(() => true, (params) => async ($state) => {
