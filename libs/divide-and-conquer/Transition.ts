@@ -1,5 +1,7 @@
 import { merge } from 'rambdax/immutable'
 import { Partial } from 'ts-toolbelt/out/Object/Partial'
+import { clone } from 'rambdax'
+import { GenericState } from './GenericState'
 
 export type TransitionBase<State> = (state: State) => Promise<State | undefined>
 
@@ -14,9 +16,19 @@ export const emptyTransition = <Params, State>(params: Params) => async (state: 
 export type Update<State extends object> = (state: Readonly<State>) => Promise<Partial<State, 'deep'> | undefined>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export function toTransition<State extends object>(update: Update<State>) {
-  return async (state: State) => {
-    const patch = await update(state)
-    return patch ? merge(state, patch) : state
+export function toGenericTransition<Data, Out, Err extends Error>(update: Update<GenericState<Data, Out, Err>>) {
+  return async (state: GenericState<Data, Out, Err>) => {
+    try {
+      // clone is required because the update function may mutate the argument
+      const patch = await update(clone(state))
+      return patch ? merge(state, patch) : state
+    } catch (error) {
+      // error handling via try-catch is required because we don't want to check for error return values (and we don't have monads)
+      if (error instanceof Error) {
+        return merge(state, { error })
+      } else {
+        throw error
+      }
+    }
   }
 }

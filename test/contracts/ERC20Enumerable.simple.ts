@@ -13,13 +13,14 @@ import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 import { one, uint256Max, zero } from '../../libs/bn/constants'
-import { ERC20EnumerableError, MintParams } from './ERC20EnumerableCommon'
+import { ERC20EnumerableError } from './ERC20Enumerable.errors'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { BN } from '../../libs/bn'
 import { todo } from '../../libs/utils/todo'
 import prand from 'pure-rand'
 import { Plan, runTestWithPlans } from '../../libs/divide-and-conquer/runTest'
 import { runStepWithHandlers } from '../../libs/divide-and-conquer/runStepWithHandlers'
+import { MintParams } from './ERC20Enumerable.params'
 
 export interface Data {
   balances: BalanceBN[]
