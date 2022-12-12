@@ -1,5 +1,5 @@
-export interface GenericState<Data, Output, Error> {
+export interface GenericState<Data, Out, Err extends Error> {
   data: Data
-  output?: Output
-  error?: Error
+  output?: Out
+  error?: Err
 }

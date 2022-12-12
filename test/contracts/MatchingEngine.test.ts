@@ -1,7 +1,6 @@
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { BigNumber } from 'bignumber.js'
 import { Timestamp } from '../../util-local/types'
-import { ERC20EnumerableError as ErrorERC20EnumerableSimple } from './ERC20EnumerableCommon'
 
 type UserId = number
 
@@ -40,8 +39,6 @@ export interface Data {
 
 export type Out = undefined
 
-export type Err = ErrorERC20EnumerableSimple
-
-const { MathSubUnderflow, MathAddUnderflow, MathAddOverflow, TransferAmountExceedsBalance, MintToZeroAddress, TransferToZeroAddress, TransferFromZeroAddress } = ErrorERC20EnumerableSimple
+export type Err = Error
 
 type State = GenericState<Data, Out, Err>
