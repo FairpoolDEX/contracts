@@ -24,23 +24,23 @@ export async function getERC721AOwners(blockTag: BlockTag, contractAddress: Addr
   const totalSupply = await token.totalSupply({ blockTag })
   const tokenIds = range(0, totalSupply.toNumber())
   const tokenIdsPaginated = chunk(tokenIds, maxRequestsPerSecond / 2)
-  const owners = flatten(await sequentialMap(tokenIdsPaginated, tokenIdPage => getERC721OwnersAtBlockTagCached(tokenIdPage, blockTag, contractAddress, ethers, cache)))
-  return owners
+  const resultsArray = await sequentialMap(tokenIdsPaginated, tokenIdPage => getERC721AOwnersAtBlockTagCached(tokenIdPage, blockTag, contractAddress, ethers, cache))
+  return flatten(resultsArray)
 }
 
-export async function getERC721OwnerAtBlockTag(tokenId: ERC721TokenId, blockTag: BlockTag, contractAddress: Address, ethers: Ethers) {
-  debug(__filename, getERC721OwnerAtBlockTag, tokenId, blockTag, contractAddress)
+export async function getERC721AOwnerAtBlockTag(tokenId: ERC721TokenId, blockTag: BlockTag, contractAddress: Address, ethers: Ethers) {
+  debug(__filename, getERC721AOwnerAtBlockTag, tokenId, blockTag, contractAddress)
   const token = await getERC721Token(contractAddress, ethers)
   const owner = await token.ownerOf(tokenId, { blockTag })
   return validateAddress(owner)
 }
 
-export async function getERC721OwnerAtBlockTagCached(tokenId: ERC721TokenId, blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
-  const cacheKey = getCacheKey(getERC721OwnerAtBlockTagCached, tokenId, blockTag, contractAddress)
-  const ownerCached = await cache.wrap<Address>(cacheKey, () => getERC721OwnerAtBlockTag(tokenId, blockTag, contractAddress, ethers))
+export async function getERC721AOwnerAtBlockTagCached(tokenId: ERC721TokenId, blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
+  const cacheKey = getCacheKey(getERC721AOwnerAtBlockTagCached, tokenId, blockTag, contractAddress)
+  const ownerCached = await cache.wrap<Address>(cacheKey, () => getERC721AOwnerAtBlockTag(tokenId, blockTag, contractAddress, ethers))
   return validateAddress(ownerCached)
 }
 
-export async function getERC721OwnersAtBlockTagCached(tokenIds: ERC721TokenId[], blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
-  return Promise.all(tokenIds.map(tokenId => getERC721OwnerAtBlockTagCached(tokenId, blockTag, contractAddress, ethers, cache)))
+export async function getERC721AOwnersAtBlockTagCached(tokenIds: ERC721TokenId[], blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
+  return Promise.all(tokenIds.map(tokenId => getERC721AOwnerAtBlockTagCached(tokenId, blockTag, contractAddress, ethers, cache)))
 }

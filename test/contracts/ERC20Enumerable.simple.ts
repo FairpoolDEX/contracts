@@ -1,6 +1,6 @@
 import { Random } from 'fast-check'
 import { BalanceBN, balanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
+import { toGenericTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { step, Step } from '../../libs/divide-and-conquer/Step'
@@ -13,7 +13,7 @@ import { uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 import { one, uint256Max, zero } from '../../libs/bn/constants'
-import { ERC20EnumerableError } from './ERC20Enumerable.errors'
+import { ERC20EnumerableError, MintToZeroAddress } from './ERC20Enumerable.errors'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { BN } from '../../libs/bn'
 import { todo } from '../../libs/utils/todo'
@@ -50,7 +50,7 @@ export const getHolders: Projection<State, Address[]> = (state: State) => state.
 
 const emptyMintParams: MintParams = { to: $zero, amount: zero }
 
-export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> = ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
+export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> = ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
   balances.push({
     address: to,
     amount,
@@ -61,20 +61,20 @@ export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> =
 export const mintHandlers: Handler<MintParams, State>[] = [
   handler(
     ({ params: { to } }) => to === $zero,
-    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
-      return { error: ERC20EnumerableError.MintToZeroAddress }
+    ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
+      return { error: new MintToZeroAddress() }
     })
   ),
   handler(
     ({ state: { data: { balances } } }) => balances.length === 0,
-    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
+    ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
       balances.push({ address: to, amount })
       return { data: { balances } }
     })
   ),
   handler(
     ({ state: { data: { balances } }, params: { to } }) => balances.findIndex(b => b.address === to) != -1,
-    ({ to, amount }) => toTransition(async ({ data: { balances } }) => {
+    ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
       const index = balances.findIndex(b => b.address === to)
       balances[index].amount = balances[index].amount.add(amount)
       return { data: { balances } }

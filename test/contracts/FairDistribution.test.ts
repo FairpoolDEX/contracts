@@ -1,5 +1,5 @@
 import { BalanceBN } from '../../models/BalanceBN'
-import { toTransition, Transition } from '../../libs/divide-and-conquer/Transition'
+import { toGenericTransition, Transition } from '../../libs/divide-and-conquer/Transition'
 import { BigNumber } from 'ethers'
 import { GenericState } from '../../libs/divide-and-conquer/GenericState'
 import { bn } from '../../libs/bn/utils'
@@ -8,7 +8,6 @@ import { BalancesMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
 import { zero } from '../../libs/bn/constants'
 import { todo } from 'libs/utils/todo'
-import { Partial } from 'ts-toolbelt/out/Object/Partial'
 
 type ConstantUint256 = BigNumber
 
@@ -23,9 +22,9 @@ export interface Data {
 
 export type Output = BalanceBN[]
 
-export type Error = undefined
+export type Err = Error
 
-type State = GenericState<Data, Output, Error>
+type State = GenericState<Data, Output, Err>
 
 const WINDOW: ConstantUint256 = bn(100)
 
@@ -39,6 +38,6 @@ interface DistributeParams {
   profit: AmountBN
 }
 
-const distribute: Transition<DistributeParams, State> = (params) => toTransition(async (state) => {
-  return todo<Partial<State, 'deep'>>()
+const distribute: Transition<DistributeParams, State> = (params) => toGenericTransition(async (state) => {
+  return todo()
 })
