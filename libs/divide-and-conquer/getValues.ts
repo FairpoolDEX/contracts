@@ -1,4 +1,4 @@
-import { clone } from 'rambdax'
+import { clone } from 'remeda'
 
 export type GetValues<Type> = (pivot: Type) => Type[]
 
