@@ -10,7 +10,7 @@ import { eq, neq } from '../../libs/divide-and-conquer/allFunctionDefinitions'
 import { zero } from '../../libs/bn/constants'
 import { ERC20EnumerableError, MintToZeroAddress, TransferAmountExceedsBalance, TransferFromZeroAddress, TransferToZeroAddress } from './ERC20Enumerable.errors'
 import { MintParams, TransferParams } from './ERC20Enumerable.params'
-import { addUint, subUint } from './Math.functions'
+import { addUint, subUint } from '../../libs/ethereum/math'
 
 export interface Data {
   totalSupply: AmountBN
