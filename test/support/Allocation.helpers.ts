@@ -1,6 +1,5 @@
 import { GenericTokenWithVesting } from '../../typechain-types'
 import { Allocation } from '../../models/Allocation'
-import { sumAmountsOf } from '../../util-local/balance'
 import { expect } from '../../util-local/expect'
 import { readFile } from 'fs/promises'
 import { uniq } from 'lodash'
@@ -14,6 +13,7 @@ import { VestingType } from '../../models/VestingType'
 import { sendMultipleTransactions } from '../../util-local/ethers'
 import { RunnableContext } from '../../util-local/context/getRunnableContext'
 import { tenPow18 } from '../../libs/bn/constants'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 export const noVestingName = 'None'
 
@@ -57,7 +57,7 @@ export async function addVestedAllocations(context: RunnableContext, token: Gene
 }
 
 export function validateAllocations(totalAmount: AmountBN, allocations: CustomNamedAllocation[]) {
-  const sum = sumAmountsOf(allocations)
+  const sum = sumAmountBNs(allocations)
   expect(sum).to.equal(totalAmount)
   return allocations
 }

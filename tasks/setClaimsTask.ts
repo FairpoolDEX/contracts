@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { chunk } from '../test/support/all.helpers'
-import { BalancesMap, optimizeForGasRefund, readBalances, sumAmountsOf } from '../util-local/balance'
+import { BalancesMap, optimizeForGasRefund, readBalances } from '../util-local/balance'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
 import { Address } from '../models/Address'
@@ -14,6 +14,7 @@ import { BullToken } from '../typechain-types'
 import { getOverrides } from '../util-local/network'
 import { ContractName } from '../models/ContractName'
 import { Chunked, getChunkedContext } from '../util-local/context/getChunkedContext'
+import { sumAmountBNs } from '../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
@@ -50,7 +51,7 @@ async function getValidatedClaims(filename: Filename) {
 }
 
 function validateClaims(claims: BalanceBN[]) {
-  expect(sumAmountsOf(claims)).to.be.lte(airdropDistributedTokenAmountTotal)
+  expect(sumAmountBNs(claims)).to.be.lte(airdropDistributedTokenAmountTotal)
   return claims
 }
 

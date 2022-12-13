@@ -3,7 +3,7 @@ import { maxSupply as shieldMaxSupply } from './ColiToken.helpers'
 import fs from 'fs'
 import { SetClaimsContext, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { parseAddresses } from '../../tasks/claimManyTask'
-import { BalancesMap, sumAmountsOf } from '../../util-local/balance'
+import { BalancesMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
 import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
@@ -11,6 +11,7 @@ import { BalanceBN } from '../../models/BalanceBN'
 import { days, seconds } from '../../util-local/time'
 import { validateBlockNumber } from '../../models/BlockNumber'
 import { Contract } from 'ethers'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 export const bullDecimals = 18
 
@@ -89,7 +90,7 @@ export async function getTestExpectations(balances: BalanceBN[], context: SetCla
   const multiply = getMultiplier(airdropStageShareNumerator, airdropStageShareDenominator, airdropRate)
   return {
     balances: {},
-    totalAmount: multiply(sumAmountsOf(balances)),
+    totalAmount: multiply(sumAmountBNs(balances)),
   }
 }
 

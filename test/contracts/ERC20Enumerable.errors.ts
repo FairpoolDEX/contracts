@@ -1,4 +1,4 @@
-import { MathOutOfBounds } from './Math.errors'
+import { MathOutOfBounds } from '../../libs/bn/errors'
 
 export type ERC20EnumerableError = MathOutOfBounds | TransferFromZeroAddress | TransferToZeroAddress | TransferAmountExceedsBalance | MintToZeroAddress | BurnFromZeroAddress | BurnAmountExceedsBalance
 

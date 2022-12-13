@@ -21,11 +21,11 @@ import { expect } from '../util-local/expect'
 import { FrozenWallet } from '../models/FrozenWallet'
 import { expectFrozenWalletsOnToken } from '../models/FrozenWallet/expectFrozenWalletsOnToken'
 import { expectBalancesOnToken } from '../util-local/expectBalancesOnToken'
-import { sumAmountsOf } from '../util-local/balance'
 import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 import { toTokenAmount } from '../test/support/all.helpers'
 import { deployUpgradeableContract } from './deployContractTask'
 import { impl } from 'libs/utils/todo'
+import { sumAmountBNs } from '../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
@@ -78,7 +78,7 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
 }
 
 function expectAllocations(allocations: NamedAllocation[]) {
-  const sum = sumAmountsOf(allocations)
+  const sum = sumAmountBNs(allocations)
   expect(sum.lt(maxSupplyTokenAmount)).to.be.true
   expect(sum.gt(toTokenAmount(1))).to.be.true
 }

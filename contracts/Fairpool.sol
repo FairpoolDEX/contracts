@@ -188,19 +188,19 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     }
 
     function getBaseDeltaBuy(uint quoteDelta) internal view returns (uint baseDelta) {
-        uint quoteAmount = address(this).balance;
-        uint baseAmount = totalSupply();
-        uint quoteFinal = quoteAmount + quoteDelta;
-        uint baseFinal = (quoteFinal.sqrt() * scale) / speed;
-        return baseFinal - baseAmount;
+        // IMPORTANT: "When a payable function is called: address(this).balance is increased by msg.value before any of your code is executed"
+        uint quoteNew = address(this).balance;
+        uint baseOld = totalSupply();
+        uint baseNew = (quoteNew.sqrt() * scale) / speed;
+        return baseNew - baseOld;
     }
 
     function getQuoteDeltaSell(uint baseDelta) internal view returns (uint quoteDelta) {
-        uint quoteAmount = address(this).balance;
-        uint baseAmount = totalSupply();
-        uint quoteFinalSqrt = ((baseAmount - baseDelta) * speed) / scale;
-        uint quoteFinal = quoteFinalSqrt * quoteFinalSqrt;
-        return quoteAmount - quoteFinal;
+        uint quoteOld = address(this).balance;
+        uint baseOld = totalSupply();
+        uint quoteNewSqrt = ((baseOld - baseDelta) * speed) / scale;
+        uint quoteNew = quoteNewSqrt * quoteNewSqrt;
+        return quoteOld - quoteNew;
     }
 
     /* View functions */
