@@ -7,3 +7,6 @@
 [submodule "libs/divide-and-conquer"]
 	path = libs/divide-and-conquer
 	url = https://github.com/zenbox-org/divide-and-conquer.git
+[submodule "libs/ethereum"]
+	path = libs/ethereum
+	url = https://github.com/zenbox-org/ethereum.git
