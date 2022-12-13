@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../../typechain-types'
 import { BigNumber, Contract } from 'ethers'
 import { Ethers } from '../../../util-local/types'
-import { MaxUint256, scale } from '../all.helpers'
+import { scale } from '../all.helpers'
 import { upgrades } from 'hardhat'
 import { getLatestBlockTimestamp } from '../test.helpers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../Uniswap.helpers'
@@ -11,6 +11,7 @@ import { nail } from '../../../util/string'
 import { expect } from '../../../util-local/expect'
 import { Debugger } from 'debug'
 import { $zero } from '../../../data/allAddresses'
+import { MaxUint256 } from '../../../libs/ethereum/constants'
 
 export class TradingSimulation {
   constructor(

@@ -18,8 +18,6 @@ export const fromTokenAmount = (value: BigNumber): number => parseFloat(utils.fo
 
 export const toTokenAmountString = (value: string | number): string => toTokenAmount(value).toString()
 
-export const MaxUint256 = BigNumber.from('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
-
 export const MaxSafeInt = 0x1fffffffffffff - 1
 
 export const scale = BigNumber.from(10).pow(18)

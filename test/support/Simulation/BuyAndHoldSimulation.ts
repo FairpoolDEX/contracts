@@ -1,7 +1,6 @@
-import $debug from 'debug'
-import { MaxUint256 } from '../all.helpers'
 import { expect } from '../../../util-local/expect'
 import { TradingSimulation } from './TradingSimulation'
+import { MaxUint256 } from '../../../libs/ethereum/constants'
 
 export class BuyAndHoldSimulation extends TradingSimulation {
   async run() {
