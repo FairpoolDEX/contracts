@@ -1,5 +1,5 @@
 import { ERC20EnumerableModel } from './ERC20Enumerable/ERC20EnumerableModel'
-import { sumAmountsOf } from '../../util-local/balance'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 type Data = ERC20EnumerableModel
 
@@ -23,7 +23,7 @@ const Transfer = {
 
 type PredicateName = null
 
-const totalSupply = (data: Data) => sumAmountsOf(data.balances)
+const totalSupply = (data: Data) => sumAmountBNs(data.balances)
 
 const projections = [
   totalSupply,

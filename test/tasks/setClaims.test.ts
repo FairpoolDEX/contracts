@@ -7,7 +7,7 @@ import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropDistributedTokenAmountSingleStage, airdropStageDuration, airdropStageFailureCount, airdropStageSuccessCount, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, fromShieldToBull, getBogusBalances, getTestBalanceMap, getTestExpectations, maxSupply, pausedAt } from '../support/BullToken.helpers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../util-local/expect'
-import { BalancesMap, getBalancesFromMap, mergeBalance, sumAmountsOf } from '../../util-local/balance'
+import { BalancesMap, getBalancesFromMap, mergeBalance } from '../../util-local/balance'
 import { getTestSetClaimsContext } from '../support/context'
 import { balanceBN, BalanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { Address, validateAddress } from '../../models/Address'
@@ -26,6 +26,7 @@ import { airdropStage3 } from '../../data/allBlocks'
 import { validateRewrites } from '../../models/Rewrite'
 import { tmpdir } from 'os'
 import { getCachedContext } from '../../util-local/context/getCachedContext'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 describe.skip('setClaimsBullToken', async () => {
 
@@ -158,8 +159,8 @@ describe.skip('setClaimsBullToken', async () => {
     const context = await getRebrandTestWriteClaimsContext()
     const claimsFromBullToken = await getClaimsFromBullToken(context)
     const claimsFromShieldToken = await getClaimsFromColiToken(context)
-    const sumClaimsFromBullToken = sumAmountsOf(claimsFromBullToken)
-    const sumClaimsFromShieldToken = sumAmountsOf(claimsFromShieldToken)
+    const sumClaimsFromBullToken = sumAmountBNs(claimsFromBullToken)
+    const sumClaimsFromShieldToken = sumAmountBNs(claimsFromShieldToken)
     /**
      * Potential causes of luft:
      * - Uniswap burned liquidity (unlikely - expect passed after unwrap)
@@ -202,7 +203,7 @@ describe.skip('setClaimsBullToken', async () => {
     const KSBalance = balances.find(b => b.address === KS)
     expect(everyBalanceIsPositive).to.be.true
     expect(balances.length).to.be.greaterThan(10)
-    expect(balance.amount).to.be.closeTo(sumAmountsOf(balances), 1)
+    expect(balance.amount).to.be.closeTo(sumAmountBNs(balances), 1)
     expect(CSBalance).to.exist
     expect(KSBalance).to.not.exist
     expect(CSBalance?.amount).to.equal(toTokenAmount('1000000'))

@@ -1,6 +1,6 @@
 import { Decimal } from 'decimal.js'
 import { toTokenAmount } from '../support/all.helpers'
-import { BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util-local/balance'
+import { BalancesMap, getBalancesFromMap } from '../../util-local/balance'
 import { expectations as oldExpectations } from './setClaims.2021-08-03'
 import { CS, Eddy, isBullSellerAddress, Jordan, KS, newHardwareDeployer, NFTradePool, oldSoftwareDeployer, Van1sh } from '../../data/allAddresses'
 import { mergeVersionedRecords } from '../../util-local/version'
@@ -19,6 +19,7 @@ import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmo
 import { expect } from '../../util-local/expect'
 import { ensure } from '../../util/ensure'
 import { zero } from '../../libs/bn/constants'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 export const virtualSHLDBalancesFromCurrentBullBalances: BalancesMap = {
   [oldSoftwareDeployer]: toTokenAmount(new Decimal('7476830.847274140000000000')),
@@ -98,11 +99,11 @@ export async function getKSAmountFromBullToken() {
 async function getKSBalance() {
   const { transfer19418, transfer66750, transfer56700 } = getKSTransferDummies()
   const balancesAtDistributionDates = [
-    sumAmountsOf([transfer19418]),
-    sumAmountsOf([transfer19418]),
-    sumAmountsOf([transfer19418]),
-    sumAmountsOf([transfer19418, transfer66750, transfer56700]),
-    sumAmountsOf([transfer19418, transfer66750, transfer56700]),
+    sumAmountBNs([transfer19418]),
+    sumAmountBNs([transfer19418]),
+    sumAmountBNs([transfer19418]),
+    sumAmountBNs([transfer19418, transfer66750, transfer56700]),
+    sumAmountBNs([transfer19418, transfer66750, transfer56700]),
   ]
   return fromShieldToBull(sumBN(balancesAtDistributionDates))
 }

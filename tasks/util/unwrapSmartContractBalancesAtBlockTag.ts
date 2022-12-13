@@ -1,5 +1,5 @@
 import { BalanceBN } from '../../models/BalanceBN'
-import { addBalances, BalancesMap, getBalancesFromMap, sumAmountsOf } from '../../util-local/balance'
+import { addBalances, BalancesMap, getBalancesFromMap } from '../../util-local/balance'
 import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
 import { isContract } from '../../util-local/contract'
@@ -20,6 +20,7 @@ import { CachedRunnableContext } from '../../util-local/context/getCachedContext
 import { zero } from '../../libs/bn/constants'
 import { mapAsync } from 'libs/utils/promise'
 import { todo } from '../../libs/utils/todo'
+import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
 /** NOTES
  * Some smart contracts are multisigs, so the user can, technically, move the tokens
@@ -41,7 +42,7 @@ export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, b
   const { address } = balance
   const type = await getAddressType(address, context)
   const balances = await unwrapSmartContractBalanceAtBlockTagByType(type, balance, signer.address, blockTag, tokenAddress, context)
-  expect(balance.amount).to.be.closeTo(sumAmountsOf(balances), 10)
+  expect(balance.amount).to.be.closeTo(sumAmountBNs(balances), 10)
   return balances
 }
 
@@ -66,7 +67,7 @@ async function unwrapUniswapV2PairBalanceAtBlockTag(balance: BalanceBN, blockTag
   const { ethers, cache } = context
   const { address: uniswapPairAddress, amount: uniswapPairAmount } = balance
   const liquidityProviderBalances = await getERC20BalancesAtBlockTagPaginated(blockTag, uniswapPairAddress, context)
-  const liquidityProviderTotalSupply = sumAmountsOf(liquidityProviderBalances)
+  const liquidityProviderTotalSupply = sumAmountBNs(liquidityProviderBalances)
   return liquidityProviderBalances.map(lpb => ({
     address: lpb.address,
     amount: uniswapPairAmount.mul(lpb.amount).div(liquidityProviderTotalSupply),

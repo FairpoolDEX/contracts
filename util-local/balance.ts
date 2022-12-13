@@ -2,7 +2,6 @@ import { expect } from './expect'
 import neatcsv from 'neat-csv'
 import { RawCSVData } from '../util/csv'
 import { shuffle } from 'lodash'
-import { sumBN } from '../libs/bn/utils'
 import { AddressSchema } from '../models/Address'
 import { Filename } from '../util/filesystem'
 import { writeFile } from 'fs/promises'
@@ -35,10 +34,6 @@ export function padAmount(decimals: number, amountRaw: string) {
   expect(whole.length).to.be.gte(1)
   expect(fraction.length).to.be.gte(1)
   return `${whole}.${fraction.padEnd(decimals, '0')}`
-}
-
-export function sumAmountsOf(amountables: { amount: AmountBN }[]) {
-  return sumBN(amountables.map(a => a.amount))
 }
 
 export function getBalancesFromMap(balanceMap: BalancesMap): BalanceBN[] {
@@ -102,6 +97,4 @@ export function optimizeForGasRefund(balances: BalanceBN[]): BalanceBN[] {
   return shuffle(balances)
 }
 
-export function isZeroBalance(balance: BalanceBN) {
-  return balance.amount.eq(zero)
-}
+export const isZeroBalance = (balance: BalanceBN) => balance.amount.eq(zero)
