@@ -1,5 +1,5 @@
-import { MaxUint256 } from '../all.helpers'
 import { TradingSimulation } from './TradingSimulation'
+import { MaxUint256 } from '../../../libs/ethereum/constants'
 
 export class ColiquiditySimulation extends TradingSimulation {
   async run() {

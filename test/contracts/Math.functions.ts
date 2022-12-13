@@ -1,6 +1,6 @@
 import { AmountBN } from '../../models/AmountBN'
-import { MaxUint256 } from '../support/all.helpers'
 import { MathOutOfBounds } from './Math.errors'
+import { MaxUint256 } from '../../libs/ethereum/constants'
 
 export const add = (max: AmountBN) => (a: AmountBN, b: AmountBN) => {
   const result = a.add(b)

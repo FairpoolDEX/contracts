@@ -9,12 +9,13 @@ import { BigNumber } from 'ethers'
 import { fest } from '../../util-local/mocha'
 import { mainnet } from '../../data/allNetworks'
 import { bn } from '../../libs/bn/utils'
-import { MaxUint256, scale } from '../support/all.helpers'
+import { scale } from '../support/all.helpers'
 import { getScaledPercent } from '../../models/Share'
 import { range } from 'lodash'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
 import { mapAsync } from 'libs/utils/promise'
+import { MaxUint256 } from '../../libs/ethereum/constants'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
