@@ -27,3 +27,10 @@ tasks/scripts/parameters.prod.ts
 allocations.csv
 
 *.ignored*
+
+# Crytic
+crytic-export
+
+# Certora
+.certora_internal
+.certora_recent_jobs.json

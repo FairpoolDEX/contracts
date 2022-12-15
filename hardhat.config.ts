@@ -34,6 +34,7 @@ import { amount, timestamp } from './util-local/hardhat'
 import { addVestingTypesTask } from './tasks/addVestingTypes'
 import { addAllocationsTask } from './tasks/addAllocations'
 import { ensure } from './util/ensure'
+import { assumeIntegerEnvVar } from './util/env'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -46,13 +47,31 @@ const defaultSolcSettings = {
   },
 }
 
+/**
+ * `Warning: Requested source "${path}" does not exist` - false positive, can be ignored
+ */
+const modelCheckerSettings = {
+  'contracts': {
+    'contracts/InstrumentedERC20Enumerable.sol': ['InstrumentedERC20Enumerable'],
+    'contracts/Max.sol': ['Max'],
+  },
+  'engine': 'chc',
+  'invariants': ['contract', 'reentrancy'],
+  'showUnproved': true,
+  'targets': ['assert', 'divByZero', 'constantCondition', 'balance'],
+  'timeout': assumeIntegerEnvVar('TIMEOUT', undefined),
+}
+
 export const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   solidity: {
     compilers: [
       {
         version: '0.8.16',
-        settings: defaultSolcSettings,
+        settings: {
+          ...defaultSolcSettings,
+          // 'modelChecker': modelCheckerSettings,
+        },
       },
       {
         version: '0.8.4',
