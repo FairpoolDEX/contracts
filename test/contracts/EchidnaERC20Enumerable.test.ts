@@ -69,10 +69,15 @@ describe('EchidnaERC20Enumerable', async function () {
   })
 
   fest('must replicate a zero amount test', async () => {
+    await expect_totalSupplyArray_eq_totalSupply(token)
     await tokenAsOwner.transfer('0x00000000000000000000000000000000DeaDBeef', bn(0))
-    const totalSupply = await token.totalSupply()
-    const totalSupplyArray = await token.totalSupplyArray()
-    expect(totalSupply).to.equal(totalSupplyArray)
+    await expect_totalSupplyArray_eq_totalSupply(token)
   })
 
 })
+
+async function expect_totalSupplyArray_eq_totalSupply(token: EchidnaERC20Enumerable) {
+  const totalSupply = await token.totalSupply()
+  const totalSupplyArray = await token.totalSupplyArray()
+  expect(totalSupply).to.equal(totalSupplyArray)
+}

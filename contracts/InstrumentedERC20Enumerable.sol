@@ -10,7 +10,7 @@ contract InstrumentedERC20Enumerable is ERC20Enumerable, Ownable {
         _mint(owner(), totalSupply_);
     }
 
-    function totalSupplyArray() public view returns (uint) {
+    function totalSupplyArray() public view returns (uint256) {
         uint _totalSupply;
         for (uint i = 0; i < holders.length; i++) {
             _totalSupply += balanceOf(holders[i]);
@@ -18,8 +18,11 @@ contract InstrumentedERC20Enumerable is ERC20Enumerable, Ownable {
         return _totalSupply;
     }
 
-    function assert_totalSupplyArray_eq_totalSupply() public view returns (bool) {
-        assert(totalSupplyArray() == totalSupply());
-        return true;
+    function totalSupplyArray_eq_totalSupply() public {
+        assert(echidna_totalSupplyArray_eq_totalSupply());
+    }
+
+    function echidna_totalSupplyArray_eq_totalSupply() public returns (bool) {
+        return totalSupplyArray() == totalSupply();
     }
 }
