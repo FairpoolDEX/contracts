@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.16;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -18,6 +18,8 @@ import "./SharedOwnership.sol";
  *   - Don't add parameters to errors if they are already available to the caller (e.g. don't add function arguments as parameters)
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  */
+/// #invariant "Speed must be greater than zero" speed == 0;
+/// #invariant "Name must be constant (should error)" scale == 0;
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
     using FixedPointMathLib for uint;
 
@@ -82,7 +84,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
         if (msg.value == 0) revert PaymentRequired();
         uint quoteDelta = msg.value;
-        uint baseDelta = getBaseDeltaBuy(quoteDelta);
+        uint baseDelta = getBaseDeltaBuy();
         if (baseDelta < baseReceiveMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
         _mint(msg.sender, baseDelta);
         emit Buy(msg.sender, baseDelta, quoteDelta);
@@ -187,7 +189,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         return profit;
     }
 
-    function getBaseDeltaBuy(uint quoteDelta) internal view returns (uint baseDelta) {
+    function getBaseDeltaBuy() internal view returns (uint baseDelta) {
         // IMPORTANT: "When a payable function is called: address(this).balance is increased by msg.value before any of your code is executed"
         uint quoteNew = address(this).balance;
         uint baseOld = totalSupply();

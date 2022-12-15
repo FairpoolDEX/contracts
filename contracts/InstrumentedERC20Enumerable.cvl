@@ -1,0 +1,10 @@
+methods {
+		totalSupply() returns uint envfree
+		totalSupplyArray() returns uint envfree
+}
+
+invariant totalSupplyArray_eq_totalSupplyMapping()
+	1 == 1
+	filtered {
+        f -> f.isView
+    }

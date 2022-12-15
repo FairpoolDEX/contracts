@@ -6,8 +6,7 @@ import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
 import { fest } from '../../util-local/mocha'
-import { TestMetronome } from '../support/Metronome'
-import { assert, asyncModelRun, asyncProperty, commands, context, record } from 'fast-check'
+import { asyncModelRun, record } from 'fast-check'
 import { ERC20EnumerableModel } from './ERC20Enumerable/ERC20EnumerableModel'
 import { ERC20EnumerableReal, getBalancesFull, getHolders } from './ERC20Enumerable/ERC20EnumerableReal'
 import { ModelRunSetup } from 'fast-check/lib/types/check/model/ModelRunner'
@@ -15,7 +14,6 @@ import { TransferCommand } from './ERC20Enumerable/commands/TransferCommand'
 import { amountBN, uint256BN } from '../support/fast-check/arbitraries/AmountBN'
 import { addressFrom } from '../support/fast-check/arbitraries/Address'
 import { Address } from '../../models/Address'
-import { minutes } from '../../util-local/time'
 import { bn } from '../../libs/bn/utils'
 import { expect } from '../../util-local/expect'
 import { mapAsync } from 'libs/utils/promise'
@@ -110,36 +108,6 @@ describe('ERC20Enumerable', async function () {
     const holders = await getHolders(token)
     expect(holders).to.contain(stranger.address)
   })
-
-  /**
-   * NOTE: skipped because it didn't find important bugs
-   * - Examples
-   *   - Didn't find the bug where a signer transferred his whole balance (there was a bug in the model that left his zero balance in the array of balances)
-   *   - Couldn't find the bug with transferring to a new address (the arbitrary didn't include new addresses)
-   * - Notes
-   *   - It can't find important bugs because the commands are generated before the run
-   *     - Can't generate a command that "transfers the whole user balance"
-   *       - Only via custom arbitrary, but it's more complex than a regular test with a hardcoded list of commands
-   */
-  fest.skip('must work correctly', async () => {
-    // const expirationDateMin = now
-    // const expirationDateMax = dateAdd(now, { years: 5 })
-    // const expirationDateMinPre = dateAdd(expirationDateMin, { seconds: -1 })
-    // const expirationDateMaxPost = dateAdd(expirationDateMax, { seconds: +1 })
-    const metronome = new TestMetronome(now)
-    await assert(
-      asyncProperty(commands(getWorkingCommandArbitraries(), { maxCommands: 50 }), context(), async (cmds, ctx) => {
-        ctx.log('Running cmds') // doesn't output anything
-        snapshot = await getSnapshot()
-        try {
-          const getTestPair = await get_getTestPair(token)
-          await asyncModelRun(getTestPair, cmds)
-        } finally {
-          await revertToSnapshot([snapshot])
-        }
-      }),
-    )
-  }).timeout(10 * minutes)
 
   async function get_getTestPair(token: ERC20Enumerable): Promise<ModelRunSetup<ERC20EnumerableModel, ERC20EnumerableReal>> {
     const address = token.address
