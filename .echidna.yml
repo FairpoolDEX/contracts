@@ -6,7 +6,7 @@ testDestruction: false
 # the same as contract deployer
 psender: "0x10000"
 # prefix is the prefix for Boolean functions that are properties to be checked
-prefix: "assert_"
+prefix: "echidna_"
 # propMaxGas defines gas cost at which a property fails
 # propMaxGas: 8000030
 # testMaxGas is a gas limit; does not cause failure, but terminates sequence
