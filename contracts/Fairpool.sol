@@ -18,33 +18,27 @@ import "./SharedOwnership.sol";
  *   - Don't add parameters to errors if they are already available to the caller (e.g. don't add function arguments as parameters)
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  */
-/// #invariant "Speed must be greater than zero" speed == 0;
-/// #invariant "Name must be constant (should error)" scale == 0;
+
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
+    // NOTE: IMPORTANT: _decimals must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
+
     using FixedPointMathLib for uint;
 
-    // multiplier in the formula for base amount
+    // multiplier in the formula for base amount (as speed / scale)
     uint public speed;
 
-    // percentage of buy value that the contract distributes to the token holders & beneficiaries
+    // percentage of buy value that the contract distributes to the token holders & beneficiaries (as tax / scale)
     uint public tax;
 
     // quote asset balances
-    mapping(address => uint) public totals;
+    // NOTE: sum(totals) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to pre-allocate the storage slot)
+    mapping(address => uint) internal totals;
 
-    // NOTE: IMPORTANT: this value must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
-    // NOTE: if you need to change this, you need to also override the decimals() function and return the _decimals constant from it
-    uint8 public constant _decimals = 18;
+    // allow up to 2 ** 32 unscaled
+    uint internal constant maxSpeed = scale * (2 ** 32);
 
-    // one token, as displayed in the UI
-    uint public constant one = 10 ** _decimals;
-
-    uint public constant scale = 10 ** _decimals;
-
-    uint internal constant maxBeforeSquare = 2**128 - 1;
-
-    // given uint a, uint b, uint max: if a < max and b < max and a * b does not overflow, then max is maxMultiplier
-    uint internal constant maxMultiplier = type(uint).max / 2 - 1;
+    // allow up to 1 unscaled
+    uint internal constant maxTax = scale;
 
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is 256 * 11000 = 2816000 gas
@@ -53,30 +47,28 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     uint internal constant minTotal = 1;
 
     /// Tax can't be greater or equal to maximum multiplier
-    error TaxMustBeLessThanScale();
-    error SpeedMustBeLessThanMaxMultiplier();
+    error TaxMustBeLessThanOrEqualToMaxTax();
+    error SpeedMustBeLessThanOrEqualToMaxSpeed();
     error SpeedMustBeGreaterThanZero();
+    error SpeedCanBeSetOnlyIfTotalSupplyIsZero();
     error BlockTimestampMustBeLessThanOrEqualToDeadline();
     error PaymentRequired();
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
     error BaseDeltaMustBeGreaterThanZero();
     error NewTaxMustBeLessThanOldTax();
-    error SenderMustBeBeneficiary();
     error NothingToWithdraw();
+    error AddressNotPayable(address addr);
 
     event Buy(address addr, uint baseDelta, uint quoteDelta);
     event Sell(address addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address addr, uint quoteReceived);
+    event SetSpeed(uint speed);
     event SetTax(uint tax);
 
     constructor(string memory name_, string memory symbol_, uint speed_, uint tax_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
-        if (tax_ >= scale) revert TaxMustBeLessThanScale();
-        // if (tax == 0) it's ok
-        if (speed_ >= maxMultiplier) revert SpeedMustBeLessThanMaxMultiplier();
-        if (speed_ == 0) revert SpeedMustBeGreaterThanZero();
-        speed = speed_;
-        tax = tax_;
+        _setSpeed(speed_);
+        _setTax(tax_);
     }
 
     function buy(uint baseReceiveMin, uint deadline) external payable nonReentrant {
@@ -113,6 +105,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         uint total = totals[msg.sender];
         if (total <= minTotal) revert NothingToWithdraw();
         totals[msg.sender] = minTotal;
+        // NOTE: This is a potential contract call
         payable(msg.sender).transfer(total - minTotal);
         emit Withdraw(msg.sender, total - minTotal);
     }
@@ -127,20 +120,30 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
      * - The call gas cost increases linearly with amount of holders
      */
 
-    //    // nonReentrant modifier is not needed because the function doesn't call any external contracts
-    //    function setSpeed(uint _speed) external {
-    //        if (!senderIsBeneficiary()) revert SenderMustBeBeneficiary();
-    //        speed = _speed;
-    //        emit SetSpeed(_speed);
-    //    }
+    function setSpeed(uint speed_) external onlyOwner /* nonReentrant not needed because it does not make external calls */ {
+        if (totalSupply() != 0) revert SpeedCanBeSetOnlyIfTotalSupplyIsZero();
+        _setSpeed(speed_);
+        emit SetSpeed(speed_);
+    }
 
-    function setTax(uint tax_) external /* nonReentrant not needed because it has no external calls */ {
-        if (!isBeneficiary(msg.sender)) revert SenderMustBeBeneficiary();
-        if (tax_ >= maxMultiplier) revert TaxMustBeLessThanScale();
+    function setTax(uint tax_) external onlyOwner /* nonReentrant not needed because it does not make external calls */ {
         if (tax_ >= tax) revert NewTaxMustBeLessThanOldTax();
-        tax = tax_;
+        _setTax(tax_);
         emit SetTax(tax_);
     }
+
+    function _setSpeed(uint speed_) internal {
+        if (speed_ == 0) revert SpeedMustBeGreaterThanZero();
+        if (speed_ > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
+        speed = speed_;
+    }
+
+    function _setTax(uint tax_) internal {
+        // [not needed] if (tax_ == 0) revert TaxMustBeGreaterThanZero();
+        if (tax_ > maxTax) revert TaxMustBeLessThanOrEqualToMaxTax();
+        tax = tax_;
+    }
+
 
     /* Internal functions */
 
@@ -162,7 +165,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         uint sumOfBeneficiaryTotals;
         for (i = 0; i < beneficiariesLength; i++) {
             recipient = beneficiaries[i];
-            total = getShareOf(profit, recipient);
+            total = getShareAmount(profit, recipient);
             // NOTE: we should not check that send has succeeded because otherwise a malicious user would be able to brick the contract by deploying a contract with a reverting payable fallback function
             totals[recipient] += total;
             sumOfBeneficiaryTotals += total;
@@ -227,10 +230,11 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         address to,
         uint256
     ) internal virtual override {
+        // [not needed] super._beforeTokenTransfer(from, to, amount);
         // check that address is payable before transferring the tokens, otherwise distribute() will revert for everyone
         // source: https://ethereum.stackexchange.com/a/123679
         // slither-disable-next-line arbitrary-send-eth
-        require(payable(to).send(0), "Fairpool: !payable(to)");
+        if (!payable(to).send(0)) revert AddressNotPayable(to);
     }
 
     function _afterTokenTransfer(
@@ -241,7 +245,15 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         super._afterTokenTransfer(from, to, amount);
         // preallocate the storage slot to save on gas in the distribute() loop
         // minTotal is subtracted in withdraw()
-        if (totals[to] == 0) totals[to] = minTotal;
+        if (from == to || amount == 0) {
+            return;
+        }
+        if (from != address(0) && balanceOf(from) == 0 && totals[from] == minTotal) {
+            delete totals[from];
+        }
+        if (to != address(0) && balanceOf(to) != 0 && totals[to] == 0) {
+            totals[to] = minTotal;
+        }
     }
 
     function decimals() public view virtual override returns (uint8) {

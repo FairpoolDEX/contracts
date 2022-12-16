@@ -1,49 +1,55 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./Scaled.sol";
 
-abstract contract SharedOwnership {
-    uint8 private constant _decimals = 18;
-    uint private constant scale = 10 ** _decimals;
+abstract contract SharedOwnership is Scaled {
+    uint8 public constant maxBeneficiaries = 16;
 
     address[] public beneficiaries;
     mapping (address => uint) public shares;
-    mapping (address => uint) private indexesOfBeneficiaries;
+    mapping (address => uint) internal indexesOfBeneficiaries;
 
     error BeneficiariesLengthMustBeEqualToSharesLength();
+    error BeneficiariesLengthMustBeLessThanOrEqualToMax();
     error ShareMustBeGreaterThanZero();
     error ShareMustBeLessThanOrEqualToScale();
-    error SumOfSharesMustBeLessThanOrEqualToScale();
+    error SumOfSharesMustBeEqualToScale();
     error ToAddressMustBeNonZero();
-    error BalanceMustBeGreaterThanOrEqualToAmount();
+    error AmountMustBeNonZero();
+    error SharesMustBeGreaterThanOrEqualToAmount();
 
     event TransferShares(address from, address to, uint amount);
 
     constructor(address payable[] memory beneficiaries_, uint[] memory shares_) {
-        if (beneficiaries_.length != shares_.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
-        beneficiaries = beneficiaries_;
-        uint lengthOfShares = shares_.length;
-        uint sumOfShares;
-        for (uint i = 0; i < lengthOfShares; i++) {
-            uint share = shares_[i];
-            if (share == 0) revert ShareMustBeGreaterThanZero();
-            // no need to check if (share > scale) because we already check if (sumOfShares > scale)
-            shares[beneficiaries_[i]] = shares_[i];
-            sumOfShares += share;
+        if (beneficiaries_.length == 0) {
+            beneficiaries = [msg.sender];
+            shares[msg.sender] = scale;
+        } else {
+            if (beneficiaries_.length != shares_.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
+            if (beneficiaries_.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
+            beneficiaries = beneficiaries_;
+            uint sumOfShares;
+            for (uint i = 0; i < shares_.length; i++) {
+                uint share = shares_[i];
+                if (share == 0) revert ShareMustBeGreaterThanZero();
+                // no need to check if (share > scale) because we already check if (sumOfShares > scale)
+                shares[beneficiaries_[i]] = shares_[i];
+                sumOfShares += share;
+            }
+            if (sumOfShares != scale) revert SumOfSharesMustBeEqualToScale();
         }
-        if (sumOfShares > scale) revert SumOfSharesMustBeLessThanOrEqualToScale();
     }
 
     /**
      * This function doesn't support burns, because it would break the add/remove logic
-     * - It's still possible for any beneficiary to reduce the tax & send his shares to existing beneficiaries (this would be equivalent to burning the shares)
      */
     function transferShares(address to, uint amount) external returns (bool) {
         address from = msg.sender;
         if (to == address(0)) revert ToAddressMustBeNonZero();
+        if (amount == 0) revert AmountMustBeNonZero();
         uint256 fromBalance = shares[from];
-        if (fromBalance < amount) revert BalanceMustBeGreaterThanOrEqualToAmount();
+        if (fromBalance < amount) revert SharesMustBeGreaterThanOrEqualToAmount();
         unchecked { shares[from] = fromBalance - amount; }
         shares[to] += amount;
         emit TransferShares(from, to, amount);
@@ -59,7 +65,7 @@ abstract contract SharedOwnership {
         address to,
         uint256 amount
     ) internal virtual {
-        if (from == to) {
+        if (from == to || amount == 0) {
             return;
         }
         if (from != address(0) && shares[from] == 0) {
@@ -68,6 +74,7 @@ abstract contract SharedOwnership {
         if (to != address(0) && shares[to] == amount) {
             addBeneficiary(to);
         }
+        if (beneficiaries.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
     }
 
     /**
@@ -92,11 +99,11 @@ abstract contract SharedOwnership {
         delete indexesOfBeneficiaries[target];
     }
 
-    function isBeneficiary(address target) internal view returns (bool) {
-        return shares[target] != 0;
-    }
+//    function isBeneficiary(address target) internal view returns (bool) {
+//        return shares[target] != 0;
+//    }
 
-    function getShareOf(uint amount, address target) internal view returns (uint) {
+    function getShareAmount(uint amount, address target) internal view returns (uint) {
         return (amount * shares[target]) / scale;
     }
 

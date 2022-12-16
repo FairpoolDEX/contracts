@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "./Logger.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-abstract contract ERC20Enumerable is ERC20, Logger {
+abstract contract ERC20Enumerable is ERC20 {
     address[] public holders;
-    mapping (address => uint) private indexesOfHolders;
+
+    // NOTE: solidity will return 0 for any address that is not present in indexesOfHolders. However, 0 is a valid index. We test against it via totalSupplyArray_eq_totalSupply()
+    mapping (address => uint) internal indexesOfHolders;
 
     function _afterTokenTransfer(
         address from,
@@ -51,3 +52,9 @@ abstract contract ERC20Enumerable is ERC20, Logger {
         return holders.length;
     }
 }
+
+/// UNUSED:
+/// #invariant "balanceOf"
+///    forall(uint i in holders)
+///       balanceOf(holders[i]) > 0;
+/// #invariant "totalSupplyArray() == totalSupply()" totalSupplyArray() == totalSupply();
