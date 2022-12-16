@@ -1,5 +1,5 @@
 # select the mode to test, which can be property, assertion, overflow, exploration, optimization
-testMode: "property"
+testMode: "assertion"
 # check if some contract was destructed or not
 testDestruction: false
 # psender is the sender for property transactions; by default intentionally
@@ -14,7 +14,7 @@ prefix: "echidna_"
 # maxGasprice is the maximum gas price
 # maxGasprice: 0
 # testLimit is the number of test sequences to run
-testLimit: 50000
+testLimit: 100000
 # stopOnFail makes echidna terminate as soon as any property fails and has been shrunk
 stopOnFail: false
 # estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
@@ -67,7 +67,7 @@ maxTimeDelay: 604800
 # maximum number of blocks elapsed between generated txs; default is expected increment in one week
 maxBlockDelay: 60480
 # list of methods to filter
-filterFunctions: []
+filterFunctions: ["name", "symbol", "decimals", "totalSupply", "balanceOf", "owner"]
 #  by default, blacklist methods in filterFunctions
 filterBlacklist: true
 # directory to save the corpus; by default is disabled

@@ -1,17 +1,15 @@
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
-import { EchidnaERC20Enumerable } from '../../typechain-types'
+import { ERC20EnumerableTestEchidna } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
-import { fest } from '../../util-local/mocha'
 import { Address } from '../../models/Address'
-import { bn } from '../../libs/bn/utils'
 import { expect } from '../../util-local/expect'
 
-describe('EchidnaERC20Enumerable', async function () {
-  type Token = EchidnaERC20Enumerable
+describe('ERC20EnumerableTestEchidna', async function () {
+  type Token = ERC20EnumerableTestEchidna
 
   let signers: SignerWithAddress[]
   let addresses: Address[]
@@ -47,8 +45,8 @@ describe('EchidnaERC20Enumerable', async function () {
     signers = [owner, stranger, owen, bob, sam, ted, sally, tara] = await ethers.getSigners()
     addresses = signers.map(s => s.address)
 
-    const EchidnaERC20EnumerableFactory = await ethers.getContractFactory('EchidnaERC20Enumerable')
-    tokenAsOwner = (await EchidnaERC20EnumerableFactory.connect(owner).deploy()) as unknown as Token
+    const ERC20EnumerableTestEchidnaFactory = await ethers.getContractFactory('ERC20EnumerableTestEchidna')
+    tokenAsOwner = (await ERC20EnumerableTestEchidnaFactory.connect(owner).deploy()) as unknown as Token
     token = tokenAsOwner.connect($zero)
     tokenAsBob = tokenAsOwner.connect(bob)
     tokenAsSam = tokenAsOwner.connect(sam)
@@ -68,15 +66,15 @@ describe('EchidnaERC20Enumerable', async function () {
     await revertToSnapshot([snapshot])
   })
 
-  fest('must replicate a zero amount test', async () => {
-    await expect_totalSupplyArray_eq_totalSupply(token)
-    await tokenAsOwner.transfer('0x00000000000000000000000000000000DeaDBeef', bn(0))
-    await expect_totalSupplyArray_eq_totalSupply(token)
-  })
+  // fest('must replicate a zero amount test', async () => {
+  //   await expect_totalSupplyArray_eq_totalSupply(token)
+  //   await tokenAsOwner.transfer('0x00000000000000000000000000000000DeaDBeef', bn(0))
+  //   await expect_totalSupplyArray_eq_totalSupply(token)
+  // })
 
 })
 
-async function expect_totalSupplyArray_eq_totalSupply(token: EchidnaERC20Enumerable) {
+async function expect_totalSupplyArray_eq_totalSupply(token: ERC20EnumerableTestEchidna) {
   const totalSupply = await token.totalSupply()
   const totalSupplyArray = await token.totalSupplyArray()
   expect(totalSupply).to.equal(totalSupplyArray)

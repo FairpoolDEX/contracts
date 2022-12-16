@@ -96,7 +96,7 @@ describe('Fairpool', async function () {
       scale.mul(bn(2)),
       getScaledPercent(30),
       [ben.address, bob.address],
-      [getScaledPercent(12), getScaledPercent(7)]
+      [getScaledPercent(12), getScaledPercent(88)]
     )) as unknown as Fairpool
     fairpool = fairpoolAsOwner.connect($zero)
     fairpoolAsBob = fairpoolAsOwner.connect(bob)
