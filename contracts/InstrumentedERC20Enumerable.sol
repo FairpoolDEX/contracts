@@ -5,7 +5,6 @@ import "./ERC20Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract InstrumentedERC20Enumerable is ERC20Enumerable, Ownable {
-
     constructor(string memory name_, string memory symbol_, uint totalSupply_) ERC20(name_, symbol_) Ownable() {
         _mint(owner(), totalSupply_);
     }

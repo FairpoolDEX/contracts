@@ -25,8 +25,8 @@ seqLen: 100
 shrinkLimit: 5000
 # coverage controls coverage guided testing
 coverage: false
-# format can be "text" or "json" for different output (human or machine readable)
-format: "text"
+# format can be omitted (interactive UI), "text", "json"
+# format: "text"
 # contractAddr is the address of the contract itself
 contractAddr: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
 # deployer is address of the contract deployer (who often is privileged owner, etc.)
