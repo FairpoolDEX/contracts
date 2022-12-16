@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
+import "./Logger.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "hardhat/console.sol";
 
-abstract contract ERC20Enumerable is ERC20 {
+abstract contract ERC20Enumerable is ERC20, Logger {
     address[] public holders;
     mapping (address => uint) private indexesOfHolders;
 
@@ -13,14 +13,14 @@ abstract contract ERC20Enumerable is ERC20 {
         address to,
         uint256 amount
     ) internal virtual override {
-        if (from == to) {
+        if (from == to || amount == 0) {
             return;
         }
         if (from != address(0) && balanceOf(from) == 0) {
             removeHolder(from);
         }
         // if balanceOf(to) == amount, then balanceOfBeforeTransfer(to) == 0, so it should be added to holders
-        if (to != address(0) && balanceOf(to) == amount && amount != 0) {
+        if (to != address(0) && balanceOf(to) == amount) {
             addHolder(to);
         }
     }
