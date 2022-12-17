@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import "./Scaled.sol";
 
 abstract contract SharedOwnership is Scaled {
+    // maxBeneficiaries is required to limit the gas costs of the beneficiaries loop in distribute()
     uint8 public constant maxBeneficiaries = 16;
 
     address[] public beneficiaries;
@@ -13,7 +14,6 @@ abstract contract SharedOwnership is Scaled {
     error BeneficiariesLengthMustBeEqualToSharesLength();
     error BeneficiariesLengthMustBeLessThanOrEqualToMax();
     error ShareMustBeGreaterThanZero();
-    error ShareMustBeLessThanOrEqualToScale();
     error SumOfSharesMustBeEqualToScale();
     error ToAddressMustBeNonZero();
     error AmountMustBeNonZero();
@@ -33,7 +33,7 @@ abstract contract SharedOwnership is Scaled {
             for (uint i = 0; i < shares_.length; i++) {
                 uint share = shares_[i];
                 if (share == 0) revert ShareMustBeGreaterThanZero();
-                // no need to check if (share > scale) because we already check if (sumOfShares > scale)
+                // no need to check (share <= scale) because we already check (sumOfShares != scale)
                 shares[beneficiaries_[i]] = shares_[i];
                 sumOfShares += share;
             }

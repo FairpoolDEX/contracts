@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 import "./Util.sol";
 import "./SharedOwnership.sol";
 
-abstract contract SharedOwnershipTest is SharedOwnership, Util {
+contract SharedOwnershipTest is SharedOwnership, Util {
     uint[] $shares;
     address payable[] $beneficiaries;
 
@@ -14,8 +14,8 @@ abstract contract SharedOwnershipTest is SharedOwnership, Util {
         beneficiariesIsBounded();
         beneficiariesAreUnique();
         beneficiariesAreNonZero();
-        beneficiariesHavePositiveShare();
-        beneficiariesHaveTotalShares();
+        sharesArePositive();
+        sharesSumEqualsScale();
         indexesOfBeneficiariesMatchBeneficiaries();
     }
 
@@ -33,13 +33,13 @@ abstract contract SharedOwnershipTest is SharedOwnership, Util {
         ensureNoneEqual(beneficiaries, address(0), "beneficiaries");
     }
 
-    function beneficiariesHavePositiveShare() internal {
+    function sharesArePositive() internal {
         for (uint i = 0; i < beneficiaries.length; i++) {
-            ensure(shares[beneficiaries[i]] != 0, beneficiaries[i], "beneficiariesHavePositiveShare");
+            ensure(shares[beneficiaries[i]] > 0, beneficiaries[i], "beneficiariesHavePositiveShare");
         }
     }
 
-    function beneficiariesHaveTotalShares() internal {
+    function sharesSumEqualsScale() internal {
         uint sum = 0;
         for (uint i = 0; i < beneficiaries.length; i++) {
             sum += shares[beneficiaries[i]];
