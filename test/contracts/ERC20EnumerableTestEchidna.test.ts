@@ -6,7 +6,6 @@ import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
 import { Address } from '../../models/Address'
-import { expect } from '../../util-local/expect'
 
 describe('ERC20EnumerableTestEchidna', async function () {
   type Token = ERC20EnumerableTestEchidna
@@ -74,8 +73,8 @@ describe('ERC20EnumerableTestEchidna', async function () {
 
 })
 
-async function expect_totalSupplyArray_eq_totalSupply(token: ERC20EnumerableTestEchidna) {
-  const totalSupply = await token.totalSupply()
-  const totalSupplyArray = await token.totalSupplyArray()
-  expect(totalSupply).to.equal(totalSupplyArray)
-}
+// async function expect_totalSupplyArray_eq_totalSupply(token: ERC20EnumerableTestEchidna) {
+//   const totalSupply = await token.totalSupply()
+//   const totalSupplyArray = await token.totalSupplyArray()
+//   expect(totalSupply).to.equal(totalSupplyArray)
+// }

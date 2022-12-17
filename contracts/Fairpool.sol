@@ -120,13 +120,13 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
      * - The call gas cost increases linearly with amount of holders
      */
 
-    function setSpeed(uint speed_) external onlyOwner /* nonReentrant not needed because it does not make external calls */ {
+    function setSpeed(uint speed_) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert SpeedCanBeSetOnlyIfTotalSupplyIsZero();
         _setSpeed(speed_);
         emit SetSpeed(speed_);
     }
 
-    function setTax(uint tax_) external onlyOwner /* nonReentrant not needed because it does not make external calls */ {
+    function setTax(uint tax_) external onlyOwner nonReentrant {
         if (tax_ >= tax) revert NewTaxMustBeLessThanOldTax();
         _setTax(tax_);
         emit SetTax(tax_);
