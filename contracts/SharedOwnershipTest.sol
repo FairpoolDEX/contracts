@@ -30,7 +30,7 @@ contract SharedOwnershipTest is SharedOwnership, Util {
     }
 
     function beneficiariesAreNonZero() internal {
-        ensureNoneEqual(beneficiaries, address(0), "beneficiaries");
+        ensureNotIncludes(beneficiaries, address(0), "beneficiaries");
     }
 
     function sharesArePositive() internal {
