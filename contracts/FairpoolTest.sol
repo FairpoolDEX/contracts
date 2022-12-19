@@ -44,7 +44,7 @@ abstract contract FairpoolTest is Fairpool, Util {
     }
 
     function totalsFollowsHolders() internal {
-        logArrayA(holders, "holders");
+        logArray(holders, "holders");
         for (uint i = 0; i < holders.length; i++) {
             ensure(totals[holders[i]] > 0, holders[i], totals[holders[i]], "totalsFollowsHolders");
         }

@@ -19,6 +19,43 @@ contract ERC20EnumerableTest is ERC20Enumerable, Ownable, Util {
         indexesOfHoldersMatchHolders();
     }
 
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+        address from = _msgSender();
+        address[] memory oldHolders = copy(holders);
+        uint oldBalanceOfFrom = balanceOf(from);
+        uint oldBalanceOfTo = balanceOf(to);
+        uint oldTotalSupply = totalSupply();
+        bool result = super.transfer(to, amount);
+        uint newBalanceOfFrom = balanceOf(from);
+        uint newBalanceOfTo = balanceOf(to);
+        uint newTotalSupply = totalSupply();
+        address[] memory newHolders = holders;
+        ensure(newBalanceOfFrom <= oldBalanceOfFrom, "newBalanceOfFrom <= oldBalanceOfFrom");
+        ensure(newBalanceOfTo >= oldBalanceOfTo, "newBalanceOfTo >= oldBalanceOfTo");
+        if (from == to || amount == 0) {
+            ensureEqual(newBalanceOfFrom, oldBalanceOfFrom, "newBalanceOfTo", "oldBalanceOfTo");
+            ensureEqual(newBalanceOfTo, oldBalanceOfTo, "newBalanceOfTo", "oldBalanceOfTo");
+            ensureEqual(oldHolders, newHolders, "oldHolders", "newHolders");
+        } else {
+            uint diffAbsBalanceFrom = oldBalanceOfFrom - newBalanceOfFrom;
+            uint diffAbsBalanceTo = newBalanceOfTo - oldBalanceOfTo;
+            ensureEqual(diffAbsBalanceFrom, amount, "diffAbsBalanceFrom", "amount");
+            ensureEqual(diffAbsBalanceTo, amount, "diffBalanceTo", "amount");
+        }
+        if (newBalanceOfFrom == 0) {
+            ensureNotIncludes(newHolders, from, "newHolders");
+        } else {
+            ensureIncludes(newHolders, from, "newHolders");
+        }
+        if (newBalanceOfTo == 0) {
+            ensureNotIncludes(newHolders, to, "newHolders");
+        } else {
+            ensureIncludes(newHolders, to, "newHolders");
+        }
+        ensureEqual(newTotalSupply, oldTotalSupply, "newTotalSupply", "oldTotalSupply");
+        return result;
+    }
+
     function holdersHavePositiveBalance() internal {
         for (uint i = 0; i < holders.length; i++) {
             ensure(balanceOf(holders[i]) != 0, holders[i], "holdersHavePositiveBalance");
@@ -31,7 +68,7 @@ contract ERC20EnumerableTest is ERC20Enumerable, Ownable, Util {
     }
 
     function holdersAreNonZero() internal {
-        ensureNoneEqual(holders, address(0), "holders");
+        ensureNotIncludes(holders, address(0), "holders");
     }
 
     function totalSupplyIsEqual() public {
