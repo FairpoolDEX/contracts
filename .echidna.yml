@@ -16,7 +16,7 @@ prefix: "echidna_"
 # testLimit is the number of test sequences to run
 testLimit: 100000
 # stopOnFail makes echidna terminate as soon as any property fails and has been shrunk
-stopOnFail: false
+stopOnFail: true
 # estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
 estimateGas: false
 # seqLen defines how many transactions are in a test sequence

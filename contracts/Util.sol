@@ -4,15 +4,41 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Util {
-    event LogS(string message);
-    event LogU(uint value);
-    event LogA(address addr);
-    event LogB(bool value);
+//    event Log(string message);
+//    event Log(uint value);
+//    event Log(address addr);
+//    event Log(bool value);
 
-    event Log(address addr);
-    event Log(bool value);
+    event Log(string message);
+    event Log(string message, bool value);
+    event Log(string message, uint value);
+    event Log(string message, address value);
 
-    function copy(address[] storage source) internal returns (address[] memory) {
+    event NotEqual(string $a, string $b, bool a, bool b);
+    event NotEqual(string $a, string $b, uint a, uint b);
+    event NotEqual(string $a, string $b, address a, address b);
+    event NotNotEqual(string $a, string $b, address a, address b);
+    event NotNotEqual(string $a, string $b, bool a, bool b);
+    event NotNotEqual(string $a, string $b, uint a, uint b);
+    event NotLessEqual(string $a, string $b, uint a, uint b);
+    event NotGreaterEqual(string $a, string $b, uint a, uint b);
+
+    event AssertionFailed(string $assertion, string $a, string $b, bool a, bool b);
+    event AssertionFailed(string $assertion, string $a, string $b, uint a, uint b);
+    event AssertionFailed(string $assertion, string $a, string $b, address a, address b);
+
+    event LogPN(string name, bool prev, bool next);
+    event LogPN(string name, uint prev, uint next, int diff);
+    event LogPN(string name, address prev, address next);
+
+    function log(string memory message) internal { emit Log(message); }
+    function log(string memory message, uint value) internal { emit Log(message, value); }
+    function log(string memory message, address value) internal { emit Log(message, value); }
+    function log(string memory message, bool value) internal { emit Log(message, value); }
+
+    function logPN(string memory $name, uint prev, uint next) internal { emit LogPN($name, prev, next, int(next) - int(prev)); }
+
+    function copy(address[] storage source) internal view returns (address[] memory) {
         address[] memory target = new address[](source.length);
         for (uint i = 0; i < source.length; i++) {
             target[i] = source[i];
@@ -37,63 +63,71 @@ contract Util {
         return (false, address(0));
     }
 
-    /* `ensure` functions are overloaded for polymorphic signatures */
+    function toString(bool value) internal pure returns (string memory $value) {
+        if (value) { return "true"; } else { return "false"; }
+    }
 
-    function ensure(bool condition, string memory message) internal {
+    function toString(uint value) internal pure returns (string memory $value) {
+        return Strings.toString(value);
+    }
+
+    function toString(address value) internal pure returns (string memory $value) {
+        return Strings.toHexString(uint160(value), 20);
+    }
+
+    function ensure(bool condition, string memory $condition) internal {
         if (!condition) {
-            emit LogS(not(message));
+            log(not($condition));
         }
         assert(condition);
     }
 
-    function ensure(bool condition, address addr, string memory message) internal {
+    function ensure(bool condition, address addr, string memory $addr, string memory $condition) internal {
         if (!condition) {
-            emit LogA(addr);
-            emit LogS(not(message));
+            emit Log($addr, addr);
+            emit Log(not($condition));
         }
         assert(condition);
     }
 
-    function ensure(bool condition, address addr, uint value, string memory message) internal {
+    function ensure(bool condition, address addr, uint value, string memory $addr, string memory $value, string memory $condition) internal {
         if (!condition) {
-            emit LogA(addr);
-            emit LogU(value);
-            emit LogS(not(message));
+            emit Log($addr, addr);
+            emit Log($value, value);
+            emit Log(not($condition));
         }
         assert(condition);
     }
 
-    function ensure(bool condition, address a, address b, string memory message) internal {
+    function ensure(bool condition, address a, address b, string memory $a, string memory $b, string memory $operator) internal {
         if (!condition) {
-            emit LogA(a);
-            emit LogA(b);
-            emit LogS(not(message));
+            emit Log(string.concat("Failed ", string.concat($operator, "(", $a, ", ", $b, ")"), " ~ ", string.concat($operator, "(", toString(a), ", ", toString(b), ")")));
         }
         assert(condition);
     }
 
-    function ensure(bool condition, address[] memory array, string memory arrayName, string memory message) internal {
-        if (!condition) {
-            logArray(array, arrayName);
-            emit LogS(not(message));
-        }
-        assert(condition);
-    }
-
-    function ensure(bool condition, address[] memory array, address addr, string memory $array, string memory message) internal {
+    function ensure(bool condition, address[] memory array, string memory $array, string memory $condition) internal {
         if (!condition) {
             logArray(array, $array);
-            emit LogA(addr);
-            emit LogS(not(message));
+            emit Log(not($condition));
         }
         assert(condition);
     }
 
-    function ensure(bool condition, uint a, uint b, string memory message) internal {
+    function ensure(bool condition, address[] memory array, address addr, string memory $array, string memory $condition) internal {
         if (!condition) {
-            emit LogU(a);
-            emit LogU(b);
-            emit LogS(not(message));
+            logArray(array, $array);
+            emit Log("address", addr);
+            emit Log(not($condition));
+        }
+        assert(condition);
+    }
+
+    function ensure(bool condition, uint a, uint b, string memory $condition) internal {
+        if (!condition) {
+            emit Log("uint a", a);
+            emit Log("uint a", b);
+            emit Log(not($condition));
         }
         assert(condition);
     }
@@ -102,12 +136,10 @@ contract Util {
         return string.concat("not(", message, ")");
     }
 
-    function logArray(address[] memory array, string memory arrayName) internal {
-        emit LogS(string.concat("-- ", arrayName, " start --"));
+    function logArray(address[] memory array, string memory $array) internal {
         for (uint i = 0; i < array.length; i++) {
-            emit LogA(array[i]);
+            emit Log(string.concat($array, "[", Strings.toString(i), "]"), array[i]);
         }
-        emit LogS(string.concat("-- ", arrayName, " end --"));
     }
 
     function ensureEqual(uint a, uint b, string memory message) internal {
@@ -115,11 +147,15 @@ contract Util {
     }
 
     function ensureEqual(uint a, uint b, string memory $a, string memory $b) internal {
-        ensure(a == b, a, b, string.concat($a, " == ", $b));
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
     }
 
     function ensureEqual(address a, address b, string memory $a, string memory $b) internal {
-        ensure(a == b, a, b, string.concat($a, " == ", $b));
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
+    }
+
+    function ensureNotEqual(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a != b)) emit AssertionFailed("ensureNotEqual", $a, $b, a, b);
     }
 
     function ensureEqual(address[] memory a, address[] memory b, string memory $a, string memory $b) internal {
@@ -129,19 +165,43 @@ contract Util {
         }
     }
 
-    function ensureIncludes(address[] memory array, address target, string memory $array) internal {
-        ensure(includes(array, target), array, target, $array, string.concat("includes(", $array, ", ", string(abi.encodePacked(target)), ")"));
+    function ensureLess(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a < b)) emit AssertionFailed("ensureLess", $a, $b, a, b);
     }
 
-    function ensureNotIncludes(address[] memory array, address target, string memory $array) internal {
-        ensure(!includes(array, target), array, target, $array, string.concat("not(includes(", $array, ", ", string(abi.encodePacked(target)), "))"));
+    function ensureLessEqual(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a <= b)) emit AssertionFailed("ensureLessEqual", $a, $b, a, b);
     }
 
-    function includes(address[] memory array, address target) internal returns (bool) {
+    function ensureGreater(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b);
+    }
+
+    function ensureGreaterEqual(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b);
+    }
+
+    function ensureIncludes(address[] memory array, address target, string memory $array, string memory $target) internal {
+        ensure(includes(array, target), array, target, $array, string.concat("includes(", $array, ", ", $target, ")"));
+    }
+
+    function ensureNotIncludes(address[] memory array, address target, string memory $array, string memory $target) internal {
+        ensure(!includes(array, target), array, target, $array, string.concat("not(includes(", $array, ", ", $target, "))"));
+    }
+
+    function includes(address[] memory array, address target) internal pure returns (bool) {
         for (uint i = 0; i < array.length; i++) {
             if (array[i] == target) return true;
         }
         return false;
+    }
+
+    function getOld(address[] storage source) internal view returns (address[] memory) {
+        return copy(source);
+    }
+
+    function getNew(address[] storage source) internal pure returns (address[] memory) {
+        return source;
     }
 
 }

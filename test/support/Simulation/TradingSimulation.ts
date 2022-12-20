@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BaseToken, QuoteToken, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02, WETH9 } from '../../../typechain-types'
 import { BigNumber, Contract } from 'ethers'
 import { Ethers } from '../../../util-local/types'
-import { scale } from '../all.helpers'
+import { scale18 } from '../all.helpers'
 import { upgrades } from 'hardhat'
 import { getLatestBlockTimestamp } from '../test.helpers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../Uniswap.helpers'
@@ -56,10 +56,10 @@ export class TradingSimulation {
     const signers = await ethers.getSigners()
     const [owner, stranger, alice, bob, sam, zed] = signers
 
-    const baseTotalAmount = $baseTotalAmount.mul(scale)
-    const quoteTotalAmount = $quoteTotalAmount.mul(scale)
-    const baseInitialAmount = $baseInitialAmount.mul(scale)
-    const quoteInitialAmount = $quoteInitialAmount.mul(scale)
+    const baseTotalAmount = $baseTotalAmount.mul(scale18)
+    const quoteTotalAmount = $quoteTotalAmount.mul(scale18)
+    const baseInitialAmount = $baseInitialAmount.mul(scale18)
+    const quoteInitialAmount = $quoteInitialAmount.mul(scale18)
 
     const baseRecipients = signers.map((s) => s.address)
     const baseAmounts = signers.map(() => baseInitialAmount)
@@ -201,9 +201,9 @@ export class TradingSimulation {
     const quoteFinalAmount = await this.quote.balanceOf(this.alice.address)
     const profit = quoteFinalAmount.sub(this.quoteInitialAmount)
     this.debug(nail(`
-      * Alice balance before ${activity}: ${this.quoteInitialAmount.div(scale)} ETH
-      * Alice balance after ${activity}: ${quoteFinalAmount.div(scale)} ETH
-      * Alice profit: ${profit.div(scale)} ETH (+${profit.mul(100).div(this.quoteInitialAmount)}%)
+      * Alice balance before ${activity}: ${this.quoteInitialAmount.div(scale18)} ETH
+      * Alice balance after ${activity}: ${quoteFinalAmount.div(scale18)} ETH
+      * Alice profit: ${profit.div(scale18)} ETH (+${profit.mul(100).div(this.quoteInitialAmount)}%)
     `))
   }
 
