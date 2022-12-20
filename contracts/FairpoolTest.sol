@@ -8,17 +8,6 @@ import "./Fairpool.sol";
 
 // msg.value is bounded by native currency supply
 abstract contract FairpoolTest is Fairpool, Util {
-//Call sequence:                                                                                                       │
-//│ 1.setSpeed(709) from: 0x0000000000000000000000000000000000030000 Time delay: 112559 seconds Block delay: 20138       │
-//│ 2.buy(695,4294967296) from: 0x0000000000000000000000000000000000030000 Value: 0x9235c70c46d1c659 Time delay: 598286  │
-//│   seconds Block delay: 48104                                                                                         │
-//│ 3.transfer(0x24ce4116451f90398d6a41b27fa4db01e7cc7f97,4294967295) from: 0x0000000000000000000000000000000000030000   │
-//│   Time delay: 136112 seconds Block delay: 16480                                                                      │
-//│ 4.test() from: 0x0000000000000000000000000000000000010000 Time delay: 490004 seconds Block delay: 45603              │
-//│ Event sequence:                                                                                                      │
-//│ Panic(1)                                                                                                             │
-//│ LogS("not(totalsFollowsHolders)") from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72
-//Seed: 1441043467538893535
     function test() public {
         speedIsBounded();
         taxIsBounded();
@@ -35,66 +24,121 @@ abstract contract FairpoolTest is Fairpool, Util {
         _setTax(tax_);
     }
 
-    struct BuyVars {
+    // Using a struct to avoid the "stack too deep" error
+    struct Vars {
         uint balanceOfContract;
         uint balanceOfContractCalculated;
         uint balanceOfSender;
-        uint totalSupply;
         uint totalOfSender;
+        uint sumOfBalances;
+        uint sumOfTotals;
         address[] holders;
     }
 
-//Call sequence:
-//buy(0,1529945499) Value: 0x1
-//
-//Event sequence: Panic(1), Transfer(0) from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72, Buy(Context@0x0000000000000000000000000000000000010000, 0, 1) from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72, LogU(1) from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72, LogU(1) from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72, LogS("not(next.balanceOfContract > prev.balanceOfContract)") from: FairpoolTestEchidna@0x00a329c0648769A73afAc7F9381E08FB43dBEA72
     function buy(uint baseReceivedMin, uint deadline) public virtual override payable {
         // hardcode the parameters to minimize reverts
         //        baseReceiveMin = 0;
         //        deadline = type(uint).max;
-        BuyVars memory prev;
-        BuyVars memory next;
+        Vars memory prev;
+        Vars memory next;
         address sender = _msgSender();
 
         prev.balanceOfContract = address(this).balance - msg.value;
         prev.balanceOfSender = balanceOf(sender);
-        prev.totalSupply = totalSupply();
         prev.totalOfSender = totals[sender];
+        prev.sumOfBalances = totalSupply();
+        prev.sumOfTotals = sum(holders, totals);
         prev.holders = getOld(holders);
+        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
 
         super.buy(baseReceivedMin, deadline);
 
         next.balanceOfContract = address(this).balance;
         next.balanceOfSender = balanceOf(sender);
-        next.totalSupply = totalSupply();
         next.totalOfSender = totals[sender];
+        next.sumOfBalances = totalSupply();
+        next.sumOfTotals = sum(holders, totals);
         next.holders = getNew(holders);
-
-        logPN('balanceOfContract', prev.balanceOfContract, next.balanceOfContract);
-        logPN('balanceOfSender', prev.balanceOfSender, next.balanceOfSender);
-        uint diffBalanceOfContract = next.balanceOfContract - prev.balanceOfContract;
-        uint diffBalanceOfSender = next.balanceOfSender - prev.balanceOfSender;
-        prev.balanceOfContractCalculated = prev.totalSupply * prev.totalSupply * speed / scale;
-        next.balanceOfContractCalculated = next.totalSupply * next.totalSupply * speed / scale;
+        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * speed / scale;
 
         ensureGreaterEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
-        if (next.balanceOfContract == prev.balanceOfContract) {
-            // the purchase was refunded (amount too small)
+        ensureGreaterEqual(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
+
+        uint diffBalanceOfContract = next.balanceOfContract - prev.balanceOfContract;
+        uint diffBalanceOfSender = next.balanceOfSender - prev.balanceOfSender;
+
+        ensureGreaterEqual(diffBalanceOfSender, baseReceivedMin, "diffBalanceOfSender", "baseReceiveMin");
+        if (next.balanceOfContract == prev.balanceOfContract) { // the buy transaction was refunded (amount too small)
             ensureEqual(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
-            ensureEqual(next.totalSupply, prev.totalSupply, "next.totalSupply", "prev.totalSupply");
             ensureEqual(next.totalOfSender, prev.totalOfSender, "next.totalOfSender", "prev.totalOfSender");
+            ensureEqual(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
+            ensureEqual(next.sumOfTotals, prev.sumOfTotals, "next.sumOfTotals", "prev.sumOfTotals");
             ensureEqual(next.holders, prev.holders, "next.holders", "prev.holders");
             // [sender may have bought earlier, so not checking ensureIncludes(next.holders, sender)] ensureIncludes(next.holders, sender, "next.holders", "sender");
             // [already checked by if, so not checking ensureEqual(diffBalanceOfContract, 0)] ensureEqual(diffBalanceOfContract, 0, "diffBalanceOfContract", "0");
         } else {
             ensureGreater(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
-            ensureGreater(next.totalSupply, prev.totalSupply, "next.totalSupply", "prev.totalSupply");
             ensureGreaterEqual(next.totalOfSender, prev.totalOfSender, "next.totalOfSender", "prev.totalOfSender");
+            ensureGreater(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
+            ensureGreaterEqual(next.sumOfTotals, prev.sumOfTotals, "next.sumOfTotals", "prev.sumOfTotals");
             ensureGreaterEqual(next.holders.length, prev.holders.length, "next.holders.length", "prev.holders.length");
             ensureIncludes(next.holders, sender, "next.holders", "sender");
             ensureLessEqual(diffBalanceOfContract, msg.value, "diffBalanceOfContract", "msg.value");
         }
-        ensureGreaterEqual(diffBalanceOfSender, baseReceivedMin, "diffBalance", "baseReceiveMin");
+        ensureEqual(prev.balanceOfContract, prev.balanceOfContractCalculated, "prev.balanceOfContract", "prev.balanceOfContractCalculated");
+        ensureEqual(next.balanceOfContract, next.balanceOfContractCalculated, "next.balanceOfContract", "next.balanceOfContractCalculated");
+    }
+
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual override {
+        Vars memory prev;
+        Vars memory next;
+        address sender = _msgSender();
+
+        prev.balanceOfContract = address(this).balance;
+        prev.balanceOfSender = balanceOf(sender);
+        prev.totalOfSender = totals[sender];
+        prev.sumOfBalances = totalSupply();
+        prev.sumOfTotals = sum(holders, totals);
+        prev.holders = getOld(holders);
+        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
+
+        super.sell(baseDeltaProposed, quoteReceivedMin, deadline);
+
+        next.balanceOfContract = address(this).balance;
+        next.balanceOfSender = balanceOf(sender);
+        next.totalOfSender = totals[sender];
+        next.sumOfBalances = totalSupply();
+        next.sumOfTotals = sum(holders, totals);
+        next.holders = getNew(holders);
+        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * speed / scale;
+
+        ensureLessEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
+        ensureLessEqual(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
+        ensureGreaterEqual(next.totalOfSender, prev.totalOfSender, "next.totalOfSender", "prev.totalOfSender");
+
+        // neg_ values are calculated with inverted order of next & prev
+        uint neg_diffBalanceOfContract = prev.balanceOfContract - next.balanceOfContract;
+        uint neg_diffBalanceOfSender = prev.balanceOfSender - next.balanceOfSender;
+        uint diffTotalOfSender = next.totalOfSender - prev.totalOfSender;
+
+        ensureGreaterEqual(neg_diffBalanceOfContract, 0, "neg_diffBalanceOfContract", "0");
+        ensureLessEqual(neg_diffBalanceOfSender, baseDeltaProposed, "neg_diffBalanceOfSender", "baseDeltaProposed");
+        ensureGreaterEqual(diffTotalOfSender, quoteReceivedMin, "diffTotalOfSender", "quoteReceivedMin");
+        if (neg_diffBalanceOfContract == 0) { // the sell transaction was refunded (amount too small)
+            ensureEqual(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
+            ensureEqual(next.totalOfSender, prev.totalOfSender, "next.totalOfSender", "prev.totalOfSender");
+            ensureEqual(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
+            ensureEqual(next.sumOfTotals, prev.sumOfTotals, "next.sumOfTotals", "prev.sumOfTotals");
+            ensureEqual(next.holders, prev.holders, "next.holders", "prev.holders");
+            ensureIncludes(next.holders, sender, "next.holders", "sender");
+        } else {
+            ensureLess(next.balanceOfSender, prev.balanceOfSender, "next.balanceOfSender", "prev.balanceOfSender");
+            ensureLessEqual(next.totalOfSender, prev.totalOfSender, "next.totalOfSender", "prev.totalOfSender");
+            ensureLess(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
+            ensureLessEqual(next.sumOfTotals, prev.sumOfTotals, "next.sumOfTotals", "prev.sumOfTotals");
+            ensureLessEqual(next.holders.length, prev.holders.length, "next.holders.length", "prev.holders.length");
+            // [sender may have sold the full amount, so not checking ensureIncludes(next.holders, sender)] ensureIncludes(next.holders, sender, "next.holders", "sender");
+        }
         ensureEqual(prev.balanceOfContract, prev.balanceOfContractCalculated, "prev.balanceOfContract", "prev.balanceOfContractCalculated");
         ensureEqual(next.balanceOfContract, next.balanceOfContractCalculated, "next.balanceOfContract", "next.balanceOfContractCalculated");
     }

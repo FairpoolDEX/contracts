@@ -25,6 +25,7 @@ contract Util {
 
     event AssertionFailed(string $assertion, string $a, string $b, bool a, bool b);
     event AssertionFailed(string $assertion, string $a, string $b, uint a, uint b);
+    event AssertionFailed(string $assertion, string $a, string $b, int a, int b);
     event AssertionFailed(string $assertion, string $a, string $b, address a, address b);
 
     event LogPN(string name, bool prev, bool next);
@@ -44,6 +45,12 @@ contract Util {
             target[i] = source[i];
         }
         return target;
+    }
+
+    function sum(address[] storage array, mapping(address => uint) storage values) internal view returns (uint result) {
+        for (uint i = 0; i < array.length; i++) {
+            result += values[array[i]];
+        }
     }
 
     function ensureNoDuplicateInArrayOfAddresses(mapping(address => bool) storage cache, address[] memory array, string memory message) internal {
@@ -150,6 +157,10 @@ contract Util {
         if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
     }
 
+    function ensureEqual(int a, int b, string memory $a, string memory $b) internal {
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
+    }
+
     function ensureEqual(address a, address b, string memory $a, string memory $b) internal {
         if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
     }
@@ -178,6 +189,22 @@ contract Util {
     }
 
     function ensureGreaterEqual(uint a, uint b, string memory $a, string memory $b) internal {
+        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b);
+    }
+
+    function ensureLess(int a, int b, string memory $a, string memory $b) internal {
+        if (!(a < b)) emit AssertionFailed("ensureLess", $a, $b, a, b);
+    }
+
+    function ensureLessEqual(int a, int b, string memory $a, string memory $b) internal {
+        if (!(a <= b)) emit AssertionFailed("ensureLessEqual", $a, $b, a, b);
+    }
+
+    function ensureGreater(int a, int b, string memory $a, string memory $b) internal {
+        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b);
+    }
+
+    function ensureGreaterEqual(int a, int b, string memory $a, string memory $b) internal {
         if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b);
     }
 

@@ -44,8 +44,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     // Allow up to 2 ** 32 unscaled
     uint internal constant maxSpeed = scale * (2 ** 32);
 
-    // Allow up to 1 unscaled
-    uint internal constant maxTax = scale;
+    // Allow up to 1 - (1 / scale) unscaled
+    uint internal constant maxTax = scale - 1;
 
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
@@ -62,8 +62,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error PaymentRequired();
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
-    error BaseDeltaMustBeGreaterThanZero();
-    error BaseDeltaMustBeLessThanOrEqualToBalance();
+    error BaseDeltaProposedMustBeGreaterThanZero();
+    error BaseDeltaProposedMustBeLessThanOrEqualToBalance();
     error NewTaxMustBeLessThanOldTax();
     error NothingToWithdraw();
     error AddressNotPayable(address addr);
@@ -94,19 +94,19 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
-        if (baseDeltaProposed == 0) revert BaseDeltaMustBeGreaterThanZero();
-        if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaMustBeLessThanOrEqualToBalance();
+        if (baseDeltaProposed == 0) revert BaseDeltaProposedMustBeGreaterThanZero();
+        if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaProposedMustBeLessThanOrEqualToBalance();
         (uint baseDelta, uint quoteDelta) = getSellDeltas(baseDeltaProposed);
         _burn(msg.sender, baseDelta);
         uint quoteReceived;
-        if (tax != 0) {
+        if (tax == 0) {
+            quoteReceived = quoteDelta;
+        } else {
             uint profit = (quoteDelta * tax) / scale;
             uint remainder = distribute(profit);
             quoteReceived = quoteDelta - profit + remainder;
-        } else {
-            quoteReceived = quoteDelta;
         }
-        if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteDelta);
+        if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
         payable(msg.sender).transfer(quoteReceived);
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
     }
