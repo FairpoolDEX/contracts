@@ -20,8 +20,8 @@ contract SharedOwnershipTest is SharedOwnership, Util {
     }
 
     function beneficiariesIsBounded() internal {
-        ensure(beneficiaries.length > 0, "beneficiaries.length > 0");
-        ensure(beneficiaries.length <= maxBeneficiaries, "beneficiaries.length <= maxBeneficiaries");
+        ensureGreater(beneficiaries.length, 0, "beneficiaries.length", "0");
+        ensureLessEqual(beneficiaries.length, maxBeneficiaries, "beneficiaries.length", "maxBeneficiaries");
     }
 
     mapping(address => bool) internal beneficiariesUniqueCache;
@@ -30,12 +30,12 @@ contract SharedOwnershipTest is SharedOwnership, Util {
     }
 
     function beneficiariesAreNonZero() internal {
-        ensureNotIncludes(beneficiaries, address(0), "beneficiaries");
+        ensureNotIncludes(beneficiaries, address(0), "beneficiaries", "address(0)");
     }
 
     function sharesArePositive() internal {
         for (uint i = 0; i < beneficiaries.length; i++) {
-            ensure(shares[beneficiaries[i]] > 0, beneficiaries[i], "beneficiariesHavePositiveShare");
+            ensureGreater(shares[beneficiaries[i]], 0, string.concat("shares[beneficiaries[", toString(i),"]]"), "0");
         }
     }
 
@@ -44,13 +44,12 @@ contract SharedOwnershipTest is SharedOwnership, Util {
         for (uint i = 0; i < beneficiaries.length; i++) {
             sum += shares[beneficiaries[i]];
         }
-        ensure(sum == scale, "beneficiariesHaveTotalShares");
+        ensureEqual(sum, scale, "sum(shares)", "scale");
     }
 
     function indexesOfBeneficiariesMatchBeneficiaries() internal {
         for (uint i = 0; i < beneficiaries.length; i++) {
-            uint $i = indexesOfBeneficiaries[beneficiaries[i]];
-            ensureEqual($i, i, "indexesOfBeneficiariesMatchBeneficiaries: $i == i");
+            ensureEqual(indexesOfBeneficiaries[beneficiaries[i]], i, string.concat("indexesOfBeneficiaries[beneficiaries[", toString(i),"]]"), "i");
         }
     }
 }

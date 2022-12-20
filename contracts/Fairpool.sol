@@ -9,39 +9,46 @@ import "solmate/src/utils/FixedPointMathLib.sol";
 import "hardhat/console.sol";
 import "./ERC20Enumerable.sol";
 import "./SharedOwnership.sol";
+import "./Util.sol";
 
 /**
+ * Definitions:
+ * - base - token amount
+ * - quote - money amount (native blockchain currency)
+ *
  * Notes:
- * - Revert messages should be translated in UI
- * - Variables should use uint instead of smaller types because uint actually costs less gas
+ * - quote = (base * base) * speed / scale; // the bonding curve equation (quote on the left side)
+ * - base = (quote * scale / speed).sqrt(); // the bonding curve equation (base on the left side)
+ * - price = quote / base = base * speed / scale; // the price equation
+ * - The `_decimals` variable must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
+ * - Variables must use uint instead of smaller types because uint actually costs less gas
  * - Custom errors must be used over string descriptions because it costs less gas
- *   - Don't add parameters to errors if they are already available to the caller (e.g. don't add function arguments as parameters)
+ * - Custom errors must not include the function arguments (i.e. don't add function arguments as error parameters)
+ * - Custom errors should be translated in UI
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
+ * - Ownable is needed to change speed & tax (otherwise there could be a battle between the beneficiaries)
  */
-
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
-    // NOTE: IMPORTANT: _decimals must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
-
     using FixedPointMathLib for uint;
 
-    // multiplier in the formula for base amount (as speed / scale)
+    // Multiplier in the formula for base amount (as speed / scale)
     uint public speed;
 
-    // percentage of buy value that the contract distributes to the token holders & beneficiaries (as tax / scale)
+    // Percentage of buy value that the contract distributes to the token holders & beneficiaries (as tax / scale)
     uint public tax;
 
-    // quote asset balances
+    // Quote asset balances
     // NOTE: sum(totals) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to pre-allocate the storage slot)
     mapping(address => uint) internal totals;
 
-    // allow up to 2 ** 32 unscaled
+    // Allow up to 2 ** 32 unscaled
     uint internal constant maxSpeed = scale * (2 ** 32);
 
-    // allow up to 1 unscaled
+    // Allow up to 1 unscaled
     uint internal constant maxTax = scale;
 
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
-    // Full distribution cost is 256 * 11000 = 2816000 gas
+    // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
     uint internal constant maxHoldersPerDistribution = 256;
 
     uint internal constant minTotal = 1;
@@ -56,13 +63,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
     error BaseDeltaMustBeGreaterThanZero();
+    error BaseDeltaMustBeLessThanOrEqualToBalance();
     error NewTaxMustBeLessThanOldTax();
     error NothingToWithdraw();
     error AddressNotPayable(address addr);
 
-    event Buy(address addr, uint baseDelta, uint quoteDelta);
-    event Sell(address addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
-    event Withdraw(address addr, uint quoteReceived);
+    event Buy(address indexed addr, uint baseDelta, uint quoteDelta);
+    event Sell(address indexed addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
+    event Withdraw(address indexed addr, uint quoteReceived);
     event SetSpeed(uint speed);
     event SetTax(uint tax);
 
@@ -71,22 +79,24 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         _setTax(tax_);
     }
 
-    function buy(uint baseReceiveMin, uint deadline) external payable nonReentrant {
+    function buy(uint baseDeltaMin, uint deadline) public virtual payable nonReentrant {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
         if (msg.value == 0) revert PaymentRequired();
-        uint quoteDelta = msg.value;
-        uint baseDelta = getBaseDeltaBuy();
-        if (baseDelta < baseReceiveMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
+        (uint baseDelta, uint quoteDelta) = getBuyDeltas();
+        if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
+        uint quoteRefund = msg.value - quoteDelta;
+        if (quoteRefund != 0) payable(msg.sender).transfer(quoteRefund);
         _mint(msg.sender, baseDelta);
         emit Buy(msg.sender, baseDelta, quoteDelta);
     }
 
-    function sell(uint baseDelta, uint quoteReceivedMin, uint deadline) external nonReentrant {
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
-        if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
-        uint quoteDelta = getQuoteDeltaSell(baseDelta);
+        if (baseDeltaProposed == 0) revert BaseDeltaMustBeGreaterThanZero();
+        if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaMustBeLessThanOrEqualToBalance();
+        (uint baseDelta, uint quoteDelta) = getSellDeltas(baseDeltaProposed);
         _burn(msg.sender, baseDelta);
         uint quoteReceived;
         if (tax != 0) {
@@ -101,7 +111,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
     }
 
-    function withdraw() external nonReentrant {
+    function withdraw() public virtual nonReentrant {
         uint total = totals[msg.sender];
         if (total <= minTotal) revert NothingToWithdraw();
         totals[msg.sender] = minTotal;
@@ -192,20 +202,43 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         return profit;
     }
 
-    function getBaseDeltaBuy() internal view returns (uint baseDelta) {
-        // IMPORTANT: "When a payable function is called: address(this).balance is increased by msg.value before any of your code is executed"
-        uint quoteNew = address(this).balance;
+    // IMPORTANT: "When a payable function is called: address(this).balance is increased by msg.value before any of your code is executed", so quoteNew should already include the msg.value
+    // IMPORTANT: buy deltas must be added, not subtracted from current amounts
+    function getBuyDeltas() internal view returns (uint baseDelta, uint quoteDelta) {
         uint baseOld = totalSupply();
-        uint baseNew = (quoteNew.sqrt() * scale) / speed;
-        return baseNew - baseOld;
+        uint quoteOld = address(this).balance - msg.value;
+        uint quoteNewProposed = address(this).balance;
+        uint baseNewProposed = getBase(quoteNewProposed);
+        uint baseNew = downscale(baseNewProposed);
+        uint quoteNew = getQuote(baseNew);
+        return (baseNew - baseOld, quoteNew - quoteOld);
     }
 
-    function getQuoteDeltaSell(uint baseDelta) internal view returns (uint quoteDelta) {
-        uint quoteOld = address(this).balance;
+    // IMPORTANT: sell deltas must be subtracted, not added to current amounts
+    function getSellDeltas(uint baseDeltaProposed) internal view returns (uint baseDelta, uint quoteDelta) {
         uint baseOld = totalSupply();
-        uint quoteNewSqrt = ((baseOld - baseDelta) * speed) / scale;
-        uint quoteNew = quoteNewSqrt * quoteNewSqrt;
-        return quoteOld - quoteNew;
+        uint quoteOld = address(this).balance;
+        uint baseNew = upscale(baseOld - baseDeltaProposed); // using upscale instead of downscale to ensure that `(baseOld - baseNew) < baseDeltaProposed` (because we're returning deltas to be subtracted, not added)
+        uint quoteNew = getQuote(baseNew);
+        return (baseOld - baseNew, quoteOld - quoteNew);
+    }
+
+    function getQuote(uint base) internal view returns (uint quote) {
+        return base * base * speed / scale;
+    }
+
+    function getBase(uint quote) internal view returns (uint base) {
+        return (quote * scale / speed).sqrt();
+    }
+
+    // turn value into smaller $value that is divisible by scale without remainder (value > $value)
+    function downscale(uint value) internal pure returns (uint $value) {
+        return value / scale * scale;
+    }
+
+    // turn value into larger $value that is divisible by scale without remainder (value < $value)
+    function upscale(uint value) internal pure returns (uint $value) {
+        return (value / scale + 1) * scale;
     }
 
     /* View functions */

@@ -8,7 +8,7 @@ export const toTokenAmount = (value: BigNumber | Decimal | string | number): Big
   if (value instanceof Decimal) {
     return BigNumber.from(value.mul(new Decimal(10).pow(18)).toFixed(0))
   } else if (value instanceof BigNumber) {
-    return value.mul(scale)
+    return value.mul(scale18)
   } else {
     return utils.parseUnits(typeof value === 'number' ? value.toFixed(18) : value, '18')
   }
@@ -20,7 +20,7 @@ export const toTokenAmountString = (value: string | number): string => toTokenAm
 
 export const MaxSafeInt = 0x1fffffffffffff - 1
 
-export const scale = BigNumber.from(10).pow(18)
+export const scale18 = BigNumber.from(10).pow(18)
 
 export function dateAdd(date: Date, duration: DurationInput) {
   return DateTime.fromJSDate(date).plus(duration).toJSDate()

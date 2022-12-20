@@ -7,7 +7,7 @@ contract FairpoolTestEchidna is FairpoolTest {
     address payable[] $beneficiaries;
     uint[] $shares;
 
-    constructor() Fairpool("Echidna", "TST", maxSpeed - 1, maxTax - 1, $beneficiaries, $shares) {
-        // speed and tax can be changed
+    constructor() Fairpool("Echidna", "TST", scale, scale, $beneficiaries, $shares) {
+        // speed and tax can be changed via public methods
     }
 }

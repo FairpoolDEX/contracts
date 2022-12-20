@@ -1,10 +1,10 @@
-import { bn } from '../../libs/bn/utils'
+import { bn, getShare as getShareOriginal } from '../../libs/bn/utils'
 import { toBackendAmountBN } from '../../util-local/bignumber.convert'
-import { tenPow18 } from '../../libs/bn/constants'
+import { BigNumber, BigNumberish } from 'ethers'
 
-const scale = tenPow18
+export const scale = BigNumber.from(10).pow(6)
 
-export const jump1Percent = bn(tenPow18.div(100))
+export const jump1Percent = bn(scale.div(100))
 
 /**
  * Suffixes:
@@ -18,3 +18,11 @@ export const bidFP_bidSC = (bidFP: number) => toBackendAmountBN(bidFP, 18)
 export const amountFP_amountSC = (amountFP: number) => toBackendAmountBN(amountFP, 18)
 
 export const jumpFP_jumpSC = (jumpFP: number) => toBackendAmountBN(jumpFP, 18)
+
+export function getScaledPercent(numerator: BigNumberish) {
+  return getShareOriginal(scale, numerator, 100)
+}
+
+export function getQuoteAmountMin(speed: BigNumber, scale: BigNumber) {
+  return speed.mul(scale)
+}

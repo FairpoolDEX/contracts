@@ -6,7 +6,7 @@ import { CS, Eddy, isBullSellerAddress, Jordan, KS, newHardwareDeployer, NFTrade
 import { mergeVersionedRecords } from '../../util-local/version'
 import { expectBalancesToMatch, expectUnderTotalAmount } from '../../util-local/expectation'
 import { airdropDistributedTokenAmountTotal, airdropDistributionDates, bullDecimals, fromShieldToBull } from '../support/BullToken.helpers'
-import { getShare, sumBN } from '../../libs/bn/utils'
+import { getShare, sumBNs } from '../../libs/bn/utils'
 import { getDistributionBlockNumbers, WriteClaimsValidator } from '../../tasks/writeClaimsTask'
 import { ColiMainnet } from '../../data/allDeployments'
 import { Address } from '../../models/Address'
@@ -105,7 +105,7 @@ async function getKSBalance() {
     sumAmountBNs([transfer19418, transfer66750, transfer56700]),
     sumAmountBNs([transfer19418, transfer66750, transfer56700]),
   ]
-  return fromShieldToBull(sumBN(balancesAtDistributionDates))
+  return fromShieldToBull(sumBNs(balancesAtDistributionDates))
 }
 
 async function getVan1shBalance() {
@@ -121,7 +121,7 @@ async function getTotalBalanceFromTransfersCSV(address: Address, date: Date) {
   const totalBalanceFromBull = await getBullBalanceAt(address, airdropDistributionDates[0])
   const transfers = await getTransfersFromCSVFile(shieldDecimals, ColiMainnet.address, address, date)
   const balancesAtDistributionDates = await getBalancesAtDistributionDates(address, transfers)
-  const totalBalanceFromShield = fromShieldToBull(sumBN(balancesAtDistributionDates))
+  const totalBalanceFromShield = fromShieldToBull(sumBNs(balancesAtDistributionDates))
   return totalBalanceFromBull.add(totalBalanceFromShield)
 }
 
