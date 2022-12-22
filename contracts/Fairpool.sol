@@ -29,6 +29,7 @@ import "./Util.sol";
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  * - Ownable is needed to change speed & tax (otherwise there could be a battle between the beneficiaries)
  * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of dividends). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay dividends to anyone else ~= he should pay dividends to himself)
+ * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
  */
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
     using FixedPointMathLib for uint;
@@ -43,11 +44,19 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     // NOTE: can be set to zero to avoid the dividends
     uint public dividends;
 
+    // Percentage of sale distributed to the operator (as fees / scale)
+    uint public fees = scale * 25 / 1000; // 2.5%
+
+    // Operator receives the fees
+    address payable public operator = payable(0x7554140235ad2D1Cc75452D2008336700C598Dc1);
+
     // Quote asset balances available for withdrawal
-    // NOTE: sum(tallies) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to pre-allocate the storage slot)
+    // IMPORTANT: Due to preallocation, sum(tallies) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to preallocate the storage slot)
+    // `if (balanceOf(address) == 0) then (tallies[address] == 0)` => false, because beneficiaries may receive tallies while their balances are zero
+    // `if (balanceOf(address) != 0) then (tallies[address] == defaultTally || tallies[address] > defaultTally)` => true, because of preallocation
     mapping(address => uint) internal tallies;
 
-    // Real balance of contract (must be equal to address(this).balance - sum(tallies) - )
+    // Real balance of contract (less than or equal to `address(this).balance - sum(tallies) - defaultTally * holders.length`)
     uint public quoteBalanceOfContract;
 
     // Allow up to 2 ** 32 unscaled
@@ -74,9 +83,10 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error SpeedMustBeLessThanOrEqualToMaxSpeed();
     error SpeedMustBeGreaterThanZero();
     error SpeedCanBeSetOnlyIfTotalSupplyIsZero();
-    error RoyaltiesPlusDividendsMustBeLessThanScale();
-    error NewRoyaltiesMustBeLessThanOldRoyaltiesOrTotalSupplyMustBeZero();
-    error NewDividendsMustBeLessThanOldDividendsOrTotalSupplyMustBeZero();
+    error RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
+    error NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
+    error OnlyOperator();
+    error OperatorMustBeNonZero();
 
     event Buy(address indexed addr, uint baseDelta, uint quoteDelta);
     event Sell(address indexed addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
@@ -84,11 +94,17 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     event SetSpeed(uint speed);
     event SetRoyalties(uint royalties);
     event SetDividends(uint dividends);
+    event SetFees(uint fees);
+    event SetOperator(address operator);
 
     constructor(string memory name_, string memory symbol_, uint speed_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
         setSpeedInternal(speed_);
-        setRoyaltiesInternal(royalties_);
-        setDividendsInternal(dividends_);
+        setTaxesInternal(royalties_, dividends_, fees);
+        // operator is already set
+        // preallocate tallies
+        for (uint i = 0; i < beneficiaries.length; i++) {
+            tallies[beneficiaries[i]] = defaultTally;
+        }
     }
 
     function buy(uint baseDeltaMin, uint deadline) public virtual payable nonReentrant {
@@ -100,10 +116,10 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         // baseDelta != 0 ==> quoteDelta != 0
         if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
         uint quoteRefund = msg.value - quoteDelta;
-        if (quoteRefund != 0) payable(msg.sender).transfer(quoteRefund);
+        emit Buy(msg.sender, baseDelta, quoteDelta);
         _mint(msg.sender, baseDelta);
         quoteBalanceOfContract += quoteDelta;
-        emit Buy(msg.sender, baseDelta, quoteDelta);
+        if (quoteRefund != 0) payable(msg.sender).transfer(quoteRefund);
     }
 
     function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant {
@@ -117,35 +133,30 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         quoteBalanceOfContract -= quoteDelta;
         uint quoteReceived = quoteDelta - distribute(quoteDelta);
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
-        payable(msg.sender).transfer(quoteReceived);
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
+        uint quoteWithdrawn = doWithdrawAndEmit();
+        payable(msg.sender).transfer(quoteReceived + quoteWithdrawn);
     }
 
     function withdraw() public virtual nonReentrant {
-        if (tallies[msg.sender] <= defaultTally) revert NothingToWithdraw();
-        uint amount = tallies[msg.sender] - defaultTally;
-        tallies[msg.sender] = defaultTally;
-        // NOTE: This is a potential contract call (reverts on failure)
-        payable(msg.sender).transfer(amount);
-        emit Withdraw(msg.sender, amount);
+        uint quoteWithdrawn = doWithdrawAndEmit();
+        if (quoteWithdrawn == 0) revert NothingToWithdraw();
+        payable(msg.sender).transfer(quoteWithdrawn);
     }
 
-    // saves 30907 gas compared to separate sell() + withdraw() transactions
-    // may be optimized further by bundling two transfer() calls into one
-    function sellAndWithdraw(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual {
-        sell(baseDeltaProposed, quoteReceivedMin, deadline);
-        withdraw();
+    function doWithdrawAndEmit() internal returns (uint quoteWithdrawn) {
+        if (tallies[msg.sender] > defaultTally) {
+            quoteWithdrawn = tallies[msg.sender] - defaultTally;
+            emit Withdraw(msg.sender, quoteWithdrawn);
+            if (balanceOf(msg.sender) == 0 && !isBeneficiary(msg.sender)) {
+                tallies[msg.sender] = 0;
+            } else {
+                tallies[msg.sender] = defaultTally;
+            }
+        } else {
+            quoteWithdrawn = 0;
+        }
     }
-
-        /**
-         * IMPORTANT: the contract must not have a `setSpeed` function, because otherwise it would be possible to reach a state where some holders can't sell:
-         * - Contract is drained of quote (quote amount on contract address is zero)
-         * - Contract is not drained of base (totalSupply is not zero)
-         *
-         * Alternatively, we can implement a `setSpeed` function that scales the current amounts of tokens, but:
-         * - It's difficult to implement
-         * - The call gas cost increases linearly with amount of holders
-         */
 
     function setSpeed(uint speed_) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert SpeedCanBeSetOnlyIfTotalSupplyIsZero();
@@ -153,44 +164,48 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         emit SetSpeed(speed_);
     }
 
-    function setRoyalties(uint royalties_) external onlyOwner nonReentrant {
-        if (totalSupply() != 0 && royalties_ >= royalties) revert NewRoyaltiesMustBeLessThanOldRoyaltiesOrTotalSupplyMustBeZero();
-        setRoyaltiesInternal(royalties_);
-        emit SetRoyalties(royalties_);
+    function setRoyalties(uint royaltiesNew) external onlyOwner nonReentrant {
+        setTaxesInternal(royaltiesNew, dividends, fees);
+        emit SetRoyalties(royaltiesNew);
     }
 
-    function setDividends(uint dividends_) external onlyOwner nonReentrant {
-        if (totalSupply() != 0 && dividends_ >= dividends) revert NewDividendsMustBeLessThanOldDividendsOrTotalSupplyMustBeZero();
-        setDividendsInternal(dividends_);
-        emit SetDividends(dividends_);
+    function setDividends(uint dividendsNew) external onlyOwner nonReentrant {
+        setTaxesInternal(royalties, dividendsNew, fees);
+        emit SetDividends(dividendsNew);
     }
 
-    function setSpeedInternal(uint speed_) internal {
-        if (speed_ == 0) revert SpeedMustBeGreaterThanZero();
-        if (speed_ > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
-        speed = speed_;
+    function setFees(uint feesNew) external nonReentrant {
+        if (msg.sender != operator) revert OnlyOperator();
+        setTaxesInternal(royalties, dividends, feesNew);
+        emit SetDividends(feesNew);
     }
 
-    // royalties_ can be 0
-    function setRoyaltiesInternal(uint royalties_) internal {
-        unchecked { // using manual overflow check because otherwise Echidna reports an error
-            uint sum = royalties_ + dividends;
-            if (/* overflow */ sum < dividends || sum >= scale) revert RoyaltiesPlusDividendsMustBeLessThanScale();
-            royalties = royalties_;
-        }
+    function setOperator(address payable operatorNew) external nonReentrant {
+        if (msg.sender != operator) revert OnlyOperator();
+        setOperatorInternal(operatorNew);
+        emit SetOperator(operatorNew);
     }
 
-    // dividends_ can be 0
-    function setDividendsInternal(uint dividends_) internal {
-        unchecked { // using manual overflow check because otherwise Echidna reports an error
-            uint sum = dividends_ + royalties;
-            if (/* overflow */ sum < royalties || sum >= scale) revert RoyaltiesPlusDividendsMustBeLessThanScale();
-            dividends = dividends_;
-        }
+    function setSpeedInternal(uint speedNew) internal {
+        if (speedNew == 0) revert SpeedMustBeGreaterThanZero();
+        if (speedNew > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
+        speed = speedNew;
     }
 
+    function setOperatorInternal(address payable operatorNew) internal {
+        if (operatorNew == address(0)) revert OperatorMustBeNonZero();
+        operator = operatorNew;
+    }
 
-    /* Internal functions */
+    // using a single function for all three taxes to ensure their sum < scale (revert otherwise)
+    function setTaxesInternal(uint royaltiesNew, uint dividendsNew, uint feesNew) internal {
+        // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
+        if (royalties >= scale || dividends >= scale || fees >= scale || royalties + dividends + fees >= scale) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
+        if (totalSupply() != 0 && (royaltiesNew > royalties || dividendsNew > dividends || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
+        royalties = royaltiesNew;
+        dividends = dividendsNew;
+        fees = feesNew;
+    }
 
     /**
      * Distributes profit between beneficiaries and holders
@@ -236,6 +251,11 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
                 tallies[recipient] += total; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
                 quoteDistributed += total;
             }
+        }
+
+        uint quoteDistributedToOperator = (quoteDelta * fees) / scale;
+        if (quoteDistributedToOperator != 0) {
+            operator.transfer(quoteDistributedToOperator);
         }
     }
 
@@ -326,12 +346,32 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (from == to || amount == 0) {
             return;
         }
-        if (from != address(0) && balanceOf(from) == 0 && tallies[from] == defaultTally) {
-            delete tallies[from];
+        if (from != address(0) && balanceOf(from) == 0) {
+            deallocate(from);
         }
-        if (to != address(0) && balanceOf(to) != 0 && tallies[to] == 0) {
-            tallies[to] = defaultTally;
+        if (to != address(0) && balanceOf(to) != 0) {
+            preallocate(to);
         }
+    }
+
+    function addBeneficiary(address target) internal virtual override {
+        super.addBeneficiary(target);
+        preallocate(target);
+    }
+
+    function removeBeneficiary(address target) internal virtual override {
+        super.removeBeneficiary(target);
+        deallocate(target);
+    }
+
+    function preallocate(address target) internal {
+        // `if` is necessary to prevent overwriting an existing positive tally
+        if (tallies[target] == 0) tallies[target] = defaultTally;
+    }
+
+    function deallocate(address target) internal {
+        // `if` is necessary to prevent overwriting an existing positive tally
+        if (tallies[target] == defaultTally) delete tallies[target];
     }
 
     function decimals() public view virtual override returns (uint8) {

@@ -18,7 +18,7 @@ import { MaxUint256 } from '../../libs/ethereum/constants'
 import { identity } from 'remeda'
 import { Address } from '../../models/Address'
 import { parseAddress } from '../../libs/ethereum/models/Address'
-import { ensure, ensureGet } from '../../libs/utils/ensure'
+import { ensure, ensureFind } from '../../libs/utils/ensure'
 import { LogLevel } from '../../util-local/ethers'
 import { CallOverrides } from '@ethersproject/contracts/src.ts/index'
 import { hexZeroPad } from '@ethersproject/bytes'
@@ -166,22 +166,16 @@ describe('Fairpool', async function () {
     ethers.utils.Logger.setLogLevel(LogLevel.ERROR) // suppress "Duplicate definition" warnings
     const fairpoolTestFactory = await ethers.getContractFactory('FairpoolTest')
     const fairpool = (await fairpoolTestFactory.connect(owner).deploy()) as unknown as FairpoolTest
-    const callers = {
-      '0x0000000000000000000000000000000000010000': ben,
-      '0x0000000000000000000000000000000000020000': bob,
-      '0x0000000000000000000000000000000000030000': owner,
-    }
-    // const transactionsRaw = ''
-    const transactionsRaw = `
-        transferOwnership(0x20000) from: 0x0000000000000000000000000000000000030000 Time delay: 48551 seconds Block delay: 26540
-        setSpeed(15) from: 0x0000000000000000000000000000000000020000 Time delay: 29218 seconds Block delay: 60226
-        buy(2,103895064935751566547449530349109067107879149236133541355761536741632193449489) from: 0x0000000000000000000000000000000000030000 Value: 0x1a8c0402d4562fd66 Time delay: 554469 seconds Block delay: 60039
-        sell(4294967295,0,115792089237316195423570985008687907853269984665640564039457584007913129574401) from: 0x0000000000000000000000000000000000030000 Time delay: 338920 seconds Block delay: 53308
-    `
+    const callers: Caller[] = [
+      { address: '0x0000000000000000000000000000000000010000', signer: ben },
+      { address: '0x0000000000000000000000000000000000020000', signer: bob },
+      { address: '0x0000000000000000000000000000000000030000', signer: owner },
+    ]
+    const transactionsRaw = ''
     const transactions = transactionsRaw.split('\n').map(s => s.trim()).filter(identity).map(parseTransaction(callers))
-    const results = await sequentialMap(transactions, async ({ caller, name, args, value, origin }) => {
+    const results = await sequentialMap(transactions, async ({ signer, name, args, value, origin }) => {
       console.info('Executing', origin)
-      const context = fairpool.connect(caller)
+      const context = fairpool.connect(signer)
       const overrides: CallOverrides = { value }
       const argsWithOverrides = [...args, overrides]
       // hack to allow calling arbitrary functions
@@ -203,12 +197,12 @@ describe('Fairpool', async function () {
     return sellTxReceipt.gasUsed.add(withdrawTxReceipt.gasUsed)
   }
 
-  fest('get transaction costs', async () => {
-    const separate = await getGasUsedForSeparateSellAndWithdraw()
-    const combined = await getGasUsedForCombinedSellAndWithdraw()
-    const diff = separate.sub(combined)
-    console.info('stats', separate.toString(), combined.toString(), diff.toString())
-  })
+  // fest('get transaction costs', async () => {
+  //   const separate = await getGasUsedForSeparateSellAndWithdraw()
+  //   const combined = await getGasUsedForCombinedSellAndWithdraw()
+  //   const diff = separate.sub(combined)
+  //   console.info('stats', separate.toString(), combined.toString(), diff.toString())
+  // })
 
   const getGasUsedForCombinedSellAndWithdraw = async () => {
     snapshot = await getSnapshot()
@@ -230,74 +224,18 @@ describe('Fairpool', async function () {
   //   console.log('Gas per holder', gasPerHolder.toString())
   // })
 
-  // fest('must increase the price after buy', async () => {
-  //   const amount = bn(10)
-  //   const result = await fairpoolAsBob.buy(amount)
-  //   const bidAfterExpected = bid.mul((1 + jump).pow(amount))
-  //   // jumpUI = 1
-  //   // bid = 10
-  //   // amount = 5
-  //   // bidAfterExpected = 10 * (1 + 0.01) ^ 5
-  //   // bidAfterExpected = (bid * scale) * (1 * scale / scale + jump * scale / scale) ^ (amount * scale / scale)
-  //   // amount should not be scaled, jump should not be scaled
-  //   // actualJump = 0.01 * 1e18 = 1e16
-  //   // actualBid = 10 * 1e18 = 10e18
-  //   // actualAmount = 5 * 1e18 = 5e18
-  //   // actualBidAfterExpected = actualBid *
-  //   const bidAfterActual = await fairpoolAsBob.bid()
-  //   expect(bidAfter).to.be.gt(bid)
-  // })
-
-  // fest('must calculate bid correctly', async () => {
-  //   const decimals = 18
-  //   const scale = toBackendAmountBN(1, decimals)
-  //   const currentN = 10
-  //   const currentBS = toBackendAmountBN(currentN, decimals)
-  //   const totalN = 5 // how much the user spends
-  //   const totalBS = toBackendAmountBN(totalN, decimals)
-  //   const speedN = 0.01
-  //   const speedBS = toBackendAmountBN(speedN, decimals)
-  //   const getAmountBSScaled = getAmountBS(scale)
-  //   const newBidFP = getAmountN(currentN, totalN, speedN)
-  //   const newBidBSExpected = toBackendAmountBN(newBidFP, decimals)
-  //   const newBidBSActual = getAmountBSScaled(bidBS, totalBS, speedBS)
-  //   const diffAbs = newBidBSExpected.sub(newBidBSActual).abs()
-  //   expect(diffAbs).to.be.lte(bn(100))
-  // })
-
 })
 
-const getAmountN = (baseAmount: number, quoteAmount: number, quoteDelta: number, speed: number) => {
-  const quoteFinal = quoteAmount + quoteDelta
-  const baseFinal = speed * Math.sqrt(quoteFinal)
-  return baseFinal - baseAmount
-}
-
-// const getAmountBS = (scale: BigNumber) => (bid: BigNumber, total: BigNumber, jump: BigNumber) => {
-//   return stub<BigNumber>()
-// }
-
-type GetAmountN<State> = (state: State, total: number) => [State, number]
-
-const chain = <State, Inputs extends unknown[], Outputs extends unknown[]>(state: State, ...inputsArr: Inputs[]) => (func: (state: State, ...input: Inputs) => [State, ...Outputs]) => {
-  return inputsArr.reduce((state, inputs) => {
-    const [stateNew] = func(state, ...inputs)
-    return stateNew
-  }, state)
-}
-
-/**
- * Looks like bid & jump are functionally dependent
- */
-const getAmountBS = (basePrice: BigNumber, total: BigNumber, jump: BigNumber) => {
-
+interface Caller {
+  address: Address
+  signer: SignerWithAddress
 }
 
 type TransactionArg = BigNumber | Address
 
 interface Transaction {
   origin: string
-  caller: SignerWithAddress
+  signer: SignerWithAddress
   name: Parameters<FairpoolTest['interface']['getFunction']>[0]
   args: TransactionArg[]
   value: BigNumber
@@ -305,11 +243,10 @@ interface Transaction {
   blockDelay: BigNumber
 }
 
-const parseTransaction = (callers: Record<Address, SignerWithAddress>) => (origin: string): Transaction => {
+const parseTransaction = (callers: Caller[]) => (origin: string): Transaction => {
   const [callRaw] = origin.split(' ')
-  // TODO: hardcode Transaction['name'] type
   const [_, name, argsRaw] = ensure(callRaw.match(/^(\w+)\(([^(]*)\)$/)) as [string, Transaction['name'], string]
-  const from = ensure(parseLineComponent('from', parseAddress, origin))
+  const from = parseLineComponent('from', parseAddress, origin)
   const value = parseLineComponent('Value', bn, origin) || bn(0)
   const timeDelay = parseLineComponent('Time delay', bn, origin) || bn(0)
   const blockDelay = parseLineComponent('Block delay', bn, origin) || bn(0)
@@ -318,18 +255,19 @@ const parseTransaction = (callers: Record<Address, SignerWithAddress>) => (origi
   const args: TransactionArg[] = argsSplit.map(bn)
   // begin hack
   if (name === 'transferOwnership') {
-    args[0] = ensureGet(callers, parseAddress(hexZeroPad(argsSplit[0], 20))).address
+    const address = parseAddress(hexZeroPad(argsSplit[0], 20))
+    args[0] = ensureFind(callers, c => c.address === address).signer.address
   }
   // end hack
-  const caller = ensureGet(callers, from)
-  return { origin, caller, name, args, value, blockDelay, timeDelay }
+  const { signer } = callers.find(c => c.address === from) || callers[0]
+  return { origin, signer, name, args, value, blockDelay, timeDelay }
 }
 
 const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (transaction: Transaction) => {
-  const { caller, name, args, blockDelay, timeDelay, value } = transaction
+  const { signer, name, args, blockDelay, timeDelay, value } = transaction
   const splinters = []
   splinters.push(`${name}(${args.map(stringifyArg).join(',')})`)
-  splinters.push(`From: ${caller.address}`)
+  splinters.push(`From: ${signer.address}`)
   // incomplete
   return todo()
 }

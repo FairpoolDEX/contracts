@@ -80,7 +80,7 @@ abstract contract SharedOwnership is Scaled {
     /**
      * Assumes that `holder` does not exist in `holders`
      */
-    function addBeneficiary(address target) internal {
+    function addBeneficiary(address target) internal virtual {
         indexesOfBeneficiaries[target] = beneficiaries.length;
         beneficiaries.push(target);
     }
@@ -90,7 +90,7 @@ abstract contract SharedOwnership is Scaled {
      * Uses a gas-optimal algorithm for removing the value from array
      * Does not preserve array order
      */
-    function removeBeneficiary(address target) internal {
+    function removeBeneficiary(address target) internal virtual {
         uint index = indexesOfBeneficiaries[target];
         address last = beneficiaries[beneficiaries.length - 1];
         indexesOfBeneficiaries[last] = index;
@@ -99,9 +99,9 @@ abstract contract SharedOwnership is Scaled {
         delete indexesOfBeneficiaries[target];
     }
 
-//    function isBeneficiary(address target) internal view returns (bool) {
-//        return shares[target] != 0;
-//    }
+    function isBeneficiary(address target) internal view returns (bool) {
+        return shares[target] != 0;
+    }
 
     function getShareAmount(uint amount, address target) internal view returns (uint) {
         return (amount * shares[target]) / scale;
