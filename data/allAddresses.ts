@@ -1,6 +1,6 @@
 import { Address, validateAddress, validateAddresses } from '../models/Address'
-import { nail } from '../util/string'
 import { BalanceBN } from '../models/BalanceBN'
+import { nail } from '../libs/utils/string'
 
 export const $zero = validateAddress('0x0000000000000000000000000000000000000000')
 

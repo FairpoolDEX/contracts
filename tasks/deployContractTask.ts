@@ -2,13 +2,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { getOverrides } from '../util-local/network'
 import { Address } from '../models/Address'
 import { getConstructorArgs, verifyWithWorkaround } from '../util-local/verifyWithWorkaround'
-import { toUpperSnakeCase } from '../util/string'
 import { RunnableTaskArgumentsSchema } from '../util-local/RunnableTaskArguments'
 import { z } from 'zod'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { getProxyCheckerUrl } from '../util/url'
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { expect } from '../util-local/expect'
+import { toUpperSnakeCase } from '../util/toUpperSnakeCase'
 
 export async function deployNonUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)

@@ -97,6 +97,7 @@ export const config: HardhatUserConfig = {
       //   blockNumber: 12779553,
       // },
       blockGasLimit: 8000000,
+      allowUnlimitedContractSize: true,
       accounts: {
         mnemonic: process.env.MNEMONIC || '',
       },
