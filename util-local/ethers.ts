@@ -70,3 +70,11 @@ export function sendMultipleTransactions<In, Out extends ContractTransaction, Ar
     return tx
   }, ...args)
 }
+
+export enum LogLevel {
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  ERROR = 'ERROR',
+  OFF = 'OFF'
+}

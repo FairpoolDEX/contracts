@@ -1,7 +1,7 @@
 import { Deployment, DeploymentSchema, parseDeploymentUid } from '../models/Deployment'
 import { getFinder, getInserter } from '../util/zod'
 import { BullToken } from '../models/ContractName'
-import { nail } from '../util/string'
+import { nail } from '../libs/utils/string'
 
 export const allDeployments: Deployment[] = []
 

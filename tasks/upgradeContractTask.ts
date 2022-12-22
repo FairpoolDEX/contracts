@@ -5,7 +5,7 @@ import { Address, AddressSchema } from '../models/Address'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { RunnableTaskArgumentsSchema } from '../util-local/RunnableTaskArguments'
 import { verifyWithWorkaround } from '../util-local/verifyWithWorkaround'
-import { toUpperSnakeCase } from '../util/string'
+import { toUpperSnakeCase } from '../util/toUpperSnakeCase'
 
 export async function upgradeContractTask(args: UpgradeContractTaskArguments, hre: HardhatRuntimeEnvironment): Promise<UpgradeContractTaskOutput> {
   const context = await getUpgradeContractContext(args, hre)

@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
-import { Fairpool } from '../../typechain-types'
+import { Fairpool, FairpoolTest } from '../../typechain-types'
 import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
@@ -13,8 +13,16 @@ import { getQuoteAmountMin, getScaledPercent, scale } from '../support/Fairpool.
 import { range } from 'lodash'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
-import { mapAsync } from 'libs/utils/promise'
+import { mapAsync, sequentialMap } from 'libs/utils/promise'
 import { MaxUint256 } from '../../libs/ethereum/constants'
+import { identity } from 'remeda'
+import { Address } from '../../models/Address'
+import { parseAddress } from '../../libs/ethereum/models/Address'
+import { ensure, ensureGet } from '../../libs/utils/ensure'
+import { LogLevel } from '../../util-local/ethers'
+import { CallOverrides } from '@ethersproject/contracts/src.ts/index'
+import { hexZeroPad } from '@ethersproject/bytes'
+import { todo } from '../../libs/utils/todo'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -38,7 +46,8 @@ describe('Fairpool', async function () {
   let snapshot: unknown
 
   let speed: BigNumber
-  let tax: BigNumber
+  let royalties: BigNumber
+  let dividends: BigNumber
   // let jump: number
   // let denominator: number
 
@@ -91,12 +100,14 @@ describe('Fairpool', async function () {
 
     const fairpoolFactory = await ethers.getContractFactory('Fairpool')
     speed = getScaledPercent(200)
-    tax = getScaledPercent(30)
+    royalties = getScaledPercent(30)
+    dividends = getScaledPercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
       'Abraham Lincoln Token',
       'ABRA',
       speed,
-      tax,
+      royalties,
+      dividends,
       [ben.address, bob.address],
       [getScaledPercent(12), getScaledPercent(88)]
     )) as unknown as Fairpool
@@ -125,9 +136,9 @@ describe('Fairpool', async function () {
     const balanceQuoteTotal = await owner.getBalance()
     const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(getQuoteAmountMin(speed, scale)) })
     const balanceBaseBeforeTransfers = await fairpoolAsOwner.balanceOf(owner.address)
-    const transferAmount = balanceBaseBeforeTransfers.div(maxHoldersCount + 10)
-    console.log('balanceBaseBeforeTransfers', balanceBaseBeforeTransfers.toString())
-    console.log('transferAmount', transferAmount.toString())
+    const balanceBaseMinForSell = scale.mul(2)
+    const balanceBaseForTransfers = balanceBaseBeforeTransfers.sub(balanceBaseMinForSell)
+    const transferAmount = balanceBaseForTransfers.div(maxHoldersCount)
     const sendTxes = await mapAsync(range(0, maxHoldersCount), async i => {
       const wallet = ethers.Wallet.createRandom()
       // preload the address with ETH to reduce the gas cost of send() in distribute()
@@ -137,9 +148,7 @@ describe('Fairpool', async function () {
       // })
       return fairpoolAsOwner.transfer(wallet.address, transferAmount)
     })
-    const balanceBaseAfterTransfers = await fairpoolAsOwner.balanceOf(owner.address)
-    console.log('balanceBaseAfterTransfers', balanceBaseAfterTransfers.toString())
-    const sellTx = await fairpoolAsOwner.sell(balanceBaseAfterTransfers, 0, MaxUint256)
+    const sellTx = await fairpoolAsOwner.sell(balanceBaseMinForSell, 0, MaxUint256)
     const sellTxReceipt = await sellTx.wait(1)
     // console.log('sellTxReceipt', sellTxReceipt.gasUsed.toString())
     await revertToSnapshot([snapshot])
@@ -152,6 +161,65 @@ describe('Fairpool', async function () {
     const gasUsed = await getGasUsedForManyHolders(maxHoldersCount)
     expect(gasUsed).to.be.lte(blockGasLimit / 10)
   })
+
+  fest('must replay Echidna transactions', async () => {
+    ethers.utils.Logger.setLogLevel(LogLevel.ERROR) // suppress "Duplicate definition" warnings
+    const fairpoolTestFactory = await ethers.getContractFactory('FairpoolTest')
+    const fairpool = (await fairpoolTestFactory.connect(owner).deploy()) as unknown as FairpoolTest
+    const callers = {
+      '0x0000000000000000000000000000000000010000': ben,
+      '0x0000000000000000000000000000000000020000': bob,
+      '0x0000000000000000000000000000000000030000': owner,
+    }
+    // const transactionsRaw = ''
+    const transactionsRaw = `
+        transferOwnership(0x20000) from: 0x0000000000000000000000000000000000030000 Time delay: 48551 seconds Block delay: 26540
+        setSpeed(15) from: 0x0000000000000000000000000000000000020000 Time delay: 29218 seconds Block delay: 60226
+        buy(2,103895064935751566547449530349109067107879149236133541355761536741632193449489) from: 0x0000000000000000000000000000000000030000 Value: 0x1a8c0402d4562fd66 Time delay: 554469 seconds Block delay: 60039
+        sell(4294967295,0,115792089237316195423570985008687907853269984665640564039457584007913129574401) from: 0x0000000000000000000000000000000000030000 Time delay: 338920 seconds Block delay: 53308
+    `
+    const transactions = transactionsRaw.split('\n').map(s => s.trim()).filter(identity).map(parseTransaction(callers))
+    const results = await sequentialMap(transactions, async ({ caller, name, args, value, origin }) => {
+      console.info('Executing', origin)
+      const context = fairpool.connect(caller)
+      const overrides: CallOverrides = { value }
+      const argsWithOverrides = [...args, overrides]
+      // hack to allow calling arbitrary functions
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (context[name] as any).apply(context, argsWithOverrides)
+    })
+  })
+
+  const getGasUsedForSeparateSellAndWithdraw = async () => {
+    snapshot = await getSnapshot()
+    const balanceQuoteTotal = await owner.getBalance()
+    const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(getQuoteAmountMin(speed, scale)) })
+    const balance = await fairpoolAsOwner.balanceOf(owner.address)
+    const sellTx = await fairpoolAsOwner.sell(balance, 0, MaxUint256)
+    const sellTxReceipt = await sellTx.wait(1)
+    const withdrawTx = await fairpoolAsOwner.withdraw()
+    const withdrawTxReceipt = await withdrawTx.wait(1)
+    await revertToSnapshot([snapshot])
+    return sellTxReceipt.gasUsed.add(withdrawTxReceipt.gasUsed)
+  }
+
+  fest('get transaction costs', async () => {
+    const separate = await getGasUsedForSeparateSellAndWithdraw()
+    const combined = await getGasUsedForCombinedSellAndWithdraw()
+    const diff = separate.sub(combined)
+    console.info('stats', separate.toString(), combined.toString(), diff.toString())
+  })
+
+  const getGasUsedForCombinedSellAndWithdraw = async () => {
+    snapshot = await getSnapshot()
+    const balanceQuoteTotal = await owner.getBalance()
+    const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(getQuoteAmountMin(speed, scale)) })
+    const balance = await fairpoolAsOwner.balanceOf(owner.address)
+    const sellAndWithdrawTx = await fairpoolAsOwner.sellAndWithdraw(balance, 0, MaxUint256)
+    const sellAndWithdrawTxReceipt = await sellAndWithdrawTx.wait(1)
+    await revertToSnapshot([snapshot])
+    return sellAndWithdrawTxReceipt.gasUsed
+  }
 
   // fest('must get the gas per holder', async () => {
   //   const maxHoldersCount1 = 50
@@ -223,4 +291,57 @@ const chain = <State, Inputs extends unknown[], Outputs extends unknown[]>(state
  */
 const getAmountBS = (basePrice: BigNumber, total: BigNumber, jump: BigNumber) => {
 
+}
+
+type TransactionArg = BigNumber | Address
+
+interface Transaction {
+  origin: string
+  caller: SignerWithAddress
+  name: Parameters<FairpoolTest['interface']['getFunction']>[0]
+  args: TransactionArg[]
+  value: BigNumber
+  timeDelay: BigNumber
+  blockDelay: BigNumber
+}
+
+const parseTransaction = (callers: Record<Address, SignerWithAddress>) => (origin: string): Transaction => {
+  const [callRaw] = origin.split(' ')
+  // TODO: hardcode Transaction['name'] type
+  const [_, name, argsRaw] = ensure(callRaw.match(/^(\w+)\(([^(]*)\)$/)) as [string, Transaction['name'], string]
+  const from = ensure(parseLineComponent('from', parseAddress, origin))
+  const value = parseLineComponent('Value', bn, origin) || bn(0)
+  const timeDelay = parseLineComponent('Time delay', bn, origin) || bn(0)
+  const blockDelay = parseLineComponent('Block delay', bn, origin) || bn(0)
+  // assuming all args are numbers (better to use decode here)
+  const argsSplit = argsRaw.split(',').filter(identity)
+  const args: TransactionArg[] = argsSplit.map(bn)
+  // begin hack
+  if (name === 'transferOwnership') {
+    args[0] = ensureGet(callers, parseAddress(hexZeroPad(argsSplit[0], 20))).address
+  }
+  // end hack
+  const caller = ensureGet(callers, from)
+  return { origin, caller, name, args, value, blockDelay, timeDelay }
+}
+
+const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (transaction: Transaction) => {
+  const { caller, name, args, blockDelay, timeDelay, value } = transaction
+  const splinters = []
+  splinters.push(`${name}(${args.map(stringifyArg).join(',')})`)
+  splinters.push(`From: ${caller.address}`)
+  // incomplete
+  return todo()
+}
+
+const stringifyArg = (arg: TransactionArg): string => {
+  if (arg instanceof BigNumber) return arg.toString()
+  return arg
+}
+
+function parseLineComponent<T>(name: string, parser: (value: string) => T, line: string) {
+  const matches = line.match(new RegExp(`${name}: ([^\\s]+)`))
+  if (matches) {
+    return parser(matches[1])
+  }
 }

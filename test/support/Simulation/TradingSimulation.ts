@@ -7,11 +7,11 @@ import { upgrades } from 'hardhat'
 import { getLatestBlockTimestamp } from '../test.helpers'
 import { deployUniswapPair, getUniswapV2FactoryContractFactory, getUniswapV2Router02ContractFactory, getWETH9ContractFactory } from '../Uniswap.helpers'
 import { flatten } from 'lodash'
-import { nail } from '../../../util/string'
 import { expect } from '../../../util-local/expect'
 import { Debugger } from 'debug'
 import { $zero } from '../../../data/allAddresses'
 import { MaxUint256 } from '../../../libs/ethereum/constants'
+import { nail } from '../../../libs/utils/string'
 
 export class TradingSimulation {
   constructor(
