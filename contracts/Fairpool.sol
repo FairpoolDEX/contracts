@@ -86,7 +86,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
     error NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
     error OnlyOperator();
-    error OperatorMustBeNonZero();
+    error OperatorMustNotBeZeroAddress();
+    error OperatorMustNotBeContractAddress();
 
     event Buy(address indexed addr, uint baseDelta, uint quoteDelta);
     event Sell(address indexed addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
@@ -131,7 +132,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         // baseDelta != 0 ==> quoteDelta != 0
         _burn(msg.sender, baseDelta);
         quoteBalanceOfContract -= quoteDelta;
-        uint quoteReceived = quoteDelta - distribute(quoteDelta);
+        uint quoteDistributed = distribute(quoteDelta);
+        uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
         uint quoteWithdrawn = doWithdrawAndEmit();
@@ -148,7 +150,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (tallies[msg.sender] > defaultTally) {
             quoteWithdrawn = tallies[msg.sender] - defaultTally;
             emit Withdraw(msg.sender, quoteWithdrawn);
-            if (balanceOf(msg.sender) == 0 && !isBeneficiary(msg.sender)) {
+            if (balanceOf(msg.sender) == 0 && shares[msg.sender] == 0) {
                 tallies[msg.sender] = 0;
             } else {
                 tallies[msg.sender] = defaultTally;
@@ -158,53 +160,52 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         }
     }
 
-    function setSpeed(uint speed_) external onlyOwner nonReentrant {
+    function setSpeed(uint $speed) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert SpeedCanBeSetOnlyIfTotalSupplyIsZero();
-        setSpeedInternal(speed_);
-        emit SetSpeed(speed_);
+        setSpeedInternal($speed);
+        emit SetSpeed($speed);
     }
 
-    function setRoyalties(uint royaltiesNew) external onlyOwner nonReentrant {
-        setTaxesInternal(royaltiesNew, dividends, fees);
-        emit SetRoyalties(royaltiesNew);
+    function setRoyalties(uint $royalties) external onlyOwner nonReentrant {
+        setTaxesInternal($royalties, dividends, fees);
+        emit SetRoyalties($royalties);
     }
 
-    function setDividends(uint dividendsNew) external onlyOwner nonReentrant {
-        setTaxesInternal(royalties, dividendsNew, fees);
-        emit SetDividends(dividendsNew);
+    function setDividends(uint $dividends) external onlyOwner nonReentrant {
+        setTaxesInternal(royalties, $dividends, fees);
+        emit SetDividends($dividends);
     }
 
-    function setFees(uint feesNew) external nonReentrant {
-        if (msg.sender != operator) revert OnlyOperator();
-        setTaxesInternal(royalties, dividends, feesNew);
-        emit SetDividends(feesNew);
+    function setFees(uint $fees) external onlyOperator nonReentrant {
+        setTaxesInternal(royalties, dividends, $fees);
+        emit SetFees($fees);
     }
 
-    function setOperator(address payable operatorNew) external nonReentrant {
-        if (msg.sender != operator) revert OnlyOperator();
-        setOperatorInternal(operatorNew);
-        emit SetOperator(operatorNew);
+    function setOperator(address payable $operator) external onlyOperator nonReentrant {
+        setOperatorInternal($operator);
+        emit SetOperator($operator);
     }
 
-    function setSpeedInternal(uint speedNew) internal {
-        if (speedNew == 0) revert SpeedMustBeGreaterThanZero();
-        if (speedNew > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
-        speed = speedNew;
+    function setSpeedInternal(uint $speed) internal {
+        if ($speed == 0) revert SpeedMustBeGreaterThanZero();
+        if ($speed > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
+        speed = $speed;
     }
 
-    function setOperatorInternal(address payable operatorNew) internal {
-        if (operatorNew == address(0)) revert OperatorMustBeNonZero();
-        operator = operatorNew;
+    function setOperatorInternal(address payable $operator) internal {
+        if ($operator == address(0)) revert OperatorMustNotBeZeroAddress();
+        if ($operator == address(this)) revert OperatorMustNotBeContractAddress();
+        operator = $operator;
     }
 
     // using a single function for all three taxes to ensure their sum < scale (revert otherwise)
-    function setTaxesInternal(uint royaltiesNew, uint dividendsNew, uint feesNew) internal {
+    function setTaxesInternal(uint $royalties, uint $dividends, uint $fees) internal {
         // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
-        if (royalties >= scale || dividends >= scale || fees >= scale || royalties + dividends + fees >= scale) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
-        if (totalSupply() != 0 && (royaltiesNew > royalties || dividendsNew > dividends || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
-        royalties = royaltiesNew;
-        dividends = dividendsNew;
-        fees = feesNew;
+        if ($royalties >= scale || $dividends >= scale || $fees >= scale || $royalties + $dividends + $fees >= scale) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
+        if (totalSupply() != 0 && ($royalties > royalties || $dividends > dividends || $fees > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
+        royalties = $royalties;
+        dividends = $dividends;
+        fees = $fees;
     }
 
     /**
@@ -256,6 +257,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         uint quoteDistributedToOperator = (quoteDelta * fees) / scale;
         if (quoteDistributedToOperator != 0) {
             operator.transfer(quoteDistributedToOperator);
+            quoteDistributed += quoteDistributedToOperator;
         }
     }
 
@@ -304,6 +306,11 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     // turn value into larger $value that is divisible by scale without remainder (value < $value)
     function upscale(uint value) internal pure returns (uint $value) {
         return (value / scale + 1) * scale;
+    }
+
+    modifier onlyOperator() {
+        if (msg.sender != operator) revert OnlyOperator();
+        _;
     }
 
     /* View functions */
