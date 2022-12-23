@@ -99,10 +99,6 @@ abstract contract SharedOwnership is Scaled {
         delete indexesOfBeneficiaries[target];
     }
 
-    function isBeneficiary(address target) internal view returns (bool) {
-        return shares[target] != 0;
-    }
-
     function getShareAmount(uint amount, address target) internal view returns (uint) {
         return (amount * shares[target]) / scale;
     }

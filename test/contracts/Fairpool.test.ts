@@ -23,6 +23,9 @@ import { LogLevel } from '../../util-local/ethers'
 import { CallOverrides } from '@ethersproject/contracts/src.ts/index'
 import { hexZeroPad } from '@ethersproject/bytes'
 import { todo } from '../../libs/utils/todo'
+import { ContractTransaction } from '@ethersproject/contracts'
+import { renderLogDescription } from '../../util-local/ethers/renderLogDescription'
+import { show } from '../../libs/utils/debug'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -167,21 +170,33 @@ describe('Fairpool', async function () {
     const fairpoolTestFactory = await ethers.getContractFactory('FairpoolTest')
     const fairpool = (await fairpoolTestFactory.connect(owner).deploy()) as unknown as FairpoolTest
     const callers: Caller[] = [
-      { address: '0x0000000000000000000000000000000000010000', signer: ben },
-      { address: '0x0000000000000000000000000000000000020000', signer: bob },
       { address: '0x0000000000000000000000000000000000030000', signer: owner },
+      { address: '0x0000000000000000000000000000000000020000', signer: bob },
+      { address: '0x0000000000000000000000000000000000010000', signer: ben },
     ]
-    const transactionsRaw = ''
-    const transactions = transactionsRaw.split('\n').map(s => s.trim()).filter(identity).map(parseTransaction(callers))
-    const results = await sequentialMap(transactions, async ({ signer, name, args, value, origin }) => {
-      console.info('Executing', origin)
+    const echidnaLog = `
+      setSpeed(2110643339) Time delay: 323464 seconds Block delay: 37527
+      buy(65535,115792089237316195423570985008687907853269984665640564039457584007913129638935) Value: 0x3d1109f8faec13726 Time delay: 439519 seconds Block delay: 23310
+      sell(4369999,1,115792089237316195423570985008687907853269984665640564039457584007913129574400) Time delay: 273833 seconds Block delay: 27535
+    `
+    const echidnaLines = echidnaLog.split('\n').map(s => s.trim()).filter(identity)
+    const infos = echidnaLines.map(parseTransactionInfo(callers))
+    const results = await sequentialMap(infos, async (info) => {
+      const { signer, name, args, value, origin } = info
+      show('\n' + origin)
       const context = fairpool.connect(signer)
       const overrides: CallOverrides = { value }
       const argsWithOverrides = [...args, overrides]
       // hack to allow calling arbitrary functions
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (context[name] as any).apply(context, argsWithOverrides)
+      const transaction = await (context[name] as any).apply(context, argsWithOverrides) as ContractTransaction
+      const receipt = await transaction.wait(1) // TODO: the block number will be incremented, so "Block delay" will not work as intended. However, we want to preserve the order of console.log's, so we want to wait here
+      const logs = receipt.logs.map(l => fairpool.interface.parseLog(l))
+      show(logs.map(renderLogDescription))
+      return { info, transaction, receipt, logs }
     })
+    const hasAssertionFailed = !!results.find(({ logs }) => logs.find(l => l.name === 'AssertionFailed'))
+    if (hasAssertionFailed) throw new Error('AssertionFailed')
   })
 
   const getGasUsedForSeparateSellAndWithdraw = async () => {
@@ -201,7 +216,7 @@ describe('Fairpool', async function () {
   //   const separate = await getGasUsedForSeparateSellAndWithdraw()
   //   const combined = await getGasUsedForCombinedSellAndWithdraw()
   //   const diff = separate.sub(combined)
-  //   console.info('stats', separate.toString(), combined.toString(), diff.toString())
+  //   show('stats', separate.toString(), combined.toString(), diff.toString())
   // })
 
   const getGasUsedForCombinedSellAndWithdraw = async () => {
@@ -231,28 +246,28 @@ interface Caller {
   signer: SignerWithAddress
 }
 
-type TransactionArg = BigNumber | Address
+type TransactionInfoArg = BigNumber | Address
 
-interface Transaction {
+interface TransactionInfo {
   origin: string
   signer: SignerWithAddress
   name: Parameters<FairpoolTest['interface']['getFunction']>[0]
-  args: TransactionArg[]
+  args: TransactionInfoArg[]
   value: BigNumber
   timeDelay: BigNumber
   blockDelay: BigNumber
 }
 
-const parseTransaction = (callers: Caller[]) => (origin: string): Transaction => {
+const parseTransactionInfo = (callers: Caller[]) => (origin: string): TransactionInfo => {
   const [callRaw] = origin.split(' ')
-  const [_, name, argsRaw] = ensure(callRaw.match(/^(\w+)\(([^(]*)\)$/)) as [string, Transaction['name'], string]
+  const [_, name, argsRaw] = ensure(callRaw.match(/^(\w+)\(([^(]*)\)$/)) as [string, TransactionInfo['name'], string]
   const from = parseLineComponent('from', parseAddress, origin)
   const value = parseLineComponent('Value', bn, origin) || bn(0)
   const timeDelay = parseLineComponent('Time delay', bn, origin) || bn(0)
   const blockDelay = parseLineComponent('Block delay', bn, origin) || bn(0)
   // assuming all args are numbers (better to use decode here)
   const argsSplit = argsRaw.split(',').filter(identity)
-  const args: TransactionArg[] = argsSplit.map(bn)
+  const args: TransactionInfoArg[] = argsSplit.map(bn)
   // begin hack
   if (name === 'transferOwnership') {
     const address = parseAddress(hexZeroPad(argsSplit[0], 20))
@@ -263,7 +278,7 @@ const parseTransaction = (callers: Caller[]) => (origin: string): Transaction =>
   return { origin, signer, name, args, value, blockDelay, timeDelay }
 }
 
-const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (transaction: Transaction) => {
+const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (transaction: TransactionInfo) => {
   const { signer, name, args, blockDelay, timeDelay, value } = transaction
   const splinters = []
   splinters.push(`${name}(${args.map(stringifyArg).join(',')})`)
@@ -272,7 +287,7 @@ const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (t
   return todo()
 }
 
-const stringifyArg = (arg: TransactionArg): string => {
+const stringifyArg = (arg: TransactionInfoArg): string => {
   if (arg instanceof BigNumber) return arg.toString()
   return arg
 }
