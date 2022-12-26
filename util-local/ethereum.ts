@@ -5,6 +5,8 @@ export function getJsonRpcUrl(networkName: NetworkName) {
   switch (networkName) {
     case 'mainnet':
       return `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`
+    case 'goerli':
+      return `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_GOERLI_API_KEY}`
     case 'ropsten':
       return `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_ROPSTEN_API_KEY}`
     case 'rinkeby':

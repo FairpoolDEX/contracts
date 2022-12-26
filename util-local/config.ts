@@ -1,5 +1,6 @@
 import { config as dotEnvConfig } from 'dotenv'
+import { getMnemonic } from './getMnemonic'
 
 dotEnvConfig()
 
-export const mnemonic = process.env.MNEMONIC || ''
+export const mnemonic = getMnemonic()
