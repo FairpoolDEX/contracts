@@ -1,0 +1,11 @@
+echo "Fuzzing ERC20Enumerable"
+./fuzz.ERC20Enumerable.local.sh --test-mode overflow --test-limit 1000000 --seq-len 1000 --format text "$@"
+./fuzz.ERC20Enumerable.local.sh --test-mode assertion --test-limit 1000000 --seq-len 1000 --format text "$@"
+
+echo "Fuzzing SharedOwnership"
+./fuzz.SharedOwnership.local.sh --test-mode overflow --test-limit 1000000 --seq-len 1000 --format text "$@"
+./fuzz.SharedOwnership.local.sh --test-mode assertion --test-limit 1000000 --seq-len 1000 --format text "$@"
+
+echo "Fuzzing Fairpool"
+./fuzz.Fairpool.local.sh --test-mode overflow --test-limit 1000000 --seq-len 1000 --format text "$@"
+./fuzz.Fairpool.local.sh --test-mode assertion --test-limit 1000000 --seq-len 1000 --format text "$@"

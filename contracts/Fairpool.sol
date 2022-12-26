@@ -6,10 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "solmate/src/utils/FixedPointMathLib.sol";
-import "hardhat/console.sol";
 import "./ERC20Enumerable.sol";
 import "./SharedOwnership.sol";
-import "./Util.sol";
 
 /**
  * Definitions:

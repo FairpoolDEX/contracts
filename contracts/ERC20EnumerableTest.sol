@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "./Util.sol";
-import "./ERC20Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ERC20Enumerable.sol";
+import "./Util.sol";
+import "./IncreaseAllowanceHooks.sol";
 
-contract ERC20EnumerableTest is ERC20Enumerable, Ownable, Util {
+contract ERC20EnumerableTest is ERC20Enumerable, Ownable, IncreaseAllowanceHooks, Util {
     constructor(string memory name_, string memory symbol_, uint totalSupply_) ERC20(name_, symbol_) Ownable() {
         _mint(owner(), totalSupply_);
     }
@@ -88,6 +89,12 @@ contract ERC20EnumerableTest is ERC20Enumerable, Ownable, Util {
             sum += balanceOf(holders[i]);
         }
         return sum;
+    }
+
+    // Must be overridden to prevent Echidna from reporting an overflow (there's no explicit revert in ERC20 because it relies on automatic overflow checking)
+    function increaseAllowance(address spender, uint256 addedValue) public virtual override returns (bool) {
+        checkAllowance(spender, addedValue, allowance(msg.sender, spender));
+        return super.increaseAllowance(spender, addedValue);
     }
 
 }
