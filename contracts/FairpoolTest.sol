@@ -4,11 +4,12 @@ pragma solidity 0.8.16;
 import "./Util.sol";
 import "./ERC20Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IncreaseAllowanceHooks.sol";
 import "./Fairpool.sol";
 
 // TODO: Test existence: increasing speed decreases baseDelta, it's possible to arrive back at the same state if msg.sender is operator
 // TODO: -4320273083666300421
-contract FairpoolTest is Fairpool, Util {
+contract FairpoolTest is Fairpool, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
     uint constant $speed = maxSpeed;
@@ -273,12 +274,7 @@ contract FairpoolTest is Fairpool, Util {
 
     // Must be overridden to prevent Echidna from reporting an overflow (there's no explicit revert in ERC20 because it relies on automatic overflow checking)
     function increaseAllowance(address spender, uint256 addedValue) public virtual override returns (bool) {
-        address owner = _msgSender();
-        uint currentAllowance = allowance(owner, spender);
-        unchecked {
-            uint newAllowance = currentAllowance + addedValue;
-            require(newAllowance >= currentAllowance, "ERC20: increased allowance above type(uint).max");
-        }
+        checkAllowance(spender, addedValue, allowance(msg.sender, spender));
         return super.increaseAllowance(spender, addedValue);
     }
 
