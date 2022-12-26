@@ -6,14 +6,8 @@ import "./ERC20Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Fairpool.sol";
 
-/* TODO
- * If the sender sells his full amount, he is no longer included in holders, so sumOfTallies will be incorrect
- * quoteBalanceOfContractIsCorrect() must fail
- * -- looks like it shouldn't fail now after changes; need to test it by removing quoteBalanceOfContract from code
- * -- still current after the preallocate() / deallocate() fix
-*/
-// TODO: what if quoteDelta * fees < scale? (then operator would receive 0)
-// TODO: same problem with royalties and dividends
+// TODO: Test existence: increasing speed decreases baseDelta, it's possible to arrive back at the same state if msg.sender is operator
+// TODO: -4320273083666300421
 contract FairpoolTest is Fairpool, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
@@ -33,8 +27,8 @@ contract FairpoolTest is Fairpool, Util {
     function test() public {
         speedIsBounded();
         taxIsBounded();
-        allHoldersHaveTallies();
-        quoteBalanceOfContractIsCorrect();
+        allUsersHaveTallies();
+        contractBalanceIsCorrect();
     }
 
     // allow testing different combinations of speed, royalties, dividends
@@ -120,7 +114,7 @@ contract FairpoolTest is Fairpool, Util {
         ensureGreaterEqual(next.balanceOfContract, next.balanceOfContractCalculated, "next.balanceOfContract", "next.balanceOfContractCalculated");
     }
 
-    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual override {
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual override returns (uint quoteDistributed) {
         Vars memory prev;
         Vars memory next;
         address sender = _msgSender();
@@ -136,7 +130,8 @@ contract FairpoolTest is Fairpool, Util {
         prev.holders = getOld(holders);
         prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
 
-        super.sell(baseDeltaProposed, quoteReceivedMin, deadline);
+        quoteDistributed = super.sell(baseDeltaProposed, quoteReceivedMin, deadline);
+        ensureNotEqual(quoteDistributed, 0, "quoteDistributed", "0"); // because deltaQuote is always divisible by scale without remainder
 
         next.balanceOfContract = address(this).balance;
         next.balanceOfContractCached = quoteBalanceOfContract;
@@ -151,8 +146,7 @@ contract FairpoolTest is Fairpool, Util {
 
         ensureLessEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
         ensureLess(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
-        // tallyOfSender can be either 0 or 1 (if balanceOfSender == 0 or balanceOfSender != 0)
-        ensureLessEqual(next.tallyOfSender, 1, "next.tallyOfSender", "1");
+        ensureLessEqual(next.tallyOfSender, 1, "next.tallyOfSender", "1"); // because tallyOfSender can be either 0 or 1 (if balanceOfSender == 0 or balanceOfSender != 0)
 
         // neg_ values are calculated with inverted order of next & prev
         uint neg_diffBalanceOfContract = prev.balanceOfContract - next.balanceOfContract;
@@ -230,7 +224,12 @@ contract FairpoolTest is Fairpool, Util {
         ensureLessEqual(next.tallyOfSender, 1, "next.tallyOfSender", "1");
         ensureEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
         ensureGreater(next.quoteBalanceOfSender, prev.quoteBalanceOfSender, "next.quoteBalanceOfSender", "prev.quoteBalanceOfSender");
-        ensureEqual(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+        if (msg.sender == operator) {
+            // this assertion is redundant, because we already check ensureGreater(next.quoteBalanceOfSender, prev.quoteBalanceOfSender), but we'll leave it for completeness
+            ensureGreater(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+        } else {
+            ensureEqual(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+        }
         ensureLess(next.tallyOfSender, prev.tallyOfSender, "next.tallyOfSender", "prev.tallyOfSender");
         ensureEqual(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
         ensureLessEqual(next.sumOfTalliesOfHolders, prev.sumOfTalliesOfHolders, "next.sumOfTalliesOfHolders", "prev.sumOfTalliesOfHolders");
@@ -251,17 +250,24 @@ contract FairpoolTest is Fairpool, Util {
         ensure(royalties <= maxRoyalties, "tax <= maxTax");
     }
 
-    function allHoldersHaveTallies() internal {
+    function allUsersHaveTallies() internal {
+        logArray(holders, "holders");
         for (uint i = 0; i < holders.length; i++) {
+            log('balanceOf(holders[i])', balanceOf(holders[i]));
             ensureGreater(tallies[holders[i]], 0, string.concat("tallies[holders[", toString(i), "]]"), "0");
+        }
+        for (uint i = 0; i < beneficiaries.length; i++) {
+            log('balanceOf(beneficiaries[i])', balanceOf(beneficiaries[i]));
+            ensureGreater(tallies[beneficiaries[i]], 0, string.concat("tallies[beneficiaries[", toString(i), "]]"), "0");
         }
         ensureEqual(tallies[address(0)], 0, "tallies[address(0)]", "0");
     }
 
-    function quoteBalanceOfContractIsCorrect() internal {
-        uint sumOfTallies = sum(holders, tallies);
+    function contractBalanceIsCorrect() internal {
+        uint sumOfTalliesOfHolders = sum(holders, tallies);
         uint sumOfPreallocations = defaultTally * holders.length;
-        uint expectedBalance = quoteBalanceOfContract + sumOfTallies - sumOfPreallocations;
+        uint expectedBalance = quoteBalanceOfContract + sumOfTalliesOfHolders - sumOfPreallocations;
+        // NOTE: Using GreaterEqual instead of Equal because if the sender sells his full balance, he is no longer included in holders, so sumOfTalliesOfHolders will not include his tally
         ensureGreaterEqual(address(this).balance, expectedBalance, "address(this).balance", "quoteBalanceOfContract + sumOfTallies - sumOfPreallocations");
     }
 
