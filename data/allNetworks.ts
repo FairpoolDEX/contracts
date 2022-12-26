@@ -29,6 +29,12 @@ export const mainnet = addEVMNetwork({
   blockGasLimit: 30000000, // https://etherscan.io/blocks
 })
 
+export const goerli = addEVMNetwork({
+  name: 'goerli',
+  chainId: 5,
+  blockGasLimit: 30000000, // https://goerli.etherscan.io/blocks
+})
+
 export const ropsten = addEVMNetwork({
   name: 'ropsten',
   chainId: 3,
