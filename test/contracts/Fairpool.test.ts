@@ -2,7 +2,6 @@ import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { Fairpool, FairpoolTest } from '../../typechain-types'
-import { beforeEach } from 'mocha'
 import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
@@ -15,17 +14,18 @@ import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
 import { mapAsync, sequentialMap } from 'libs/utils/promise'
 import { MaxUint256 } from '../../libs/ethereum/constants'
-import { identity } from 'remeda'
+import { identity, zip } from 'remeda'
 import { Address } from '../../models/Address'
 import { parseAddress } from '../../libs/ethereum/models/Address'
 import { ensure, ensureFind } from '../../libs/utils/ensure'
 import { LogLevel } from '../../util-local/ethers'
 import { CallOverrides } from '@ethersproject/contracts/src.ts/index'
-import { hexZeroPad } from '@ethersproject/bytes'
-import { todo } from '../../libs/utils/todo'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { renderLogDescription } from '../../util-local/ethers/renderLogDescription'
 import { show } from '../../libs/utils/debug'
+import { FunctionCall, parseFunctionCall } from '../../util-local/parseFunctionCall'
+import { getSignatures } from '../../util-local/getSignatures'
+import { hexZeroPad } from 'ethers/lib/utils'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -168,30 +168,36 @@ describe('Fairpool', async function () {
   fest('must replay Echidna transactions', async () => {
     ethers.utils.Logger.setLogLevel(LogLevel.ERROR) // suppress "Duplicate definition" warnings
     const fairpoolTestFactory = await ethers.getContractFactory('FairpoolTest')
-    const fairpool = (await fairpoolTestFactory.connect(owner).deploy()) as unknown as FairpoolTest
-    const callers: Caller[] = [
-      { address: '0x0000000000000000000000000000000000030000', signer: owner },
-      { address: '0x0000000000000000000000000000000000020000', signer: bob },
-      { address: '0x0000000000000000000000000000000000010000', signer: ben },
+    const fairpoolTest = (await fairpoolTestFactory.connect(owner).deploy()) as unknown as FairpoolTest
+    const rewrites: Rewrite<Address>[] = [
+      { from: '0x0000000000000000000000000000000000030000', to: owner.address },
+      { from: '0x0000000000000000000000000000000000020000', to: bob.address },
+      { from: '0x0000000000000000000000000000000000010000', to: ben.address },
+      { from: '0x00a329c0648769a73afac7f9381e08fb43dbea72', to: fairpoolTest.address },
     ]
+    const signatures = getSignatures(fairpoolTest.interface.functions)
     const echidnaLog = `
-      setSpeed(2110643339) Time delay: 323464 seconds Block delay: 37527
-      buy(65535,115792089237316195423570985008687907853269984665640564039457584007913129638935) Value: 0x3d1109f8faec13726 Time delay: 439519 seconds Block delay: 23310
-      sell(4369999,1,115792089237316195423570985008687907853269984665640564039457584007913129574400) Time delay: 273833 seconds Block delay: 27535
+      setSpeed(266) from: 0x0000000000000000000000000000000000030000 Time delay: 124482 seconds Block delay: 15771
+      transferShares(0x10000,16) from: 0x0000000000000000000000000000000000030000 Time delay: 18 seconds Block delay: 41552
+      transferShares(0x30000,7) from: 0x0000000000000000000000000000000000010000 Time delay: 4121 seconds Block delay: 1001
+      buy(65537,115792089237316195423570985008687907853269984665640564039457584007913129639808) from: 0x0000000000000000000000000000000000010000 Value: 0x322ec6b9a77f4a56 Time delay: 58862 seconds Block delay: 44445
+      transferShares(0xc17c4dd16364f52552d996cfe73d259a0fc7ba8e,9) from: 0x0000000000000000000000000000000000010000 Time delay: 255 seconds Block delay: 28613
+      test() from: 0x0000000000000000000000000000000000010000 Time delay: 382087 seconds Block delay: 7755
     `
     const echidnaLines = echidnaLog.split('\n').map(s => s.trim()).filter(identity)
-    const infos = echidnaLines.map(parseTransactionInfo(callers))
+    const infos = echidnaLines.map(parseTransactionInfo(signatures, rewrites))
     const results = await sequentialMap(infos, async (info) => {
-      const { signer, name, args, value, origin } = info
-      show('\n' + origin)
-      const context = fairpool.connect(signer)
+      const { caller, name, args, value, origin } = info
+      show('\n' + stringifyTransaction(info))
+      const signer = ensureFind(signers, s => s.address === caller)
+      const context = fairpoolTest.connect(signer)
       const overrides: CallOverrides = { value }
       const argsWithOverrides = [...args, overrides]
       // hack to allow calling arbitrary functions
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const transaction = await (context[name] as any).apply(context, argsWithOverrides) as ContractTransaction
       const receipt = await transaction.wait(1) // TODO: the block number will be incremented, so "Block delay" will not work as intended. However, we want to preserve the order of console.log's, so we want to wait here
-      const logs = receipt.logs.map(l => fairpool.interface.parseLog(l))
+      const logs = receipt.logs.map(l => fairpoolTest.interface.parseLog(l))
       show(logs.map(renderLogDescription))
       return { info, transaction, receipt, logs }
     })
@@ -219,16 +225,16 @@ describe('Fairpool', async function () {
   //   show('stats', separate.toString(), combined.toString(), diff.toString())
   // })
 
-  const getGasUsedForCombinedSellAndWithdraw = async () => {
-    snapshot = await getSnapshot()
-    const balanceQuoteTotal = await owner.getBalance()
-    const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(getQuoteAmountMin(speed, scale)) })
-    const balance = await fairpoolAsOwner.balanceOf(owner.address)
-    const sellAndWithdrawTx = await fairpoolAsOwner.sellAndWithdraw(balance, 0, MaxUint256)
-    const sellAndWithdrawTxReceipt = await sellAndWithdrawTx.wait(1)
-    await revertToSnapshot([snapshot])
-    return sellAndWithdrawTxReceipt.gasUsed
-  }
+  // const getGasUsedForCombinedSellAndWithdraw = async () => {
+  //   snapshot = await getSnapshot()
+  //   const balanceQuoteTotal = await owner.getBalance()
+  //   const buyTx = await fairpoolAsOwner.buy(0, MaxUint256, { value: bn(1000).mul(getQuoteAmountMin(speed, scale)) })
+  //   const balance = await fairpoolAsOwner.balanceOf(owner.address)
+  //   const sellAndWithdrawTx = await fairpoolAsOwner.sellAndWithdraw(balance, 0, MaxUint256)
+  //   const sellAndWithdrawTxReceipt = await sellAndWithdrawTx.wait(1)
+  //   await revertToSnapshot([snapshot])
+  //   return sellAndWithdrawTxReceipt.gasUsed
+  // }
 
   // fest('must get the gas per holder', async () => {
   //   const maxHoldersCount1 = 50
@@ -241,16 +247,11 @@ describe('Fairpool', async function () {
 
 })
 
-interface Caller {
-  address: Address
-  signer: SignerWithAddress
-}
-
 type TransactionInfoArg = BigNumber | Address
 
 interface TransactionInfo {
   origin: string
-  signer: SignerWithAddress
+  caller: Address
   name: Parameters<FairpoolTest['interface']['getFunction']>[0]
   args: TransactionInfoArg[]
   value: BigNumber
@@ -258,34 +259,58 @@ interface TransactionInfo {
   blockDelay: BigNumber
 }
 
-const parseTransactionInfo = (callers: Caller[]) => (origin: string): TransactionInfo => {
+const parseTransactionInfo = (signatures: FunctionCall[], rewrites: Rewrite<Address>[]) => (origin: string): TransactionInfo => {
   const [callRaw] = origin.split(' ')
-  const [_, name, argsRaw] = ensure(callRaw.match(/^(\w+)\(([^(]*)\)$/)) as [string, TransactionInfo['name'], string]
+  const call = parseFunctionCall(callRaw)
+  const name = call.name as TransactionInfo['name']
+  const signature = ensureFind(signatures, s => s.name === name)
   const from = parseLineComponent('from', parseAddress, origin)
   const value = parseLineComponent('Value', bn, origin) || bn(0)
   const timeDelay = parseLineComponent('Time delay', bn, origin) || bn(0)
   const blockDelay = parseLineComponent('Block delay', bn, origin) || bn(0)
-  // assuming all args are numbers (better to use decode here)
-  const argsSplit = argsRaw.split(',').filter(identity)
-  const args: TransactionInfoArg[] = argsSplit.map(bn)
-  // begin hack
-  if (name === 'transferOwnership') {
-    const address = parseAddress(hexZeroPad(argsSplit[0], 20))
-    args[0] = ensureFind(callers, c => c.address === address).signer.address
-  }
-  // end hack
-  const { signer } = callers.find(c => c.address === from) || callers[0]
-  return { origin, signer, name, args, value, blockDelay, timeDelay }
+  const args = parseTransactionInfoArgs(signature.args, rewrites)(call.args)
+  const caller = (from ? ensureFind(rewrites, c => c.from === from) : rewrites[0]).to
+  return { origin, caller, name, args, value, blockDelay, timeDelay }
 }
 
-const stringifyTransaction = (callers: Record<Address, SignerWithAddress>) => (transaction: TransactionInfo) => {
-  const { signer, name, args, blockDelay, timeDelay, value } = transaction
+const parseTransactionInfoArgs = (types: string[], rewrites: Rewrite<Address>[]) => (args: string[]) => {
+  ensure(types.length === args.length)
+  let from: Address
+  let rewrite: Rewrite<Address> | undefined
+  return zip(args, types).map(([arg, type]) => {
+    switch (true) {
+      case type.startsWith('int'):
+      case type.startsWith('uint'):
+        return bn(arg)
+      case type === 'string':
+        return arg
+      case type === 'address':
+        from = parseAddress(hexZeroPad(arg, 20))
+        rewrite = rewrites.find(r => r.from === from)
+        return rewrite ? rewrite.to : from
+      default:
+        throw new Error(`Unknown type "${type}" for arg "${arg}"`)
+    }
+  })
+}
+
+const stringifyTransaction = (transaction: TransactionInfo) => {
+  const { caller, name, args, blockDelay, timeDelay, value } = transaction
   const splinters = []
   splinters.push(`${name}(${args.map(stringifyArg).join(',')})`)
-  splinters.push(`From: ${signer.address}`)
-  // incomplete
-  return todo()
+  splinters.push(`From: ${caller}`)
+  splinters.push(`Value: ${value.toString()}`)
+  splinters.push(`Time delay: ${timeDelay.toString()}`)
+  splinters.push(`Block delay: ${blockDelay.toString()}`)
+  return splinters.join(' ')
 }
+
+interface Rewrite<T> {
+  from: T
+  to: T
+}
+
+// const toAddressRewrites = (callers: Caller[]): Rewrite<Address>[] => callers.map(c => ({ from: c.address, to: c.signer.address }))
 
 const stringifyArg = (arg: TransactionInfoArg): string => {
   if (arg instanceof BigNumber) return arg.toString()

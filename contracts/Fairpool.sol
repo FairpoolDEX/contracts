@@ -28,8 +28,13 @@ import "./Util.sol";
  * - Custom errors can have names of any length (the resulting selector is always 4 bytes)
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  * - Ownable is needed to change speed & tax (otherwise there could be a battle between the beneficiaries)
+ * - Owner may call renounceOwnership(), thus setting the owner to zero address
  * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of dividends). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay dividends to anyone else ~= he should pay dividends to himself)
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
+ * - baseNew is always divisible by scale without remainder (due to upscale() / downscale())
+ * - quoteNew is always divisible by scale without remainder (due to getQuote(baseNew) )
+ * - baseDelta is always divisible by scale without remainder (due to baseNew - baseOld / baseOld - baseNew)
+ * - quoteDelta is always divisible by scale without remainder (due to quoteNew - quoteOld / quoteOld - quoteNew)
  */
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
     using FixedPointMathLib for uint;
@@ -52,6 +57,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
 
     // Quote asset balances available for withdrawal
     // IMPORTANT: Due to preallocation, sum(tallies) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to preallocate the storage slot)
+    // IMPORTANT: There's no deallocation: every address that has been a holder or a beneficiary in the past will always have tallies[address] >= defaultTally
     // `if (balanceOf(address) == 0) then (tallies[address] == 0)` => false, because beneficiaries may receive tallies while their balances are zero
     // `if (balanceOf(address) != 0) then (tallies[address] == defaultTally || tallies[address] > defaultTally)` => true, because of preallocation
     mapping(address => uint) internal tallies;
@@ -123,7 +129,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (quoteRefund != 0) payable(msg.sender).transfer(quoteRefund);
     }
 
-    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant {
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant returns (uint quoteDistributed) {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
         if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaProposedMustBeLessThanOrEqualToBalance();
@@ -132,7 +138,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         // baseDelta != 0 ==> quoteDelta != 0
         _burn(msg.sender, baseDelta);
         quoteBalanceOfContract -= quoteDelta;
-        uint quoteDistributed = distribute(quoteDelta);
+        quoteDistributed = distribute(quoteDelta);
         uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
         emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
@@ -150,11 +156,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (tallies[msg.sender] > defaultTally) {
             quoteWithdrawn = tallies[msg.sender] - defaultTally;
             emit Withdraw(msg.sender, quoteWithdrawn);
-            if (balanceOf(msg.sender) == 0 && shares[msg.sender] == 0) {
-                tallies[msg.sender] = 0;
-            } else {
-                tallies[msg.sender] = defaultTally;
-            }
+            tallies[msg.sender] = defaultTally;
         } else {
             quoteWithdrawn = 0;
         }
@@ -353,9 +355,6 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         if (from == to || amount == 0) {
             return;
         }
-        if (from != address(0) && balanceOf(from) == 0) {
-            deallocate(from);
-        }
         if (to != address(0) && balanceOf(to) != 0) {
             preallocate(to);
         }
@@ -366,19 +365,9 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         preallocate(target);
     }
 
-    function removeBeneficiary(address target) internal virtual override {
-        super.removeBeneficiary(target);
-        deallocate(target);
-    }
-
     function preallocate(address target) internal {
         // `if` is necessary to prevent overwriting an existing positive tally
         if (tallies[target] == 0) tallies[target] = defaultTally;
-    }
-
-    function deallocate(address target) internal {
-        // `if` is necessary to prevent overwriting an existing positive tally
-        if (tallies[target] == defaultTally) delete tallies[target];
     }
 
     function decimals() public view virtual override returns (uint8) {
