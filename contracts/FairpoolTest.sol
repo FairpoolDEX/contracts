@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "./Util.sol";
-import "./ERC20Enumerable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./FairpoolOwnerOperator.sol";
 import "./IncreaseAllowanceHooks.sol";
-import "./Fairpool.sol";
+import "./Util.sol";
 
-// TODO: Test existence: increasing speed decreases baseDelta, it's possible to arrive back at the same state if msg.sender is operator
-// TODO: -4320273083666300421
-contract FairpoolTest is Fairpool, IncreaseAllowanceHooks, Util {
+contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
     uint constant $speed = maxSpeed;
@@ -17,7 +13,7 @@ contract FairpoolTest is Fairpool, IncreaseAllowanceHooks, Util {
     uint constant $royalties = scale / 2 - $fees;
     uint constant $dividends = scale / 2 - 1;
 
-    constructor() Fairpool("FairpoolTest", "FTS", $speed, $royalties, $dividends, $beneficiaries, $shares) {
+    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $speed, $royalties, $dividends, $beneficiaries, $shares) {
         // speed and tax can be changed via reset()
         // beneficiaries and shares can be changed via transferShares()
         operator = payable(msg.sender); // allow the owner to receive the fees & call setOperator()
