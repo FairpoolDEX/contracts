@@ -19,6 +19,24 @@ import { deployFairpoolTest } from './Fairpool/deployFairpoolTest'
 import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
+import { bn } from '../../libs/bn/utils'
+
+type FairpoolParameterGetter = 'royalties' | 'dividends' | 'fees'
+type FairpoolParameterSetter = 'setRoyalties' | 'setDividends' | 'setFees'
+
+async function expectParameter(contract: Fairpool, admin: SignerWithAddress, stranger: SignerWithAddress, getter: FairpoolParameterGetter, setter: FairpoolParameterSetter, valueNew: BigNumber, error: string, isCustomError: boolean) {
+  const valueBefore = await contract[getter]()
+  expect(valueBefore).not.to.equal(valueNew)
+  const promise = contract.connect(stranger)[setter](valueNew)
+  if (isCustomError) {
+    await expect(promise).to.be.revertedWithCustomError(contract, error)
+  } else {
+    await expect(promise).to.be.revertedWith(error)
+  }
+  await contract.connect(admin)[setter](valueNew)
+  const feesAfter = await contract[getter]()
+  expect(feesAfter).to.equal(valueNew)
+}
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -29,13 +47,14 @@ describe('Fairpool', async function () {
   let sam: SignerWithAddress
   let sally: SignerWithAddress
   let ted: SignerWithAddress
-  let tara: SignerWithAddress
+  let operator: SignerWithAddress
 
   let fairpool: Fairpool
   let fairpoolAsOwner: Fairpool
   let fairpoolAsSam: Fairpool
   let fairpoolAsBob: Fairpool
   let fairpoolAsSally: Fairpool
+  let fairpoolAsOperator: Fairpool
 
   let now: Date
 
@@ -92,9 +111,9 @@ describe('Fairpool', async function () {
    */
 
   before(async () => {
-    signers = [owner, stranger, ben, bob, sam, ted, sally, tara] = await ethers.getSigners()
+    signers = [owner, stranger, ben, bob, sam, ted, sally, operator] = await ethers.getSigners()
 
-    const fairpoolFactory = await ethers.getContractFactory('Fairpool')
+    const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
     speed = getScaledPercent(200)
     royalties = getScaledPercent(30)
     dividends = getScaledPercent(20)
@@ -108,9 +127,12 @@ describe('Fairpool', async function () {
       [getScaledPercent(12), getScaledPercent(88)]
     )) as unknown as Fairpool
     fairpool = fairpoolAsOwner.connect($zero)
-    fairpoolAsBob = fairpoolAsOwner.connect(bob)
-    fairpoolAsSam = fairpoolAsOwner.connect(sam)
-    fairpoolAsSally = fairpoolAsOwner.connect(sally)
+    fairpoolAsBob = fairpool.connect(bob)
+    fairpoolAsSam = fairpool.connect(sam)
+    fairpoolAsSally = fairpool.connect(sally)
+    fairpoolAsOperator = fairpool.connect(operator)
+
+    await fairpoolAsOwner.setOperator(operator.address)
 
     // denominator = fairpool.denominator()
     // bid = await fairpoolAsBob.bid()
@@ -159,7 +181,28 @@ describe('Fairpool', async function () {
   })
 
   fest('setOperator', async () => {
+    // before setOperator(bob.address)
+    await expect(fairpoolAsBob.setOperator(bob.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await fairpoolAsOperator.setOperator(bob.address)
+    const operator1 = await fairpool.operator()
+    expect(operator1).to.equal(bob.address)
+    // after setOperator(bob.address)
+    await expect(fairpoolAsOperator.setOperator(owner.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await fairpoolAsBob.setOperator(operator.address)
+    const operator2 = await fairpool.operator()
+    expect(operator2).to.equal(operator.address)
+  })
 
+  fest('setRoyalties', async () => {
+    await expectParameter(fairpool, owner, bob, 'royalties', 'setRoyalties', bn(1), 'Ownable: caller is not the owner', false)
+  })
+
+  fest('setDividends', async () => {
+    await expectParameter(fairpool, owner, bob, 'dividends', 'setDividends', bn(1), 'Ownable: caller is not the owner', false)
+  })
+
+  fest('setFees', async () => {
+    await expectParameter(fairpool, operator, bob, 'fees', 'setFees', bn(1), 'OnlyOperator', true)
   })
 
   // fest('must get the gas per holder', async () => {
