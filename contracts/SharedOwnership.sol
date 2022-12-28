@@ -19,7 +19,7 @@ abstract contract SharedOwnership is Scaled {
     error AmountMustBeNonZero();
     error SharesMustBeGreaterThanOrEqualToAmount();
 
-    event TransferShares(address from, address to, uint amount);
+    event TransferShares(address indexed from, address indexed to, uint amount);
 
     constructor(address payable[] memory beneficiaries_, uint[] memory shares_) {
         if (beneficiaries_.length == 0) {

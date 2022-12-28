@@ -93,7 +93,7 @@ export const config: HardhatUserConfig = {
       gasPrice,
       gasMultiplier: 1,
       // forking: {
-      //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`,
+      //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY_MAINNET}`,
       //   blockNumber: 12779553,
       // },
       blockGasLimit: 8000000,

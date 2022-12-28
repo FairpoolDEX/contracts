@@ -10,7 +10,7 @@
     "clean": "FEES=20:1 SILENCE_ENV_VAR=true hardhat clean --show-stack-traces",
     "compile": "FEES=20:1 SILENCE_ENV_VAR=true hardhat compile --show-stack-traces",
     "typecheck": "tsc --noEmit",
-    "fork": "FEES=20:1 SILENCE_ENV_VAR=true hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_MAINNET_API_KEY",
+    "fork": "FEES=20:1 SILENCE_ENV_VAR=true hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/$ALCHEMY_API_KEY_MAINNET",
     "lint:all": "yarn lint:code:all && yarn lint:markdown:all",
     "lint:code": "eslint --fix --ignore-path .gitignore --max-warnings=0",
     "lint:code:all": "yarn lint:code .",
