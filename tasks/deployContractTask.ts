@@ -23,9 +23,11 @@ export async function deployUpgradeableContractTask(args: DeployContractTaskArgu
 }
 
 export async function deployNonUpgradeableContract(context: DeployContractContext): Promise<DeployNonUpgradeableContractOutput> {
-  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, network, log, run } = context
+  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, artifacts, network, log, run } = context
 
   const factory = await ethers.getContractFactory(contractName)
+  const artifact = await artifacts.readArtifact(contractName)
+  const contractFullName = `${artifact.sourceName}:${artifact.contractName}`
   const contractNameEnvVar = toUpperSnakeCase($contractNameEnvVar || contractName)
   const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
   log(`NETWORK = ${network.name}`)
@@ -42,15 +44,18 @@ export async function deployNonUpgradeableContract(context: DeployContractContex
     address,
     constructorArgs: constructorArgsModule,
     constructorArgsParams,
+    contract: contractFullName,
   })
 
   return { address }
 }
 
 export async function deployUpgradeableContract(context: DeployContractContext): Promise<DeployUpgradeableContractOutput> {
-  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, upgrades, network, log, run } = context
+  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, upgrades, artifacts, network, log, run } = context
 
   const factory = await ethers.getContractFactory(contractName)
+  const artifact = await artifacts.readArtifact(contractName)
+  const contractFullName = `${artifact.sourceName}:${artifact.contractName}`
   const contractNameEnvVar = toUpperSnakeCase($contractNameEnvVar || contractName)
   const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
   log(`NETWORK = ${network.name}`)
@@ -67,6 +72,7 @@ export async function deployUpgradeableContract(context: DeployContractContext):
     if (verify) await verifyWithWorkaround(run, {
       address: implementationAddress,
       // constructorArgs not needed since the implementation contract constructor has zero arguments
+      contract: contractFullName,
     })
   } finally {
     log(`IMPORTANT: Verify proxy manually using ${await getProxyCheckerUrl(proxyAddress, contract.signer)}`)
