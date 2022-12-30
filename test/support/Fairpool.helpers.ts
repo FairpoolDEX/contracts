@@ -1,5 +1,5 @@
 import { bn, getShare as getShareOriginal } from '../../libs/bn/utils'
-import { toBackendAmountBN } from '../../util-local/bignumber.convert'
+import { toBackendAmountBN } from '../../libs/utils/bignumber.convert'
 import { BigNumber, BigNumberish } from 'ethers'
 
 export const scale = BigNumber.from(10).pow(6)
