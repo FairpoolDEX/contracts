@@ -7,7 +7,7 @@ import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
 import { fest } from '../../util-local/mocha'
 import { mainnet } from '../../data/allNetworks'
-import { getScaledPercent } from '../support/Fairpool.helpers'
+import { getScaledPercent, scale } from '../support/Fairpool.helpers'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
 import { sequentialMap } from 'libs/utils/promise'
@@ -20,6 +20,7 @@ import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
 import { bn } from '../../libs/bn/utils'
+import { MaxUint256 } from '../../libs/ethereum/constants'
 
 type FairpoolParameterGetter = 'royalties' | 'dividends' | 'fees'
 type FairpoolParameterSetter = 'setRoyalties' | 'setDividends' | 'setFees'
@@ -178,6 +179,16 @@ describe('Fairpool', async function () {
     const results = await sequentialMap(infos, executeTransaction(fairpoolTest, signers))
     const hasAssertionFailed = !!results.find(({ logs }) => logs.find(l => l.name === 'AssertionFailed'))
     if (hasAssertionFailed) throw new Error('AssertionFailed')
+  })
+
+  fest('quoteDeltaProposedMin', async () => {
+    const quoteDeltaProposedMin = speed.mul(scale)
+    // first transaction should be reverted
+    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin.sub(1) })).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    // second transaction should be accepted
+    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin })).to.eventually.be.ok
+    // third transaction should be reverted because the totalSupply() has increased, so quoteDeltaProposedMin is not enough anymore
+    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin })).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
   })
 
   fest('setOperator', async () => {

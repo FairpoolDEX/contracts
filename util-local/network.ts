@@ -1,14 +1,8 @@
-import { Overrides } from 'ethers'
+import { Overrides, Signer } from 'ethers'
 import { getGasLimit, maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
-import { NetworkName } from '../models/NetworkName'
-import { Signer } from '@ethersproject/abstract-signer/src.ts/index'
-import { ensure } from '../util/ensure'
+import { ensure } from '../libs/utils/ensure'
 import { findNetworkByChainId } from '../data/allNetworks'
-
-export interface NetworkInfo {
-  name: NetworkName
-}
 
 // Copied from @ethersproject/abstract-provider because it had type errors
 export interface FeeData {
