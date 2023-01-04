@@ -23,6 +23,11 @@ addNetworkExplorer({
 })
 
 addNetworkExplorer({
+  name: 'goerli',
+  url: 'https://goerli.etherscan.io',
+})
+
+addNetworkExplorer({
   name: 'rinkeby',
   url: 'https://rinkeby.etherscan.io',
 })

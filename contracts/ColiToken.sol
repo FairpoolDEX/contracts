@@ -80,11 +80,11 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
     }
 
     function name() public view virtual override returns (string memory) {
-        return "Coliquidity Token";
+        return "Fairpool Token";
     }
 
     function symbol() public view virtual override returns (string memory) {
-        return "COLI";
+        return "FAIR";
     }
 
     function addVestingType(uint256 monthlyRate, uint256 initialRate, uint256 lockDaysPeriod) external onlyOwner returns (uint256) {
