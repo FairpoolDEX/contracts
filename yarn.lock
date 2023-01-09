@@ -5867,10 +5867,10 @@ luxon-business-days@^3.0.1:
   resolved "https://registry.yarnpkg.com/luxon-business-days/-/luxon-business-days-3.0.1.tgz#31c06059cb4f1ec3cba96bc1117f3c202cb67fb2"
   integrity sha512-MOKq0tdTjsCnvcaIEw7x0hGPBJHcqufvNSiI2klXZTGh/Hs4h6c1TjJNfQKq6ctwSTnLTyP53/SFHDBX/ghmsQ==
 
-luxon@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/luxon/-/luxon-3.1.1.tgz#b492c645b2474fb86f3bd3283213846b99c32c1e"
-  integrity sha512-Ah6DloGmvseB/pX1cAmjbFvyU/pKuwQMQqz7d0yvuDlVYLTs2WeDHQMpC8tGjm1da+BriHROW/OEIT/KfYg6xw==
+luxon@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/luxon/-/luxon-3.2.1.tgz#14f1af209188ad61212578ea7e3d518d18cee45f"
+  integrity sha512-QrwPArQCNLAKGO/C+ZIilgIuDnEnKx5QYODdDtbFaxzsbZcc/a7WFq7MhsVYgRlwawLtvOUESTlfJ+hc/USqPg==
 
 make-dir@^3.0.0:
   version "3.1.0"
