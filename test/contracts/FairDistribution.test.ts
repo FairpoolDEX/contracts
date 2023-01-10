@@ -1,13 +1,14 @@
 import { BalanceBN } from '../../models/BalanceBN'
-import { toGenericTransition, Transition } from '../../libs/divide-and-conquer/Transition'
+import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { BigNumber } from 'ethers'
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { bn } from '../../libs/bn/utils'
 import { AmountBN } from '../../models/AmountBN'
 import { BalancesMap } from '../../util-local/balance'
 import { Address } from '../../models/Address'
 import { zero } from '../../libs/bn/constants'
 import { todo } from 'libs/utils/todo'
+import { toGenericTransition } from '../../libs/divide-and-conquer/models/GenericState/toGenericTransition'
 
 type ConstantUint256 = BigNumber
 

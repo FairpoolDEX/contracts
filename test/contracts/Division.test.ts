@@ -1,4 +1,4 @@
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { cloneDeep } from 'lodash'
 import { variator } from '../../libs/divide-and-conquer/Variator'

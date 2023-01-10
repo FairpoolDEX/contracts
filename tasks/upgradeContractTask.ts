@@ -13,8 +13,21 @@ export async function upgradeContractTask(args: UpgradeContractTaskArguments, hr
 }
 
 export async function upgradeContract(context: UpgradeContractContext) {
-  const { contractName, contractAddress, verify, ethers, upgrades, log, run } = context
+  const { contractName, contractAddress, verify, ethers, upgrades, log, run, getNamedAccounts } = context
   log(`Upgrading ${contractName}`)
+
+  const { arst } = await getNamedAccounts()
+
+  // const frame = ethProvider('frame') // Connect to Frame
+  // const Greeter = await ethers.getContractFactory('Greeter')
+  // const tx = await Greeter.getDeployTransaction()
+  //
+  // // Set `tx.from` to current Frame account
+  // tx.from = (await frame.request({ method: 'eth_requestAccounts' }))[0]
+  //
+  // // Sign and send the transaction using Frame
+  // await frame.request({ method: 'eth_sendTransaction', params: [tx] })
+
   const Token = await ethers.getContractFactory(contractName)
   const token = await upgrades.upgradeProxy(contractAddress, Token)
   log(`Waiting for upgrade TX: ${token.deployTransaction.hash}`)

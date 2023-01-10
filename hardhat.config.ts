@@ -87,6 +87,7 @@ export const config: HardhatUserConfig = {
       },
     ],
   },
+  namedAccounts: { deployer: '0x7554140235ad2D1Cc75452D2008336700C598Dc1' },
   networks: {
     hardhat: {
       initialDate: new Date(0).toISOString(),
@@ -120,6 +121,13 @@ export const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 2 * minutes,
+    }),
+    goerli_hardware: fromNetwork(goerli, {
+      url: 'http://127.0.0.1:1248', // The RPC endpoint exposed by Frame
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 5 * minutes,
     }),
     ropsten: fromNetwork(ropsten, {
       url: getJsonRpcUrl('ropsten'),

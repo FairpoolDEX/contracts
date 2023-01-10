@@ -4,11 +4,15 @@ import { z } from 'zod'
 export const AddressSchema = z.string().superRefine((value, ctx) => {
   try {
     normalizeAddress(value)
-  } catch (e) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: e.toString(),
-    })
+  } catch (error) {
+    if (error instanceof Error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error.toString(),
+      })
+    } else {
+      throw error
+    }
   }
 }).transform(normalizeAddress)
 

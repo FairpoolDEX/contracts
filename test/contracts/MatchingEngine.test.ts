@@ -1,4 +1,4 @@
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { BigNumber } from 'bignumber.js'
 import { Timestamp } from '../../util-local/types'
 

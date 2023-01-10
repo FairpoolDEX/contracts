@@ -6,7 +6,11 @@ export async function silenceErrors<Val>(runner: SilenceRunner<Val>, filter: Sil
   try {
     return await runner()
   } catch (e) {
-    if (!filter(e)) {
+    if (e instanceof Error) {
+      if (!filter(e)) {
+        throw e
+      }
+    } else {
       throw e
     }
   }

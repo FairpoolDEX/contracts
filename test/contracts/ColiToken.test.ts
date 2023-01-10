@@ -508,6 +508,7 @@ async function getRebrandTestDeployContractContext(contractName: ContractName): 
     contractName,
     constructorArgsParams: [releaseTime.toString()],
     verify: false,
+    signerType: 'default',
   }))
 }
 

@@ -1,6 +1,6 @@
 import { Random } from 'fast-check'
 import { BalanceBN, balanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { toGenericTransition, Transition } from '../../libs/divide-and-conquer/Transition'
+import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { step, Step } from '../../libs/divide-and-conquer/Step'
@@ -14,13 +14,14 @@ import { handler, Handler } from '../../libs/divide-and-conquer/Handler'
 import { Filter } from '../../util/ensure'
 import { one, uint256Max, zero } from '../../libs/bn/constants'
 import { ERC20EnumerableError, MintToZeroAddress } from './ERC20Enumerable.errors'
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
+import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { BN } from '../../libs/bn'
 import { todo } from '../../libs/utils/todo'
 import prand from 'pure-rand'
 import { Plan, runTestWithPlans } from '../../libs/divide-and-conquer/runTest'
 import { runStepWithHandlers } from '../../libs/divide-and-conquer/runStepWithHandlers'
 import { MintParams } from './ERC20Enumerable.params'
+import { toGenericTransition } from '../../libs/divide-and-conquer/models/GenericState/toGenericTransition'
 
 export interface Data {
   balances: BalanceBN[]
