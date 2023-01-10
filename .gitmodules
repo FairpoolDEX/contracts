@@ -10,3 +10,6 @@
 [submodule "libs/ethereum"]
 	path = libs/ethereum
 	url = https://github.com/zenbox-org/ethereum.git
+[submodule "libs/fairpool"]
+	path = libs/fairpool
+	url = https://github.com/zenbox-org/fairpool.git
