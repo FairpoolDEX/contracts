@@ -72,6 +72,7 @@ async function deployColiToken(context: DeployColiTokenContext): Promise<ColiTok
     constructorArgsModule,
     constructorArgsParams: [],
     verify: true,
+    signerType: 'default',
     ...context,
   })
   return await getContract(ethers, 'ColiToken', result.proxyAddress) as unknown as ColiToken

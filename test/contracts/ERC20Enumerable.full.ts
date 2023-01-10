@@ -1,7 +1,7 @@
 import { BalancesMap } from '../../util-local/balance'
 import { AmountBN } from '../../models/AmountBN'
-import { GenericState } from '../../libs/divide-and-conquer/GenericState'
-import { toGenericTransition, Transition } from '../../libs/divide-and-conquer/Transition'
+import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
+import { Transition } from '../../libs/divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
 import { Address } from '../../models/Address'
 import { concat, pull } from 'lodash'
@@ -11,6 +11,7 @@ import { zero } from '../../libs/bn/constants'
 import { ERC20EnumerableError, MintToZeroAddress, TransferAmountExceedsBalance, TransferFromZeroAddress, TransferToZeroAddress } from './ERC20Enumerable.errors'
 import { MintParams, TransferParams } from './ERC20Enumerable.params'
 import { addUint, subUint } from '../../libs/ethereum/math'
+import { toGenericTransition } from '../../libs/divide-and-conquer/models/GenericState/toGenericTransition'
 
 export interface Data {
   totalSupply: AmountBN

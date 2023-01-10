@@ -4,9 +4,9 @@ export const NetworkNameSchema = z.enum(['hardhat', 'localhost', 'mainnet', 'goe
 
 const { hardhat, localhost } = NetworkNameSchema.enum
 
-export const localTestnets = [hardhat, localhost]
-
 export type NetworkName = z.infer<typeof NetworkNameSchema>
+
+export const localTestnets: NetworkName[] = [hardhat, localhost]
 
 export function validateNetworkName(name: NetworkName | string) {
   return NetworkNameSchema.parse(name)

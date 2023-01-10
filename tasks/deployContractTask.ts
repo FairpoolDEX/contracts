@@ -7,31 +7,31 @@ import { z } from 'zod'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { getProxyCheckerUrl } from '../util/url'
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
-import { expect } from '../util-local/expect'
 import { toUpperSnakeCase } from '../util/toUpperSnakeCase'
+import { expect } from 'libs/utils/chai'
 
 export async function deployNonUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)
-  await ensureDeployer(context)
   return deployNonUpgradeableContract(context)
 }
 
 export async function deployUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)
-  await ensureDeployer(context)
   return deployUpgradeableContract(context)
 }
 
 export async function deployNonUpgradeableContract(context: DeployContractContext): Promise<DeployNonUpgradeableContractOutput> {
-  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, artifacts, network, log, run } = context
+  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, ethers, artifacts, network, log, run } = context
 
-  const factory = await ethers.getContractFactory(contractName)
+  const signer = await getSigner(context)
+  const signerAddress = await signer.getAddress()
+  const factory = (await ethers.getContractFactory(contractName)).connect(signer)
   const artifact = await artifacts.readArtifact(contractName)
   const contractFullName = `${artifact.sourceName}:${artifact.contractName}`
   const contractNameEnvVar = toUpperSnakeCase($contractNameEnvVar || contractName)
   const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
   log(`NETWORK = ${network.name}`)
-  log(`export ${contractNameEnvVar}_DEPLOYER=${signer.address}`)
+  log(`export ${contractNameEnvVar}_DEPLOYER=${signerAddress}`)
 
   const contract = await factory.deploy(...constructorArgs, {
     ...await getOverrides(signer),
@@ -51,15 +51,17 @@ export async function deployNonUpgradeableContract(context: DeployContractContex
 }
 
 export async function deployUpgradeableContract(context: DeployContractContext): Promise<DeployUpgradeableContractOutput> {
-  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, signer, ethers, upgrades, artifacts, network, log, run } = context
+  const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, ethers, upgrades, artifacts, network, log, run } = context
 
-  const factory = await ethers.getContractFactory(contractName)
+  const signer = await getSigner(context)
+  const signerAddress = await signer.getAddress()
+  const factory = (await ethers.getContractFactory(contractName)).connect(signer)
   const artifact = await artifacts.readArtifact(contractName)
   const contractFullName = `${artifact.sourceName}:${artifact.contractName}`
   const contractNameEnvVar = toUpperSnakeCase($contractNameEnvVar || contractName)
   const constructorArgs: unknown[] = await getConstructorArgs(run, constructorArgsModule, constructorArgsParams)
   log(`NETWORK = ${network.name}`)
-  log(`export ${contractNameEnvVar}_DEPLOYER=${signer.address}`)
+  log(`export ${contractNameEnvVar}_DEPLOYER=${signerAddress}`)
 
   const contract = await upgrades.deployProxy(factory, constructorArgs)
   await contract.deployTransaction.wait(5) // per hardhat recommendation
@@ -81,10 +83,17 @@ export async function deployUpgradeableContract(context: DeployContractContext):
   return { proxyAddress, implementationAddress }
 }
 
-async function ensureDeployer(context: DeployContractContext) {
-  const { signer, deployer } = context
-  if (!deployer) return
-  expect(signer.address).to.equal(deployer, 'Signer address must be equal to deployer address')
+async function getSigner(context: DeployContractContext) {
+  const { signer, deployer, ethers, signerType } = context
+  switch (signerType) {
+    case 'default':
+      if (deployer) expect(signer.address).to.equal(deployer, 'Signer address must be equal to deployer address')
+      return signer
+    case 'rpc':
+      return ethers.provider.getSigner(deployer)
+    default:
+      throw new Error(`Unknown signer type "${signerType}"`)
+  }
 }
 
 const DeployContractTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
@@ -93,6 +102,7 @@ const DeployContractTaskArgumentsSchema = RunnableTaskArgumentsSchema.extend({
   constructorArgsModule: z.string().optional(),
   constructorArgsParams: z.array(z.string()).default([]),
   verify: z.boolean().default(true),
+  signerType: z.enum(['default', 'rpc']).default('default'),
   deployer: z.string().min(1).optional(),
 })
 
