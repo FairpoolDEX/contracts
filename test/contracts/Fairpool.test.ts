@@ -2,16 +2,15 @@ import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { Fairpool } from '../../typechain-types'
-import $debug from 'debug'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
 import { fest } from '../../util-local/mocha'
 import { mainnet } from '../../data/allNetworks'
-import { getScaledPercent, scale } from '../support/Fairpool.helpers'
+import { decimals as baseDecimals, getScaledPercent, scale } from '../support/Fairpool.helpers'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
-import { sequentialMap } from 'libs/utils/promise'
-import { identity } from 'remeda'
+import { parallelMap, sequentialMap } from 'libs/utils/promise'
+import { identity, range } from 'remeda'
 import { Address } from '../../models/Address'
 import { getSignatures } from '../../util-local/getSignatures'
 import { getGasUsedForManyHolders } from './Fairpool/getGasUsedForManyHolders'
@@ -20,24 +19,16 @@ import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
 import { bn } from '../../libs/bn/utils'
-import { MaxUint256 } from '../../libs/ethereum/constants'
-
-type FairpoolParameterGetter = 'royalties' | 'dividends' | 'fees'
-type FairpoolParameterSetter = 'setRoyalties' | 'setDividends' | 'setFees'
-
-async function expectParameter(contract: Fairpool, admin: SignerWithAddress, stranger: SignerWithAddress, getter: FairpoolParameterGetter, setter: FairpoolParameterSetter, valueNew: BigNumber, error: string, isCustomError: boolean) {
-  const valueBefore = await contract[getter]()
-  expect(valueBefore).not.to.equal(valueNew)
-  const promise = contract.connect(stranger)[setter](valueNew)
-  if (isCustomError) {
-    await expect(promise).to.be.revertedWithCustomError(contract, error)
-  } else {
-    await expect(promise).to.be.revertedWith(error)
-  }
-  await contract.connect(admin)[setter](valueNew)
-  const feesAfter = await contract[getter]()
-  expect(feesAfter).to.equal(valueNew)
-}
+import { DefaultDecimals as quoteDecimals, MaxUint256 } from '../../libs/ethereum/constants'
+import { buy } from '../support/Fairpool.functions'
+import { BuyEvent, BuyEventTopic } from '../../libs/fairpool/models/BuyEvent'
+import { fromRawEventToBuyEvent } from '../../libs/fairpool/models/BuyEvent/fromRawEventToBuyEvent'
+import { expectParameter } from './Fairpool/expectParameter'
+import { toFrontendAmountBN } from '../../libs/utils/bignumber.convert'
+import { getCsvStringifier } from '../../libs/utils/csv'
+import { tmpdir } from 'os'
+import { getDebug, isEnabledLog } from '../../libs/utils/debug'
+import { pipeline } from '../../libs/utils/stream'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -67,7 +58,7 @@ describe('Fairpool', async function () {
   // let jump: number
   // let denominator: number
 
-  const debug = $debug(this.title)
+  const debug = getDebug(__filename)
 
   /**
    * TODO: Tests
@@ -214,6 +205,47 @@ describe('Fairpool', async function () {
 
   fest('setFees', async () => {
     await expectParameter(fairpool, operator, bob, 'fees', 'setFees', bn(1), 'OnlyOperator', true)
+  })
+
+  fest('Price table', async () => {
+    const count = 20
+    const value = bn(10).pow(quoteDecimals.sub(2))
+    const signer = bob
+    const transactions = await parallelMap(range(0, count), async () => {
+      return buy(fairpool, signer, value)
+    })
+    const events = await fairpool.queryFilter({ topics: [BuyEventTopic] })
+    expect(events.length).to.equal(count)
+    const buys = events.map(fromRawEventToBuyEvent)
+    const fromBuyEventToCsv = (buy: BuyEvent) => {
+      const { sender, baseDelta, quoteDelta } = buy
+      const price = quoteDelta.div(baseDelta)
+      const baseDeltaDisplayed = toFrontendAmountBN(baseDelta, baseDecimals.toNumber())
+      const quoteDeltaDisplayed = toFrontendAmountBN(quoteDelta, quoteDecimals.toNumber())
+      const priceDisplayed = quoteDeltaDisplayed.div(baseDeltaDisplayed)
+      return [
+        sender,
+        baseDelta,
+        quoteDelta,
+        price,
+        baseDeltaDisplayed,
+        quoteDeltaDisplayed,
+        priceDisplayed,
+      ].map(v => v.toString())
+    }
+    const columns = [
+      'sender',
+      'baseDelta',
+      'quoteDelta',
+      'price',
+      'baseDeltaDisplayed',
+      'quoteDeltaDisplayed',
+      'priceDisplayed',
+    ]
+    const stringifier = getCsvStringifier({ header: true, columns }, fromBuyEventToCsv, buys)
+    const filename = `${tmpdir()}/buys.csv`
+    // debug(filename)
+    if (isEnabledLog) await pipeline(stringifier, process.stderr)
   })
 
   // fest('must get the gas per holder', async () => {

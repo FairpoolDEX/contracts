@@ -3,7 +3,6 @@ import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { Ethers } from '../../util-local/types'
 import { Cache } from 'cache-manager'
 import { ERC721TokenId } from '../../models/ERC721TokenId'
-import { debug } from '../../util/debug'
 import { getCacheKey } from '../../util/cache'
 import { getERC721Token } from '../../tasks/util/getERC721Token'
 import { chunk, countBy, flatten, range, toPairs } from 'lodash'
@@ -12,6 +11,7 @@ import { getERC721AToken } from '../../tasks/util/getERC721AToken'
 import { balanceBN, validateBalancesBN } from '../../models/BalanceBN'
 import { BigNumber } from 'ethers'
 import { sequentialMap } from 'libs/utils/promise'
+import { debug } from '../../libs/utils/debug'
 
 export async function getERC721ABalances(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache) {
   const owners = await getERC721AOwners(blockTag, contractAddress, ethers, cache)
