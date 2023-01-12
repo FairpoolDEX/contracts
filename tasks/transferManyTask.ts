@@ -14,8 +14,8 @@ import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
 import { getOverrides } from '../util-local/network'
 import { ContractName } from '../models/ContractName'
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
-import { Filename } from '../util/filesystem'
 import { ColiToken } from '../typechain-types'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function transferManyTask(args: TransferManyTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const { contractName, contractAddress, balances: balancesPath, expectations: expectationsPath } = args

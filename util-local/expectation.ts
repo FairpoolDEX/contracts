@@ -1,10 +1,10 @@
 import { BigNumber } from 'ethers'
 import { expect } from './expect'
-import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { getAbsoluteFilename } from './import'
 import { sumAmountBNs } from '../libs/ethereum/models/AmountBN/sumAmountBNs'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function importExpectations(filename: Filename) {
   return (await import(getAbsoluteFilename(filename))).expectations

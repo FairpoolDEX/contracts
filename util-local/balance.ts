@@ -3,13 +3,13 @@ import neatcsv from 'neat-csv'
 import { RawCSVData } from '../util/csv'
 import { shuffle } from 'lodash'
 import { AddressSchema } from '../models/Address'
-import { Filename } from '../util/filesystem'
 import { writeFile } from 'fs/promises'
 import { AmountBN } from '../models/AmountBN'
 import { BalanceBN, validateBalanceBN, validateBalancesBN } from '../models/BalanceBN'
 import { parseAmountCSV } from '../models/AmountBN/parseAmountCSV'
 import { importDefault } from './import'
 import { zero } from '../libs/bn/constants'
+import { Filename } from '../libs/utils/filesystem'
 
 export type BalancesMap = { [address: string]: AmountBN }
 

@@ -18,7 +18,6 @@ import { BlockNumber } from '../models/BlockNumber'
 import { moveBalances } from '../models/BalanceBN/moveBalances'
 import { getJordanBalanceOfShieldToken } from '../test/expectations/writeClaims.rebrand'
 import { Address } from '../models/Address'
-import { Filename } from '../util/filesystem'
 import { getRewritesFromCSVFile } from '../models/Rewrite/getRewritesFromCSVFile'
 import { Rewrite } from '../models/Rewrite'
 import { applyRewrites } from '../models/Rewrite/applyRewrites'
@@ -26,6 +25,7 @@ import { importDefault } from '../util-local/import'
 import { CachedContext, CachedTaskArguments, getCachedContext } from '../util-local/context/getCachedContext'
 import { zero } from '../libs/bn/constants'
 import { sequentialMap } from 'libs/utils/promise'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function writeClaimsTask(args: WriteClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteClaimsContext(args, hre)

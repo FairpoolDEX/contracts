@@ -11,7 +11,6 @@ import { isTestnet, NetworkName } from '../models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
 import { isFinished, NamedAllocation } from '../models/NamedAllocation'
-import { Filename } from '../util/filesystem'
 import { parseAllocationsCSV } from '../models/Allocation/parseAllocationsCSV'
 import { flatten, uniq } from 'lodash'
 import { VestingName } from '../models/VestingName.js'
@@ -26,6 +25,7 @@ import { toTokenAmount } from '../test/support/all.helpers'
 import { deployUpgradeableContract } from './deployContractTask'
 import { impl } from 'libs/utils/todo'
 import { sumAmountBNs } from '../libs/ethereum/models/AmountBN/sumAmountBNs'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
