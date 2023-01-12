@@ -1,17 +1,15 @@
 import { z } from 'zod'
 import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
-import { BlockNumberSchema } from './BlockNumber'
-import { TransactionHashSchema, zeroTransactionHash } from './TransactionHash'
+import { zeroTransactionHash } from './TransactionHash'
 import { $zero } from '../data/allAddresses'
 import { zero } from '../libs/bn/constants'
+import { EventSchema } from '../libs/ethereum/models/Event'
 
-export const TransferSchema = z.object({
+export const TransferSchema = EventSchema.extend({
   from: AddressSchema,
   to: AddressSchema,
   amount: AmountBNSchema,
-  blockNumber: BlockNumberSchema,
-  transactionHash: TransactionHashSchema,
 })
 
 export const CachedTransferSchema = TransferSchema.extend({

@@ -7,7 +7,7 @@ import { clone } from 'remeda'
 import { file } from 'tmp-promise'
 import childProcess from 'child_process'
 import { promisify } from 'util'
-import { debug } from './util/debug'
+import { debug } from './libs/utils/debug'
 
 const execFile = promisify(childProcess.execFile)
 

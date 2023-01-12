@@ -5,11 +5,11 @@ import { getCacheKey } from '../../util/cache'
 import { Event } from '@ethersproject/contracts/src.ts/index'
 import { flatten, range } from 'lodash'
 import { maxBlocksPerQueryFilterRequest, rateLimiter } from '../../util-local/getblock'
-import { debug } from '../../util/debug'
 import { getBlockNumber } from '../../util-local/ethers'
 import { Cache } from 'cache-manager'
 import { Transfer, validateTransfer } from '../../models/Transfer'
 import { sequentialMap } from 'libs/utils/promise'
+import { debug } from '../../libs/utils/debug'
 
 async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)

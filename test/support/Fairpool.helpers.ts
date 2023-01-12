@@ -2,9 +2,11 @@ import { bn, getShare as getShareOriginal } from '../../libs/bn/utils'
 import { toBackendAmountBN } from '../../libs/utils/bignumber.convert'
 import { BigNumber, BigNumberish } from 'ethers'
 
-export const scale = BigNumber.from(10).pow(6)
+export const decimals = bn(6)
 
-export const jump1Percent = bn(scale.div(100))
+export const scale = bn(10).pow(decimals)
+
+export const jump1Percent = scale.div(100)
 
 /**
  * Suffixes:

@@ -93,9 +93,9 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error OperatorMustNotBeZeroAddress();
     error OperatorMustNotBeContractAddress();
 
-    event Buy(address indexed addr, uint baseDelta, uint quoteDelta);
-    event Sell(address indexed addr, uint baseDelta, uint quoteDelta, uint quoteReceived);
-    event Withdraw(address indexed addr, uint quoteReceived);
+    event Buy(address indexed sender, uint baseDelta, uint quoteDelta);
+    event Sell(address indexed sender, uint baseDelta, uint quoteDelta, uint quoteReceived);
+    event Withdraw(address indexed sender, uint quoteReceived);
     event SetSpeed(uint speed);
     event SetRoyalties(uint royalties);
     event SetDividends(uint dividends);

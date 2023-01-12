@@ -5,7 +5,6 @@ import { BalanceBN, validateBalanceBN } from '../../models/BalanceBN'
 import { getGenericToken } from './getERC20Token'
 import { getTransfersPaginatedCached } from './getTransfers'
 import { unwrapSmartContractBalancesAtBlockTag } from './unwrapSmartContractBalancesAtBlockTag'
-import { debug } from '../../util/debug'
 import { deployedAt } from '../../test/support/ColiToken.helpers'
 import { chunk, flatten, uniq } from 'lodash'
 import { maxRequestsPerSecond } from '../../util-local/getblock'
@@ -14,6 +13,7 @@ import { isZeroBalance } from '../../util-local/balance'
 import { Cache } from 'cache-manager'
 import { CachedRunnableContext } from '../../util-local/context/getCachedContext'
 import { sequentialMap } from 'libs/utils/promise'
+import { debug } from '../../libs/utils/debug'
 
 export async function getERC20HolderAddressesAtBlockTag(blockTag: BlockTag, contractAddress: Address, ethers: Ethers, cache: Cache): Promise<Address[]> {
   debug(__filename, getERC20HolderAddressesAtBlockTag, blockTag, contractAddress)

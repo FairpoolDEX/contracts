@@ -8,12 +8,12 @@ import { getCacheKey } from '../util/cache'
 import { Cache } from 'cache-manager'
 import { validateContractCode } from '../models/ContractCode'
 import { rateLimiter } from './getblock'
-import { debug } from '../util/debug'
 import { RunnableContext } from './context/getRunnableContext'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { getTransactionUrl } from '../util/url'
 import { impl } from 'libs/utils/todo'
 import { sequentialMap } from 'libs/utils/promise'
+import { debug } from '../libs/utils/debug'
 
 export async function getCode(ethers: Ethers, address: Address) {
   await rateLimiter.removeTokens(1)
