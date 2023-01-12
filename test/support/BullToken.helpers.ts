@@ -9,7 +9,7 @@ import { getShieldBalancesForBullAirdropFinal } from '../../tasks/util/parse'
 import { AmountBN } from '../../models/AmountBN'
 import { BalanceBN } from '../../models/BalanceBN'
 import { days, seconds } from '../../util-local/time'
-import { validateBlockNumber } from '../../models/BlockNumber'
+import { parseBlockNumber } from '../../libs/ethereum/models/BlockNumber'
 import { Contract } from 'ethers'
 import { sumAmountBNs } from '../../libs/ethereum/models/AmountBN/sumAmountBNs'
 
@@ -51,7 +51,7 @@ export const airdropDistributedTokenAmountTotal = airdropDistributedTokenAmountS
 
 export const fromShieldToBull = airdropMultiply
 
-export const pausedAt = validateBlockNumber(12952142)
+export const pausedAt = parseBlockNumber(12952142)
 
 type Claims = { [index: string]: string }
 

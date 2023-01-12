@@ -1,6 +1,6 @@
 import { toTokenAmount } from './all.helpers'
 import { getRewriteAddressMap, RewriteAddressMap } from '../../util-local/address'
-import { validateBlockNumber } from '../../models/BlockNumber'
+import { parseBlockNumber } from '../../libs/ethereum/models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
 import { days, month, seconds } from '../../util-local/time'
 import { parseVestingTypes } from '../../models/VestingType'
@@ -18,7 +18,7 @@ export const maxSupply = 969163000
 
 export const maxSupplyTokenAmount = toTokenAmount(maxSupply)
 
-export const deployedAt = validateBlockNumber(12463796)
+export const deployedAt = parseBlockNumber(12463796)
 
 export const releaseTimeTest = dateToTimestampSeconds(new Date('2022.01.01 13:00:00 UTC'))
 

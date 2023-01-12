@@ -14,7 +14,7 @@ import { isBullSellerBalance, Jordan, oldSoftwareDeployer } from '../data/allAdd
 import { findDeployment } from '../data/allDeployments'
 import { ContextualValidator, validateWithContext } from '../util-local/validator'
 import { balanceBN, BalanceBN } from '../models/BalanceBN'
-import { BlockNumber } from '../models/BlockNumber'
+import { BlockNumber } from '../libs/ethereum/models/BlockNumber'
 import { moveBalances } from '../models/BalanceBN/moveBalances'
 import { getJordanBalanceOfShieldToken } from '../test/expectations/writeClaims.rebrand'
 import { Address } from '../models/Address'
