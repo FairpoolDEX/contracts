@@ -1,4 +1,4 @@
-import { Filename } from '../util/filesystem'
+import { Filename } from '../libs/utils/filesystem'
 
 export interface Writable {
   out: Filename

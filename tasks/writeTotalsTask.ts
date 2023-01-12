@@ -4,7 +4,6 @@ import { getRunnableContext, RunnableContext } from '../util-local/context/getRu
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
 import { Writable } from '../util-local/writable'
 import { BalanceBN, validateBalanceBN } from '../models/BalanceBN'
-import { Filename } from '../util/filesystem'
 import { Address } from '../models/Address'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
 import { NetworkName, validateNetworkName } from '../models/NetworkName'
@@ -21,6 +20,7 @@ import { getSubmissionsFromCSVFile } from '../models/LearnToEarn/Submission/getS
 import { ten, zero } from '../libs/bn/constants'
 import { todo } from 'libs/utils/todo'
 import { mapAsync } from '../libs/utils/promise'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)

@@ -4,7 +4,6 @@ import { BalancesMap, optimizeForGasRefund, readBalances } from '../util-local/b
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
 import { Address } from '../models/Address'
-import { Filename } from '../util/filesystem'
 import { BalanceBN } from '../models/BalanceBN'
 import { AmountBN } from '../models/AmountBN'
 import { expect } from '../util-local/expect'
@@ -15,6 +14,7 @@ import { getOverrides } from '../util-local/network'
 import { ContractName } from '../models/ContractName'
 import { Chunked, getChunkedContext } from '../util-local/context/getChunkedContext'
 import { sumAmountBNs } from '../libs/ethereum/models/AmountBN/sumAmountBNs'
+import { Filename } from '../libs/utils/filesystem'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
