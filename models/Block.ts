@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BlockNumberSchema } from './BlockNumber'
+import { BlockNumberSchema } from '../libs/ethereum/models/BlockNumber'
 
 export const BlockSchema = z.object({
   number: BlockNumberSchema,
