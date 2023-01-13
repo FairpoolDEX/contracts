@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { getDuplicatesRefinement } from '../util/zod'
-import { NetworkNameSchema } from './NetworkName'
+import { NetworkNameSchema } from '../libs/ethereum/models/NetworkName'
 import { AddressSchema } from './Address'
 
 export const TokenInfoSchema = z.object({

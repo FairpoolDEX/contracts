@@ -1,4 +1,4 @@
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ensure } from '../util/ensure'
 import { CLIArgumentType } from 'hardhat/types/runtime'

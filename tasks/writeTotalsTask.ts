@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { toBackendAmountBND } from '../libs/utils/bignumber.convert'
 import { writeBalancesCSV } from '../util-local/balance'
 import { getRunnableContext, RunnableContext } from '../util-local/context/getRunnableContext'
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
@@ -6,11 +7,10 @@ import { Writable } from '../util-local/writable'
 import { BalanceBN, validateBalanceBN } from '../models/BalanceBN'
 import { Address } from '../models/Address'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
-import { NetworkName, validateNetworkName } from '../models/NetworkName'
+import { NetworkName, validateNetworkName } from '../libs/ethereum/models/NetworkName'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
 import { GenericToken } from '../typechain-types'
-import { toBackendAmountBN } from '../libs/utils/bignumber.convert'
 import { ensure } from '../util/ensure'
 import { TokenInfo } from '../models/TokenInfo'
 import { getProvider } from '../util-local/hardhat'
@@ -152,18 +152,18 @@ const blockNumberMap = new Map<Timestamp, Map<NetworkName, number>>([
 const nativeAssetPriceMap = new Map<number, Map<NetworkName, PriceBN>>([
   [round1StartedAtTimestamp, new Map<NetworkName, PriceBN>([
     // NOTE: getCandleOpenPrice('FTX', round.startedAt, asset)
-    ['mainnet', toBackendAmountBN('3058.5', priceDecimals)],
-    ['bscmainnet', toBackendAmountBN('411.836', priceDecimals)],
+    ['mainnet', toBackendAmountBND(priceDecimals)('3058.5')],
+    ['bscmainnet', toBackendAmountBND(priceDecimals)('411.836')],
   ])],
 ])
 
 const tokenPriceMap = new Map<number, Map<string, PriceBN>>([
   [round1StartedAtTimestamp, new Map<string, PriceBN>([
     // NOTE: getCandleOpenPrice('FTX', round.startedAt, asset)
-    ['COLI', toBackendAmountBN('0.00170297', priceDecimals)],
-    ['BUSD', toBackendAmountBN('1', priceDecimals)],
-    ['USDT', toBackendAmountBN('1', priceDecimals)],
-    ['USDC', toBackendAmountBN('1', priceDecimals)],
-    ['DAI', toBackendAmountBN('1', priceDecimals)],
+    ['COLI', toBackendAmountBND(priceDecimals)('0.00170297')],
+    ['BUSD', toBackendAmountBND(priceDecimals)('1')],
+    ['USDT', toBackendAmountBND(priceDecimals)('1')],
+    ['USDC', toBackendAmountBND(priceDecimals)('1')],
+    ['DAI', toBackendAmountBND(priceDecimals)('1')],
   ])],
 ])

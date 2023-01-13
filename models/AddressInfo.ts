@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { NetworkName, NetworkNameSchema } from './NetworkName'
+import { NetworkName, NetworkNameSchema } from '../libs/ethereum/models/NetworkName'
 import { Address, AddressSchema } from './Address'
 import { AddressTypeSchema } from './AddressType'
 

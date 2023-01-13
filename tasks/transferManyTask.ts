@@ -10,7 +10,7 @@ import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator }
 import { network } from 'hardhat'
 import { importExpectations } from '../util-local/expectation'
 import { Address } from '../models/Address'
-import { NetworkName, NetworkNameSchema } from '../models/NetworkName'
+import { NetworkName, NetworkNameSchema } from '../libs/ethereum/models/NetworkName'
 import { getOverrides } from '../util-local/network'
 import { ContractName } from '../models/ContractName'
 import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'

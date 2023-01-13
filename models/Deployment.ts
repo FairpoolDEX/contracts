@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { getDuplicatesRefinement } from '../util/zod'
 import { ContractNameSchema } from './ContractName'
-import { NetworkNameSchema } from './NetworkName'
+import { NetworkNameSchema } from '../libs/ethereum/models/NetworkName'
 import { AddressSchema } from './Address'
 
 export const DeploymentSchema = z.object({

@@ -5,7 +5,7 @@ import { getRunnableContext, RunnableContext } from '../util-local/context/getRu
 import { AmountBN } from '../models/AmountBN'
 import { getContractForSigner } from '../util-local/ethers'
 import { Coliquidity, GenericToken } from '../typechain-types'
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 import { $zero } from '../data/allAddresses'
 import { Signer, utils } from 'ethers'
 import { OfferCreatedTopic } from '../test/support/Coliquidity.helpers'

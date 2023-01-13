@@ -4,7 +4,7 @@ import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
 import { isContract } from '../../util-local/contract'
 import { ensure } from '../../util/ensure'
-import { findNetwork } from '../../data/allNetworks'
+import { findNetwork } from '../../libs/ethereum/data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
 import { NFTrade, TeamFinance, UniswapV2Pair, Unknown } from '../../models/ContractType'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
@@ -100,7 +100,7 @@ async function getAddressType(address: string, context: CachedRunnableContext): 
   const code = await getCodeCached(ethers, cache, address)
   if (isContract(code)) {
     const network = ensure(findNetwork({ name: networkName }))
-    const contractInfo = findContractInfo({ vm: network.vm, code })
+    const contractInfo = findContractInfo({ code })
     // const contractInfo = ensure(findContractInfo({ vm: network.vm, code }), async () => {
     //   debug(__filename, getAddressType, 'codeNotFound', code)
     //   return new Error(`Cannot find contract info for network: ${networkName} and address ${address} (https://etherscan.io/address/${address}#code)`)

@@ -1,12 +1,13 @@
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { toFrontendAmountBND } from '../../libs/utils/bignumber.convert'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { Fairpool } from '../../typechain-types'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
 import { fest } from '../../util-local/mocha'
-import { mainnet } from '../../data/allNetworks'
-import { decimals as baseDecimals, getScaledPercent, scale } from '../support/Fairpool.helpers'
+import { mainnet } from '../../libs/ethereum/data/allNetworks'
+import { DefaultDecimals as baseDecimals, DefaultScale as baseScale } from '../../libs/fairpool/constants'
 import { assumeIntegerEnvVar } from '../../util/env'
 import { expect } from '../../util-local/expect'
 import { parallelMap, sequentialMap } from 'libs/utils/promise'
@@ -24,11 +25,11 @@ import { buy } from '../support/Fairpool.functions'
 import { BuyEvent, BuyEventTopic } from '../../libs/fairpool/models/BuyEvent'
 import { fromRawEventToBuyEvent } from '../../models/BuyEvent/fromRawEventToBuyEvent'
 import { expectParameter } from './Fairpool/expectParameter'
-import { toFrontendAmountBN } from '../../libs/utils/bignumber.convert'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { tmpdir } from 'os'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
+import { getScaledPercent } from '../support/Fairpool.helpers'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -173,7 +174,7 @@ describe('Fairpool', async function () {
   })
 
   fest('quoteDeltaProposedMin', async () => {
-    const quoteDeltaProposedMin = speed.mul(scale)
+    const quoteDeltaProposedMin = speed.mul(baseScale)
     // first transaction should be reverted
     await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin.sub(1) })).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
     // second transaction should be accepted
@@ -220,8 +221,8 @@ describe('Fairpool', async function () {
     const fromBuyEventToCsv = (buy: BuyEvent) => {
       const { sender, baseDelta, quoteDelta } = buy
       const price = quoteDelta.div(baseDelta)
-      const baseDeltaDisplayed = toFrontendAmountBN(baseDelta, baseDecimals.toNumber())
-      const quoteDeltaDisplayed = toFrontendAmountBN(quoteDelta, quoteDecimals.toNumber())
+      const baseDeltaDisplayed = toFrontendAmountBND(baseDecimals)(baseDelta)
+      const quoteDeltaDisplayed = toFrontendAmountBND(quoteDecimals)(quoteDelta)
       const priceDisplayed = quoteDeltaDisplayed.div(baseDeltaDisplayed)
       return [
         sender,

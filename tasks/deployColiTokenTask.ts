@@ -7,7 +7,7 @@ import { getRunnableContext, RunnableContext } from '../util-local/context/getRu
 import { Expected, importExpectations } from '../util-local/expectation'
 import { ColiToken } from '../typechain-types'
 import { getContract } from '../util-local/ethers'
-import { isTestnet, NetworkName } from '../models/NetworkName'
+import { isTestnet, NetworkName } from '../libs/ethereum/models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
 import { isFinished, NamedAllocation } from '../models/NamedAllocation'

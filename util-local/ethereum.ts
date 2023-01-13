@@ -1,4 +1,4 @@
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 import { nail } from '../libs/utils/string'
 
 export function getJsonRpcUrl(networkName: NetworkName) {
