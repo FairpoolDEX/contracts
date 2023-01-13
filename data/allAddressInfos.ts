@@ -1,7 +1,7 @@
 import { AddressInfo, AddressInfoSchema, getAddressInfoUid, toAddressInfoUid } from '../models/AddressInfo'
 import { getFinder, getInserter } from '../util/zod'
 import { ensure } from '../util/ensure'
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 import { Address } from '../models/Address'
 import { AddressType } from '../models/AddressType'
 

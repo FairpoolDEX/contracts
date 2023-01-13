@@ -1,7 +1,7 @@
 import { assumeIntegerEnvVar, demandIntegerEnvVar } from '../util/env'
 import { gwei } from '../test/support/all.helpers'
 import { strict as assert } from 'assert'
-import { NetworkName } from '../models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 
 if (process.env.FEES) {
   const fees = process.env.FEES.split(':')

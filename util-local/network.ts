@@ -2,7 +2,7 @@ import { Overrides, Signer } from 'ethers'
 import { getGasLimit, maxFeePerGas, maxPriorityFeePerGas } from './gas'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ensure } from '../libs/utils/ensure'
-import { findNetworkByChainId } from '../data/allNetworks'
+import { findNetworkByChainId } from '../libs/ethereum/data/allNetworks'
 
 // Copied from @ethersproject/abstract-provider because it had type errors
 export interface FeeData {

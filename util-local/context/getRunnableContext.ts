@@ -1,4 +1,4 @@
-import { NetworkName, NetworkNameSchema } from '../../models/NetworkName'
+import { NetworkName, NetworkNameSchema } from '../../libs/ethereum/models/NetworkName'
 import { Logger } from '../log'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { RunnableTaskArguments } from '../RunnableTaskArguments'

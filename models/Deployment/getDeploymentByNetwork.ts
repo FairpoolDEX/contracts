@@ -1,4 +1,4 @@
-import { NetworkName } from '../NetworkName'
+import { NetworkName } from '../../libs/ethereum/models/NetworkName'
 import { ensure } from '../../util/ensure'
 import { Deployment } from '../Deployment'
 
