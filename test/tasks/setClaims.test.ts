@@ -147,7 +147,7 @@ describe.skip('setClaimsBullToken', async () => {
     const bullTotalSupply_2022_01_16 = BigNumber.from('1490403967926689867814673435496')
     const bullAddressesLength_2022_01_16 = 313
     const context = await getRebrandTestWriteClaimsContext()
-    const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
+    const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.extra.network.name }))
     const addresses = await getERC20HolderAddressesAtBlockTag(pausedAt + 1, deployment.address, ethers, context.cache)
     expect(addresses.length).to.be.greaterThan(bullAddressesLength_2022_01_16)
     const claimsFromBullToken = await getClaimsFromBullToken(context)
@@ -195,7 +195,7 @@ describe.skip('setClaimsBullToken', async () => {
     const context = await getRebrandTestWriteClaimsContext()
     const { cache, ethers } = context
     const blockTag = airdropStage3.number
-    const shield = ensure(findDeployment({ contract: 'ColiToken', network: context.networkName }))
+    const shield = ensure(findDeployment({ contract: 'ColiToken', network: context.extra.network.name }))
     const balance = await getERC20BalanceForAddressAtBlockTagCached(NFTradePool, blockTag, shield.address, ethers, cache)
     const balances = await unwrapNFTradeBalanceAtBlockTag(balance, blockTag, shield.address, context)
     const everyBalanceIsPositive = balances.every(b => b.amount.gte(0))
@@ -228,7 +228,6 @@ async function getRebrandTestWriteClaimsContext(): Promise<WriteClaimsContext> {
   return {
     ...await getRunnableContext(args, hardhatRuntimeEnvironment),
     ...await getCachedContext(args, hardhatRuntimeEnvironment),
-    networkName: 'mainnet',
     out: `${tmpdir()}/testWriteClaims.json`,
     rewrites: '',
     expectations: '',

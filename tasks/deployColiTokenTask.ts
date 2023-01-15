@@ -7,7 +7,7 @@ import { getRunnableContext, RunnableContext } from '../util-local/context/getRu
 import { Expected, importExpectations } from '../util-local/expectation'
 import { ColiToken } from '../typechain-types'
 import { getContract } from '../util-local/ethers'
-import { isTestnet, NetworkName } from '../libs/ethereum/models/NetworkName'
+import { NetworkName } from '../libs/ethereum/models/NetworkName'
 import { readFile, realpath } from 'fs/promises'
 import { BalanceBN } from '../models/BalanceBN'
 import { isFinished, NamedAllocation } from '../models/NamedAllocation'
@@ -29,8 +29,8 @@ import { Filename } from '../libs/utils/filesystem'
 
 export async function deployColiTokenTask(args: DeployColiTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getDeployColiTokenContext(args, hre)
-  const { fromNetwork, isPaused, expectations: expectationsPath, networkName: toNetwork, ethers } = context
-  if (!(isPaused || isTestnet(toNetwork))) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
+  const { fromNetwork, isPaused, expectations: expectationsPath, extra: { network: toNetwork }, ethers } = context
+  if (!(isPaused || !toNetwork.blockchain.isMainnet)) throw new Error('Please pause the ShieldToken contract before migrating to non-testnet network')
 
   const fromDeployment = ensure(findDeployment({ contract: 'ColiToken', network: fromNetwork }))
   const fromToken = await getContract(ethers, 'ColiToken', fromDeployment.address) as unknown as ColiToken

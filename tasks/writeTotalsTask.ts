@@ -7,7 +7,7 @@ import { Writable } from '../util-local/writable'
 import { BalanceBN, validateBalanceBN } from '../models/BalanceBN'
 import { Address } from '../models/Address'
 import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
-import { NetworkName, validateNetworkName } from '../libs/ethereum/models/NetworkName'
+import { NetworkName, parseNetworkName } from '../libs/ethereum/models/NetworkName'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
 import { GenericToken } from '../typechain-types'
@@ -25,7 +25,7 @@ import { Filename } from '../libs/utils/filesystem'
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
   const { timestamp } = context
-  const networks = ['mainnet', 'bscmainnet'].map(validateNetworkName)
+  const networks = ['mainnet', 'bscmainnet'].map(parseNetworkName)
   const { submissions: submissionsPath, out, log } = context
   const submissions = await getSubmissionsFromCSVFile(submissionsPath)
   const playerAddresses = submissions.map(s => s.playerAddress)
