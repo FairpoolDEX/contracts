@@ -16,3 +16,9 @@
 [submodule "libs/blockchain"]
 	path = libs/blockchain
 	url = https://github.com/zenbox-org/blockchain.git
+[submodule "libs/finance"]
+	path = libs/finance
+	url = https://github.com/zenbox-org/finance.git
+[submodule "libs/generic"]
+	path = libs/generic
+	url = https://github.com/zenbox-org/generic.git
