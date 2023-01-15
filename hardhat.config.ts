@@ -25,7 +25,7 @@ import { writeClaimsTask, writeClaimsTaskCacheTtl } from './tasks/writeClaimsTas
 import { hours, minutes } from './util-local/time'
 import { getJsonRpcUrl } from './util-local/ethereum'
 import { deployColiTokenTask } from './tasks/deployColiTokenTask'
-import { bscmainnet, bsctestnet, goerli, mainnet, rinkeby, ropsten } from './libs/ethereum/data/allNetworks'
+import { bnbmainnet, bnbtestnet, goerli, mainnet, rinkeby, ropsten } from './libs/ethereum/data/allNetworks'
 import { Network } from './libs/ethereum/models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
@@ -143,16 +143,16 @@ export const config: HardhatUserConfig = {
       accounts: { mnemonic },
       timeout: 2 * minutes,
     }),
-    bscmainnet: fromNetwork(bscmainnet, {
-      url: getJsonRpcUrl('bscmainnet'), // 'https://bsc-dataseed.binance.org/',
+    bnbmainnet: fromNetwork(bnbmainnet, {
+      url: getJsonRpcUrl('bnbmainnet'), // 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 24 * hours,
     }),
-    bsctestnet: fromNetwork(bsctestnet, {
-      url: getJsonRpcUrl('bsctestnet'), // 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    bnbtestnet: fromNetwork(bnbtestnet, {
+      url: getJsonRpcUrl('bnbtestnet'), // 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
@@ -186,7 +186,7 @@ export const config: HardhatUserConfig = {
       rinkeby: ensure(process.env.ETHERSCAN_API_KEY),
 
       bsc: ensure(process.env.BSCSCAN_API_KEY),
-      bscTestnet: ensure(process.env.BSCSCAN_API_KEY),
+      bnbtestnet: ensure(process.env.BSCSCAN_API_KEY),
 
       avalanche: ensure(process.env.SNOWTRACE_API_KEY),
       avalancheFujiTestnet: ensure(process.env.SNOWTRACE_API_KEY),
