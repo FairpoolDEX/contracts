@@ -87,12 +87,12 @@ export async function getClaimsFromRequests(rewrites: Rewrite[], context: WriteC
 }
 
 export async function getClaimsFromBullToken(context: WriteClaimsContext) {
-  const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.networkName }))
+  const deployment = ensure(findDeployment({ contract: 'BullToken', network: context.extra.network.name }))
   return getERC20BalancesAtBlockTagPaginated(pausedAt + 1, deployment.address, context)
 }
 
 export async function getClaimsFromColiToken(context: WriteClaimsContext) {
-  const deployment = ensure(findDeployment({ contract: 'ColiToken', network: context.networkName }))
+  const deployment = ensure(findDeployment({ contract: 'ColiToken', network: context.extra.network.name }))
   const blockNumbers = await getDistributionBlockNumbers()
   const balancesByDate = await sequentialMap(blockNumbers, blockNumber => getERC20BalancesAtBlockTagPaginated(blockNumber, deployment.address, context))
   const balances = addBalances(flatten(balancesByDate))

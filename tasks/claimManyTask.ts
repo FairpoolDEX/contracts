@@ -14,13 +14,13 @@ import { Logger } from '../util-local/log'
 
 export async function claimManyTask(args: ClaimManyBullTokenTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getClaimManyBullTokenContext(args, hre)
-  const { claimer: claimerAddress, claims: claimsPath, ethers, networkName, log } = context
+  const { claimer: claimerAddress, claims: claimsPath, ethers, network, log, extra } = context
   const signers = await ethers.getSigners()
   const signer = claimerAddress ? ensure(signers.find(s => s.address === claimerAddress)) : signers[0]
   log(`[INFO] Set claimer to ${signer.address}`)
   const addresses = await parseAddresses(fs.readFileSync(claimsPath))
   log(`[INFO] Read addresses from ${claimsPath}`)
-  const token = await getBullTokenFromDeployment(networkName, ethers)
+  const token = await getBullTokenFromDeployment(extra.network, ethers)
   log(`[INFO] Attached to contract ${token.address}`)
   await claimMany(token, addresses, ethers, log)
 }

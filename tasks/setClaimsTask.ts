@@ -18,8 +18,8 @@ import { Filename } from '../libs/utils/filesystem'
 
 export async function setClaimsTask(args: SetClaimsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getSetClaimsContext(args, hre)
-  const { contractName, contractAddress, claims: claimsFilename, networkName, log, ethers } = context
-  const token = await getBullTokenFromDeployment(networkName, ethers)
+  const { contractName, contractAddress, claims: claimsFilename, extra: { network }, log, ethers } = context
+  const token = await getBullTokenFromDeployment(network, ethers)
   const claims = await getValidatedClaims(claimsFilename)
   await setClaims(token, claims, context)
 }

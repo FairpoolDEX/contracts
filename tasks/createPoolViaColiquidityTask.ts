@@ -19,8 +19,8 @@ export async function createPoolViaColiquidityTask(args: CreatePoolViaColiquidit
 }
 
 export async function createPoolViaColiquidity(context: CreatePoolViaColiquidityContext): Promise<Address> {
-  const { baseAddress, quoteAddress, baseAmount, quoteAmount, networkName, signer, ethers, log } = context
-  const coliquidity = await getColiquidityForSigner(networkName, signer)
+  const { baseAddress, quoteAddress, baseAmount, quoteAmount, signer, ethers, log, extra: { network } } = context
+  const coliquidity = await getColiquidityForSigner(network.name, signer)
   const base = await getContractForSigner(ethers, 'GenericToken', baseAddress, signer) as unknown as GenericToken
   const quote = await getContractForSigner(ethers, 'GenericToken', quoteAddress, signer) as unknown as GenericToken
   await base.approve(coliquidity.address, baseAmount)

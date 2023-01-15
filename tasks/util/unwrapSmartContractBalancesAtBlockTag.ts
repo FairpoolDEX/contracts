@@ -3,8 +3,6 @@ import { addBalances, BalancesMap, getBalancesFromMap } from '../../util-local/b
 import { flatten } from 'lodash'
 import { AddressType, Human } from '../../models/AddressType'
 import { isContract } from '../../util-local/contract'
-import { ensure } from '../../util/ensure'
-import { findNetwork } from '../../libs/ethereum/data/allNetworks'
 import { findContractInfo } from '../../data/allContractInfos'
 import { NFTrade, TeamFinance, UniswapV2Pair, Unknown } from '../../models/ContractType'
 import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
@@ -38,7 +36,7 @@ export async function unwrapSmartContractBalancesAtBlockTag(balances: BalanceBN[
 }
 
 export async function unwrapSmartContractBalanceAtBlockTag(balance: BalanceBN, blockTag: BlockTag, tokenAddress: Address, context: CachedRunnableContext): Promise<BalanceBN[]> {
-  const { signer, networkName, ethers } = context
+  const { signer, network, ethers } = context
   const { address } = balance
   const type = await getAddressType(address, context)
   const balances = await unwrapSmartContractBalanceAtBlockTagByType(type, balance, signer.address, blockTag, tokenAddress, context)
@@ -96,10 +94,9 @@ export async function unwrapNFTradeBalanceAtBlockTag(balance: BalanceBN, blockTa
 }
 
 async function getAddressType(address: string, context: CachedRunnableContext): Promise<AddressType> {
-  const { networkName, ethers, cache, log } = context
+  const { network, ethers, cache, log } = context
   const code = await getCodeCached(ethers, cache, address)
   if (isContract(code)) {
-    const network = ensure(findNetwork({ name: networkName }))
     const contractInfo = findContractInfo({ code })
     // const contractInfo = ensure(findContractInfo({ vm: network.vm, code }), async () => {
     //   debug(__filename, getAddressType, 'codeNotFound', code)
