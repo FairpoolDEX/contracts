@@ -6,7 +6,7 @@ import { RunnableTaskArguments } from '../util-local/RunnableTaskArguments'
 import { Writable } from '../util-local/writable'
 import { BalanceBN, validateBalanceBN } from '../models/BalanceBN'
 import { Address } from '../models/Address'
-import { BusdBscMainnetContract, BusdEthMainnetContract, ColiBscMainnetContract, ColiEthMainnetContract, DaiBscMainnetContract, DaiEthMainnetContract, UsdcBscMainnetContract, UsdcEthMainnetContract, UsdtBscMainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
+import { BusdbnbmainnetContract, BusdEthMainnetContract, ColibnbmainnetContract, ColiEthMainnetContract, DaibnbmainnetContract, DaiEthMainnetContract, UsdcbnbmainnetContract, UsdcEthMainnetContract, UsdtbnbmainnetContract, UsdtEthMainnetContract } from '../data/allTokenInfos'
 import { NetworkName, parseNetworkName } from '../libs/ethereum/models/NetworkName'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
@@ -25,7 +25,7 @@ import { Filename } from '../libs/utils/filesystem'
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
   const { timestamp } = context
-  const networks = ['mainnet', 'bscmainnet'].map(parseNetworkName)
+  const networks = ['mainnet', 'bnbmainnet'].map(parseNetworkName)
   const { submissions: submissionsPath, out, log } = context
   const submissions = await getSubmissionsFromCSVFile(submissionsPath)
   const playerAddresses = submissions.map(s => s.playerAddress)
@@ -109,15 +109,15 @@ const priceDecimals = 18
 
 const relevantTokenInfos = [
   ColiEthMainnetContract,
-  ColiBscMainnetContract,
+  ColibnbmainnetContract,
   BusdEthMainnetContract,
-  BusdBscMainnetContract,
+  BusdbnbmainnetContract,
   UsdcEthMainnetContract,
-  UsdcBscMainnetContract,
+  UsdcbnbmainnetContract,
   UsdtEthMainnetContract,
-  UsdtBscMainnetContract,
+  UsdtbnbmainnetContract,
   DaiEthMainnetContract,
-  DaiBscMainnetContract,
+  DaibnbmainnetContract,
 ]
 
 async function getBlockNumber(timestamp: Timestamp, networkName: NetworkName) {
@@ -140,12 +140,12 @@ const round1StartedAtTimestamp = new Date('2022-03-24T07:00:00Z').getTime()
 
 const round1StartedAtMainnetBlockNumber = 14450739
 
-const round1StartedAtBscmainnetBlockNumber = 16331030
+const round1StartedAtbnbmainnetBlockNumber = 16331030
 
 const blockNumberMap = new Map<Timestamp, Map<NetworkName, number>>([
   [round1StartedAtTimestamp, new Map<NetworkName, number>([
     ['mainnet', round1StartedAtMainnetBlockNumber],
-    ['bscmainnet', round1StartedAtBscmainnetBlockNumber],
+    ['bnbmainnet', round1StartedAtbnbmainnetBlockNumber],
   ])],
 ])
 
@@ -153,7 +153,7 @@ const nativeAssetPriceMap = new Map<number, Map<NetworkName, PriceBN>>([
   [round1StartedAtTimestamp, new Map<NetworkName, PriceBN>([
     // NOTE: getCandleOpenPrice('FTX', round.startedAt, asset)
     ['mainnet', toBackendAmountBND(priceDecimals)('3058.5')],
-    ['bscmainnet', toBackendAmountBND(priceDecimals)('411.836')],
+    ['bnbmainnet', toBackendAmountBND(priceDecimals)('411.836')],
   ])],
 ])
 

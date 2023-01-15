@@ -11,9 +11,9 @@ export function getJsonRpcUrl(networkName: NetworkName) {
       return `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY_ROPSTEN}`
     case 'rinkeby':
       return `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY_RINKEBY}`
-    case 'bscmainnet':
+    case 'bnbmainnet':
       return `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API_KEY}/bsc/mainnet/archive`
-    case 'bsctestnet':
+    case 'bnbtestnet':
       return `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API_KEY}/bsc/testnet/archive`
     default:
       throw new Error(nail(`Get the url for "${networkName}" network at https://account.getblock.io/ or https://dashboard.alchemyapi.io/`))

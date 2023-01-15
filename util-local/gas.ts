@@ -20,8 +20,8 @@ assert(maxFeePerGas >= maxPriorityFeePerGas)
 export function getGasLimit(network: NetworkName) {
   if (gasLimit) return gasLimit
   // switch (network) {
-  //   case 'bscmainnet':
-  //   case 'bsctestnet':
+  //   case 'bnbmainnet':
+  //   case 'bnbtestnet':
   //     return 8000000
   //   default:
   //     throw impl()
