@@ -121,7 +121,6 @@
     "seedrandom": "^3.0.5",
     "semver": "^7.3.5",
     "solhint": "^3.3.6",
-    "solidity-coverage": "^0.8.2",
     "solmate": "transmissions11/solmate",
     "stacktrace-js": "^2.0.2",
     "tmp-promise": "^3.0.3",
