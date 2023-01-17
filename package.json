@@ -119,7 +119,7 @@
     "remeda": "^1.3.0",
     "seedrandom": "^3.0.5",
     "semver": "^7.3.5",
-    "solhint": "^3.3.6",
+    "solhint": "^3.3.7",
     "solmate": "transmissions11/solmate",
     "stacktrace-js": "^2.0.2",
     "tmp-promise": "^3.0.3",
