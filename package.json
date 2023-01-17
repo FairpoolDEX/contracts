@@ -91,7 +91,6 @@
     "eth-provider": "^0.13.6",
     "eth-scribble": "^0.6.16",
     "ethers": "^5.7.0",
-    "etherscan-api": "^10.0.5",
     "execa": "^6.1.0",
     "fast-check": "^3.5.0",
     "hardhat": "^2.10.2",
