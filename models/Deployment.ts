@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { ContractNameSchema } from './ContractName'
 import { NetworkNameSchema } from '../libs/ethereum/models/NetworkName'
 import { AddressSchema } from './Address'

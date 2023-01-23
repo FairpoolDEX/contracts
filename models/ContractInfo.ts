@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { toUidFromSchema, Uid } from './Uid'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { ContractCodeSchema } from './ContractCode'
 import { ContractTypeSchema } from './ContractType'
 

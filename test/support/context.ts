@@ -1,10 +1,10 @@
 import { identity } from 'lodash'
-import { getRunnableContext, RunnableContext } from '../../util-local/context/getRunnableContext'
+import { getRunnableContext, RunnableContext } from '../../utils-local/context/getRunnableContext'
 import { SetClaimsContext, SetClaimsTaskArguments } from '../../tasks/setClaimsTask'
 import { airdropRate, airdropStageShareDenominator, airdropStageShareNumerator } from './BullToken.helpers'
 import hardhatRuntimeEnvironment from 'hardhat'
-import { RunnableTaskArguments } from '../../util-local/RunnableTaskArguments'
-import { Chunked } from '../../util-local/context/getChunkedContext'
+import { RunnableTaskArguments } from '../../utils-local/RunnableTaskArguments'
+import { Chunked } from '../../utils-local/context/getChunkedContext'
 
 export async function getTestRunnableTaskArguments(): Promise<RunnableTaskArguments> {
   return {}

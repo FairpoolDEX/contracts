@@ -1,18 +1,18 @@
 import { ethers, upgrades } from 'hardhat'
-import { expect } from '../../util-local/expect'
+import { expect } from '../../utils-local/expect'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
 import { ColiToken } from '../../typechain-types'
 
 import { AllocationsForTest, getAllocationsForTest, releaseTime, releaseTimeTest } from '../support/ColiToken.helpers'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 import { UpgradeContractContext, validateUpgradeContractTaskArguments } from '../../tasks/upgradeContractTask'
 import { Address } from '../../models/Address'
 import { ContractName } from '../../models/ContractName'
 import { DeployContractContext, validateDeployContractTaskArguments } from '../../tasks/deployContractTask'
 import { getTestRunnableContext } from '../support/context'
-import { ensure } from '../../util/ensure'
+import { ensure } from '../../utils/ensure'
 
 describe('ColiToken', async () => {
 

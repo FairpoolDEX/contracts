@@ -1,6 +1,6 @@
 import neatcsv from 'neat-csv'
 import { validateRewrite } from '../Rewrite'
-import { RawCSVData } from '../../util/csv'
+import { RawCSVData } from '../../utils/csv'
 
 interface RewriteCSV {
   From: string

@@ -1,4 +1,4 @@
-import { expect } from '../../../util-local/expect'
+import { expect } from '../../../utils-local/expect'
 import { TradingSimulation } from './TradingSimulation'
 import { MaxUint256 } from '../../../libs/ethereum/constants'
 

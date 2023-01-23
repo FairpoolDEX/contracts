@@ -1,9 +1,9 @@
 import { getVestingScheduleUid, VestingSchedule, VestingScheduleSchema } from '../models/VestingSchedule'
-import { getFinder, getInserter } from '../util/zod'
+import { getFinder, getInserter } from '../utils/zod'
 import { HundredPercent } from '../models/SmartContractPercentage'
 import { VestingName } from '../models/VestingName.js'
 import { getReleasePeriodsElapsed } from '../test/support/ColiToken.helpers'
-import { ensure } from '../util/ensure'
+import { ensure } from '../utils/ensure'
 
 export const allVestingSchedules: VestingSchedule[] = []
 

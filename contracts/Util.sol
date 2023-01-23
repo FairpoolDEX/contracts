@@ -147,8 +147,12 @@ contract Util {
 
     function logArray(address[] memory array, string memory $array) internal {
         for (uint i = 0; i < array.length; i++) {
-            emit Log(string.concat($array, "[", Strings.toString(i), "]"), array[i]);
+            logArrayItem(array, i, $array);
         }
+    }
+
+    function logArrayItem(address[] memory array, uint i, string memory $array) internal {
+        emit Log(string.concat($array, "[", Strings.toString(i), "]"), array[i]);
     }
 
     function ensureEqual(uint a, uint b, string memory message) internal {

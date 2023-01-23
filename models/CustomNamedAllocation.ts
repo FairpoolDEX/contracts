@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { AllocationSchema } from './Allocation'
 
 export const CustomNamedAllocationSchema = AllocationSchema.extend({

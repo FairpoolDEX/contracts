@@ -1,5 +1,5 @@
-import { expect } from '../../util-local/expect'
-import { fest } from '../../util-local/mocha'
+import { expect } from '../../utils-local/expect'
+import { fest } from '../../utils-local/mocha'
 import { parseEtherscanAmountCSV } from '../../models/AmountBN/parseEtherscanAmountCSV'
 import { BigNumber } from 'ethers'
 

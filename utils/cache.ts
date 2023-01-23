@@ -1,6 +1,6 @@
 import cacheManager from 'cache-manager'
 import fsStore from 'cache-manager-fs-hash'
-import { days, seconds } from '../util-local/time'
+import { days, seconds } from '../utils-local/time'
 import { toString } from 'lodash'
 import { homedir } from 'os'
 import mkdirp from 'mkdirp'

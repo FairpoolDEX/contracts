@@ -4,7 +4,7 @@ import { BigNumber } from 'ethers'
 import { beforeEach, Context } from 'mocha'
 import { BuyAndHoldSimulation } from '../support/Simulation/BuyAndHoldSimulation'
 import $debug from 'debug'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 
 describe('BuyAndHoldSimulation', async function () {
   let simulation: BuyAndHoldSimulation

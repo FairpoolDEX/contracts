@@ -1,6 +1,6 @@
 import { expect } from './expect'
 import neatcsv from 'neat-csv'
-import { RawCSVData } from '../util/csv'
+import { RawCSVData } from '../utils/csv'
 import { shuffle } from 'lodash'
 import { AddressSchema } from '../models/Address'
 import { writeFile } from 'fs/promises'

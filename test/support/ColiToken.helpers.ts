@@ -1,11 +1,11 @@
 import { toTokenAmount } from './all.helpers'
-import { getRewriteAddressMap, RewriteAddressMap } from '../../util-local/address'
+import { getRewriteAddressMap, RewriteAddressMap } from '../../utils-local/address'
 import { parseBlockNumber } from '../../libs/ethereum/models/BlockNumber'
 import { dateToTimestampSeconds } from 'hardhat/internal/util/date'
-import { days, month, seconds } from '../../util-local/time'
+import { days, month, seconds } from '../../utils-local/time'
 import { parseVestingTypes } from '../../models/VestingType'
 import { normalShare, scaledDenominator, scaledShare, zeroScaledShare } from './Vesting.helpers'
-import { AmountNum } from '../../util-local/types'
+import { AmountNum } from '../../utils-local/types'
 import { Address } from '../../models/Address'
 
 export const shieldDecimals = 18

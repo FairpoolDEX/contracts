@@ -1,6 +1,6 @@
 import { parseVestingTypes } from '../../models/VestingType'
 import { initialShare, monthlyShare, periodShareScale, scaledShare } from '../../test/support/Vesting.helpers'
-import { day, month, months } from '../../util-local/time'
+import { day, month, months } from '../../utils-local/time'
 import { Duration } from '../../models/Duration'
 
 export function dailyShareDuration(duration: Duration) {

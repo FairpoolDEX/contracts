@@ -1,5 +1,5 @@
 import { validateDeployColiTokenExpectationsMap } from '../../tasks/deployColiTokenTask'
-import { getBalancesFromMap } from '../../util-local/balance'
+import { getBalancesFromMap } from '../../utils-local/balance'
 import { CS, KS, oldSoftwareDeployer } from '../../data/allAddresses'
 import { bn } from '../../libs/bn/utils'
 import { validateRawFrozenWallets } from '../../models/FrozenWallet'

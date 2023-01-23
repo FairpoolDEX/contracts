@@ -1,4 +1,4 @@
-import { FunctionCall, parseFunctionCall } from '../../util-local/parseFunctionCall'
+import { FunctionCall, parseFunctionCall } from '../../utils-local/parseFunctionCall'
 import { Rewrite } from '../utils/rewrite'
 import { Address } from '../../models/Address'
 import { TransactionInfo } from './models/TransactionInfo'

@@ -1,7 +1,7 @@
 import { Fairpool } from '../../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
-import { expect } from '../../../util-local/expect'
+import { expect } from '../../../utils-local/expect'
 
 type FairpoolParameterGetter = 'royalties' | 'dividends' | 'fees'
 type FairpoolParameterSetter = 'setRoyalties' | 'setDividends' | 'setFees'

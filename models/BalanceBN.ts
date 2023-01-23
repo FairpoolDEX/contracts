@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Address, AddressSchema } from './Address'
 import { AmountBN, AmountBNSchema } from './AmountBN'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { toUidFromSchema, Uid } from './Uid'
 
 export const BalanceBNSchema = z.object({

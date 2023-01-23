@@ -5,15 +5,15 @@ import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../suppo
 import { Fairpool } from '../../typechain-types'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 import { mainnet } from '../../libs/ethereum/data/allNetworks'
 import { DefaultDecimals as baseDecimals, DefaultScale as baseScale } from '../../libs/fairpool/constants'
-import { assumeIntegerEnvVar } from '../../util/env'
-import { expect } from '../../util-local/expect'
+import { assumeIntegerEnvVar } from '../../utils/env'
+import { expect } from '../../utils-local/expect'
 import { parallelMap, sequentialMap } from 'libs/utils/promise'
 import { identity, range } from 'remeda'
 import { Address } from '../../models/Address'
-import { getSignatures } from '../../util-local/getSignatures'
+import { getSignatures } from '../../utils-local/getSignatures'
 import { getGasUsedForManyHolders } from './Fairpool/getGasUsedForManyHolders'
 import { deployFairpoolTest } from './Fairpool/deployFairpoolTest'
 import { Rewrite } from '../../libs/utils/rewrite'
@@ -22,14 +22,16 @@ import { executeTransaction } from '../../libs/echidna/executeTransaction'
 import { bn } from '../../libs/bn/utils'
 import { DefaultDecimals as quoteDecimals, MaxUint256 } from '../../libs/ethereum/constants'
 import { buy } from '../support/Fairpool.functions'
-import { BuyEvent, BuyEventTopic } from '../../libs/fairpool/models/BuyEvent'
-import { fromRawEventToBuyEvent } from '../../models/BuyEvent/fromRawEventToBuyEvent'
+import { BuyEvent } from '../../libs/fairpool/models/BuyEvent'
 import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { tmpdir } from 'os'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
 import { getScaledPercent } from '../support/Fairpool.helpers'
+import { cleanEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
+import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
+import { fromRawEvent } from '../../utils-local/fromRawEvent'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -151,14 +153,13 @@ describe('Fairpool', async function () {
 
   fest('must replay Echidna transactions', async () => {
     const echidnaLog = `
-      setSpeed(266) from: 0x0000000000000000000000000000000000030000 Time delay: 124482 seconds Block delay: 15771
-      transferShares(0x10000,16) from: 0x0000000000000000000000000000000000030000 Time delay: 18 seconds Block delay: 41552
-      transferShares(0x30000,7) from: 0x0000000000000000000000000000000000010000 Time delay: 4121 seconds Block delay: 1001
-      buy(65537,115792089237316195423570985008687907853269984665640564039457584007913129639808) from: 0x0000000000000000000000000000000000010000 Value: 0x322ec6b9a77f4a56 Time delay: 58862 seconds Block delay: 44445
-      transferShares(0xc17c4dd16364f52552d996cfe73d259a0fc7ba8e,9) from: 0x0000000000000000000000000000000000010000 Time delay: 255 seconds Block delay: 28613
-      test() from: 0x0000000000000000000000000000000000010000 Time delay: 382087 seconds Block delay: 7755
+      │ 1.setSpeed(9) from: 0x0000000000000000000000000000000000030000 Time delay: 322246 seconds Block delay: 3399          │
+      │ 2.buy(26,115792089237316195423570985008687907853269984665640564039457584007913129639926) from: 0x0000000000000000000000000000000000020000 Value: 0x19bcc5bc94f552adf Time delay: 544841 seconds Block delay: 55835│
+      │ 3.buy(65,115792089237316195423570985008687907853269984665640564039457584007913129639933) from: 0x0000000000000000000000000000000000030000 Value: 0x2dc0acca62c98874 Time delay: 545694 seconds Block delay: 55433 │
+      │ 4.reset(16,623,895) from: 0x0000000000000000000000000000000000030000 Time delay: 15347 seconds Block delay: 14174    │
+      │ 5.test() from: 0x0000000000000000000000000000000000030000 Time delay: 205478 seconds Block delay: 60476              │
     `
-    const echidnaLines = echidnaLog.split('\n').map(s => s.trim()).filter(identity)
+    const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(identity)
     const fairpoolTest = await deployFairpoolTest(owner)
     const signatures = getSignatures(fairpoolTest.interface.functions)
     const rewrites: Rewrite<Address>[] = [
@@ -215,9 +216,9 @@ describe('Fairpool', async function () {
     const transactions = await parallelMap(range(0, count), async () => {
       return buy(fairpool, signer, value)
     })
-    const events = await fairpool.queryFilter({ topics: [BuyEventTopic] })
+    const events = await fairpool.queryFilter({ topics: [TradeEventTopic] })
     expect(events.length).to.equal(count)
-    const buys = events.map(fromRawEventToBuyEvent)
+    const buys = events.map(fromRawEvent(parseTradeEvent))
     const fromBuyEventToCsv = (buy: BuyEvent) => {
       const { sender, baseDelta, quoteDelta } = buy
       const price = quoteDelta.div(baseDelta)

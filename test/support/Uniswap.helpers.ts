@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, Contract, ContractFactory } from 'ethers'
-import { Ethers } from '../../util-local/types'
+import { Ethers } from '../../utils-local/types'
 import UniswapV2FactoryJSON from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import { UniswapV2Factory } from '../../typechain-types'
 import { Address } from '../../models/Address'

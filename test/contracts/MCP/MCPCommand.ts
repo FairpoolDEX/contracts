@@ -1,4 +1,4 @@
-import { expect } from '../../../util-local/expect'
+import { expect } from '../../../utils-local/expect'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { BlockchainCommand } from '../../support/fast-check/commands/BlockchainCommand'
 import { MCPModel, MCPReal } from './MCPBlockchainModel'

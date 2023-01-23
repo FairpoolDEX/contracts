@@ -1,7 +1,7 @@
 import { Address } from '../../models/Address'
-import { Ethers } from '../../util-local/types'
+import { Ethers } from '../../utils-local/types'
 import { BullToken, ColiToken, GenericToken, GenericTokenWithVesting } from '../../typechain-types'
-import { ensure } from '../../util/ensure'
+import { ensure } from '../../utils/ensure'
 import { findDeployment } from '../../data/allDeployments'
 import { Network } from '../../libs/ethereum/models/Network'
 

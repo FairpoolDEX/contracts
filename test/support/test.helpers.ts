@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
-import { expect } from '../../util-local/expect'
-import { Ethers } from '../../util-local/types'
+import { expect } from '../../utils-local/expect'
+import { Ethers } from '../../utils-local/types'
 import { Address } from '../../models/Address'
 import { MaxUint256 } from '../../libs/ethereum/constants'
 

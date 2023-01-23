@@ -1,5 +1,5 @@
 import { NetworkName } from '../../libs/ethereum/models/NetworkName'
-import { ensure } from '../../util/ensure'
+import { ensure } from '../../utils/ensure'
 import { Deployment } from '../Deployment'
 
 export function getDeploymentByNetwork(deployments: Deployment[], network: NetworkName) {

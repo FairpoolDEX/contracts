@@ -16,24 +16,24 @@ import { deployMCPTask } from './tasks/deployMCPTask'
 import { deployNonUpgradeableContractTask, deployUpgradeableContractTask } from './tasks/deployContractTask'
 import { transferManyTask } from './tasks/transferManyTask'
 import { HardhatUserConfig } from 'hardhat/types'
-import { maxFeePerGas as gasPrice } from './util-local/gas'
-import { mnemonic } from './util-local/config'
+import { maxFeePerGas as gasPrice } from './utils-local/gas'
+import { mnemonic } from './utils-local/config'
 import { setClaimsTask } from './tasks/setClaimsTask'
 import { writeClaimsTask, writeClaimsTaskCacheTtl } from './tasks/writeClaimsTask'
 // import 'longjohn'
-import { hours, minutes } from './util-local/time'
-import { getJsonRpcUrl } from './util-local/ethereum'
+import { hours, minutes } from './utils-local/time'
+import { getJsonRpcUrl } from './utils-local/ethereum'
 import { deployColiTokenTask } from './tasks/deployColiTokenTask'
 import { bnbmainnet, bnbtestnet, goerli, mainnet, rinkeby, ropsten } from './libs/ethereum/data/allNetworks'
 import { Network } from './libs/ethereum/models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
 import { writeTotalsTask } from './tasks/writeTotalsTask'
-import { amount, timestamp } from './util-local/hardhat'
+import { amount, timestamp } from './utils-local/hardhat'
 import { addVestingTypesTask } from './tasks/addVestingTypes'
 import { addAllocationsTask } from './tasks/addAllocations'
-import { ensure } from './util/ensure'
-import { assumeIntegerEnvVar } from './util/env'
+import { ensure } from './utils/ensure'
+import { assumeIntegerEnvVar } from './utils/env'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -144,7 +144,6 @@ export const config: HardhatUserConfig = {
     }),
     bnbmainnet: fromNetwork(bnbmainnet, {
       url: getJsonRpcUrl('bnbmainnet'), // 'https://bsc-dataseed.binance.org/',
-      chainId: 56,
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
@@ -152,7 +151,6 @@ export const config: HardhatUserConfig = {
     }),
     bnbtestnet: fromNetwork(bnbtestnet, {
       url: getJsonRpcUrl('bnbtestnet'), // 'https://data-seed-prebsc-1-s1.binance.org:8545',
-      chainId: 97,
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
@@ -185,7 +183,7 @@ export const config: HardhatUserConfig = {
       rinkeby: ensure(process.env.ETHERSCAN_API_KEY),
 
       bsc: ensure(process.env.BSCSCAN_API_KEY),
-      bnbtestnet: ensure(process.env.BSCSCAN_API_KEY),
+      bscTestnet: ensure(process.env.BSCSCAN_API_KEY),
 
       avalanche: ensure(process.env.SNOWTRACE_API_KEY),
       avalancheFujiTestnet: ensure(process.env.SNOWTRACE_API_KEY),

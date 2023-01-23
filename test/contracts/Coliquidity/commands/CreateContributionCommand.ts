@@ -1,4 +1,4 @@
-import { AmountNum } from '../../../../util-local/types'
+import { AmountNum } from '../../../../utils-local/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, ContributionIndex, OfferIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { Address } from '../../../../models/Address'

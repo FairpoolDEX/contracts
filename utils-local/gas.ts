@@ -1,4 +1,4 @@
-import { assumeIntegerEnvVar, demandIntegerEnvVar } from '../util/env'
+import { assumeIntegerEnvVar, demandIntegerEnvVar } from '../utils/env'
 import { gwei } from '../test/support/all.helpers'
 import { strict as assert } from 'assert'
 import { NetworkName } from '../libs/ethereum/models/NetworkName'

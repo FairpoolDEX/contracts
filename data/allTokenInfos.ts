@@ -1,5 +1,5 @@
 import { parseTokenInfoUid, TokenInfo, TokenInfoSchema } from '../models/TokenInfo'
-import { getFinder, getInserter } from '../util/zod'
+import { getFinder, getInserter } from '../utils/zod'
 
 export const allTokenInfos: TokenInfo[] = []
 

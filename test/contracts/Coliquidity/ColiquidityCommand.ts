@@ -1,10 +1,10 @@
 import { BlockchainCommand } from '../../support/fast-check/commands/BlockchainCommand'
 import { BlockchainModel } from '../../support/fast-check/models/BlockchainModel'
-import { AmountNum, Ethers, Timestamp } from '../../../util-local/types'
+import { AmountNum, Ethers, Timestamp } from '../../../utils-local/types'
 import { Coliquidity, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../../../typechain-types'
 import { BlockchainReal } from '../../support/fast-check/models/BlockchainReal'
-import { demand } from '../../../util-local/demand'
-import { expect } from '../../../util-local/expect'
+import { demand } from '../../../utils-local/demand'
+import { expect } from '../../../utils-local/expect'
 import { Address } from '../../../models/Address'
 import { $zero } from '../../../data/allAddresses'
 
