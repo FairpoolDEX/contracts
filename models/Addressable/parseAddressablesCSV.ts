@@ -1,5 +1,5 @@
 import neatcsv from 'neat-csv'
-import { RawCSVData } from '../../util/csv'
+import { RawCSVData } from '../../utils/csv'
 import { parseAddressable } from '../Addressable'
 
 interface AddressableCSV {

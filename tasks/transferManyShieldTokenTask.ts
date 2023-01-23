@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types'
-import { StringAllocations } from '../util-local/types'
+import { StringAllocations } from '../utils-local/types'
 import { chunk } from '../test/support/all.helpers'
 import { BigNumber } from 'ethers'
-import { expect } from '../util-local/expect'
+import { expect } from '../utils-local/expect'
 import { maxSupplyTokenAmount } from '../test/support/ColiToken.helpers'
 
 // NOTE: Amounts should be with decimals (with a dot)

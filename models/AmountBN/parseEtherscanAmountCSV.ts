@@ -1,5 +1,5 @@
 import { AmountBN } from '../AmountBN'
-import { padAmount } from '../../util-local/balance'
+import { padAmount } from '../../utils-local/balance'
 import { parseAmountCSV } from './parseAmountCSV'
 
 export function parseEtherscanAmountCSV(decimals: number, amount: string): AmountBN {

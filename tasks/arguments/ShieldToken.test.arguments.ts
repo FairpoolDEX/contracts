@@ -1,4 +1,4 @@
-import { getTomorrow, toUnixTimestamp } from '../../util/luxon'
+import { getTomorrow, toUnixTimestamp } from '../../utils/luxon'
 
 // simulate release on the next day
 const releaseTime = toUnixTimestamp(getTomorrow())

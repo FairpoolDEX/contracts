@@ -1,4 +1,4 @@
-import { BalancesMap } from '../../util-local/balance'
+import { BalancesMap } from '../../utils-local/balance'
 import { AmountBN } from '../../models/AmountBN'
 import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { Transition } from '../../libs/divide-and-conquer/Transition'

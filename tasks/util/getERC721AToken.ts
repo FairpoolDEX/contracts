@@ -1,5 +1,5 @@
 import { Address } from '../../models/Address'
-import { Ethers } from '../../util-local/types'
+import { Ethers } from '../../utils-local/types'
 import { ERC721A } from '../../typechain-types'
 
 export async function getERC721AToken(address: Address, ethers: Ethers) {

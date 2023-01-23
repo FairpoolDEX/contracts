@@ -1,6 +1,6 @@
 import { z, ZodObject } from 'zod'
 import { isEqual, pick } from 'lodash'
-import { GetUid } from '../util/zod'
+import { GetUid } from '../utils/zod'
 import { ZodRawShape } from 'zod/lib/types'
 import { Id } from './Id'
 

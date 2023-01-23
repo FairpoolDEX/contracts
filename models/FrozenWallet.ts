@@ -3,7 +3,7 @@ import { toUidFromSchema, Uid } from './Uid'
 import { AddressSchema } from './Address'
 import { AmountBNSchema } from './AmountBN'
 import { DurationSchema } from './Duration'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 
 export const FrozenWalletSchema = z.object({
   wallet: AddressSchema,

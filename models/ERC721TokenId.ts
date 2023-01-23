@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { getDuplicatesRefinement } from '../util/zod'
-import { isEqualBy } from '../util/lodash'
+import { getDuplicatesRefinement } from '../utils/zod'
+import { isEqualBy } from '../utils/lodash'
 
 export const ERC721TokenIdSchema = z.number().int().nonnegative().describe('ERC721TokenId')
 

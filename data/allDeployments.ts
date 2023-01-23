@@ -1,5 +1,5 @@
 import { Deployment, DeploymentSchema, parseDeploymentUid } from '../models/Deployment'
-import { getFinder, getInserter } from '../util/zod'
+import { getFinder, getInserter } from '../utils/zod'
 import { BullToken } from '../models/ContractName'
 import { nail } from '../libs/utils/string'
 

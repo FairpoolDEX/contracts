@@ -5,7 +5,7 @@ import { stringifyTransaction } from './stringifyTransaction'
 import { ensureFind } from '../utils/ensure'
 import { CallOverrides } from '@ethersproject/contracts/src.ts/index'
 import { ContractTransaction } from '@ethersproject/contracts'
-import { renderLogDescription } from '../../util-local/ethers/renderLogDescription'
+import { renderLogDescription } from '../../utils-local/ethers/renderLogDescription'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 export const executeTransaction = (contract: Contract, signers: SignerWithAddress[]) => async (info: TransactionInfo) => {

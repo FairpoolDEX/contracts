@@ -15,12 +15,12 @@
     "./index.d.ts"
   ],
   "include": [
-    "./util",
+    "./utils",
     "./tasks/scripts",
     "./deploy",
     "./test",
     "./tasks",
-    "./types",
+    "./types"
   ],
   "exclude": [
     "node_modules",

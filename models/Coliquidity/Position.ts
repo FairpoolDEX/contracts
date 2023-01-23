@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { getDuplicatesRefinement } from '../../util/zod'
-import { isEqualBy } from '../../util/lodash'
+import { getDuplicatesRefinement } from '../../utils/zod'
+import { isEqualBy } from '../../utils/lodash'
 import { AmountBNSchema } from '../AmountBN'
 import { AddressSchema } from '../Address'
 

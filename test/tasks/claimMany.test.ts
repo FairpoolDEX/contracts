@@ -1,4 +1,4 @@
-import { expect } from '../../util-local/expect'
+import { expect } from '../../utils-local/expect'
 import { ethers, upgrades } from 'hardhat'
 import { toTokenAmount } from '../support/all.helpers'
 import { timeTravel } from '../support/test.helpers'
@@ -7,10 +7,10 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { setClaims, SetClaimsExpectationsMap } from '../../tasks/setClaimsTask'
 import { airdropClaimDuration, airdropStageDuration, airdropStartTimestampForTest, burnRateDenominator, burnRateNumerator, getTestAddresses, getTestBalanceMap, getTestExpectations, setDefaultAmounts } from '../support/BullToken.helpers'
 import { claimMany } from '../../tasks/claimManyTask'
-import { BalancesMap, getBalancesFromMap } from '../../util-local/balance'
+import { BalancesMap, getBalancesFromMap } from '../../utils-local/balance'
 import { Address } from '../../models/Address'
 import { getTestSetClaimsContext } from '../support/context'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 
 describe('claimBullToken', async () => {
 

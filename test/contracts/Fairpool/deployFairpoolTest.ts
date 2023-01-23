@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { ethers } from 'hardhat'
-import { LogLevel } from '../../../util-local/ethers'
+import { LogLevel } from '../../../utils-local/ethers'
 import { FairpoolTest } from '../../../typechain-types'
 
 export async function deployFairpoolTest(owner: SignerWithAddress) {

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { ShareSchema } from './Share'
 import { DurationSchema } from './Duration'
 

@@ -1,7 +1,7 @@
 import { BalanceBN } from '../BalanceBN'
 import { Address } from '../Address'
 import { AmountBN } from '../AmountBN'
-import { ensure } from '../../util/ensure'
+import { ensure } from '../../utils/ensure'
 
 export function moveBalances(balances: BalanceBN[], from: Address, to: Address, amount: AmountBN): BalanceBN[] {
   // NOTE: This function mutates the data

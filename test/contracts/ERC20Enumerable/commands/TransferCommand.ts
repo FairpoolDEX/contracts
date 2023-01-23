@@ -7,7 +7,7 @@ import { $zero } from '../../../../data/allAddresses'
 import { BalanceBN } from '../../../../models/BalanceBN'
 import { ERC20EnumerableModel } from '../ERC20EnumerableModel'
 import { ERC20EnumerableReal, getBalances, getHolders } from '../ERC20EnumerableReal'
-import { Ethers } from '../../../../util-local/types'
+import { Ethers } from '../../../../utils-local/types'
 import { sortBy } from 'lodash'
 
 export class TransferCommand extends ERC20EnumerableCommand<TransferCommandResult> implements AsyncCommand<ERC20EnumerableModel, ERC20EnumerableReal, true> {

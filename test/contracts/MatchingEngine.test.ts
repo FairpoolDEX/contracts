@@ -1,6 +1,6 @@
 import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { BigNumber } from 'bignumber.js'
-import { Timestamp } from '../../util-local/types'
+import { Timestamp } from '../../utils-local/types'
 
 type UserId = number
 

@@ -1,6 +1,6 @@
 import { Block, BlockSchema, getBlockUid } from '../models/Block'
-import { getFinder, getInserter } from '../util/zod'
-import { minute } from '../util-local/time'
+import { getFinder, getInserter } from '../utils/zod'
+import { minute } from '../utils-local/time'
 
 export const allBlocks: Block[] = []
 

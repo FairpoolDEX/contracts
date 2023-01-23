@@ -1,6 +1,6 @@
-import { RunnableContext } from '../../util-local/context/getRunnableContext'
+import { RunnableContext } from '../../utils-local/context/getRunnableContext'
 import { ContractTransaction } from 'ethers'
-import { getTransactionUrl } from '../../util/url'
+import { getTransactionUrl } from '../../utils/url'
 
 export async function logAndWaitForTransactions(context: RunnableContext, minConfirmations: number, transactions: ContractTransaction[]) {
   const { log, signer } = context

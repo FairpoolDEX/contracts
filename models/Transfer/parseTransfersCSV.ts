@@ -2,7 +2,7 @@ import neatcsv from 'neat-csv'
 import { validateTransfer } from '../Transfer'
 import { toInteger } from 'lodash'
 import { parseEtherscanAmountCSV } from '../AmountBN/parseEtherscanAmountCSV'
-import { RawCSVData } from '../../util/csv'
+import { RawCSVData } from '../../utils/csv'
 
 interface EtherscanExportTransferRow {
   Txhash: string

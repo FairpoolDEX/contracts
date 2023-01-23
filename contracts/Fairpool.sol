@@ -93,8 +93,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error OperatorMustNotBeZeroAddress();
     error OperatorMustNotBeContractAddress();
 
-    event Buy(address indexed sender, uint baseDelta, uint quoteDelta);
-    event Sell(address indexed sender, uint baseDelta, uint quoteDelta, uint quoteReceived);
+    event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
     event SetSpeed(uint speed);
     event SetRoyalties(uint royalties);
@@ -121,7 +120,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         // baseDelta != 0 ==> quoteDelta != 0
         if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
         uint quoteRefund = msg.value - quoteDelta;
-        emit Buy(msg.sender, baseDelta, quoteDelta);
+        emit Trade(msg.sender, true, baseDelta, quoteDelta, 0);
         _mint(msg.sender, baseDelta);
         quoteBalanceOfContract += quoteDelta;
         if (quoteRefund != 0) payable(msg.sender).transfer(quoteRefund);
@@ -139,7 +138,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         quoteDistributed = distribute(quoteDelta);
         uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
-        emit Sell(msg.sender, baseDelta, quoteDelta, quoteReceived);
+        emit Trade(msg.sender, false, baseDelta, quoteDelta, quoteReceived);
         uint quoteWithdrawn = doWithdrawAndEmit();
         payable(msg.sender).transfer(quoteReceived + quoteWithdrawn);
     }

@@ -1,7 +1,7 @@
 import { GenericCommand } from '../../support/fast-check/commands/GenericCommand'
 import { ERC20EnumerableModel } from './ERC20EnumerableModel'
 import { ERC20EnumerableReal } from './ERC20EnumerableReal'
-import { Ethers } from '../../../util-local/types'
+import { Ethers } from '../../../utils-local/types'
 import { ERC20 } from '../../../typechain-types'
 
 export abstract class ERC20EnumerableCommand<Result> extends GenericCommand<ERC20EnumerableModel, ERC20EnumerableReal, Result> {

@@ -1,8 +1,8 @@
 import { Context } from 'mocha'
 import { getBaseVolumeForStablePrice, getLiquidityAfterBuy, getLiquidityAfterDeposit, getLiquidityAfterSell } from '../support/Coliquidity.generic.helpers'
-import { expect } from '../../util-local/expect'
+import { expect } from '../../utils-local/expect'
 import { uniswapFeeNumber } from '../support/Uniswap.helpers'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 
 describe('ColiquidityAnalysis', async function () {
 

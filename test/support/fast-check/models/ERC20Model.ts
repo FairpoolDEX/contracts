@@ -1,7 +1,7 @@
 import { Address } from '../../../../models/Address'
-import { ensure } from '../../../../util/ensure'
+import { ensure } from '../../../../utils/ensure'
 import { BalanceBN } from '../../../../models/BalanceBN'
-import { removeByIndex } from '../../../../util/lodash'
+import { removeByIndex } from '../../../../utils/lodash'
 import { zero } from '../../../../libs/bn/constants'
 
 export interface ERC20Model {

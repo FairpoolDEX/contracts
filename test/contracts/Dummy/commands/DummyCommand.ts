@@ -1,7 +1,7 @@
 import { AsyncCommand } from 'fast-check'
 import { Address } from '../../../../models/Address'
 import { GenericCommand } from '../../../support/fast-check/commands/GenericCommand'
-import { Logger } from '../../../../util-local/log'
+import { Logger } from '../../../../utils-local/log'
 
 interface DummyModel {}
 interface DummyReal {}

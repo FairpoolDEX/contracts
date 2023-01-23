@@ -1,5 +1,5 @@
 import { ContractInfo, ContractInfoSchema, getContractInfoUid } from '../models/ContractInfo'
-import { getFinder, getInserter } from '../util/zod'
+import { getFinder, getInserter } from '../utils/zod'
 
 export const allContractInfos: ContractInfo[] = []
 

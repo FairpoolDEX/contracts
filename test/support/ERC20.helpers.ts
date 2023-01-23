@@ -3,7 +3,7 @@ import { BlockTag } from '@ethersproject/abstract-provider/src.ts/index'
 import { Address } from '../../models/Address'
 import { AmountBN, validateAmountBN } from '../../models/AmountBN'
 import { BalanceBN, validateBalanceBN } from '../../models/BalanceBN'
-import { getCacheKey } from '../../util/cache'
+import { getCacheKey } from '../../utils/cache'
 import { Cache } from 'cache-manager'
 
 export async function getERC20AmountAtBlockTag(token: Contract, blockTag: BlockTag, address: Address) {

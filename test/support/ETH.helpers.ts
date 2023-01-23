@@ -1,4 +1,4 @@
-import { seconds } from '../../util-local/time'
+import { seconds } from '../../utils-local/time'
 
 export const decimals = 18
 

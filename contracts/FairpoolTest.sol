@@ -5,6 +5,9 @@ import "./FairpoolOwnerOperator.sol";
 import "./IncreaseAllowanceHooks.sol";
 import "./Util.sol";
 
+/**
+8444811267716841432
+*/
 contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
@@ -30,11 +33,19 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
 
     // allow testing different combinations of speed, royalties, dividends
     function reset(uint speed_, uint royalties_, uint dividends_) public onlyOwner {
-        for (uint i = 0; i < holders.length; i++) {
-            _burn(holders[i], balanceOf(holders[i]));
-            delete tallies[holders[i]];
+        // need to copy holders because it's modified in the loop body via _burn()
+        address[] memory $holders = copy(holders);
+        for (uint i = 0; i < $holders.length; i++) {
+            _burn($holders[i], balanceOf($holders[i]));
+            delete tallies[$holders[i]];
+        }
+        // no need to copy beneficiaries because it's not modified in the loop body
+        for (uint i = 0; i < beneficiaries.length; i++) {
+            // set the tallies for beneficiaries (may have been deleted in the previous loop if a beneficiary was also a holder)
+            preallocate(beneficiaries[i]);
         }
         payable(owner()).transfer(address(this).balance);
+        quoteBalanceOfContract = 0;
         setSpeedInternal(speed_);
         setTaxesInternal(royalties_, dividends_, fees);
     }

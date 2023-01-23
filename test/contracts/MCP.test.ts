@@ -1,4 +1,4 @@
-import { expect } from '../../util-local/expect'
+import { expect } from '../../utils-local/expect'
 import { flatten } from 'lodash'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
@@ -9,8 +9,8 @@ import { beforeEach } from 'mocha'
 import { ERC20Model } from '../support/fast-check/models/ERC20Model'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
-import { hours } from '../../util-local/time'
-import { fest } from '../../util-local/mocha'
+import { hours } from '../../utils-local/time'
+import { fest } from '../../utils-local/mocha'
 
 describe.skip('Market Crash Protection', async () => {
   let owner: SignerWithAddress

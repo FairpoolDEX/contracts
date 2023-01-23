@@ -1,4 +1,4 @@
-import { AmountNum, Timestamp } from '../../../../util-local/types'
+import { AmountNum, Timestamp } from '../../../../utils-local/types'
 import { ColiquidityCommand, ColiquidityModel, ColiquidityReal, OfferIndex } from '../ColiquidityCommand'
 import { AsyncCommand } from 'fast-check'
 import { Address } from '../../../../models/Address'

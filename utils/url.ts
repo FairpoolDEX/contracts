@@ -1,6 +1,6 @@
 import { Address } from '../models/Address'
 import { ContractTransaction, Signer } from 'ethers'
-import { getNetworkFromSigner } from '../util-local/network'
+import { getNetworkFromSigner } from '../utils-local/network'
 import { ensure } from './ensure'
 import { findNetworkExplorer } from '../libs/ethereum/data/allNetworkExplorers'
 

@@ -1,4 +1,4 @@
-import { expect } from '../../util-local/expect'
+import { expect } from '../../utils-local/expect'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
@@ -12,7 +12,7 @@ import * as os from 'os'
 import { range, toInteger } from 'lodash'
 import mkdirp from 'mkdirp'
 import { $zero } from '../../data/allAddresses'
-import { fest } from '../../util-local/mocha'
+import { fest } from '../../utils-local/mocha'
 
 xdescribe('TraderLoot', async function () {
   let owner: SignerWithAddress

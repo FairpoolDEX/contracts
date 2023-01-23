@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { toUidFromSchema, Uid } from './Uid'
-import { getDuplicatesRefinement } from '../util/zod'
+import { getDuplicatesRefinement } from '../utils/zod'
 import { AddressSchema } from './Address'
 
 export const RewriteSchema = z.object({
