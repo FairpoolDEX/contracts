@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "solmate/src/utils/FixedPointMathLib.sol";
 import "./ERC20Enumerable.sol";
 import "./SharedOwnership.sol";
+import "./Util.sol";
+import "./bancor/BancorFormula.sol";
+// import "hardhat/console.sol";
 
 /**
  * Definitions:
@@ -15,10 +17,10 @@ import "./SharedOwnership.sol";
  * - quote - money amount (native blockchain currency)
  *
  * Notes:
- * - quote = (base * base) * speed / scale; // the bonding curve equation (quote on the left side)
- * - base = (quote * scale / speed).sqrt(); // the bonding curve equation (base on the left side)
- * - price = quote / base = base * speed / scale; // the price equation
- * - The `_decimals` variable must be equal to the decimals of the base asset of the current blockchain (so that msg.value is scaled to this amount of decimals)
+ * - quote = (base * base) * speed / MAX_WEIGHT; // the bonding curve equation (quote on the left side)
+ * - base = (quote * MAX_WEIGHT / speed).sqrt(); // the bonding curve equation (base on the left side)
+ * - price = quote / base = base * speed / MAX_WEIGHT; // the price equation
+ * - The `_decimals` variable must be equal to the decimals of the base asset of the current blockchain (so that msg.value is MAX_WEIGHTd to this amount of decimals)
  * - Variables must use uint instead of smaller types because uint actually costs less gas
  * - Custom errors must be used over string descriptions because it costs less gas
  * - Custom errors must not include the function arguments (i.e. don't add function arguments as error parameters)
@@ -29,26 +31,36 @@ import "./SharedOwnership.sol";
  * - Owner may call renounceOwnership(), thus setting the owner to zero address
  * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of dividends). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay dividends to anyone else ~= he should pay dividends to himself)
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
- * - baseNew is always divisible by scale without remainder (due to upscale() / downscale())
- * - quoteNew is always divisible by scale without remainder (due to getQuote(baseNew) )
- * - baseDelta is always divisible by scale without remainder (due to baseNew - baseOld / baseOld - baseNew)
- * - quoteDelta is always divisible by scale without remainder (due to quoteNew - quoteOld / quoteOld - quoteNew)
+ * - baseNew is always divisible by MAX_WEIGHT without remainder (due to upscale() / downscale())
+ * - quoteNew is always divisible by MAX_WEIGHT without remainder (due to getQuote(baseNew) )
+ * - baseDelta is always divisible by MAX_WEIGHT without remainder (due to baseNew - baseOld / baseOld - baseNew)
+ * - quoteDelta is always divisible by MAX_WEIGHT without remainder (due to quoteNew - quoteOld / quoteOld - quoteNew)
  */
-contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable {
-    using FixedPointMathLib for uint;
+contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable, BancorFormula {
+    // count of decimals
+    uint8 internal constant precision = 18;
 
-    // Multiplier in the formula for base amount (as speed / scale)
-    uint public speed;
+    // multiplier for scaled integers
+    uint internal constant scale = 10 ** precision;
 
-    // Percentage of sale distributed to the beneficiaries (as royalties / scale)
+    // Extra "base balance buffer" added to totalSupply before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
+    uint public constant baseBuffer = scale;
+
+    // Extra "quote balance buffer" added to quoteBalanceOfContract before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
+    uint public quoteBuffer;
+
+    // Multiplier in the Bancor functions (0 < weight < MAX_WEIGHT)
+    uint32 public weight;
+
+    // Percentage of sale distributed to the beneficiaries (as royalties / MAX_WEIGHT)
     uint public royalties;
 
-    // Percentage of sale distributed to the holders (as dividends / scale)
+    // Percentage of sale distributed to the holders (as dividends / MAX_WEIGHT)
     // NOTE: can be set to zero to avoid the dividends
     uint public dividends;
 
-    // Percentage of sale distributed to the operator (as fees / scale)
-    uint public fees = scale * 25 / 1000; // 2.5%
+    // Percentage of sale distributed to the operator (as fees / MAX_WEIGHT)
+    uint public fees = MAX_WEIGHT * 25 / 1000; // 2.5%
 
     // Operator receives the fees
     address payable public operator = payable(0x7554140235ad2D1Cc75452D2008336700C598Dc1);
@@ -63,11 +75,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     // Real balance of contract (less than or equal to `address(this).balance - sum(tallies) - defaultTally * holders.length`)
     uint public quoteBalanceOfContract;
 
-    // Allow up to 2 ** 32 unscaled
-    uint internal constant maxSpeed = scale * (2 ** 32);
-
-    // Allow up to 1 - (1 / scale) unscaled
-    uint internal constant maxRoyalties = scale - 1;
+    // Allow up to 1 - (1 / MAX_WEIGHT) unscaled
+    uint internal constant maxRoyalties = MAX_WEIGHT - 1;
 
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
@@ -84,10 +93,13 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     error BaseDeltaProposedMustBeLessThanOrEqualToBalance();
     error NothingToWithdraw();
     error AddressNotPayable(address addr);
-    error SpeedMustBeLessThanOrEqualToMaxSpeed();
-    error SpeedMustBeGreaterThanZero();
-    error SpeedCanBeSetOnlyIfTotalSupplyIsZero();
-    error RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
+    error QuoteBufferMustBeGreaterThanZero();
+    error WeightMustBeLessThanOrEqualToMaxWeight();
+    error WeightMustBeGreaterThanZero();
+    error WeightCanBeSetOnlyIfTotalSupplyIsZero();
+    error CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
+    error DividendsCanBeSetOnlyIfTotalSupplyIsZero();
+    error RoyaltiesPlusDividendsPlusFeesMustBeLessThanMaxWeight();
     error NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
     error OnlyOperator();
     error OperatorMustNotBeZeroAddress();
@@ -95,14 +107,16 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
 
     event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
-    event SetSpeed(uint speed);
+    event SetQuoteBuffer(uint quoteBuffer);
+    event SetWeight(uint32 weight);
     event SetRoyalties(uint royalties);
     event SetDividends(uint dividends);
     event SetFees(uint fees);
     event SetOperator(address operator);
 
-    constructor(string memory name_, string memory symbol_, uint speed_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
-        setSpeedInternal(speed_);
+    constructor(string memory name_, string memory symbol_, uint quoteBuffer_, uint32 weight_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
+        setQuoteBufferInternal(quoteBuffer_);
+        setWeightInternal(weight_);
         setTaxesInternal(royalties_, dividends_, fees);
         // operator is already set
         // preallocate tallies
@@ -133,11 +147,11 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         (uint baseDelta, uint quoteDelta) = getSellDeltas(baseDeltaProposed);
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
         // baseDelta != 0 ==> quoteDelta != 0
-        _burn(msg.sender, baseDelta);
         quoteBalanceOfContract -= quoteDelta;
         quoteDistributed = distribute(quoteDelta);
         uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
+        _burn(msg.sender, baseDelta); // IMPORTANT: _burn() must be called after distribute() because holders.length must be greater than 0 (a single holder must be able to sell back & receive rewards for himself)
         emit Trade(msg.sender, false, baseDelta, quoteDelta, quoteReceived);
         uint quoteWithdrawn = doWithdrawAndEmit();
         payable(msg.sender).transfer(quoteReceived + quoteWithdrawn);
@@ -159,11 +173,15 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         }
     }
 
-    function setSpeed(uint $speed) external onlyOwner nonReentrant {
-        if (totalSupply() != 0) revert SpeedCanBeSetOnlyIfTotalSupplyIsZero();
-        setSpeedInternal($speed);
-        emit SetSpeed($speed);
+    function setCurveParameters(uint $quoteBuffer, uint32 $weight) external onlyOwner nonReentrant {
+        if (totalSupply() != 0) revert CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
+        setQuoteBufferInternal($quoteBuffer);
+        setWeightInternal($weight);
+        emit SetQuoteBuffer($quoteBuffer);
+        emit SetWeight($weight);
     }
+
+    // using separate setRoyalties, setDividends, setFees because they have different modifiers (onlyOwner vs onlyOperator)
 
     function setRoyalties(uint $royalties) external onlyOwner nonReentrant {
         setTaxesInternal($royalties, dividends, fees);
@@ -171,6 +189,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     }
 
     function setDividends(uint $dividends) external onlyOwner nonReentrant {
+        if (totalSupply() != 0) revert DividendsCanBeSetOnlyIfTotalSupplyIsZero();
         setTaxesInternal(royalties, $dividends, fees);
         emit SetDividends($dividends);
     }
@@ -185,10 +204,15 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         emit SetOperator($operator);
     }
 
-    function setSpeedInternal(uint $speed) internal {
-        if ($speed == 0) revert SpeedMustBeGreaterThanZero();
-        if ($speed > maxSpeed) revert SpeedMustBeLessThanOrEqualToMaxSpeed();
-        speed = $speed;
+    function setQuoteBufferInternal(uint $quoteBuffer) internal {
+        if ($quoteBuffer == 0) revert QuoteBufferMustBeGreaterThanZero();
+        quoteBuffer = $quoteBuffer;
+    }
+
+    function setWeightInternal(uint32 $weight) internal {
+        if ($weight == 0) revert WeightMustBeGreaterThanZero();
+        if ($weight > MAX_WEIGHT) revert WeightMustBeLessThanOrEqualToMaxWeight();
+        weight = $weight;
     }
 
     function setOperatorInternal(address payable $operator) internal {
@@ -197,10 +221,10 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         operator = $operator;
     }
 
-    // using a single function for all three taxes to ensure their sum < scale (revert otherwise)
+    // using a single function for all three taxes to ensure their sum < MAX_WEIGHT (revert otherwise)
     function setTaxesInternal(uint $royalties, uint $dividends, uint $fees) internal {
         // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
-        if ($royalties >= scale || $dividends >= scale || $fees >= scale || $royalties + $dividends + $fees >= scale) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScale();
+        if ($royalties >= MAX_WEIGHT || $dividends >= MAX_WEIGHT || $fees >= MAX_WEIGHT || $royalties + $dividends + $fees >= MAX_WEIGHT) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanMaxWeight();
         if (totalSupply() != 0 && ($royalties > royalties || $dividends > dividends || $fees > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
         royalties = $royalties;
         dividends = $dividends;
@@ -220,7 +244,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         address recipient;
 
         // distribute to beneficiaries
-        uint quoteDistributedToBeneficiaries = (quoteDelta * royalties) / scale;
+        uint quoteDistributedToBeneficiaries = (quoteDelta * royalties) / MAX_WEIGHT;
         if (quoteDistributedToBeneficiaries != 0) {
             length = beneficiaries.length;
             for (i = 0; i < length; i++) {
@@ -232,7 +256,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
         }
 
         // distribute to holders
-        uint quoteDistributedToHolders = (quoteDelta * dividends) / scale;
+        uint quoteDistributedToHolders = (quoteDelta * dividends) / MAX_WEIGHT;
         if (quoteDistributedToHolders != 0) {
             length = holders.length;
             uint maxHolders = length < maxHoldersPerDistribution ? length : maxHoldersPerDistribution;
@@ -253,7 +277,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
             }
         }
 
-        uint quoteDistributedToOperator = (quoteDelta * fees) / scale;
+        uint quoteDistributedToOperator = (quoteDelta * fees) / MAX_WEIGHT;
         if (quoteDistributedToOperator != 0) {
             operator.transfer(quoteDistributedToOperator);
             quoteDistributed += quoteDistributedToOperator;
@@ -263,48 +287,31 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     // IMPORTANT: "When a payable function is called: address(this).balance is increased by msg.value before any of your code is executed", so quoteNew should already include the msg.value
     // IMPORTANT: Buy deltas must be added, not subtracted from current amounts
     function getBuyDeltas() internal view returns (uint baseDelta, uint quoteDelta) {
-        uint baseOld = totalSupply();
-        uint quoteOld = quoteBalanceOfContract;
-        uint quoteNewProposed = quoteOld + msg.value;
-        uint baseNewProposed = getBase(quoteNewProposed);
-        uint baseNew = downscale(baseNewProposed);
-        uint quoteNew = getQuote(baseNew);
-        if (baseNew < baseOld) { // may happen because of downscale()
-            return (0, 0);
-        } else {
-            return (baseNew - baseOld, quoteNew - quoteOld);
-        }
+        baseDelta = purchaseTargetAmount(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, msg.value);
+        quoteDelta = msg.value;
+//        uint baseOld = totalSupply();
+//        uint quoteOld = quoteBalanceOfContract;
+//        uint quoteNewProposed = quoteOld + msg.value;
+//        uint baseNewProposed = getBase(quoteNewProposed);
+//        uint baseNew = downscale(baseNewProposed);
+//        uint quoteNew = getQuote(baseNew);
+//        if (baseNew < baseOld) { // may happen because of downscale()
+//            return (0, 0);
+//        } else {
+//            return (baseNew - baseOld, quoteNew - quoteOld);
+//        }
     }
 
     // IMPORTANT: Sell deltas must be subtracted, not added to current amounts
     function getSellDeltas(uint baseDeltaProposed) internal view returns (uint baseDelta, uint quoteDelta) {
-        uint baseOld = totalSupply();
-        uint quoteOld = quoteBalanceOfContract;
-        uint baseNew = upscale(baseOld - baseDeltaProposed); // using upscale instead of downscale to ensure that `(baseOld - baseNew) < baseDeltaProposed` (because we're returning deltas to be subtracted, not added)
-        uint quoteNew = getQuote(baseNew);
-        if (baseOld < baseNew) { // may happen because of upscale() if baseDeltaProposed is very small
-            return (0, 0);
+        uint baseBalanceOfContract = totalSupply();
+        baseDelta = baseDeltaProposed;
+        if (baseDeltaProposed == baseBalanceOfContract) {
+            // this special case is also present in the formula code, but it doesn't work because we pass baseBalanceOfContract + baseBuffer (and baseDeltaProposed is always less than baseBalanceOfContract + baseBuffer)
+            quoteDelta = quoteBalanceOfContract;
         } else {
-            return (baseOld - baseNew, quoteOld - quoteNew);
+            quoteDelta = saleTargetAmount(baseBalanceOfContract + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, baseDeltaProposed);
         }
-    }
-
-    function getQuote(uint base) internal view returns (uint quote) {
-        return base * base * speed / scale;
-    }
-
-    function getBase(uint quote) internal view returns (uint base) {
-        return (quote * scale / speed).sqrt();
-    }
-
-    // turn value into smaller $value that is divisible by scale without remainder (value > $value)
-    function downscale(uint value) internal pure returns (uint $value) {
-        return value / scale * scale;
-    }
-
-    // turn value into larger $value that is divisible by scale without remainder (value < $value)
-    function upscale(uint value) internal pure returns (uint $value) {
-        return (value / scale + 1) * scale;
     }
 
     modifier onlyOperator() {
@@ -368,6 +375,6 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable 
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return _decimals;
+        return precision;
     }
 }

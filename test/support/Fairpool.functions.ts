@@ -10,3 +10,10 @@ export async function buy(fairpool: Fairpool, signer: SignerWithAddress, quoteDe
 export async function sell(fairpool: Fairpool, signer: SignerWithAddress, baseDeltaProposed: BigNumber) {
   return fairpool.connect(signer).sell(baseDeltaProposed, 0, MaxUint256)
 }
+
+export async function getBalances(fairpool: Fairpool, signer: SignerWithAddress) {
+  return {
+    base: await fairpool.balanceOf(signer.address),
+    quote: await signer.getBalance(),
+  }
+}

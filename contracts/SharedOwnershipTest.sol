@@ -44,7 +44,7 @@ contract SharedOwnershipTest is SharedOwnership, Util {
         for (uint i = 0; i < beneficiaries.length; i++) {
             sum += shares[beneficiaries[i]];
         }
-        ensureEqual(sum, scale, "sum(shares)", "scale");
+        ensureEqual(sum, scaleOfShares, "sum(shares)", "scale");
     }
 
     function indexesOfBeneficiariesMatchBeneficiaries() internal {

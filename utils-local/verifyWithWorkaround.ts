@@ -5,7 +5,7 @@ import { silenceErrors } from './silenceErrors'
 export async function verifyWithWorkaround(run: RunTaskFunction, taskArguments: TaskArguments) {
   return silenceErrors(
     () => run('verify', taskArguments),
-    (e) => e.message === 'Contract source code already verified',
+    (e) => e.message.toLowerCase().includes('already verified'),
   )
 }
 

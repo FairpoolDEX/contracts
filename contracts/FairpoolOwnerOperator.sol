@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 import "./Fairpool.sol";
 
 contract FairpoolOwnerOperator is Fairpool {
-    constructor(string memory name_, string memory symbol_, uint speed_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) Fairpool(name_, symbol_, speed_, royalties_, dividends_, beneficiaries_, shares_) {
+    constructor(string memory name_, string memory symbol_, uint quoteBuffer_, uint32 weight_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) Fairpool(name_, symbol_, quoteBuffer_, weight_, royalties_, dividends_, beneficiaries_, shares_) {
         // simplify testing by allowing the owner to receive the fees & call setOperator()
         operator = payable(msg.sender);
     }

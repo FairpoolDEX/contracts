@@ -3,21 +3,19 @@ pragma solidity 0.8.16;
 
 import "./FairpoolOwnerOperator.sol";
 import "./IncreaseAllowanceHooks.sol";
-import "./Util.sol";
+//import "./Util.sol";
 
-/**
-8444811267716841432
-*/
 contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
-    uint constant $speed = maxSpeed;
-    uint constant $fees = scale * 25 / 1000;
-    uint constant $royalties = scale / 2 - $fees;
-    uint constant $dividends = scale / 2 - 1;
+    uint constant $quoteBuffer = 10 * scaleOfShares;
+    uint32 constant $weight = MAX_WEIGHT / 2;
+    uint constant $fees = scaleOfShares * 25 / 1000;
+    uint constant $royalties = scaleOfShares / 2 - $fees;
+    uint constant $dividends = scaleOfShares / 2 - 1;
 
-    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $speed, $royalties, $dividends, $beneficiaries, $shares) {
-        // speed and tax can be changed via reset()
+    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $quoteBuffer, $weight, $royalties, $dividends, $beneficiaries, $shares) {
+        // weight and tax can be changed via reset()
         // beneficiaries and shares can be changed via transferShares()
         operator = payable(msg.sender); // allow the owner to receive the fees & call setOperator()
         setTaxesInternal($royalties, $dividends, $fees);
@@ -25,14 +23,14 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
 
     // msg.value is bounded by native currency supply
     function test() public {
-        speedIsBounded();
+        weightIsBounded();
         taxIsBounded();
         allUsersHaveTallies();
         contractBalanceIsCorrect();
     }
 
     // allow testing different combinations of speed, royalties, dividends
-    function reset(uint speed_, uint royalties_, uint dividends_) public onlyOwner {
+    function reset(uint quoteBuffer_, uint32 weight_, uint royalties_, uint dividends_) public onlyOwner {
         // need to copy holders because it's modified in the loop body via _burn()
         address[] memory $holders = copy(holders);
         for (uint i = 0; i < $holders.length; i++) {
@@ -46,7 +44,8 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         }
         payable(owner()).transfer(address(this).balance);
         quoteBalanceOfContract = 0;
-        setSpeedInternal(speed_);
+        setQuoteBufferInternal(quoteBuffer_);
+        setWeightInternal(weight_);
         setTaxesInternal(royalties_, dividends_, fees);
     }
 
@@ -81,7 +80,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.sumOfBalances = totalSupply();
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
-        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
+        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * weight / scaleOfShares;
 
         super.buy(baseReceivedMin, deadline);
 
@@ -94,7 +93,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.sumOfBalances = totalSupply();
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
-        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * speed / scale;
+        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * weight / scaleOfShares;
 
         ensureGreaterEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
         ensureGreaterEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
@@ -136,7 +135,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.sumOfBalances = totalSupply();
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
-        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
+        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * weight / scaleOfShares;
 
         quoteDistributed = super.sell(baseDeltaProposed, quoteReceivedMin, deadline);
         ensureNotEqual(quoteDistributed, 0, "quoteDistributed", "0"); // because deltaQuote is always divisible by scale without remainder
@@ -150,7 +149,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.sumOfBalances = totalSupply();
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
-        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * speed / scale;
+        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * weight / scaleOfShares;
 
         ensureLessEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
         ensureLess(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
@@ -200,7 +199,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.sumOfBalances = totalSupply();
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
-        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * speed / scale;
+        prev.balanceOfContractCalculated = prev.sumOfBalances * prev.sumOfBalances * weight / scaleOfShares;
 
         super.withdraw();
 
@@ -213,7 +212,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.sumOfBalances = totalSupply();
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
-        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * speed / scale;
+        next.balanceOfContractCalculated = next.sumOfBalances * next.sumOfBalances * weight / scaleOfShares;
 
         ensureLessEqual(next.balanceOfContract, prev.balanceOfContract, "next.balanceOfContract", "prev.balanceOfContract");
         ensureEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
@@ -248,9 +247,9 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         ensureGreaterEqual(next.balanceOfContract, next.balanceOfContractCalculated, "next.balanceOfContract", "next.balanceOfContractCalculated");
     }
 
-    function speedIsBounded() internal {
-        ensure(speed > 0, "speed > 0");
-        ensure(speed <= maxSpeed, "speed <= maxSpeed");
+    function weightIsBounded() internal {
+        ensure(weight > 0, "weight > 0");
+        ensure(weight <= MAX_WEIGHT, "weight <= MAX_WEIGHT");
     }
 
     function taxIsBounded() internal {

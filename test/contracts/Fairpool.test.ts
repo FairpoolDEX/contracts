@@ -7,10 +7,9 @@ import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
 import { fest } from '../../utils-local/mocha'
 import { mainnet } from '../../libs/ethereum/data/allNetworks'
-import { DefaultDecimals as baseDecimals, DefaultScale as baseScale } from '../../libs/fairpool/constants'
 import { assumeIntegerEnvVar } from '../../utils/env'
 import { expect } from '../../utils-local/expect'
-import { parallelMap, sequentialMap } from 'libs/utils/promise'
+import { sequentialMap } from 'libs/utils/promise'
 import { identity, range } from 'remeda'
 import { Address } from '../../models/Address'
 import { getSignatures } from '../../utils-local/getSignatures'
@@ -20,18 +19,21 @@ import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
 import { bn } from '../../libs/bn/utils'
-import { DefaultDecimals as quoteDecimals, MaxUint256 } from '../../libs/ethereum/constants'
-import { buy } from '../support/Fairpool.functions'
-import { BuyEvent } from '../../libs/fairpool/models/BuyEvent'
+import { buy, getBalances, sell } from '../support/Fairpool.functions'
 import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
-import { tmpdir } from 'os'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
-import { getScaledPercent } from '../support/Fairpool.helpers'
+import { ensureQuoteDeltaMin, getWeightedPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
 import { cleanEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
-import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
+import { parseTradeEvent, TradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
+import { createWriteStream } from 'fs'
+import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
+import { BaseDecimals, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
+import { sumFees } from '../../utils-local/ethers/sumFees'
+import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
+import { zero } from '../../libs/bn/constants'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -55,7 +57,8 @@ describe('Fairpool', async function () {
 
   let snapshot: unknown
 
-  let speed: BigNumber
+  let quoteBuffer: BigNumber
+  let weight: BigNumber
   let royalties: BigNumber
   let dividends: BigNumber
   // let jump: number
@@ -109,17 +112,19 @@ describe('Fairpool', async function () {
     signers = [owner, stranger, ben, bob, sam, ted, sally, operator] = await ethers.getSigners()
 
     const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
-    speed = getScaledPercent(200)
-    royalties = getScaledPercent(30)
-    dividends = getScaledPercent(20)
+    quoteBuffer = QuoteScale.mul(10)
+    weight = getWeightedPercent(33)
+    royalties = getWeightedPercent(30)
+    dividends = getWeightedPercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
       'Abraham Lincoln Token',
       'ABRA',
-      speed,
+      quoteBuffer,
+      weight,
       royalties,
       dividends,
       [ben.address, bob.address],
-      [getScaledPercent(12), getScaledPercent(88)]
+      [getWeightedPercent(12), getWeightedPercent(88)]
     )) as unknown as Fairpool
     fairpool = fairpoolAsOwner.connect($zero)
     fairpoolAsBob = fairpool.connect(bob)
@@ -144,6 +149,19 @@ describe('Fairpool', async function () {
     await revertToSnapshot([snapshot])
   })
 
+  async function unsetTaxes() {
+    await fairpoolAsOwner.setRoyalties(0)
+    await fairpoolAsOperator.setFees(0)
+  }
+
+  /**
+   * @see getQuoteDeltaMinTask
+   */
+
+  fest('must keep quoteDeltaMin small', async () => {
+    await ensureQuoteDeltaMin(fairpool, bob, sam)
+  })
+
   fest('must keep the sell() transaction under block gas limit', async () => {
     const { blockGasLimit } = mainnet
     const maxHoldersCount = assumeIntegerEnvVar('MAX_HOLDER_COUNT', 500)
@@ -151,14 +169,31 @@ describe('Fairpool', async function () {
     expect(gasUsed).to.be.lte(blockGasLimit / 10)
   })
 
-  fest('must replay Echidna transactions', async () => {
-    const echidnaLog = `
-      │ 1.setSpeed(9) from: 0x0000000000000000000000000000000000030000 Time delay: 322246 seconds Block delay: 3399          │
-      │ 2.buy(26,115792089237316195423570985008687907853269984665640564039457584007913129639926) from: 0x0000000000000000000000000000000000020000 Value: 0x19bcc5bc94f552adf Time delay: 544841 seconds Block delay: 55835│
-      │ 3.buy(65,115792089237316195423570985008687907853269984665640564039457584007913129639933) from: 0x0000000000000000000000000000000000030000 Value: 0x2dc0acca62c98874 Time delay: 545694 seconds Block delay: 55433 │
-      │ 4.reset(16,623,895) from: 0x0000000000000000000000000000000000030000 Time delay: 15347 seconds Block delay: 14174    │
-      │ 5.test() from: 0x0000000000000000000000000000000000030000 Time delay: 205478 seconds Block delay: 60476              │
-    `
+  fest('must allow the short cycle', async () => {
+    await unsetTaxes()
+    const before = await getBalances(fairpool, bob)
+    const quoteDelta = quoteBuffer // no reason to choose quoteBuffer, but quoteDelta must be greater than quoteDeltaMin (which has not been calculated yet)
+    const buyTx = await buy(fairpool, bob, quoteDelta)
+    const contractQuoteBalanceExternalAfterBuy = await getContractBalance(fairpool)
+    const contractQuoteBalanceInternalAfterBuy = await fairpool.quoteBalanceOfContract()
+    expect(quoteDelta).to.equal(contractQuoteBalanceExternalAfterBuy)
+    expect(quoteDelta).to.equal(contractQuoteBalanceInternalAfterBuy)
+    const during = await getBalances(fairpool, bob)
+    const baseDelta = await fairpool.balanceOf(bob.address)
+    const sellTx = await sell(fairpool, bob, baseDelta)
+    const after = await getBalances(fairpool, bob)
+    const fees = await sumFees([buyTx, sellTx])
+    const contractQuoteBalanceExternalAfterSell = await getContractBalance(fairpool)
+    /**
+     * sell() calls withdraw(), so the contract must be drained
+     */
+    expect(contractQuoteBalanceExternalAfterSell).to.eq(zero)
+    const afterWithFeesAndContractBalance = { ...after, quote: after.quote.add(fees).add(contractQuoteBalanceExternalAfterSell) }
+    expect(before).to.deep.equal(afterWithFeesAndContractBalance)
+  })
+
+  fest('must replay Echidna transactions', withCleanEthersError(async () => {
+    const echidnaLog = ''
     const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(identity)
     const fairpoolTest = await deployFairpoolTest(owner)
     const signatures = getSignatures(fairpoolTest.interface.functions)
@@ -172,16 +207,19 @@ describe('Fairpool', async function () {
     const results = await sequentialMap(infos, executeTransaction(fairpoolTest, signers))
     const hasAssertionFailed = !!results.find(({ logs }) => logs.find(l => l.name === 'AssertionFailed'))
     if (hasAssertionFailed) throw new Error('AssertionFailed')
-  })
+  }))
 
-  fest('quoteDeltaProposedMin', async () => {
-    const quoteDeltaProposedMin = speed.mul(baseScale)
+  fest('quoteDeltaMinProposed', async () => {
+    const quoteDeltaMinProposed = quoteDeltaMinStatic
     // first transaction should be reverted
-    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin.sub(1) })).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    // console.log('balance 1', await fairpool.balanceOf(bob.address))
     // second transaction should be accepted
-    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin })).to.eventually.be.ok
+    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+    // console.log('balance 2', await fairpool.balanceOf(bob.address))
+    await buy(fairpool, bob, QuoteScale.mul(10))
     // third transaction should be reverted because the totalSupply() has increased, so quoteDeltaProposedMin is not enough anymore
-    await expect(fairpoolAsBob.buy(0, MaxUint256, { value: quoteDeltaProposedMin })).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
   })
 
   fest('setOperator', async () => {
@@ -211,43 +249,54 @@ describe('Fairpool', async function () {
 
   fest('Price table', async () => {
     const count = 20
-    const value = bn(10).pow(quoteDecimals.sub(2))
+    const value = bn(10).pow(QuoteDecimals.sub(2))
     const signer = bob
-    const transactions = await parallelMap(range(0, count), async () => {
+    const transactions = await Promise.all(range(0, count).map(async () => {
       return buy(fairpool, signer, value)
-    })
+    }))
     const events = await fairpool.queryFilter({ topics: [TradeEventTopic] })
     expect(events.length).to.equal(count)
-    const buys = events.map(fromRawEvent(parseTradeEvent))
-    const fromBuyEventToCsv = (buy: BuyEvent) => {
-      const { sender, baseDelta, quoteDelta } = buy
+    const network = await fairpool.provider.getNetwork()
+    const trades = events.map(fromRawEvent(network.chainId)(parseTradeEvent))
+    const fromTradeEventToCsv = (trade: TradeEvent) => {
+      const { sender, isBuy, baseDelta, quoteDelta, quoteReceived } = trade
       const price = quoteDelta.div(baseDelta)
-      const baseDeltaDisplayed = toFrontendAmountBND(baseDecimals)(baseDelta)
-      const quoteDeltaDisplayed = toFrontendAmountBND(quoteDecimals)(quoteDelta)
+      const baseDeltaDisplayed = toFrontendAmountBND(BaseDecimals)(baseDelta)
+      const quoteDeltaDisplayed = toFrontendAmountBND(QuoteDecimals)(quoteDelta)
+      const quoteReceivedDisplayed = toFrontendAmountBND(QuoteDecimals)(quoteReceived)
       const priceDisplayed = quoteDeltaDisplayed.div(baseDeltaDisplayed)
       return [
         sender,
+        isBuy,
         baseDelta,
         quoteDelta,
         price,
         baseDeltaDisplayed,
         quoteDeltaDisplayed,
+        quoteReceivedDisplayed,
         priceDisplayed,
       ].map(v => v.toString())
     }
     const columns = [
       'sender',
+      'isBuy',
       'baseDelta',
       'quoteDelta',
       'price',
       'baseDeltaDisplayed',
       'quoteDeltaDisplayed',
+      'quoteReceivedDisplayed',
       'priceDisplayed',
     ]
-    const stringifier = getCsvStringifier({ header: true, columns }, fromBuyEventToCsv, buys)
-    const filename = `${tmpdir()}/buys.csv`
+    const stringifier = getCsvStringifier({ header: true, columns }, fromTradeEventToCsv, trades)
+    // const out = process.stderr
     // debug(filename)
-    if (isEnabledLog) await pipeline(stringifier, process.stderr)
+    if (isEnabledLog) {
+      const filename = process.env.FILENAME
+      const out = filename ? createWriteStream(filename) : process.stderr
+      console.error(`'Writing to ${filename ?? 'stderr'}'`)
+      await pipeline(stringifier, out)
+    }
   })
 
   // fest('must get the gas per holder', async () => {

@@ -12,7 +12,7 @@ export const parseTransactionInfo = (signatures: FunctionCall[], rewrites: Rewri
   const [callRaw] = origin.split(' ')
   const call = parseFunctionCall(callRaw)
   const name = call.name as TransactionInfo['name']
-  const signature = ensureFind(signatures, s => s.name === name)
+  const signature = ensureFind(signatures, s => s.name === name, new Error(`Can't find ${name} function in the list of contract signatures`))
   const from = parseLineComponent('from', parseAddress, origin)
   const value = parseLineComponent('Value', bn, origin) || bn(0)
   const timeDelay = parseLineComponent('Time delay', bn, origin) || bn(0)
