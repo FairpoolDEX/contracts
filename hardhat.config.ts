@@ -96,7 +96,7 @@ export const config: HardhatUserConfig = {
       //   url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY_MAINNET}`,
       //   blockNumber: 12779553,
       // },
-      blockGasLimit: 8000000,
+      blockGasLimit: 16000000, // increased blockGasLimit to deploy FairpoolTest.sol
       allowUnlimitedContractSize: true,
       accounts: { mnemonic },
     },

@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "./Scaled.sol";
-
-abstract contract SharedOwnership is Scaled {
+abstract contract SharedOwnership {
     // maxBeneficiaries is required to limit the gas costs of the beneficiaries loop in distribute()
     uint8 public constant maxBeneficiaries = 16;
 
+    uint public constant precisionOfShares = 6;
+
+    // IMPORTANT: Keep the scale small to minimize the probability of the overflow in getShareAmount()
+    uint public constant scaleOfShares = 10 ** precisionOfShares;
+
     address[] public beneficiaries;
+
     mapping (address => uint) public shares;
+
     mapping (address => uint) internal indexesOfBeneficiaries;
 
     error BeneficiariesLengthMustBeEqualToSharesLength();
@@ -24,7 +29,7 @@ abstract contract SharedOwnership is Scaled {
     constructor(address payable[] memory beneficiaries_, uint[] memory shares_) {
         if (beneficiaries_.length == 0) {
             beneficiaries = [msg.sender];
-            shares[msg.sender] = scale;
+            shares[msg.sender] = scaleOfShares;
         } else {
             if (beneficiaries_.length != shares_.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
             if (beneficiaries_.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
@@ -37,7 +42,7 @@ abstract contract SharedOwnership is Scaled {
                 shares[beneficiaries_[i]] = shares_[i];
                 sumOfShares += share;
             }
-            if (sumOfShares != scale) revert SumOfSharesMustBeEqualToScale();
+            if (sumOfShares != scaleOfShares) revert SumOfSharesMustBeEqualToScale();
         }
     }
 
@@ -100,7 +105,7 @@ abstract contract SharedOwnership is Scaled {
     }
 
     function getShareAmount(uint amount, address target) internal view returns (uint) {
-        return (amount * shares[target]) / scale;
+        return (amount * shares[target]) / scaleOfShares;
     }
 
     function beneficiariesLength() external view returns (uint) {

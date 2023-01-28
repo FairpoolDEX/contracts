@@ -9,6 +9,7 @@ import { getProxyCheckerUrl } from '../utils/url'
 import { getImplementationAddress } from '@openzeppelin/upgrades-core'
 import { toUpperSnakeCase } from '../utils/toUpperSnakeCase'
 import { expect } from 'libs/utils/chai'
+import { Contract } from 'ethers'
 
 export async function deployNonUpgradeableContractTask(args: DeployContractTaskArguments, hre: HardhatRuntimeEnvironment) {
   const context = await getDeployContractContext(args, hre)
@@ -20,7 +21,7 @@ export async function deployUpgradeableContractTask(args: DeployContractTaskArgu
   return deployUpgradeableContract(context)
 }
 
-export async function deployNonUpgradeableContract(context: DeployContractContext): Promise<DeployNonUpgradeableContractOutput> {
+export async function deployNonUpgradeableContract<C extends Contract>(context: DeployContractContext): Promise<DeployNonUpgradeableContractOutput<C>> {
   const { contractName, contractNameEnvVar: $contractNameEnvVar, constructorArgsModule, constructorArgsParams, verify, ethers, artifacts, network, log, run } = context
 
   const signer = await getSigner(context)
@@ -35,7 +36,7 @@ export async function deployNonUpgradeableContract(context: DeployContractContex
 
   const contract = await factory.deploy(...constructorArgs, {
     ...await getOverrides(signer),
-  })
+  }) as C
   await contract.deployTransaction.wait(5) // per hardhat recommendation
   const address = contract.address
   log(`export ${contractNameEnvVar}_ADDRESS=${address}`)
@@ -47,7 +48,7 @@ export async function deployNonUpgradeableContract(context: DeployContractContex
     contract: contractFullName,
   })
 
-  return { address }
+  return { contract }
 }
 
 export async function deployUpgradeableContract(context: DeployContractContext): Promise<DeployUpgradeableContractOutput> {
@@ -125,8 +126,8 @@ export interface DeployUpgradeableContractOutput {
   implementationAddress: Address
 }
 
-export interface DeployNonUpgradeableContractOutput {
-  address: Address
+export interface DeployNonUpgradeableContractOutput<C extends Contract> {
+  contract: C
 }
 
 /**
