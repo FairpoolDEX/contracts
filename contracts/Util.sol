@@ -25,7 +25,9 @@ contract Util {
 
     event AssertionFailed(string $assertion, string $a, string $b, bool a, bool b);
     event AssertionFailed(string $assertion, string $a, string $b, uint a, uint b);
-    event AssertionFailed(string $assertion, string $a, string $b, uint a, uint b, uint diff);
+    event AssertionFailed(string $assertion, string $a, string $b, uint a, uint b, int diff);
+    event AssertionFailed(string $assertion, string $a, string $b, string $diff, uint a, uint b, uint diff);
+    event AssertionFailed(string $assertion, string $a, string $b, string $deltaExpected, string $deltaActual, string $diff, uint a, uint b, uint deltaExpected, uint deltaActual, uint diff);
     event AssertionFailed(string $assertion, string $a, string $b, int a, int b);
     event AssertionFailed(string $assertion, string $a, string $b, int a, int b, int diff);
     event AssertionFailed(string $assertion, string $a, string $b, address a, address b);
@@ -160,11 +162,11 @@ contract Util {
     }
 
     function ensureEqual(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureEqual(int a, int b, string memory $a, string memory $b) internal {
-        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b, a - b);
     }
 
     function ensureEqual(address a, address b, string memory $a, string memory $b) internal {
@@ -172,7 +174,7 @@ contract Util {
     }
 
     function ensureNotEqual(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a != b)) emit AssertionFailed("ensureNotEqual", $a, $b, a, b);
+        if (!(a != b)) emit AssertionFailed("ensureNotEqual", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureEqual(address[] memory a, address[] memory b, string memory $a, string memory $b) internal {
@@ -183,19 +185,19 @@ contract Util {
     }
 
     function ensureLess(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a < b)) emit AssertionFailed("ensureLess", $a, $b, a, b, a - b);
+        if (!(a < b)) emit AssertionFailed("ensureLess", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureLessEqual(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a <= b)) emit AssertionFailed("ensureLessEqual", $a, $b, a, b, a - b);
+        if (!(a <= b)) emit AssertionFailed("ensureLessEqual", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureGreater(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b, b - a);
+        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureGreaterEqual(uint a, uint b, string memory $a, string memory $b) internal {
-        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b, b - a);
+        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b, int(a) - int(b));
     }
 
     function ensureLess(int a, int b, string memory $a, string memory $b) internal {
@@ -207,11 +209,17 @@ contract Util {
     }
 
     function ensureGreater(int a, int b, string memory $a, string memory $b) internal {
-        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b, b - a);
+        if (!(a > b)) emit AssertionFailed("ensureGreater", $a, $b, a, b, a - b);
     }
 
     function ensureGreaterEqual(int a, int b, string memory $a, string memory $b) internal {
-        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b, b - a);
+        if (!(a >= b)) emit AssertionFailed("ensureGreaterEqual", $a, $b, a, b, a - b);
+    }
+
+    function ensureWithin(uint a, uint b, uint delta, string memory $a, string memory $b, string memory $delta) internal {
+        // TODO: use int diff
+        uint diff = getAbsDiff(a, b);
+        if (!(diff <= delta)) emit AssertionFailed("ensureWithin", $a, $b, $delta, "diff", "diff - delta", a, b, delta, diff, diff - delta);
     }
 
     function ensureIncludes(address[] memory array, address target, string memory $array, string memory $target) internal {
@@ -235,6 +243,10 @@ contract Util {
 
     function getNew(address[] storage source) internal pure returns (address[] memory) {
         return source;
+    }
+
+    function getAbsDiff(uint a, uint b) internal pure returns (uint) {
+        return a > b ? a - b : b - a;
     }
 
 }

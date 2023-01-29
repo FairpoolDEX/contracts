@@ -1,14 +1,15 @@
 import { Fairpool__factory } from '../../typechain-types'
-import { getWeightedPercent } from '../../test/support/Fairpool.helpers'
-import { DefaultQuoteBuffer } from '../../libs/fairpool/constants'
+import { getSharePercent, getWeightPercent } from '../../test/support/Fairpool.helpers'
+import { DefaultSlope } from '../../libs/fairpool/constants'
 
+const DefaultWeight = getWeightPercent(33)
 const args: Parameters<Fairpool__factory['deploy']> = [
   'Official Fairpool Token',
   'FAIR',
-  DefaultQuoteBuffer,
-  getWeightedPercent(1, 1000),
-  getWeightedPercent(7),
-  getWeightedPercent(20),
+  DefaultSlope,
+  DefaultWeight,
+  getSharePercent(7),
+  getSharePercent(20),
   [],
   [],
 ]

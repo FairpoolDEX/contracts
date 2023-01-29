@@ -2,12 +2,13 @@
 pragma solidity 0.8.16;
 
 abstract contract SharedOwnership {
-    // maxBeneficiaries is required to limit the gas costs of the beneficiaries loop in distribute()
+    // Required to limit the gas costs of the beneficiaries loop in distribute()
     uint8 public constant maxBeneficiaries = 16;
 
     uint public constant precisionOfShares = 6;
 
-    // IMPORTANT: Keep the scale small to minimize the probability of the overflow in getShareAmount()
+    // IMPORTANT: must be kept small to minimize the probability of the overflow in getShareAmount()
+    // IMPORTANT: must be kept small to minimize the min quoteDelta in sell()
     uint public constant scaleOfShares = 10 ** precisionOfShares;
 
     address[] public beneficiaries;
