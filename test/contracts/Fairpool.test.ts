@@ -9,8 +9,8 @@ import { fest } from '../../utils-local/mocha'
 import { mainnet } from '../../libs/ethereum/data/allNetworks'
 import { assumeIntegerEnvVar } from '../../utils/env'
 import { expect } from '../../utils-local/expect'
-import { sequentialMap } from 'libs/utils/promise'
-import { identity, range } from 'remeda'
+import { mapAsync, repeatAsync, sequentialMap } from 'libs/utils/promise'
+import { range } from 'remeda'
 import { Address } from '../../models/Address'
 import { getSignatures } from '../../utils-local/getSignatures'
 import { getGasUsedForManyHolders } from './Fairpool/getGasUsedForManyHolders'
@@ -18,19 +18,19 @@ import { deployFairpoolTest } from './Fairpool/deployFairpoolTest'
 import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
-import { bn } from '../../libs/bn/utils'
-import { buy, getBalances, sell } from '../support/Fairpool.functions'
+import { bn, sumBNs } from '../../libs/bn/utils'
+import { buy, getBalances, getSupplyStats, sell, selloff, subSupplyStats, zeroSupplyStats } from '../support/Fairpool.functions'
 import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
-import { ensureQuoteDeltaMin, getWeightedPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
-import { cleanEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
+import { ensureQuoteDeltaMin, getSharePercent, getWeightPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
+import { cleanEchidnaLogString, filterEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
 import { parseTradeEvent, TradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
 import { createWriteStream } from 'fs'
 import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
-import { BaseDecimals, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
+import { BaseDecimals, BaseScale, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
@@ -57,7 +57,7 @@ describe('Fairpool', async function () {
 
   let snapshot: unknown
 
-  let quoteBuffer: BigNumber
+  let slope: BigNumber
   let weight: BigNumber
   let royalties: BigNumber
   let dividends: BigNumber
@@ -112,19 +112,19 @@ describe('Fairpool', async function () {
     signers = [owner, stranger, ben, bob, sam, ted, sally, operator] = await ethers.getSigners()
 
     const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
-    quoteBuffer = QuoteScale.mul(10)
-    weight = getWeightedPercent(33)
-    royalties = getWeightedPercent(30)
-    dividends = getWeightedPercent(20)
+    slope = bn(5)
+    weight = getWeightPercent(33)
+    royalties = getSharePercent(30)
+    dividends = getSharePercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
       'Abraham Lincoln Token',
       'ABRA',
-      quoteBuffer,
+      slope,
       weight,
       royalties,
       dividends,
       [ben.address, bob.address],
-      [getWeightedPercent(12), getWeightedPercent(88)]
+      [getSharePercent(12), getSharePercent(88)]
     )) as unknown as Fairpool
     fairpool = fairpoolAsOwner.connect($zero)
     fairpoolAsBob = fairpool.connect(bob)
@@ -151,6 +151,7 @@ describe('Fairpool', async function () {
 
   async function unsetTaxes() {
     await fairpoolAsOwner.setRoyalties(0)
+    await fairpoolAsOwner.setDividends(0)
     await fairpoolAsOperator.setFees(0)
   }
 
@@ -172,7 +173,7 @@ describe('Fairpool', async function () {
   fest('must allow the short cycle', async () => {
     await unsetTaxes()
     const before = await getBalances(fairpool, bob)
-    const quoteDelta = quoteBuffer // no reason to choose quoteBuffer, but quoteDelta must be greater than quoteDeltaMin (which has not been calculated yet)
+    const quoteDelta = quoteDeltaMinStatic
     const buyTx = await buy(fairpool, bob, quoteDelta)
     const contractQuoteBalanceExternalAfterBuy = await getContractBalance(fairpool)
     const contractQuoteBalanceInternalAfterBuy = await fairpool.quoteBalanceOfContract()
@@ -193,8 +194,13 @@ describe('Fairpool', async function () {
   })
 
   fest('must replay Echidna transactions', withCleanEthersError(async () => {
-    const echidnaLog = ''
-    const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(identity)
+    const echidnaLog = `
+        // setFees(5) Time delay: 467824 seconds Block delay: 7658
+        // setOperator(0x486981aa55a7602540540f0e02a4137d5b953444) Time delay: 128848 seconds Block delay: 11026
+        // buy(29,559809169921) Value: 0x3a38d9132ca4be2bb Time delay: 88533 seconds Block delay: 4896
+        // sell(596,760,115792089237316195423570985008687907853098509048339394248628124861006319694184) Time delay: 83958 seconds Block delay: 11483
+    `
+    const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(filterEchidnaLogString)
     const fairpoolTest = await deployFairpoolTest(owner)
     const signatures = getSignatures(fairpoolTest.interface.functions)
     const rewrites: Rewrite<Address>[] = [
@@ -205,21 +211,71 @@ describe('Fairpool', async function () {
     ]
     const infos = echidnaLines.map(parseTransactionInfo(signatures, rewrites))
     const results = await sequentialMap(infos, executeTransaction(fairpoolTest, signers))
-    const hasAssertionFailed = !!results.find(({ logs }) => logs.find(l => l.name === 'AssertionFailed'))
-    if (hasAssertionFailed) throw new Error('AssertionFailed')
+    const $AssertionFailed = 'AssertionFailed'
+    const failedTx = results.find(({ logs }) => logs.find(l => l.name === $AssertionFailed))
+    if (failedTx) throw new Error($AssertionFailed)
   }))
 
   fest('quoteDeltaMinProposed', async () => {
     const quoteDeltaMinProposed = quoteDeltaMinStatic
     // first transaction should be reverted
-    await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares')
     // console.log('balance 1', await fairpool.balanceOf(bob.address))
     // second transaction should be accepted
     await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
     // console.log('balance 2', await fairpool.balanceOf(bob.address))
-    await buy(fairpool, bob, QuoteScale.mul(10))
-    // third transaction should be reverted because the totalSupply() has increased, so quoteDeltaProposedMin is not enough anymore
-    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    await buy(fairpool, bob, QuoteScale.mul(100))
+    // third transaction should be accepted also, even though the totalSupply() has increased
+    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+  })
+
+  /**
+   * NOTE: The user receives higher baseSupply from a single big buy tx than from multiple small buy txes (even if he spends the same quoteSupply)
+   * Most likely it's caused by rounding in the power() function
+   */
+  fest('buys must be almost additive', async () => {
+    await unsetTaxes()
+    const volumes = range(0, 500).map(i => QuoteScale)
+
+    expect(getSupplyStats(fairpool)).to.eventually.deep.equal(zeroSupplyStats)
+    const multiBuys = await mapAsync(volumes, volume => buy(fairpool, bob, volume))
+    const afterMultiBuys = await getSupplyStats(fairpool)
+    await selloff(fairpool, bob)
+
+    expect(getSupplyStats(fairpool)).to.eventually.deep.equal(zeroSupplyStats)
+    const singleBuy = await buy(fairpool, bob, sumBNs(volumes))
+    const afterSingleBuy = await getSupplyStats(fairpool)
+    await selloff(fairpool, bob)
+
+    // expect(afterSingleBuy).to.deep.equal(afterMultiBuys)
+    const diff = subSupplyStats(afterSingleBuy, afterMultiBuys)
+    const maxDiff = { baseSupply: BaseScale.div(1000000), quoteSupply: bn(0) }
+    expect(diff.baseSupply).to.be.lessThanOrEqual(maxDiff.baseSupply)
+    expect(diff.quoteSupply).to.be.lessThanOrEqual(maxDiff.quoteSupply)
+
+    // // first transaction should be reverted
+    // await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+    // // console.log('balance 1', await fairpool.balanceOf(bob.address))
+    // // second transaction should be accepted
+    // await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+    // // console.log('balance 2', await fairpool.balanceOf(bob.address))
+    // await buy(fairpool, bob, QuoteScale.mul(10))
+    // // third transaction should be reverted because the totalSupply() has increased, so quoteDeltaProposedMin is not enough anymore
+    // await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
+  })
+
+  fest('last seller does not have an advantage without taxes', async () => {
+    await unsetTaxes()
+    const volumes = range(0, 500).map(i => QuoteScale)
+    const samQuoteBalanceBefore = await sam.getBalance()
+    await buy(fairpool, sam, QuoteScale)
+    await mapAsync(volumes, volume => buy(fairpool, bob, volume))
+    await selloff(fairpool, bob)
+    await selloff(fairpool, sam)
+    const samQuoteBalanceAfter = await sam.getBalance()
+    const profit = samQuoteBalanceAfter.sub(samQuoteBalanceBefore)
+    // console.log('profit', renderETH(profit))
+    expect(profit).to.be.lessThan(0)
   })
 
   fest('setOperator', async () => {
@@ -251,9 +307,7 @@ describe('Fairpool', async function () {
     const count = 20
     const value = bn(10).pow(QuoteDecimals.sub(2))
     const signer = bob
-    const transactions = await Promise.all(range(0, count).map(async () => {
-      return buy(fairpool, signer, value)
-    }))
+    const transactions = await repeatAsync(count, () => buy(fairpool, signer, value))
     const events = await fairpool.queryFilter({ topics: [TradeEventTopic] })
     expect(events.length).to.equal(count)
     const network = await fairpool.provider.getNetwork()

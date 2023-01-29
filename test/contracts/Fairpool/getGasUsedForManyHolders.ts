@@ -16,7 +16,7 @@ export const getGasUsedForManyHolders = async (fairpool: Fairpool, signer: Signe
   const balanceBaseBeforeTransfers = await fairpoolAsSigner.balanceOf(signer.address)
   const balanceBaseMinForSell = getShare(balanceBaseBeforeTransfers, 1, 100)
   const balanceBaseForTransfers = balanceBaseBeforeTransfers.sub(balanceBaseMinForSell)
-  const transferAmount = balanceBaseBeforeTransfers.div(maxHoldersCount)
+  const transferAmount = balanceBaseForTransfers.div(maxHoldersCount)
   const sendTxes = await mapAsync(range(0, maxHoldersCount), async i => {
     const wallet = ethers.Wallet.createRandom()
     return fairpoolAsSigner.transfer(wallet.address, transferAmount)

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache License v2.0
 pragma solidity 0.8.16;
 
+import "hardhat/console.sol";
+
 /**
  * Modifications:
  * - Removed irrelevant helper functions
@@ -9,8 +11,10 @@ pragma solidity 0.8.16;
  * [] Removed `if (_reserveWeight == MAX_WEIGHT)` (the calling code must check it is not equal to MAX_WEIGHT)
  */
 contract BancorFormula {
-    uint256 internal constant ONE = 1;
-    uint32 internal constant MAX_WEIGHT = 1000000;
+    uint256 internal constant one = 1;
+    uint32 internal constant maxWeight = 1000000;
+
+    // Precisions
     uint8 private constant MIN_PRECISION = 32;
     uint8 private constant MAX_PRECISION = 127;
 
@@ -182,21 +186,11 @@ contract BancorFormula {
         uint32 _reserveWeight,
         uint256 _amount
     ) internal view returns (uint256) {
-        // validate input
-        require(_supply > 0, "ERR_INVALID_SUPPLY");
-        require(_reserveBalance > 0, "ERR_INVALID_RESERVE_BALANCE");
-        require(_reserveWeight > 0 && _reserveWeight <= MAX_WEIGHT, "ERR_INVALID_RESERVE_WEIGHT");
-
-        // special case for 0 deposit amount
-        if (_amount == 0) return 0;
-
-        // special case if the weight = 100%
-        if (_reserveWeight == MAX_WEIGHT) return (_supply * _amount) / _reserveBalance;
-
+        /* removed input validation and special cases */
         uint256 result;
         uint8 precision;
         uint256 baseN = _amount + _reserveBalance;
-        (result, precision) = power(baseN, _reserveBalance, _reserveWeight, MAX_WEIGHT);
+        (result, precision) = power(baseN, _reserveBalance, _reserveWeight, maxWeight);
         uint256 temp = (_supply * result) >> precision;
         return temp - _supply;
     }
@@ -221,25 +215,11 @@ contract BancorFormula {
         uint32 _reserveWeight,
         uint256 _amount
     ) internal view returns (uint256) {
-        // validate input
-        require(_supply > 0, "ERR_INVALID_SUPPLY");
-        require(_reserveBalance > 0, "ERR_INVALID_RESERVE_BALANCE");
-        require(_reserveWeight > 0 && _reserveWeight <= MAX_WEIGHT, "ERR_INVALID_RESERVE_WEIGHT");
-        require(_amount <= _supply, "ERR_INVALID_AMOUNT");
-
-        // special case for 0 sell amount
-        if (_amount == 0) return 0;
-
-        // special case for selling the entire supply
-        if (_amount == _supply) return _reserveBalance;
-
-        // special case if the weight = 100%
-        if (_reserveWeight == MAX_WEIGHT) return (_reserveBalance * _amount) / _supply;
-
+        /* removed input validation and special cases */
         uint256 result;
         uint8 precision;
         uint256 baseD = _supply - _amount;
-        (result, precision) = power(_supply, baseD, MAX_WEIGHT, _reserveWeight);
+        (result, precision) = power(_supply, baseD, maxWeight, _reserveWeight);
         uint256 temp1 = (_reserveBalance * result);
         uint256 temp2 = _reserveBalance << precision;
         return (temp1 - temp2) / result;
@@ -308,7 +288,7 @@ contract BancorFormula {
                 x = (x * x) / FIXED_1; // now 1 < x < 4
                 if (x >= FIXED_2) {
                     x >>= 1; // now 1 < x < 2
-                    res += ONE << (i - 1);
+                    res += one << (i - 1);
                 }
             }
         }
@@ -331,7 +311,7 @@ contract BancorFormula {
         } else {
             // Exactly 8 iterations
             for (uint8 s = 128; s > 0; s >>= 1) {
-                if (_n >= (ONE << s)) {
+                if (_n >= (one << s)) {
                     _n >>= s;
                     res |= s;
                 }
@@ -438,7 +418,7 @@ contract BancorFormula {
         xi = (xi * _x) >> _precision;
         res += xi * 0x0000000000000000000000000000001; // add x^33 * (33! / 33!)
 
-        return res / 0x688589cc0e9505e2f2fee5580000000 + _x + (ONE << _precision); // divide by 33! and then add x^1 / 1! + x^0 / 0!
+        return res / 0x688589cc0e9505e2f2fee5580000000 + _x + (one << _precision); // divide by 33! and then add x^1 / 1! + x^0 / 0!
     }
 
     /**
