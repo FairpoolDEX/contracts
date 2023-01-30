@@ -8,7 +8,7 @@ import "./IncreaseAllowanceHooks.sol";
 contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
-    uint constant $slope = 5;
+    uint constant $slope = 5 * scale;
     uint32 constant $weight = maxWeight / 3;
     uint constant $fees = scaleOfShares * 25 / 1000;
     uint constant $royalties = scaleOfShares / 2 - $fees;
@@ -44,8 +44,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         }
         payable(owner()).transfer(address(this).balance);
         quoteBalanceOfContract = 0;
-        setQuoteBufferInternal(slope_, weight_);
-        setWeightInternal(weight_);
+        setCurveParametersInternal(slope_, weight_);
         setTaxesInternal(royalties_, dividends_, fees_);
     }
 

@@ -30,20 +30,25 @@ import "hardhat/console.sol";
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
  */
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable, BancorFormula {
-    // count of decimals
+    // Count of decimals
     uint8 internal constant precision = 18;
 
-    // multiplier for scaled integers
+    // Multiplier for scaled integers
     uint internal constant scale = 10 ** precision;
+
+    // Coefficient in the power function (variable `m` in formula `y = m * x ^ n`)
+    // Used only for calculating the quoteBuffer
+    // IMPORTANT: slope must be scaled to `scale` (e.g. multiplied by 10 ** 18)
+    uint public slope;
+
+    // Multiplier in the Bancor functions (0 < weight < MAX_WEIGHT)
+    uint32 public weight;
 
     // Extra "base balance buffer" added to totalSupply before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
     uint public constant baseBuffer = scale;
 
     // Extra "quote balance buffer" added to quoteBalanceOfContract before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
     uint public quoteBuffer;
-
-    // Multiplier in the Bancor functions (0 < weight < MAX_WEIGHT)
-    uint32 public weight;
 
     // Percentage of sale distributed to the beneficiaries (as royalties / MAX_WEIGHT)
     uint public royalties;
@@ -109,7 +114,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
 
     event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
-    event SetQuoteBuffer(uint quoteBuffer);
+    event SetSlope(uint slope);
     event SetWeight(uint32 weight);
     event SetRoyalties(uint royalties);
     event SetDividends(uint dividends);
@@ -117,8 +122,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     event SetOperator(address operator);
 
     constructor(string memory nameNew, string memory symbolNew, uint slopeNew, uint32 weightNew, uint royaltiesNew, uint dividendsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
-        setQuoteBufferInternal(slopeNew, weightNew);
-        setWeightInternal(weightNew);
+        setCurveParametersInternal(slopeNew, weightNew);
         setTaxesInternal(royaltiesNew, dividendsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
         // operator is already set
         // preallocate tallies
@@ -184,9 +188,8 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
 
     function setCurveParameters(uint slopeNew, uint32 weightNew) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-        setQuoteBufferInternal(slopeNew, weightNew);
-        setWeightInternal(weightNew);
-        emit SetQuoteBuffer(quoteBuffer);
+        setCurveParametersInternal(slopeNew, weightNew);
+        emit SetSlope(slope);
         emit SetWeight(weight);
     }
 
@@ -213,20 +216,17 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         emit SetOperator(operatorNew);
     }
 
-    function setQuoteBufferInternal(uint slopeNew, uint weightNew) internal {
+    function setCurveParametersInternal(uint slopeNew, uint32 weightNew) internal {
         if (slopeNew == 0) revert SlopeMustBeGreaterThanZero();
         if (slopeNew >= maxSlope) revert SlopeMustBeLessThanMaxSlope();
-        // IMPORTANT: in the expression for quoteBufferNew, the numerator must be divisible by denominator without remainder (the following assert ensures this)
-        assert(scale % maxWeight == 0);
-        uint quoteBufferNew = slopeNew * weightNew * (scale / maxWeight);
-        if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
-        quoteBuffer = quoteBufferNew;
-    }
-
-    function setWeightInternal(uint32 weightNew) internal {
         if (weightNew == 0) revert WeightMustBeGreaterThanZero();
         if (weightNew >= maxWeight) revert WeightMustBeLessThanMaxWeight();
+        slope = slopeNew;
         weight = weightNew;
+        // slope must already be multiplied by scale, so we don't need to multiply again in the following formula
+        uint quoteBufferNew = slope * weight / maxWeight;
+        if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
+        quoteBuffer = quoteBufferNew;
     }
 
     function setOperatorInternal(address payable operatorNew) internal {
