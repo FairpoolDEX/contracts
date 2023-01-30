@@ -34,6 +34,9 @@ import { BaseDecimals, BaseScale, QuoteDecimals, QuoteScale } from '../../libs/f
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
+import { BN } from '../../libs/bn'
+import { AmountBN } from '../../libs/ethereum/models/AmountBN'
+import { DefaultSlope } from '../../libs/fairpool/constants'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -112,7 +115,7 @@ describe('Fairpool', async function () {
     signers = [owner, stranger, ben, bob, sam, ted, sally, operator] = await ethers.getSigners()
 
     const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
-    slope = bn(5)
+    slope = DefaultSlope
     weight = getWeightPercent(33)
     royalties = getSharePercent(30)
     dividends = getSharePercent(20)
@@ -227,6 +230,17 @@ describe('Fairpool', async function () {
     await buy(fairpool, bob, QuoteScale.mul(100))
     // third transaction should be accepted also, even though the totalSupply() has increased
     await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+  })
+
+  fest('curve parameters must not matter for profit', async () => {
+    const bobAmount = QuoteScale
+    const samAmount = QuoteScale.mul(1000)
+    const profits = await Promise.all([
+      getProfit(slope, weight, owner, bob, sam, bobAmount, samAmount),
+      getProfit(slope.mul(100), weight, owner, bob, sam, bobAmount, samAmount),
+      getProfit(slope, weight.mul(3), owner, bob, sam, bobAmount, samAmount),
+    ])
+    profits.forEach(profit => expect(profit).to.equal(profits[0]))
   })
 
   /**
@@ -363,3 +377,26 @@ describe('Fairpool', async function () {
   // })
 
 })
+
+async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress, bobAmount: AmountBN, samAmount: AmountBN) {
+  const royalties = getSharePercent(30)
+  const dividends = getSharePercent(20)
+  const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
+  const fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
+    'Abraham Lincoln Token',
+    'ABRA',
+    slope,
+    weight,
+    royalties,
+    dividends,
+    [],
+    []
+  )) as unknown as Fairpool
+  const fairpool = fairpoolAsOwner.connect($zero)
+  const quoteBalanceBefore = await bob.getBalance()
+  await buy(fairpool, bob, bobAmount)
+  await buy(fairpool, sam, samAmount)
+  await selloff(fairpool, bob)
+  const quoteBalanceAfter = await bob.getBalance()
+  return quoteBalanceAfter.sub(quoteBalanceBefore)
+}

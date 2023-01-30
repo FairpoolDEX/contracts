@@ -27,20 +27,20 @@ abstract contract SharedOwnership {
 
     event TransferShares(address indexed from, address indexed to, uint amount);
 
-    constructor(address payable[] memory beneficiaries_, uint[] memory shares_) {
-        if (beneficiaries_.length == 0) {
+    constructor(address payable[] memory beneficiariesNew, uint[] memory sharesNew) {
+        if (beneficiariesNew.length == 0) {
             beneficiaries = [msg.sender];
             shares[msg.sender] = scaleOfShares;
         } else {
-            if (beneficiaries_.length != shares_.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
-            if (beneficiaries_.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
-            beneficiaries = beneficiaries_;
+            if (beneficiariesNew.length != sharesNew.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
+            if (beneficiariesNew.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
+            beneficiaries = beneficiariesNew;
             uint sumOfShares;
-            for (uint i = 0; i < shares_.length; i++) {
-                uint share = shares_[i];
+            for (uint i = 0; i < sharesNew.length; i++) {
+                uint share = sharesNew[i];
                 if (share == 0) revert ShareMustBeGreaterThanZero();
                 // no need to check (share <= scale) because we already check (sumOfShares != scale)
-                shares[beneficiaries_[i]] = shares_[i];
+                shares[beneficiariesNew[i]] = sharesNew[i];
                 sumOfShares += share;
             }
             if (sumOfShares != scaleOfShares) revert SumOfSharesMustBeEqualToScale();

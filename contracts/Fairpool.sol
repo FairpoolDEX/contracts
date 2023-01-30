@@ -116,10 +116,10 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     event SetFees(uint fees);
     event SetOperator(address operator);
 
-    constructor(string memory name_, string memory symbol_, uint slope_, uint32 weight_, uint royalties_, uint dividends_, address payable[] memory beneficiaries_, uint[] memory shares_) ERC20(name_, symbol_) SharedOwnership(beneficiaries_, shares_) Ownable() {
-        setQuoteBufferInternal(slope_, weight_);
-        setWeightInternal(weight_);
-        setTaxesInternal(royalties_, dividends_, fees);
+    constructor(string memory nameNew, string memory symbolNew, uint slopeNew, uint32 weightNew, uint royaltiesNew, uint dividendsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
+        setQuoteBufferInternal(slopeNew, weightNew);
+        setWeightInternal(weightNew);
+        setTaxesInternal(royaltiesNew, dividendsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
         // operator is already set
         // preallocate tallies
         for (uint i = 0; i < beneficiaries.length; i++) {
@@ -182,67 +182,67 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         }
     }
 
-    function setCurveParameters(uint $slope, uint32 $weight) external onlyOwner nonReentrant {
+    function setCurveParameters(uint slopeNew, uint32 weightNew) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-        setQuoteBufferInternal($slope, $weight);
-        setWeightInternal($weight);
+        setQuoteBufferInternal(slopeNew, weightNew);
+        setWeightInternal(weightNew);
         emit SetQuoteBuffer(quoteBuffer);
         emit SetWeight(weight);
     }
 
     // using separate setRoyalties, setDividends, setFees because they have different modifiers (onlyOwner vs onlyOperator)
 
-    function setRoyalties(uint $royalties) external onlyOwner nonReentrant {
-        setTaxesInternal($royalties, dividends, fees);
-        emit SetRoyalties($royalties);
+    function setRoyalties(uint royaltiesNew) external onlyOwner nonReentrant {
+        setTaxesInternal(royaltiesNew, dividends, fees);
+        emit SetRoyalties(royaltiesNew);
     }
 
-    function setDividends(uint $dividends) external onlyOwner nonReentrant {
+    function setDividends(uint dividendsNew) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert DividendsCanBeSetOnlyIfTotalSupplyIsZero();
-        setTaxesInternal(royalties, $dividends, fees);
-        emit SetDividends($dividends);
+        setTaxesInternal(royalties, dividendsNew, fees);
+        emit SetDividends(dividendsNew);
     }
 
-    function setFees(uint $fees) external onlyOperator nonReentrant {
-        setTaxesInternal(royalties, dividends, $fees);
-        emit SetFees($fees);
+    function setFees(uint feesNew) external onlyOperator nonReentrant {
+        setTaxesInternal(royalties, dividends, feesNew);
+        emit SetFees(feesNew);
     }
 
-    function setOperator(address payable $operator) external onlyOperator nonReentrant {
-        setOperatorInternal($operator);
-        emit SetOperator($operator);
+    function setOperator(address payable operatorNew) external onlyOperator nonReentrant {
+        setOperatorInternal(operatorNew);
+        emit SetOperator(operatorNew);
     }
 
-    function setQuoteBufferInternal(uint $slope, uint $weight) internal {
-        if ($slope == 0) revert SlopeMustBeGreaterThanZero();
-        if ($slope >= maxSlope) revert SlopeMustBeLessThanMaxSlope();
-        // IMPORTANT: in the expression for $quoteBuffer, the numerator must be divisible by denominator without remainder (the following assert ensures this)
+    function setQuoteBufferInternal(uint slopeNew, uint weightNew) internal {
+        if (slopeNew == 0) revert SlopeMustBeGreaterThanZero();
+        if (slopeNew >= maxSlope) revert SlopeMustBeLessThanMaxSlope();
+        // IMPORTANT: in the expression for quoteBufferNew, the numerator must be divisible by denominator without remainder (the following assert ensures this)
         assert(scale % maxWeight == 0);
-        uint $quoteBuffer = $slope * $weight * (scale / maxWeight);
-        if ($quoteBuffer >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
-        quoteBuffer = $quoteBuffer;
+        uint quoteBufferNew = slopeNew * weightNew * (scale / maxWeight);
+        if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
+        quoteBuffer = quoteBufferNew;
     }
 
-    function setWeightInternal(uint32 $weight) internal {
-        if ($weight == 0) revert WeightMustBeGreaterThanZero();
-        if ($weight >= maxWeight) revert WeightMustBeLessThanMaxWeight();
-        weight = $weight;
+    function setWeightInternal(uint32 weightNew) internal {
+        if (weightNew == 0) revert WeightMustBeGreaterThanZero();
+        if (weightNew >= maxWeight) revert WeightMustBeLessThanMaxWeight();
+        weight = weightNew;
     }
 
-    function setOperatorInternal(address payable $operator) internal {
-        if ($operator == address(0)) revert OperatorMustNotBeZeroAddress();
-        if ($operator == address(this)) revert OperatorMustNotBeContractAddress();
-        operator = $operator;
+    function setOperatorInternal(address payable operatorNew) internal {
+        if (operatorNew == address(0)) revert OperatorMustNotBeZeroAddress();
+        if (operatorNew == address(this)) revert OperatorMustNotBeContractAddress();
+        operator = operatorNew;
     }
 
     // using a single function for all three taxes to ensure their sum < MAX_WEIGHT (revert otherwise)
-    function setTaxesInternal(uint $royalties, uint $dividends, uint $fees) internal {
+    function setTaxesInternal(uint royaltiesNew, uint dividendsNew, uint feesNew) internal {
         // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
-        if ($royalties >= scaleOfShares || $dividends >= scaleOfShares || $fees >= scaleOfShares || $royalties + $dividends + $fees >= scaleOfShares) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScaleOfShares();
-        if (totalSupply() != 0 && ($royalties > royalties || $dividends > dividends || $fees > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
-        royalties = $royalties;
-        dividends = $dividends;
-        fees = $fees;
+        if (royaltiesNew >= scaleOfShares || dividendsNew >= scaleOfShares || feesNew >= scaleOfShares || royaltiesNew + dividendsNew + feesNew >= scaleOfShares) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScaleOfShares();
+        if (totalSupply() != 0 && (royaltiesNew > royalties || dividendsNew > dividends || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
+        royalties = royaltiesNew;
+        dividends = dividendsNew;
+        fees = feesNew;
     }
 
     /**
