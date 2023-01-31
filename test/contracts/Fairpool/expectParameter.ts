@@ -3,8 +3,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
 import { expect } from '../../../utils-local/expect'
 
-type FairpoolParameterGetter = 'royalties' | 'dividends' | 'fees'
-type FairpoolParameterSetter = 'setRoyalties' | 'setDividends' | 'setFees'
+type FairpoolParameterGetter = 'royalties' | 'earnings' | 'fees'
+type FairpoolParameterSetter = 'setRoyalties' | 'setEarnings' | 'setFees'
 
 export async function expectParameter(contract: Fairpool, admin: SignerWithAddress, stranger: SignerWithAddress, getter: FairpoolParameterGetter, setter: FairpoolParameterSetter, valueNew: BigNumber, error: string, isCustomError: boolean) {
   const valueBefore = await contract[getter]()

@@ -26,7 +26,7 @@ import "hardhat/console.sol";
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  * - Ownable is needed to change curve parameters & taxes (otherwise there could be a battle between the beneficiaries)
  * - Owner may call renounceOwnership(), thus setting the owner to zero address
- * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of dividends). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay dividends to anyone else ~= he should pay dividends to himself)
+ * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of earnings). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay earnings to anyone else ~= he should pay earnings to himself)
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
  */
 contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable, BancorFormula {
@@ -53,9 +53,9 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     // Percentage of sale distributed to the beneficiaries (as royalties / MAX_WEIGHT)
     uint public royalties;
 
-    // Percentage of sale distributed to the holders (as dividends / MAX_WEIGHT)
-    // NOTE: can be set to zero to avoid the dividends
-    uint public dividends;
+    // Percentage of sale distributed to the holders (as earnings / MAX_WEIGHT)
+    // NOTE: can be set to zero to avoid the earnings
+    uint public earnings;
 
     // Percentage of sale distributed to the operator (as fees / MAX_WEIGHT)
     uint public fees = scaleOfShares * 25 / 1000; // 2.5%
@@ -100,13 +100,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     error AddressNotPayable(address addr);
     error SlopeMustBeGreaterThanZero();
     error SlopeMustBeLessThanMaxSlope();
+    error QuoteBufferMustBeGreaterThanZero();
     error QuoteBufferMustBeLessThanMaxQuoteBuffer();
     error WeightMustBeLessThanMaxWeight();
     error WeightMustBeGreaterThanZero();
     error WeightCanBeSetOnlyIfTotalSupplyIsZero();
     error CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-    error DividendsCanBeSetOnlyIfTotalSupplyIsZero();
-    error RoyaltiesPlusDividendsPlusFeesMustBeLessThanScaleOfShares();
+    error EarningsCanBeSetOnlyIfTotalSupplyIsZero();
+    error RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
     error NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
     error OnlyOperator();
     error OperatorMustNotBeZeroAddress();
@@ -117,13 +118,13 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     event SetSlope(uint slope);
     event SetWeight(uint32 weight);
     event SetRoyalties(uint royalties);
-    event SetDividends(uint dividends);
+    event SetEarnings(uint earnings);
     event SetFees(uint fees);
     event SetOperator(address operator);
 
-    constructor(string memory nameNew, string memory symbolNew, uint slopeNew, uint32 weightNew, uint royaltiesNew, uint dividendsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
+    constructor(string memory nameNew, string memory symbolNew, uint slopeNew, uint32 weightNew, uint royaltiesNew, uint earningsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
         setCurveParametersInternal(slopeNew, weightNew);
-        setTaxesInternal(royaltiesNew, dividendsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
+        setTaxesInternal(royaltiesNew, earningsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
         // operator is already set
         // preallocate tallies
         for (uint i = 0; i < beneficiaries.length; i++) {
@@ -164,7 +165,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         quoteDistributed = distribute(quoteDelta);
         uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
-        _burn(msg.sender, baseDelta); // IMPORTANT: _burn() must be called after distribute() because holders.length must be greater than 0 (a single holder must be able to sell back & receive rewards for himself)
+        _burn(msg.sender, baseDelta); // IMPORTANT: _burn() must be called after distribute() because holders.length must be greater than 0 (a single holder must be able to sell back & receive earnings for himself)
         emit Trade(msg.sender, false, baseDelta, quoteDelta, quoteReceived);
         uint quoteWithdrawn = doWithdrawAndEmit();
         payable(msg.sender).transfer(quoteReceived + quoteWithdrawn);
@@ -193,21 +194,21 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         emit SetWeight(weight);
     }
 
-    // using separate setRoyalties, setDividends, setFees because they have different modifiers (onlyOwner vs onlyOperator)
+    // using separate setRoyalties, setEarnings, setFees because they have different modifiers (onlyOwner vs onlyOperator)
 
     function setRoyalties(uint royaltiesNew) external onlyOwner nonReentrant {
-        setTaxesInternal(royaltiesNew, dividends, fees);
+        setTaxesInternal(royaltiesNew, earnings, fees);
         emit SetRoyalties(royaltiesNew);
     }
 
-    function setDividends(uint dividendsNew) external onlyOwner nonReentrant {
-        if (totalSupply() != 0) revert DividendsCanBeSetOnlyIfTotalSupplyIsZero();
-        setTaxesInternal(royalties, dividendsNew, fees);
-        emit SetDividends(dividendsNew);
+    function setEarnings(uint earningsNew) external onlyOwner nonReentrant {
+        if (totalSupply() != 0) revert EarningsCanBeSetOnlyIfTotalSupplyIsZero();
+        setTaxesInternal(royalties, earningsNew, fees);
+        emit SetEarnings(earningsNew);
     }
 
     function setFees(uint feesNew) external onlyOperator nonReentrant {
-        setTaxesInternal(royalties, dividends, feesNew);
+        setTaxesInternal(royalties, earnings, feesNew);
         emit SetFees(feesNew);
     }
 
@@ -225,6 +226,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         weight = weightNew;
         // slope must already be multiplied by scale, so we don't need to multiply again in the following formula
         uint quoteBufferNew = slope * weight / maxWeight;
+        if (quoteBufferNew == 0) revert QuoteBufferMustBeGreaterThanZero();
         if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
         quoteBuffer = quoteBufferNew;
     }
@@ -236,12 +238,12 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     }
 
     // using a single function for all three taxes to ensure their sum < MAX_WEIGHT (revert otherwise)
-    function setTaxesInternal(uint royaltiesNew, uint dividendsNew, uint feesNew) internal {
+    function setTaxesInternal(uint royaltiesNew, uint earningsNew, uint feesNew) internal {
         // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
-        if (royaltiesNew >= scaleOfShares || dividendsNew >= scaleOfShares || feesNew >= scaleOfShares || royaltiesNew + dividendsNew + feesNew >= scaleOfShares) revert RoyaltiesPlusDividendsPlusFeesMustBeLessThanScaleOfShares();
-        if (totalSupply() != 0 && (royaltiesNew > royalties || dividendsNew > dividends || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
+        if (royaltiesNew >= scaleOfShares || earningsNew >= scaleOfShares || feesNew >= scaleOfShares || royaltiesNew + earningsNew + feesNew >= scaleOfShares) revert RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
+        if (totalSupply() != 0 && (royaltiesNew > royalties || earningsNew > earnings || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
         royalties = royaltiesNew;
-        dividends = dividendsNew;
+        earnings = earningsNew;
         fees = feesNew;
     }
 
@@ -270,7 +272,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         }
 
         // distribute to holders
-        uint quoteDistributedToHolders = (quoteDelta * dividends) / scaleOfShares;
+        uint quoteDistributedToHolders = (quoteDelta * earnings) / scaleOfShares;
         if (quoteDistributedToHolders != 0) {
             length = holders.length;
             uint maxHolders = length < maxHoldersPerDistribution ? length : maxHoldersPerDistribution;

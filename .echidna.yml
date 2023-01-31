@@ -67,7 +67,7 @@ maxTimeDelay: 604800
 # maximum number of blocks elapsed between generated txs; default is expected increment in one week
 maxBlockDelay: 60480
 # list of methods to filter
-filterFunctions: ["name", "symbol", "decimals", "totalSupply", "balanceOf", "allowance", "owner", "speed", "royalties", "dividends", "fees", "operator", "tallies", "quoteBalanceOfContract", "beneficiaries", "shares"]
+filterFunctions: ["name", "symbol", "decimals", "totalSupply", "balanceOf", "allowance", "owner", "slope", "weight", "baseBuffer", "quoteBuffer", "agent", "agentShare", "agentTally", "royalties", "earnings", "fees", "operator", "tallies", "quoteBalanceOfContract", "beneficiaries", "shares"]
 #  by default, blacklist methods in filterFunctions
 filterBlacklist: true
 # directory to save the corpus; by default is disabled

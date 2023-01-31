@@ -191,7 +191,10 @@ contract BancorFormula {
         uint8 precision;
         uint256 baseN = _amount + _reserveBalance;
         (result, precision) = power(baseN, _reserveBalance, _reserveWeight, maxWeight);
+        console.log('result', result);
+        console.log('precision', precision);
         uint256 temp = (_supply * result) >> precision;
+        console.log('temp', temp);
         return temp - _supply;
     }
 
