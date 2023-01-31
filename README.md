@@ -1,4 +1,4 @@
-# Coliquidity contracts
+# Fairpool contracts
 
 ## Setup
 
@@ -39,7 +39,7 @@ set -o allexport; source .env; set +o allexport # Export .env vars
 yarn fork
 # switch to another console
 export NETWORK=localhost # set NETWORK to local fork
-hardhat deployBullToken --network $NETWORK # or any other command with --network $NETWORK
+# run any command with --network $NETWORK
 ```
 
 Lint code
@@ -56,6 +56,4 @@ yarn coverage
 
 ## License
 
-The code in this repository is provided for informational purposes only. If you want to use it for any other purpose, you need to obtain an explicit permission from the copyright holder.
-
-Ⓒ Shield Finance, 2021. All rights reserved.
+The code in this repository is provided for informational purposes only. If you want to use it for any other purpose, including production deployment, please contact us to discuss a partnership.
