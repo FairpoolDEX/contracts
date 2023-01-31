@@ -12,13 +12,13 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     uint32 constant $weight = maxWeight / 3;
     uint constant $fees = scaleOfShares * 25 / 1000;
     uint constant $royalties = scaleOfShares / 2 - $fees;
-    uint constant $dividends = scaleOfShares / 2 - 1;
+    uint constant $earnings = scaleOfShares / 2 - 1;
 
-    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $slope, $weight, $royalties, $dividends, $beneficiaries, $shares) {
+    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $slope, $weight, $royalties, $earnings, $beneficiaries, $shares) {
         // weight and tax can be changed via reset()
         // beneficiaries and shares can be changed via transferShares()
         operator = payable(msg.sender); // allow the owner to receive the fees & call setOperator()
-        setTaxesInternal($royalties, $dividends, $fees);
+        setTaxesInternal($royalties, $earnings, $fees);
     }
 
     // msg.value is bounded by native currency supply
@@ -27,10 +27,11 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         taxesAreBounded();
         allUsersHaveTallies();
         contractBalanceIsCorrect();
+        sumOfBuysIsEqualToBigBuy();
     }
 
     // allow testing different combinations of contract parameters
-    function reset(uint slope_, uint32 weight_, uint royalties_, uint dividends_, uint fees_) public onlyOperator {
+    function reset(uint slopeNew, uint32 weightNew, uint royaltiesNew, uint earningsNew, uint feesNew) public onlyOperator {
         // need to copy holders because it's modified in the loop body via _burn()
         address[] memory $holders = copy(holders);
         for (uint i = 0; i < $holders.length; i++) {
@@ -44,8 +45,8 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         }
         payable(owner()).transfer(address(this).balance);
         quoteBalanceOfContract = 0;
-        setCurveParametersInternal(slope_, weight_);
-        setTaxesInternal(royalties_, dividends_, fees_);
+        setCurveParametersInternal(slopeNew, weightNew);
+        setTaxesInternal(royaltiesNew, earningsNew, feesNew);
     }
 
     // Using a struct to avoid the "stack too deep" error
@@ -251,12 +252,12 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
 
     function weightIsBounded() internal {
         ensureGreater(weight, 0, "weight", "0");
-        ensureLess(weight, maxWeight, "weight", "MAX_WEIGHT");
+        ensureLess(weight, maxWeight, "weight", "maxWeight");
     }
 
     function taxesAreBounded() internal {
         // tax == 0 is ok
-        ensureLessEqual(royalties + dividends + fees, scaleOfShares, "royalties + dividends + fees", "SCALE_OF_SHARES");
+        ensureLessEqual(royalties + earnings + fees, scaleOfShares, "royalties + earnings + fees", "scaleOfShares");
     }
 
     function allUsersHaveTallies() internal {
@@ -278,6 +279,20 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         uint expectedBalance = quoteBalanceOfContract + sumOfTalliesOfHolders - sumOfPreallocations;
         // NOTE: Using GreaterEqual instead of Equal because if the sender sells his full balance, he is no longer included in holders, so sumOfTalliesOfHolders will not include his tally
         ensureGreaterEqual(address(this).balance, expectedBalance, "address(this).balance", "quoteBalanceOfContract + sumOfTallies - sumOfPreallocations");
+    }
+
+    function sumOfBuysIsEqualToBigBuy() public {
+        uint quoteDeltaFull = 1000000;
+        uint quoteDeltaHalf = quoteDeltaFull / 2;
+        uint baseDeltaFull = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteDeltaFull);
+        uint baseDeltaHalf1 = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteDeltaHalf);
+        uint baseDeltaHalf2 = purchaseTargetAmount(baseBuffer + baseDeltaHalf1, quoteBuffer + quoteDeltaHalf, weight, quoteDeltaHalf);
+        uint baseDeltaHalfSum = baseDeltaHalf1 + baseDeltaHalf2;
+        console.log('baseDeltaFull', baseDeltaFull);
+        console.log('baseDeltaHalf1', baseDeltaHalf1);
+        console.log('baseDeltaHalf2', baseDeltaHalf2);
+        console.log('baseDeltaHalfSum', baseDeltaHalfSum);
+        ensureEqual(baseDeltaFull, baseDeltaHalfSum, "baseDeltaFull", "baseDeltaHalfSum");
     }
 
     // Must be overridden to prevent Echidna from reporting an overflow (there's no explicit revert in ERC20 because it relies on automatic overflow checking)

@@ -24,7 +24,7 @@ import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
-import { ensureQuoteDeltaMin, getSharePercent, getWeightPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
+import { ensureQuoteDeltaMin, getSharePercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
 import { cleanEchidnaLogString, filterEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
 import { parseTradeEvent, TradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
@@ -36,7 +36,7 @@ import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
 import { BN } from '../../libs/bn'
 import { AmountBN } from '../../libs/ethereum/models/AmountBN'
-import { DefaultSlope } from '../../libs/fairpool/constants'
+import { DefaultSlope, DefaultWeight } from '../../libs/fairpool/constants'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -63,7 +63,7 @@ describe('Fairpool', async function () {
   let slope: BigNumber
   let weight: BigNumber
   let royalties: BigNumber
-  let dividends: BigNumber
+  let earnings: BigNumber
   // let jump: number
   // let denominator: number
 
@@ -116,16 +116,16 @@ describe('Fairpool', async function () {
 
     const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
     slope = DefaultSlope
-    weight = getWeightPercent(33)
+    weight = DefaultWeight
     royalties = getSharePercent(30)
-    dividends = getSharePercent(20)
+    earnings = getSharePercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
       'Abraham Lincoln Token',
       'ABRA',
       slope,
       weight,
       royalties,
-      dividends,
+      earnings,
       [ben.address, bob.address],
       [getSharePercent(12), getSharePercent(88)]
     )) as unknown as Fairpool
@@ -154,7 +154,7 @@ describe('Fairpool', async function () {
 
   async function unsetTaxes() {
     await fairpoolAsOwner.setRoyalties(0)
-    await fairpoolAsOwner.setDividends(0)
+    await fairpoolAsOwner.setEarnings(0)
     await fairpoolAsOperator.setFees(0)
   }
 
@@ -198,10 +198,11 @@ describe('Fairpool', async function () {
 
   fest('must replay Echidna transactions', withCleanEthersError(async () => {
     const echidnaLog = `
-        // setFees(5) Time delay: 467824 seconds Block delay: 7658
-        // setOperator(0x486981aa55a7602540540f0e02a4137d5b953444) Time delay: 128848 seconds Block delay: 11026
-        // buy(29,559809169921) Value: 0x3a38d9132ca4be2bb Time delay: 88533 seconds Block delay: 4896
-        // sell(596,760,115792089237316195423570985008687907853098509048339394248628124861006319694184) Time delay: 83958 seconds Block delay: 11483
+      // test() from: 0x0000000000000000000000000000000000030000
+      // setCurveParameters(5079110400,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      // // setCurveParameters(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      // buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
+      // buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
     `
     const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(filterEchidnaLogString)
     const fairpoolTest = await deployFairpoolTest(owner)
@@ -309,8 +310,8 @@ describe('Fairpool', async function () {
     await expectParameter(fairpool, owner, bob, 'royalties', 'setRoyalties', bn(1), 'Ownable: caller is not the owner', false)
   })
 
-  fest('setDividends', async () => {
-    await expectParameter(fairpool, owner, bob, 'dividends', 'setDividends', bn(1), 'Ownable: caller is not the owner', false)
+  fest('setEarnings', async () => {
+    await expectParameter(fairpool, owner, bob, 'earnings', 'setEarnings', bn(1), 'Ownable: caller is not the owner', false)
   })
 
   fest('setFees', async () => {
@@ -380,7 +381,7 @@ describe('Fairpool', async function () {
 
 async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress, bobAmount: AmountBN, samAmount: AmountBN) {
   const royalties = getSharePercent(30)
-  const dividends = getSharePercent(20)
+  const earnings = getSharePercent(20)
   const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
   const fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
     'Abraham Lincoln Token',
@@ -388,7 +389,7 @@ async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress, bob: S
     slope,
     weight,
     royalties,
-    dividends,
+    earnings,
     [],
     []
   )) as unknown as Fairpool
