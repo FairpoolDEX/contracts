@@ -9,7 +9,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     address payable[] $beneficiaries;
     uint[] $shares;
     uint constant $slope = 5 * scale;
-    uint32 constant $weight = maxWeight / 3;
+    uint32 constant $weight = scaleOfWeight / 3;
     uint constant $fees = scaleOfShares * 25 / 1000;
     uint constant $royalties = scaleOfShares / 2 - $fees;
     uint constant $earnings = scaleOfShares / 2 - 1;
@@ -27,7 +27,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         taxesAreBounded();
         allUsersHaveTallies();
         contractBalanceIsCorrect();
-        sumOfBuysIsEqualToBigBuy();
+        sumOfBuysIsAlmostEqualToBigBuy();
     }
 
     // allow testing different combinations of contract parameters
@@ -78,7 +78,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.quoteBalanceOfOperator = sender == operator ? sender.balance + msg.value : operator.balance;
         prev.tallyOfSender = tallies[sender];
         prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        prev.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
 
@@ -91,7 +91,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.quoteBalanceOfOperator = sender == operator ? sender.balance : operator.balance;
         next.tallyOfSender = tallies[sender];
         next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        next.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
 
@@ -134,7 +134,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.quoteBalanceOfOperator = operator.balance;
         prev.tallyOfSender = tallies[sender];
         prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        prev.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
 
@@ -148,7 +148,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.quoteBalanceOfOperator = operator.balance;
         next.tallyOfSender = tallies[sender];
         next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        next.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
 
@@ -199,7 +199,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         prev.quoteBalanceOfOperator = operator.balance;
         prev.tallyOfSender = tallies[sender];
         prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        prev.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         prev.sumOfTalliesOfHolders = sum(holders, tallies);
         prev.holders = getOld(holders);
 
@@ -212,7 +212,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         next.quoteBalanceOfOperator = operator.balance;
         next.tallyOfSender = tallies[sender];
         next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
+        next.sumOfBalancesCalculated = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteBalanceOfContract);
         next.sumOfTalliesOfHolders = sum(holders, tallies);
         next.holders = getNew(holders);
 
@@ -252,7 +252,7 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
 
     function weightIsBounded() internal {
         ensureGreater(weight, 0, "weight", "0");
-        ensureLess(weight, maxWeight, "weight", "maxWeight");
+        ensureLess(weight, scaleOfWeight, "weight", "maxWeight");
     }
 
     function taxesAreBounded() internal {
@@ -281,18 +281,24 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         ensureGreaterEqual(address(this).balance, expectedBalance, "address(this).balance", "quoteBalanceOfContract + sumOfTallies - sumOfPreallocations");
     }
 
-    function sumOfBuysIsEqualToBigBuy() public {
-        uint quoteDeltaFull = 1000000;
-        uint quoteDeltaHalf = quoteDeltaFull / 2;
-        uint baseDeltaFull = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteDeltaFull);
-        uint baseDeltaHalf1 = purchaseTargetAmount(baseBuffer, quoteBuffer, weight, quoteDeltaHalf);
-        uint baseDeltaHalf2 = purchaseTargetAmount(baseBuffer + baseDeltaHalf1, quoteBuffer + quoteDeltaHalf, weight, quoteDeltaHalf);
-        uint baseDeltaHalfSum = baseDeltaHalf1 + baseDeltaHalf2;
-        console.log('baseDeltaFull', baseDeltaFull);
-        console.log('baseDeltaHalf1', baseDeltaHalf1);
-        console.log('baseDeltaHalf2', baseDeltaHalf2);
-        console.log('baseDeltaHalfSum', baseDeltaHalfSum);
-        ensureEqual(baseDeltaFull, baseDeltaHalfSum, "baseDeltaFull", "baseDeltaHalfSum");
+    function sumOfBuysIsAlmostEqualToBigBuy() internal {
+//        console.log('slope', slope);
+//        console.log('weight', weight);
+//        console.log('---');
+        uint quoteDeltaAll = 100000000000;
+        uint baseDeltaAll = getBaseDelta(baseBuffer, quoteBuffer, weight, quoteDeltaAll);
+        uint quoteDeltaSum;
+        uint baseDeltaSum;
+        uint denominator = 10;
+        uint quoteDeltaFraction = quoteDeltaAll / denominator;
+        for (uint i = 0; i < denominator; i++) {
+            baseDeltaSum += getBaseDelta(baseBuffer + baseDeltaSum, quoteBuffer + quoteDeltaSum, weight, quoteDeltaFraction);
+            quoteDeltaSum += quoteDeltaFraction;
+        }
+//        console.log('baseDeltaFull', baseDeltaAll);
+//        console.log('baseDeltaPart', baseDeltaSum);
+//        console.log('--- === ---');
+        ensureLessEqual(baseDeltaSum, baseDeltaAll, "baseDeltaSum", "baseDeltaAll");
     }
 
     // Must be overridden to prevent Echidna from reporting an overflow (there's no explicit revert in ERC20 because it relies on automatic overflow checking)

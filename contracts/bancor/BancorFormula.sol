@@ -8,11 +8,11 @@ import "hardhat/console.sol";
  * - Removed irrelevant helper functions
  * [] Removed preconditions (the calling code must check them)
  * [] Removed if's that checked if some variable is zero (the calling code must check it is not zero)
- * [] Removed `if (_reserveWeight == MAX_WEIGHT)` (the calling code must check it is not equal to MAX_WEIGHT)
+ * [] Removed `if (_weight == MAX_WEIGHT)` (the calling code must check it is not equal to MAX_WEIGHT)
  */
 contract BancorFormula {
     uint256 internal constant one = 1;
-    uint32 internal constant maxWeight = 1000000;
+    uint32 internal constant scaleOfWeight = 1000000;
 
     // Precisions
     uint8 private constant MIN_PRECISION = 32;
@@ -170,32 +170,34 @@ contract BancorFormula {
      * calculates the target amount for a given conversion (in the main token)
      *
      * Formula:
-     * return = _supply * ((1 + _amount / _reserveBalance) ^ (_reserveWeight / 1000000) - 1)
-     * return = _supply * (1 + _amount / _reserveBalance) ^ (_reserveWeight / 1000000) - _supply
+     * return = _baseSupply * ((1 + _amount / _quoteSupply) ^ (_weight / 1000000) - 1)
+     * return = _baseSupply * (1 + _amount / _quoteSupply) ^ (_weight / 1000000) - _baseSupply
      *
-     * @param _supply          liquid token supply
-     * @param _reserveBalance  reserve balance
-     * @param _reserveWeight   reserve weight, represented in ppm (1-1000000)
-     * @param _amount          amount of reserve tokens to get the target amount for
+     * @param _baseSupply   base token supply
+     * @param _quoteSupply  quote token supply
+     * @param _weight       reserve weight, represented in ppm (1-1000000)
+     * @param _quoteDelta   amount of reserve tokens to get the target amount for
      *
      * @return target
      */
-    function purchaseTargetAmount(
-        uint256 _supply,
-        uint256 _reserveBalance,
-        uint32 _reserveWeight,
-        uint256 _amount
+    function getBaseDelta(
+        uint256 _baseSupply,
+        uint256 _quoteSupply,
+        uint32 _weight,
+        uint256 _quoteDelta
     ) internal view returns (uint256) {
         /* removed input validation and special cases */
         uint256 result;
         uint8 precision;
-        uint256 baseN = _amount + _reserveBalance;
-        (result, precision) = power(baseN, _reserveBalance, _reserveWeight, maxWeight);
-        console.log('result', result);
-        console.log('precision', precision);
-        uint256 temp = (_supply * result) >> precision;
-        console.log('temp', temp);
-        return temp - _supply;
+        uint256 baseN = _quoteDelta + _quoteSupply;
+        (result, precision) = power(baseN, _quoteSupply, _weight, scaleOfWeight);
+        uint256 temp = (_baseSupply * result) >> precision;
+//        console.log('baseN', baseN);
+//        console.log('result', result);
+//        console.log('precision', precision);
+//        console.log('baseDelta', temp - _baseSupply);
+//        console.log('---');
+        return temp - _baseSupply;
     }
 
     /**
@@ -203,28 +205,28 @@ contract BancorFormula {
      * calculates the target amount for a given conversion (in the reserve token)
      *
      * Formula:
-     * return = _reserveBalance * (1 - (1 - _amount / _supply) ^ (1000000 / _reserveWeight))
+     * return = _quoteSupply * (1 - (1 - _amount / _baseSupply) ^ (1000000 / _weight))
      *
-     * @param _supply          liquid token supply
-     * @param _reserveBalance  reserve balance
-     * @param _reserveWeight   reserve weight, represented in ppm (1-1000000)
-     * @param _amount          amount of liquid tokens to get the target amount for
+     * @param _baseSupply   base token supply
+     * @param _quoteSupply  quote token supply
+     * @param _weight       reserve weight, represented in ppm (1-1000000)
+     * @param _baseDelta    amount of liquid tokens to get the target amount for
      *
      * @return reserve token amount
      */
-    function saleTargetAmount(
-        uint256 _supply,
-        uint256 _reserveBalance,
-        uint32 _reserveWeight,
-        uint256 _amount
+    function getQuoteDelta(
+        uint256 _baseSupply,
+        uint256 _quoteSupply,
+        uint32 _weight,
+        uint256 _baseDelta
     ) internal view returns (uint256) {
         /* removed input validation and special cases */
         uint256 result;
         uint8 precision;
-        uint256 baseD = _supply - _amount;
-        (result, precision) = power(_supply, baseD, maxWeight, _reserveWeight);
-        uint256 temp1 = (_reserveBalance * result);
-        uint256 temp2 = _reserveBalance << precision;
+        uint256 baseD = _baseSupply - _baseDelta;
+        (result, precision) = power(_baseSupply, baseD, scaleOfWeight, _weight);
+        uint256 temp1 = (_quoteSupply * result);
+        uint256 temp2 = _quoteSupply << precision;
         return (temp1 - temp2) / result;
     }
 
