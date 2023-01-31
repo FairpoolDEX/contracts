@@ -1,6 +1,5 @@
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { toFrontendAmountBND } from '../../libs/utils/bignumber.convert'
 import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
 import { Fairpool } from '../../typechain-types'
 import { $zero } from '../../data/allAddresses'
@@ -24,19 +23,21 @@ import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
-import { ensureQuoteDeltaMin, getSharePercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
+import { ensureQuoteDeltaMin, getSharePercent, getWeightPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
 import { cleanEchidnaLogString, filterEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
-import { parseTradeEvent, TradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
+import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
 import { createWriteStream } from 'fs'
 import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
-import { BaseDecimals, BaseScale, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
+import { BaseScale, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
 import { BN } from '../../libs/bn'
 import { AmountBN } from '../../libs/ethereum/models/AmountBN'
 import { DefaultSlope, DefaultWeight } from '../../libs/fairpool/constants'
+import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fairpool/models/TradeEvent/fromTradeEventToCsv'
+import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -198,11 +199,11 @@ describe('Fairpool', async function () {
 
   fest('must replay Echidna transactions', withCleanEthersError(async () => {
     const echidnaLog = `
-      // test() from: 0x0000000000000000000000000000000000030000
-      // setCurveParameters(5079110400,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      setCurveParameters(100000000000001,499999) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      test() from: 0x0000000000000000000000000000000000030000
       // // setCurveParameters(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
-      // buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
-      // buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
+      buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
+      buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
     `
     const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(filterEchidnaLogString)
     const fairpoolTest = await deployFairpoolTest(owner)
@@ -238,8 +239,8 @@ describe('Fairpool', async function () {
     const samAmount = QuoteScale.mul(1000)
     const profits = await Promise.all([
       getProfit(slope, weight, owner, bob, sam, bobAmount, samAmount),
-      getProfit(slope.mul(100), weight, owner, bob, sam, bobAmount, samAmount),
-      getProfit(slope, weight.mul(3), owner, bob, sam, bobAmount, samAmount),
+      getProfit(slope.mul(1000), weight, owner, bob, sam, bobAmount, samAmount),
+      getProfit(slope, getWeightPercent(49), owner, bob, sam, bobAmount, samAmount),
     ])
     profits.forEach(profit => expect(profit).to.equal(profits[0]))
   })
@@ -250,6 +251,7 @@ describe('Fairpool', async function () {
    */
   fest('buys must be almost additive', async () => {
     await unsetTaxes()
+    // await fairpoolAsOwner.setCurveParameters(bn('5079110400'), bn('982081'))
     const volumes = range(0, 500).map(i => QuoteScale)
 
     expect(getSupplyStats(fairpool)).to.eventually.deep.equal(zeroSupplyStats)
@@ -264,7 +266,10 @@ describe('Fairpool', async function () {
 
     // expect(afterSingleBuy).to.deep.equal(afterMultiBuys)
     const diff = subSupplyStats(afterSingleBuy, afterMultiBuys)
+    console.log('diff', diff)
     const maxDiff = { baseSupply: BaseScale.div(1000000), quoteSupply: bn(0) }
+    expect(diff.baseSupply).to.be.greaterThanOrEqual(0)
+    expect(diff.quoteSupply).to.be.greaterThanOrEqual(0)
     expect(diff.baseSupply).to.be.lessThanOrEqual(maxDiff.baseSupply)
     expect(diff.quoteSupply).to.be.lessThanOrEqual(maxDiff.quoteSupply)
 
@@ -293,6 +298,31 @@ describe('Fairpool', async function () {
     expect(profit).to.be.lessThan(0)
   })
 
+  // Can't move further with this test: BigNumber requires the pow() argument to be an integer
+  // fest('quoteBuffer is calculated correctly', async () => {
+  //   /**
+  //    * // quoteBuffer is the area under the chart
+  //    * price = slope * baseBuffer ^ (1 / weight - 1)
+  //    * quoteBuffer = slope * baseBuffer ^ (1 / weight) / (1 / weight)
+  //    * quoteBuffer = slope * weight * baseBuffer ^ (1 / weight)
+  //    */
+  //   const baseBuffer = await fairpool.baseBuffer()
+  //   console.log('slope', slope)
+  //   console.log('weight', weight)
+  //   const slopeD = toFrontendQuoteScale(slope)
+  //   const weightD = toFrontendWeightScale(weight)
+  //   const baseBufferD = toFrontendBaseScale(baseBuffer)
+  //   console.log('weightD', weightD.toString())
+  //   console.log('slopeD', slopeD.toString())
+  //   console.log('baseBufferD', baseBufferD.toString())
+  //   const quoteBufferExpectedD = slopeD.multipliedBy(weightD).multipliedBy(baseBufferD.pow(num(1).div(weightD)))
+  //   const quoteBufferActual = await fairpool.quoteBuffer()
+  //   const quoteBufferActualD = toFrontendQuoteScale(quoteBufferActual)
+  //   console.log('quoteBufferExpectedD', quoteBufferExpectedD)
+  //   console.log('quoteBufferActualD', quoteBufferActualD)
+  //   expect(quoteBufferExpectedD).to.equal(quoteBufferActualD)
+  // })
+
   fest('setOperator', async () => {
     // before setOperator(bob.address)
     await expect(fairpoolAsBob.setOperator(bob.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
@@ -318,6 +348,9 @@ describe('Fairpool', async function () {
     await expectParameter(fairpool, operator, bob, 'fees', 'setFees', bn(1), 'OnlyOperator', true)
   })
 
+  /**
+   * As baseSupply goes to Infinity, priceDelta goes to 0 (this is correct, since each `value` increment advances the price less and less)
+   */
   fest('Price table', async () => {
     const count = 20
     const value = bn(10).pow(QuoteDecimals.sub(2))
@@ -327,37 +360,8 @@ describe('Fairpool', async function () {
     expect(events.length).to.equal(count)
     const network = await fairpool.provider.getNetwork()
     const trades = events.map(fromRawEvent(network.chainId)(parseTradeEvent))
-    const fromTradeEventToCsv = (trade: TradeEvent) => {
-      const { sender, isBuy, baseDelta, quoteDelta, quoteReceived } = trade
-      const price = quoteDelta.div(baseDelta)
-      const baseDeltaDisplayed = toFrontendAmountBND(BaseDecimals)(baseDelta)
-      const quoteDeltaDisplayed = toFrontendAmountBND(QuoteDecimals)(quoteDelta)
-      const quoteReceivedDisplayed = toFrontendAmountBND(QuoteDecimals)(quoteReceived)
-      const priceDisplayed = quoteDeltaDisplayed.div(baseDeltaDisplayed)
-      return [
-        sender,
-        isBuy,
-        baseDelta,
-        quoteDelta,
-        price,
-        baseDeltaDisplayed,
-        quoteDeltaDisplayed,
-        quoteReceivedDisplayed,
-        priceDisplayed,
-      ].map(v => v.toString())
-    }
-    const columns = [
-      'sender',
-      'isBuy',
-      'baseDelta',
-      'quoteDelta',
-      'price',
-      'baseDeltaDisplayed',
-      'quoteDeltaDisplayed',
-      'quoteReceivedDisplayed',
-      'priceDisplayed',
-    ]
-    const stringifier = getCsvStringifier({ header: true, columns }, fromTradeEventToCsv, trades)
+    const pairs = toPrevNextMaybePairs(trades)
+    const stringifier = getCsvStringifier({ header: true, columns: tradeEventPairCsvColumns }, fromTradeEventPairToCsv, pairs)
     // const out = process.stderr
     // debug(filename)
     if (isEnabledLog) {

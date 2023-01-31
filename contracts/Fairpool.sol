@@ -75,9 +75,15 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     // Also needed to protect against breaking the contract logic by sending the quote currency to it directly
     uint public quoteBalanceOfContract;
 
+    // Needed to ensure that the quoteBuffer is high enough, so that the power() function always returns a high precision (= 127)
+    uint internal constant minSlope = scale / 10000;
+
     // Needed to avoid overflow in setQuoteBufferInternal
     // Dividing by maxWeight and scale because of the expression for quoteBuffer
-    uint internal constant maxSlope = type(uint256).max / maxWeight / scale - 1;
+    uint internal constant maxSlope = type(uint256).max / scaleOfWeight / scale;
+
+    // Needed to ensure that the price growth is exponential (otherwise it is linear if `weight == scaleOfWeight / 2`, and sub-exponential if `weight < scaleOfWeight / 2`)
+    uint internal constant maxWeight = scaleOfWeight / 2;
 
     // Needed to avoid overflow in purchaseTargetAmount. Assumes that full quote supply can be represented in 128 bits, so that msg.value + quoteBuffer < type(uint256).max
     uint internal constant maxQuoteBuffer = type(uint256).max / 2;
@@ -86,7 +92,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
     uint internal constant maxHoldersPerDistribution = 256;
 
-    // used for preallocation: it is set on tallies for every holder
+    // Used for preallocation: it is set on tallies for every holder
     uint internal constant defaultTally = 1;
 
     error BlockTimestampMustBeLessThanOrEqualToDeadline();
@@ -98,7 +104,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     error BaseDeltaMustBeLessThanOrEqualToBalance();
     error NothingToWithdraw();
     error AddressNotPayable(address addr);
-    error SlopeMustBeGreaterThanZero();
+    error SlopeMustBeGreaterMinSlope();
     error SlopeMustBeLessThanMaxSlope();
     error QuoteBufferMustBeGreaterThanZero();
     error QuoteBufferMustBeLessThanMaxQuoteBuffer();
@@ -139,7 +145,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         // `quoteDelta < 2 * scaleOfShares` is needed because quoteDelta must be divisible by scaleOfShares in distribute()
         // using `2 * scaleOfShares` instead of `scaleOfShares` because sell() calls saleTargetAmount(), which returns a smaller quoteDelta than was initially passed to buy() as msg.value
         if (quoteDelta < 2 * scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares();
-        uint baseDelta = purchaseTargetAmount(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, quoteDelta);
+        uint baseDelta = getBaseDelta(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, quoteDelta);
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
         // baseDelta != 0 ==> quoteDelta != 0
         if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
@@ -158,7 +164,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
             // this special case is also present in the formula code, but it doesn't work because we pass baseBalanceOfContract + baseBuffer (and baseDeltaProposed is always less than baseBalanceOfContract + baseBuffer)
             quoteDelta = quoteBalanceOfContract;
         } else {
-            quoteDelta = saleTargetAmount(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, baseDelta);
+            quoteDelta = getQuoteDelta(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, baseDelta);
         }
         if (quoteDelta < scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualToScaleOfShares();
         quoteBalanceOfContract -= quoteDelta;
@@ -218,14 +224,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     }
 
     function setCurveParametersInternal(uint slopeNew, uint32 weightNew) internal {
-        if (slopeNew == 0) revert SlopeMustBeGreaterThanZero();
+        if (slopeNew <= minSlope) revert SlopeMustBeGreaterMinSlope();
         if (slopeNew >= maxSlope) revert SlopeMustBeLessThanMaxSlope();
         if (weightNew == 0) revert WeightMustBeGreaterThanZero();
         if (weightNew >= maxWeight) revert WeightMustBeLessThanMaxWeight();
         slope = slopeNew;
         weight = weightNew;
         // slope must already be multiplied by scale, so we don't need to multiply again in the following formula
-        uint quoteBufferNew = slope * weight / maxWeight;
+        uint quoteBufferNew = slope * weight / scaleOfWeight;
         if (quoteBufferNew == 0) revert QuoteBufferMustBeGreaterThanZero();
         if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
         quoteBuffer = quoteBufferNew;
