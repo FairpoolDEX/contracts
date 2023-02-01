@@ -1,21 +1,12 @@
 import { BN } from '../../libs/bn'
-import { ShareScale, WeightScale } from '../../libs/fairpool/constants'
-import { bn, getShare as getShareOriginal, maxBN } from '../../libs/bn/utils'
-import { BigNumberish } from 'ethers'
+import { ShareScale } from '../../libs/fairpool/constants'
+import { bn, maxBN } from '../../libs/bn/utils'
 import { Fairpool } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { buy, selloff } from './Fairpool.functions'
 import { show } from '../../libs/utils/debug'
 import { QuoteScale } from '../../libs/fairpool/constants.all'
 import { expect } from '../../utils-local/expect'
-
-export function getWeightPercent(numerator: BigNumberish, denominator: BigNumberish = 100) {
-  return getShareOriginal(WeightScale, numerator, denominator)
-}
-
-export function getSharePercent(numerator: BigNumberish, denominator: BigNumberish = 100) {
-  return getShareOriginal(ShareScale, numerator, denominator)
-}
 
 /**
  * @deprecated Used for previous version of the bonding curve formula
