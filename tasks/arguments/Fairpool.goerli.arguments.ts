@@ -1,8 +1,7 @@
 import { Fairpool__factory } from '../../typechain-types'
-import { getSharePercent, getWeightPercent } from '../../test/support/Fairpool.helpers'
-import { DefaultSlope } from '../../libs/fairpool/constants'
+import { DefaultSlope, DefaultWeight } from '../../libs/fairpool/constants'
+import { getSharePercent } from '../../libs/fairpool/utils'
 
-const DefaultWeight = getWeightPercent(33)
 const args: Parameters<Fairpool__factory['deploy']> = [
   'Official Fairpool Token',
   'FAIR',

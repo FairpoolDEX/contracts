@@ -23,7 +23,7 @@ import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
-import { ensureQuoteDeltaMin, getSharePercent, getWeightPercent, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
+import { ensureQuoteDeltaMin, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
 import { cleanEchidnaLogString, filterEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
 import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/TradeEvent'
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
@@ -38,6 +38,7 @@ import { AmountBN } from '../../libs/ethereum/models/AmountBN'
 import { DefaultSlope, DefaultWeight } from '../../libs/fairpool/constants'
 import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fairpool/models/TradeEvent/fromTradeEventToCsv'
 import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
+import { getSharePercent, getWeightPercent } from '../../libs/fairpool/utils'
 
 describe('Fairpool', async function () {
   let signers: SignerWithAddress[]
