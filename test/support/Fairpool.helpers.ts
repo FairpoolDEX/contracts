@@ -1,11 +1,10 @@
 import { BN } from '../../libs/bn'
-import { ShareScale } from '../../libs/fairpool/constants'
+import { QuoteScale, ShareScale } from '../../libs/fairpool/constants'
 import { bn, maxBN } from '../../libs/bn/utils'
 import { Fairpool } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { buy, selloff } from './Fairpool.functions'
 import { show } from '../../libs/utils/debug'
-import { QuoteScale } from '../../libs/fairpool/constants.all'
 import { expect } from '../../utils-local/expect'
 
 /**

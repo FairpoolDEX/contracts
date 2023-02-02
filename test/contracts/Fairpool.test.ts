@@ -29,13 +29,12 @@ import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/Tra
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
 import { createWriteStream } from 'fs'
 import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
-import { BaseScale, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants.all'
+import { BaseScale, DefaultSlope, DefaultWeight, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants'
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
 import { BN } from '../../libs/bn'
 import { AmountBN } from '../../libs/ethereum/models/AmountBN'
-import { DefaultSlope, DefaultWeight } from '../../libs/fairpool/constants'
 import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fairpool/models/TradeEvent/fromTradeEventToCsv'
 import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
 import { getSharePercent, getWeightPercent } from '../../libs/fairpool/utils'
@@ -235,6 +234,13 @@ describe('Fairpool', async function () {
     await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
   })
 
+  /**
+   * Weird: the curve parameters do matter here (see the equations)
+   * - (q = b ^ 2 / 2)[https://quickmath.com/webMathematica3/quickmath/equations/solve/advanced.jsp#c=solve_solveequationsadvanced&v1=x%2520%253D%2520%2528a%2520%255E%25202%2529%2520%2F%25202%250Ay%2520%253D%2520%2528b%2520%255E%25202%2529%2520%2F%25202%250Az%2520%253D%2520%2528c%2520%255E%25202%2529%2520%2F%25202%250Ac%2520%253D%2520a%2520%2B%2520b%250Ap%2520%253D%2520z%2520-%2520y%250Ax%2520%253D%25201%250Az%2520%253D%252010%2520*%2520x%250A&v2=x%250Ay%250Az%250Aa%250Ab%250Ac%250Ap&v3=1&v4=3&v5=1]
+   * - (q = b ^ 3 / 3)[https://quickmath.com/webMathematica3/quickmath/equations/solve/advanced.jsp#c=solve_solveequationsadvanced&v1=x%2520%253D%2520%2528a%2520%255E%25203%2529%2520%2F%25203%250Ay%2520%253D%2520%2528b%2520%255E%25203%2529%2520%2F%25203%250Az%2520%253D%2520%2528c%2520%255E%25203%2529%2520%2F%25203%250Ac%2520%253D%2520a%2520%2B%2520b%250Ap%2520%253D%2520z%2520-%2520y%250Ax%2520%253D%25201%250Az%2520%253D%252010%2520*%2520x%250A&v2=x%250Ay%250Az%250Aa%250Ab%250Ac%250Ap&v3=1&v4=3&v5=1]
+   *   - Scroll down (only the last solution is in real numbers)
+   * Most likely, since quoteBuffer is calculated dynamically, it eventually calculates back to the same curve
+   */
   fest('curve parameters must not matter for profit', async () => {
     const bobAmount = QuoteScale
     const samAmount = QuoteScale.mul(1000)
@@ -243,6 +249,7 @@ describe('Fairpool', async function () {
       getProfit(slope.mul(1000), weight, owner, bob, sam, bobAmount, samAmount),
       getProfit(slope, getWeightPercent(49), owner, bob, sam, bobAmount, samAmount),
     ])
+    // console.log('profit', toFrontendQuoteScale(profits[0]).toString())
     profits.forEach(profit => expect(profit).to.equal(profits[0]))
   })
 
@@ -267,7 +274,7 @@ describe('Fairpool', async function () {
 
     // expect(afterSingleBuy).to.deep.equal(afterMultiBuys)
     const diff = subSupplyStats(afterSingleBuy, afterMultiBuys)
-    console.log('diff', diff)
+    // console.log('diff', diff)
     const maxDiff = { baseSupply: BaseScale.div(1000000), quoteSupply: bn(0) }
     expect(diff.baseSupply).to.be.greaterThanOrEqual(0)
     expect(diff.quoteSupply).to.be.greaterThanOrEqual(0)
