@@ -41,7 +41,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     // IMPORTANT: slope must be scaled to `scale` (e.g. multiplied by 10 ** 18)
     uint public slope;
 
-    // Multiplier in the Bancor functions (0 < weight < MAX_WEIGHT)
+    // Multiplier in the Bancor functions (0 < weight < maxWeight)
     uint32 public weight;
 
     // Extra "base balance buffer" added to totalSupply before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
@@ -50,14 +50,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     // Extra "quote balance buffer" added to quoteBalanceOfContract before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
     uint public quoteBuffer;
 
-    // Percentage of sale distributed to the beneficiaries (as royalties / MAX_WEIGHT)
+    // Percentage of sale distributed to the beneficiaries (as royalties / scaleOfShares)
     uint public royalties;
 
-    // Percentage of sale distributed to the holders (as earnings / MAX_WEIGHT)
+    // Percentage of sale distributed to the holders (as earnings / scaleOfShares)
     // NOTE: can be set to zero to avoid the earnings
     uint public earnings;
 
-    // Percentage of sale distributed to the operator (as fees / MAX_WEIGHT)
+    // Percentage of sale distributed to the operator (as fees / scaleOfShares)
     uint public fees = scaleOfShares * 25 / 1000; // 2.5%
 
     // Operator receives the fees
@@ -243,7 +243,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
         operator = operatorNew;
     }
 
-    // using a single function for all three taxes to ensure their sum < MAX_WEIGHT (revert otherwise)
+    // using a single function for all three taxes to ensure their sum < scaleOfShares (revert otherwise)
     function setTaxesInternal(uint royaltiesNew, uint earningsNew, uint feesNew) internal {
         // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
         if (royaltiesNew >= scaleOfShares || earningsNew >= scaleOfShares || feesNew >= scaleOfShares || royaltiesNew + earningsNew + feesNew >= scaleOfShares) revert RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
