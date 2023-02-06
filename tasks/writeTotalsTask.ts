@@ -10,7 +10,6 @@ import { BusdbnbmainnetContract, BusdEthMainnetContract, ColibnbmainnetContract,
 import { NetworkName, parseNetworkName } from '../libs/ethereum/models/NetworkName'
 import { AmountBN, PriceBN } from '../models/AmountBN'
 import { BigNumber } from 'ethers'
-import { GenericToken } from '../typechain-types'
 import { ensure } from '../utils/ensure'
 import { TokenInfo } from '../models/TokenInfo'
 import { getProvider } from '../utils-local/hardhat'
@@ -21,6 +20,9 @@ import { ten, zero } from '../libs/bn/constants'
 import { todo } from 'libs/utils/todo'
 import { mapAsync } from '../libs/utils/promise'
 import { Filename } from '../libs/utils/filesystem'
+import { bn } from '../libs/bn/utils'
+import { num } from '../libs/utils/bignumber'
+import { BN } from '../libs/bn'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {
   const context = await getWriteTotalsContext(args, hre)
@@ -101,11 +103,11 @@ async function getTokenFrontendTotal(tokenInfo: TokenInfo, userAddress: Address,
 /**
  * WARNING: This function truncates the fractional part of the total
  */
-function getFrontendTotal(amount: BigNumber, price: BigNumber, multiplier: number, amountDecimals: number, priceDecimals: number) {
+function getFrontendTotal(amount: BigNumber, price: BigNumber, multiplier: number, amountDecimals: number, priceDecimals: BN) {
   return amount.mul(multiplier).mul(price).div(ten.pow(amountDecimals)).div(ten.pow(priceDecimals))
 }
 
-const priceDecimals = 18
+const priceDecimals = bn(18)
 
 const relevantTokenInfos = [
   ColiEthMainnetContract,
@@ -152,18 +154,18 @@ const blockNumberMap = new Map<Timestamp, Map<NetworkName, number>>([
 const nativeAssetPriceMap = new Map<number, Map<NetworkName, PriceBN>>([
   [round1StartedAtTimestamp, new Map<NetworkName, PriceBN>([
     // NOTE: getCandleOpenPrice('FTX', round.startedAt, asset)
-    ['mainnet', toBackendAmountBND(priceDecimals)('3058.5')],
-    ['bnbmainnet', toBackendAmountBND(priceDecimals)('411.836')],
+    ['mainnet', toBackendAmountBND(priceDecimals)(num('3058.5'))],
+    ['bnbmainnet', toBackendAmountBND(priceDecimals)(num('411.836'))],
   ])],
 ])
 
 const tokenPriceMap = new Map<number, Map<string, PriceBN>>([
   [round1StartedAtTimestamp, new Map<string, PriceBN>([
     // NOTE: getCandleOpenPrice('FTX', round.startedAt, asset)
-    ['COLI', toBackendAmountBND(priceDecimals)('0.00170297')],
-    ['BUSD', toBackendAmountBND(priceDecimals)('1')],
-    ['USDT', toBackendAmountBND(priceDecimals)('1')],
-    ['USDC', toBackendAmountBND(priceDecimals)('1')],
-    ['DAI', toBackendAmountBND(priceDecimals)('1')],
+    ['COLI', toBackendAmountBND(priceDecimals)(num('0.00170297'))],
+    ['BUSD', toBackendAmountBND(priceDecimals)(num('1'))],
+    ['USDT', toBackendAmountBND(priceDecimals)(num('1'))],
+    ['USDC', toBackendAmountBND(priceDecimals)(num('1'))],
+    ['DAI', toBackendAmountBND(priceDecimals)(num('1'))],
   ])],
 ])
