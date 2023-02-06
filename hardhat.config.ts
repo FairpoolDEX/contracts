@@ -24,7 +24,7 @@ import { writeClaimsTask, writeClaimsTaskCacheTtl } from './tasks/writeClaimsTas
 import { hours, minutes } from './utils-local/time'
 import { getJsonRpcUrl } from './utils-local/ethereum'
 import { deployColiTokenTask } from './tasks/deployColiTokenTask'
-import { bnbmainnet, bnbtestnet, goerli, mainnet, rinkeby, ropsten } from './libs/ethereum/data/allNetworks'
+import { bnbmainnet, bnbtestnet, cantomainnet, cantotestnet, goerli, mainnet, rinkeby, ropsten } from './libs/ethereum/data/allNetworks'
 import { Network } from './libs/ethereum/models/Network'
 import { NetworkUserConfig } from 'hardhat/src/types/config'
 import { writeClaimsToZeroTask } from './tasks/writeClaimsToZeroTask'
@@ -108,14 +108,12 @@ export const config: HardhatUserConfig = {
       timeout: 30 * minutes,
     },
     mainnet: fromNetwork(mainnet, {
-      url: getJsonRpcUrl('mainnet'),
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 24 * hours,
     }),
     goerli: fromNetwork(goerli, {
-      url: getJsonRpcUrl('goerli'),
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
@@ -129,28 +127,24 @@ export const config: HardhatUserConfig = {
       timeout: 5 * minutes,
     }),
     ropsten: fromNetwork(ropsten, {
-      url: getJsonRpcUrl('ropsten'),
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 2 * minutes,
     }),
     rinkeby: fromNetwork(rinkeby, {
-      url: getJsonRpcUrl('rinkeby'),
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 2 * minutes,
     }),
     bnbmainnet: fromNetwork(bnbmainnet, {
-      url: getJsonRpcUrl('bnbmainnet'), // 'https://bsc-dataseed.binance.org/',
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
       timeout: 24 * hours,
     }),
     bnbtestnet: fromNetwork(bnbtestnet, {
-      url: getJsonRpcUrl('bnbtestnet'), // 'https://data-seed-prebsc-1-s1.binance.org:8545',
       gasPrice,
       gasMultiplier: 1.2,
       accounts: { mnemonic },
@@ -174,6 +168,18 @@ export const config: HardhatUserConfig = {
       accounts: { mnemonic },
       timeout: 2 * minutes,
     },
+    cantomainnet: fromNetwork(cantomainnet, {
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 24 * hours,
+    }),
+    cantotestnet: fromNetwork(cantotestnet, {
+      gasPrice,
+      gasMultiplier: 1.2,
+      accounts: { mnemonic },
+      timeout: 2 * minutes,
+    }),
   },
   etherscan: {
     apiKey: {
@@ -187,6 +193,9 @@ export const config: HardhatUserConfig = {
 
       avalanche: ensure(process.env.SNOWTRACE_API_KEY),
       avalancheFujiTestnet: ensure(process.env.SNOWTRACE_API_KEY),
+
+      cantotestnet: ensure(process.env.CANTO_API_KEY),
+      cantomainnet: ensure(process.env.CANTO_API_KEY),
     },
   },
   mocha: {
@@ -239,6 +248,7 @@ Error.stackTraceLimit = Infinity
 function fromNetwork(network: Network, config: NetworkUserConfig): NetworkUserConfig {
   return {
     blockGasLimit: network.blockGasLimit,
+    url: getJsonRpcUrl(network.name),
     ...config,
   }
 }
@@ -265,6 +275,7 @@ task('deployNonUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addOptionalParam('contractNameEnvVar', 'Contract name for environment variable', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
+  .addOptionalParam('verify', 'Verify the contract', true, types.boolean)
   .addOptionalParam('deployer', 'Deployer address', undefined, types.string)
   .setAction(deployNonUpgradeableContractTask)
 
@@ -273,6 +284,7 @@ task('deployUpgradeableContract', 'Deploy a non-upgradeable contract')
   .addOptionalParam('contractNameEnvVar', 'Contract name for environment variable', undefined, types.string)
   .addOptionalParam('constructorArgsModule', 'File path to a javascript module that exports the list of arguments.', undefined, types.inputFile)
   .addOptionalVariadicPositionalParam('constructorArgsParams', 'Contract constructor arguments. Ignored if the --constructorArgsModule option is used.', [])
+  .addOptionalParam('verify', 'Verify the contract', true, types.boolean)
   .addOptionalParam('deployer', 'Deployer address', undefined, types.string)
   .setAction(deployUpgradeableContractTask)
 

@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot } from '../support/test.helpers'
+import { getLatestBlockTimestamp, getSnapshot, revertToSnapshot, timeTravel } from '../support/test.helpers'
 import { Fairpool } from '../../typechain-types'
 import { $zero } from '../../data/allAddresses'
 import { BigNumber } from 'ethers'
@@ -163,6 +163,28 @@ describe('Fairpool', async function () {
    * @see getQuoteDeltaMinTask
    */
 
+  fest.skip('must provide a higher profit at a higher price', async () => {
+    const getBobProfit = (sallyAmount: AmountBN, bobAmount: AmountBN, samAmount: AmountBN) => async () => {
+      const quoteBalanceBefore = await bob.getBalance()
+      const baseBalances = await mapAsync([sally, bob, sam], signer => fairpool.balanceOf(signer.address))
+      console.log('baseBalances', baseBalances)
+      await buy(fairpool, sally, sallyAmount)
+      await buy(fairpool, bob, bobAmount)
+      await buy(fairpool, sam, samAmount)
+      await selloff(fairpool, bob)
+      const quoteBalanceAfter = await bob.getBalance()
+      return quoteBalanceAfter.sub(quoteBalanceBefore)
+    }
+    const bobProfitAt1 = await timeTravel(getBobProfit(QuoteScale.mul(1), QuoteScale, QuoteScale.mul(100)), now.getTime() + 2)
+    const bobProfitAt100 = await timeTravel(getBobProfit(QuoteScale.mul(100), QuoteScale, QuoteScale.mul(100)), now.getTime() + 2)
+    console.log('bobProfitAt1', bobProfitAt1)
+    console.log('bobProfitAt100', bobProfitAt100)
+    // Negative profit may arise due to taxes
+    const profit = bobProfitAt100.sub(bobProfitAt1)
+    console.log('profit', profit)
+    expect(bobProfitAt100).to.be.greaterThan(bobProfitAt1)
+  })
+
   fest('must keep quoteDeltaMin small', async () => {
     await ensureQuoteDeltaMin(fairpool, bob, sam)
   })
@@ -235,11 +257,11 @@ describe('Fairpool', async function () {
   })
 
   /**
-   * Weird: the curve parameters do matter here (see the equations)
+   * Weird: according to equations, the curve parameters must matter
    * - (q = b ^ 2 / 2)[https://quickmath.com/webMathematica3/quickmath/equations/solve/advanced.jsp#c=solve_solveequationsadvanced&v1=x%2520%253D%2520%2528a%2520%255E%25202%2529%2520%2F%25202%250Ay%2520%253D%2520%2528b%2520%255E%25202%2529%2520%2F%25202%250Az%2520%253D%2520%2528c%2520%255E%25202%2529%2520%2F%25202%250Ac%2520%253D%2520a%2520%2B%2520b%250Ap%2520%253D%2520z%2520-%2520y%250Ax%2520%253D%25201%250Az%2520%253D%252010%2520*%2520x%250A&v2=x%250Ay%250Az%250Aa%250Ab%250Ac%250Ap&v3=1&v4=3&v5=1]
    * - (q = b ^ 3 / 3)[https://quickmath.com/webMathematica3/quickmath/equations/solve/advanced.jsp#c=solve_solveequationsadvanced&v1=x%2520%253D%2520%2528a%2520%255E%25203%2529%2520%2F%25203%250Ay%2520%253D%2520%2528b%2520%255E%25203%2529%2520%2F%25203%250Az%2520%253D%2520%2528c%2520%255E%25203%2529%2520%2F%25203%250Ac%2520%253D%2520a%2520%2B%2520b%250Ap%2520%253D%2520z%2520-%2520y%250Ax%2520%253D%25201%250Az%2520%253D%252010%2520*%2520x%250A&v2=x%250Ay%250Az%250Aa%250Ab%250Ac%250Ap&v3=1&v4=3&v5=1]
    *   - Scroll down (only the last solution is in real numbers)
-   * Most likely, since quoteBuffer is calculated dynamically, it eventually calculates back to the same curve
+   * Most likely, since the quoteBuffer is calculated dynamically, it eventually calculates back to the same curve
    */
   fest('curve parameters must not matter for profit', async () => {
     const bobAmount = QuoteScale

@@ -15,6 +15,10 @@ export function getJsonRpcUrl(networkName: NetworkName) {
       return `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API_KEY}/bsc/mainnet/archive`
     case 'bnbtestnet':
       return `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API_KEY}/bsc/testnet/archive`
+    case 'cantomainnet':
+      return 'https://canto.slingshot.finance'
+    case 'cantotestnet':
+      return 'https://eth.plexnode.wtf/'
     default:
       throw new Error(nail(`Get the url for "${networkName}" network at https://account.getblock.io/ or https://dashboard.alchemyapi.io/`))
   }
