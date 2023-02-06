@@ -6724,10 +6724,6 @@ solidity-comments-extractor@^0.0.7:
   resolved "https://registry.npmjs.org/solidity-comments-extractor/-/solidity-comments-extractor-0.0.7.tgz"
   integrity sha512-wciNMLg/Irp8OKGrh3S2tfvZiZ0NEyILfcRCXCD4mp7SgK/i9gzLfhY2hY7VMCQJ3kH9UB9BzNdibIVMchzyYw==
 
-"solmate@github:transmissions11/solmate":
-  version "6.6.2"
-  resolved "git+ssh://git@github.com/transmissions11/solmate.git#564e9f1606c699296420500547c47685818bcccf"
-
 "source-map-support@0.3.2 - 1.0.0":
   version "0.5.21"
   resolved "https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz"
