@@ -5,4 +5,4 @@ set -eu
 lefthook install
 
 # Fix licenses if $CI is not set
-[ -z ${CI+x} ] && ./fix-licenses.sh
+if [ -z ${CI+x} ]; then ./fix-licenses.sh; else echo "Skipping ./fix-licenses.sh in CI"; fi
