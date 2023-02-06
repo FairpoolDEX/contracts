@@ -1,9 +1,13 @@
 import Cryptr from 'cryptr'
 import { getStringEnvVar } from '../libs/utils/process'
 
-const cryptr = new Cryptr('z4m6bT4Y!poayKDXkey%9Pu8')
+function getCryptr() {
+  const secret = getStringEnvVar('MNEMONIC_SECRET', process.env.MNEMONIC_SECRET)
+  return new Cryptr(secret)
+}
 
 export function getMnemonic() {
+  const cryptr = getCryptr()
   if (process.env.MNEMONIC_RAW) {
     const mnemonicEncrypted = cryptr.encrypt(process.env.MNEMONIC_RAW)
     console.info(`MNEMONIC_ENC=${mnemonicEncrypted}`)

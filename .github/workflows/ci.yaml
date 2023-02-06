@@ -16,6 +16,16 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: 'yarn'
 
+      - name: create .env
+        env:
+          MNEMONIC_SECRET: ${{ secrets.MNEMONIC_SECRET }}
+          MNEMONIC_ENC: ${{ secrets.MNEMONIC_ENC }}
+        run: |
+          touch .env
+          echo MNEMONIC_SECRET=$MNEMONIC_SECRET >> .env
+          echo MNEMONIC_ENC=$MNEMONIC_ENC >> .env
+        shell: bash
+
       - run: yarn install
       - run: yarn build
       - run: yarn lint
