@@ -33,7 +33,7 @@
     "deploy:ple:avaxtestnet": "FEES=40:5 hardhat deployNonUpgradeableContract --contract-name GenericToken --constructor-args-module tasks/arguments/PlethoriToken.arguments.ts --network avaxtestnet",
     "deploy:busd:bnbtestnet": "FEES=20:1 hardhat deployNonUpgradeableContract --contract-name GenericToken --constructor-args-module tasks/arguments/BinanceUSD.arguments.ts --network bnbtestnet",
     "deploy:bull:bnbmainnet": "FEES=5:1 hardhat deployUpgradeableContract --contract-name BullToken --constructor-args-module tasks/arguments/BullToken.test.arguments.ts --network bnbmainnet",
-    "deploy:fairpool": "FEES=20:1 hardhat deployNonUpgradeableContract --contract-name Fairpool --constructor-args-module tasks/arguments/Fairpool.$NETWORK.arguments.ts --network $NETWORK",
+    "deploy:fairpool": "FEES=${FEES:-'20:1'} hardhat deployNonUpgradeableContract --contract-name Fairpool --constructor-args-module tasks/arguments/Fairpool.all.arguments.ts --network $NETWORK",
     "deploy:maf": "hardhat deployUpgradeableContract --contract-name GenericTokenWithVesting --contract-name-env-var MarsToken --constructor-args-module tasks/arguments/MarsToken.bnbmainnet.arguments.ts --network $NETWORK",
     "addVestingTypes:maf": "hardhat addVestingTypes --contract-address $MARS_TOKEN_PROXY_ADDRESS --vesting-types tasks/arguments/MarsToken.vestingTypes.ts --network $NETWORK",
     "addAllocations:maf": "hardhat addAllocations --contract-address $MARS_TOKEN_PROXY_ADDRESS --vesting-types tasks/arguments/MarsToken.vestingTypes.ts --allocations /tmp/Mars\\ Fellows\\ Allocations\\ -\\ Allocations.csv --total-amount 480000000 --network $NETWORK",

@@ -5,20 +5,14 @@ import { Ethers } from '../../utils-local/types'
 import { Address } from '../../models/Address'
 import { MaxUint256 } from '../../libs/ethereum/constants'
 
-type timeTravelCallback = () => Promise<void>;
+type TimeTravelCallback<T> = () => Promise<T>;
 
-export async function timeTravel(callback: timeTravelCallback, nextBlockTimestamp: number): Promise<void> {
-  // save snapshot to rollback after calling callback
+export async function timeTravel<T>(callback: TimeTravelCallback<T>, nextBlockTimestamp: number) {
   const snapshot = await getSnapshot()
-  // set new block timestamp
   await setNextBlockTimestamp(nextBlockTimestamp)
-  // mine new block to really shift time
+  // mine a new block to actually shift the time
   await ethers.provider.send('evm_mine', [])
-  await callback().finally(async () => {
-    // revert snapshot and come back in time to start point
-    // mine new block to really shift time
-    return revertToSnapshot([snapshot])
-  })
+  return callback().finally(async () => revertToSnapshot([snapshot]))
 }
 
 export async function skipBlocks(amount: number): Promise<void> {
