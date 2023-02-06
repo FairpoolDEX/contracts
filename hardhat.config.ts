@@ -32,8 +32,8 @@ import { writeTotalsTask } from './tasks/writeTotalsTask'
 import { amount, timestamp } from './utils-local/hardhat'
 import { addVestingTypesTask } from './tasks/addVestingTypes'
 import { addAllocationsTask } from './tasks/addAllocations'
-import { ensure } from './utils/ensure'
 import { assumeIntegerEnvVar } from './utils/env'
+import { fetchStringEnvVar } from './libs/utils/process'
 
 // if (process.env.NODE_ENV !== 'production'){
 //   require('longjohn');
@@ -183,19 +183,19 @@ export const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: ensure(process.env.ETHERSCAN_API_KEY),
-      goerli: ensure(process.env.ETHERSCAN_API_KEY),
-      ropsten: ensure(process.env.ETHERSCAN_API_KEY),
-      rinkeby: ensure(process.env.ETHERSCAN_API_KEY),
+      mainnet: fetchStringEnvVar('ETHERSCAN_API_KEY', process.env.ETHERSCAN_API_KEY),
+      goerli: fetchStringEnvVar('ETHERSCAN_API_KEY', process.env.ETHERSCAN_API_KEY),
+      ropsten: fetchStringEnvVar('ETHERSCAN_API_KEY', process.env.ETHERSCAN_API_KEY),
+      rinkeby: fetchStringEnvVar('ETHERSCAN_API_KEY', process.env.ETHERSCAN_API_KEY),
 
-      bsc: ensure(process.env.BSCSCAN_API_KEY),
-      bscTestnet: ensure(process.env.BSCSCAN_API_KEY),
+      bsc: fetchStringEnvVar('BSCSCAN_API_KEY', process.env.BSCSCAN_API_KEY),
+      bscTestnet: fetchStringEnvVar('BSCSCAN_API_KEY', process.env.BSCSCAN_API_KEY),
 
-      avalanche: ensure(process.env.SNOWTRACE_API_KEY),
-      avalancheFujiTestnet: ensure(process.env.SNOWTRACE_API_KEY),
+      avalanche: fetchStringEnvVar('SNOWTRACE_API_KEY', process.env.SNOWTRACE_API_KEY),
+      avalancheFujiTestnet: fetchStringEnvVar('SNOWTRACE_API_KEY', process.env.SNOWTRACE_API_KEY),
 
-      cantotestnet: ensure(process.env.CANTO_API_KEY),
-      cantomainnet: ensure(process.env.CANTO_API_KEY),
+      cantotestnet: fetchStringEnvVar('CANTO_API_KEY', process.env.CANTO_API_KEY),
+      cantomainnet: fetchStringEnvVar('CANTO_API_KEY', process.env.CANTO_API_KEY),
     },
   },
   mocha: {
