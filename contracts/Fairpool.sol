@@ -119,6 +119,7 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
     error OnlyOperator();
     error OperatorMustNotBeZeroAddress();
     error OperatorMustNotBeContractAddress();
+    error ToAddressMustBeNotEqualToThisContractAddress();
 
     event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
@@ -337,14 +338,24 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
 
     /* Override functions */
 
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
+        if (to == address(this)) revert ToAddressMustBeNotEqualToThisContractAddress();
+        super._transfer(from, to, amount);
+    }
+
     function _beforeTokenTransfer(
         address,
         address to,
         uint256
     ) internal virtual override {
-        // [not needed] super._beforeTokenTransfer(from, to, amount);
+        // [not needed because it's empty] super._beforeTokenTransfer(from, to, amount);
         // check that address is payable before transferring the tokens, otherwise distribute() will revert for everyone
         // source: https://ethereum.stackexchange.com/a/123679
+        // also prevents sending tokens to contacts that don't return true on send()
         // slither-disable-next-line arbitrary-send-eth
         if (!payable(to).send(0)) revert AddressNotPayable(to);
     }

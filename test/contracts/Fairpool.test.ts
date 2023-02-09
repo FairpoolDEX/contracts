@@ -410,7 +410,7 @@ describe('Fairpool', async function () {
   //   console.log('Gas per holder', gasPerHolder.toString())
   // })
 
-  fest('allows to recover tokens sent by mistake', async () => {
+  fest('must allow to recover tokens sent by mistake', async () => {
     const amount = 100
     const tokenId = 0
 
@@ -419,7 +419,7 @@ describe('Fairpool', async function () {
     expect(await genericERC20.balanceOf(sam.address)).to.be.equal(amount)
     await genericERC20.transfer(fairpool.address, amount)
     expect(await genericERC20.balanceOf(fairpool.address)).to.be.equal(amount)
-    expect(fairpool.connect(owner).recoverERC20(genericERC20.address, amount)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await expect(fairpool.connect(owner).recoverERC20(genericERC20.address, amount)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
     await fairpool.connect(operator).recoverERC20(genericERC20.address, amount)
     expect(await genericERC20.balanceOf(operator.address)).to.be.equal(amount)
 
@@ -428,9 +428,16 @@ describe('Fairpool', async function () {
     expect(await genericERC721.ownerOf(tokenId)).to.be.equal(sam.address)
     await genericERC721.transferFrom(sam.address, fairpool.address, tokenId)
     expect(await genericERC721.ownerOf(tokenId)).to.be.equal(fairpool.address)
-    expect(fairpool.connect(owner).recoverERC721(genericERC721.address, tokenId)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await expect(fairpool.connect(owner).recoverERC721(genericERC721.address, tokenId)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
     await fairpool.connect(operator).recoverERC721(genericERC721.address, tokenId)
     expect(await genericERC721.ownerOf(tokenId)).to.be.equal(operator.address)
+  })
+
+  fest('must disallow sending the tokens to the contract itself', async () => {
+    await buy(fairpool, bob, QuoteScale)
+    const balance = await fairpool.balanceOf(bob.address)
+    await expect(fairpool.connect(bob).transfer(fairpool.address, balance)).to.be.revertedWithCustomError(fairpool, 'ToAddressMustBeNotEqualToThisContractAddress')
+    await fairpool.connect(bob).transfer(sam.address, balance) // transfer to another address should be ok
   })
 
 })
