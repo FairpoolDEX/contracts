@@ -34,3 +34,6 @@ crytic-export
 # Certora
 .certora_internal
 .certora_recent_jobs.json
+
+# fast-check
+replay.cjs

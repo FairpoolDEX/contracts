@@ -41,7 +41,6 @@ const fuzzContract = (config: EchidnaConfig) => async (contract: string) => {
     `contracts/${contract}.sol`,
   ])
     .finally(cleanup)
-  console.log('result', result)
   return result
 }
 

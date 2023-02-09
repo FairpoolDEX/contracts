@@ -5,7 +5,7 @@ export async function addAllocationsShieldTokenTask(args: TaskArguments, hre: Ha
   const allocations: StringAllocations = (await import(args.allocations)).default
   const address = args.token
 
-  console.log(`Attaching to contract ${address}...`)
+  console.info(`Attaching to contract ${address}...`)
 
   const Token = await hre.ethers.getContractFactory('ShieldToken')
   const token = await Token.attach(address)
@@ -17,9 +17,9 @@ export async function addAllocationsShieldTokenTask(args: TaskArguments, hre: Ha
 
     const addresses = Object.keys(allocation)
     const amounts = Object.values(allocation)
-    console.log(`Calling addAllocations with "${vestingTypeIndex}" vesting type for ${addresses.length} addresses...`) // eslint-disable-line no-console
-    console.log(allocation)
+    console.info(`Calling addAllocations with "${vestingTypeIndex}" vesting type for ${addresses.length} addresses...`) // eslint-disable-line no-console
+    console.info(allocation)
     const tx = await token.addAllocations(addresses, amounts, vestingTypeIndex, { gasLimit: 8000000 })
-    console.log(`TX Hash: ${tx.hash}\n\n`)
+    console.info(`TX Hash: ${tx.hash}\n\n`)
   }
 }
