@@ -59,7 +59,6 @@ describe('createPoolViaColiquidity', async () => {
     const poolAddress = await createPoolViaColiquidity(context)
     const pool = await getUniswapV2Pair(ethers, poolAddress)
     const reserves = await pool.getReserves()
-    console.log('reserves', reserves)
     throw impl()
   })
 

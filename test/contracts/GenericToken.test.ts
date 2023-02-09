@@ -14,7 +14,7 @@ describe('GenericToken', async function () {
   let bella: SignerWithAddress
   let sally: SignerWithAddress
 
-  let generic: GenericToken
+  let token: GenericToken
 
   let now: Date
 
@@ -25,8 +25,8 @@ describe('GenericToken', async function () {
   before(async () => {
     const signers = [owner, bob, sam, bella, sally] = await ethers.getSigners()
 
-    const genericFactory = await ethers.getContractFactory('GenericToken')
-    generic = await genericFactory.deploy('Generic', 'GEN', 1000000, [], []) as GenericToken
+    const factory = await ethers.getContractFactory('GenericToken')
+    token = await factory.deploy('Generic', 'GEN', [owner.address], [1000000]) as GenericToken
 
     now = new Date(await getLatestBlockTimestamp(ethers) * 1000)
   })
@@ -41,8 +41,8 @@ describe('GenericToken', async function () {
 
   fest('must allow to transfer', async () => {
     const balanceExpected = 100
-    await generic.connect(owner).transfer(bob.address, balanceExpected)
-    const balanceActual = await generic.balanceOf(bob.address)
+    await token.connect(owner).transfer(bob.address, balanceExpected)
+    const balanceActual = await token.balanceOf(bob.address)
     expect(balanceActual).to.equal(balanceExpected)
   })
 })

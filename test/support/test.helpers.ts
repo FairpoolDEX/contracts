@@ -79,8 +79,10 @@ export async function addLiquidity(router: Contract, token0: Contract, token1: C
 
 export function logBn(label: string, value: unknown) {
   if (value instanceof BigNumber) {
+    // eslint-disable-next-line no-console
     console.log(label, value.toString())
   } else if (typeof value === 'object' && value) {
+    // eslint-disable-next-line no-console
     console.log(
       label,
       Object.fromEntries(
@@ -94,6 +96,7 @@ export function logBn(label: string, value: unknown) {
       ),
     )
   } else {
+    // eslint-disable-next-line no-console
     console.log(label, value)
   }
 }

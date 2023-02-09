@@ -10,6 +10,7 @@ import "./SharedOwnership.sol";
 import "./Util.sol";
 import "./bancor/BancorFormula.sol";
 import "hardhat/console.sol";
+import "./Recoverable.sol";
 
 /**
  * Definitions:
@@ -29,7 +30,7 @@ import "hardhat/console.sol";
  * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of earnings). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay earnings to anyone else ~= he should pay earnings to himself)
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
  */
-contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable, BancorFormula {
+contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGuard, Ownable, BancorFormula {
     // Count of decimals
     uint8 internal constant precision = 18;
 
@@ -307,6 +308,14 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, ReentrancyGuard, Ownable,
     }
 
     modifier onlyOperator() {
+        if (msg.sender != operator) revert OnlyOperator();
+        _;
+    }
+
+    /**
+     * The code is intentionally equal to onlyOperator()
+     */
+    modifier onlyKeeper() override {
         if (msg.sender != operator) revert OnlyOperator();
         _;
     }

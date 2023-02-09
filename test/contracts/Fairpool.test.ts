@@ -167,7 +167,6 @@ describe('Fairpool', async function () {
     const getBobProfit = (sallyAmount: AmountBN, bobAmount: AmountBN, samAmount: AmountBN) => async () => {
       const quoteBalanceBefore = await bob.getBalance()
       const baseBalances = await mapAsync([sally, bob, sam], signer => fairpool.balanceOf(signer.address))
-      console.log('baseBalances', baseBalances)
       await buy(fairpool, sally, sallyAmount)
       await buy(fairpool, bob, bobAmount)
       await buy(fairpool, sam, samAmount)
@@ -177,11 +176,11 @@ describe('Fairpool', async function () {
     }
     const bobProfitAt1 = await timeTravel(getBobProfit(QuoteScale.mul(1), QuoteScale, QuoteScale.mul(100)), now.getTime() + 2)
     const bobProfitAt100 = await timeTravel(getBobProfit(QuoteScale.mul(100), QuoteScale, QuoteScale.mul(100)), now.getTime() + 2)
-    console.log('bobProfitAt1', bobProfitAt1)
-    console.log('bobProfitAt100', bobProfitAt100)
+    // console.log('bobProfitAt1', bobProfitAt1)
+    // console.log('bobProfitAt100', bobProfitAt100)
     // Negative profit may arise due to taxes
     const profit = bobProfitAt100.sub(bobProfitAt1)
-    console.log('profit', profit)
+    // console.log('profit', profit)
     expect(bobProfitAt100).to.be.greaterThan(bobProfitAt1)
   })
 
@@ -249,11 +248,11 @@ describe('Fairpool', async function () {
     await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares')
     // console.log('balance 1', await fairpool.balanceOf(bob.address))
     // second transaction should be accepted
-    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+    await buy(fairpool, bob, quoteDeltaMinProposed)
     // console.log('balance 2', await fairpool.balanceOf(bob.address))
     await buy(fairpool, bob, QuoteScale.mul(100))
     // third transaction should be accepted also, even though the totalSupply() has increased
-    await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+    await buy(fairpool, bob, quoteDeltaMinProposed)
   })
 
   /**
@@ -284,12 +283,12 @@ describe('Fairpool', async function () {
     // await fairpoolAsOwner.setCurveParameters(bn('5079110400'), bn('982081'))
     const volumes = range(0, 500).map(i => QuoteScale)
 
-    expect(getSupplyStats(fairpool)).to.eventually.deep.equal(zeroSupplyStats)
+    expect(await getSupplyStats(fairpool)).to.deep.equal(zeroSupplyStats)
     const multiBuys = await mapAsync(volumes, volume => buy(fairpool, bob, volume))
     const afterMultiBuys = await getSupplyStats(fairpool)
     await selloff(fairpool, bob)
 
-    expect(getSupplyStats(fairpool)).to.eventually.deep.equal(zeroSupplyStats)
+    expect(await getSupplyStats(fairpool)).to.deep.equal(zeroSupplyStats)
     const singleBuy = await buy(fairpool, bob, sumBNs(volumes))
     const afterSingleBuy = await getSupplyStats(fairpool)
     await selloff(fairpool, bob)
@@ -307,7 +306,7 @@ describe('Fairpool', async function () {
     // await expect(buy(fairpool, bob, quoteDeltaMinProposed.div(2))).to.be.revertedWithCustomError(fairpool, 'BaseDeltaMustBeGreaterThanZero')
     // // console.log('balance 1', await fairpool.balanceOf(bob.address))
     // // second transaction should be accepted
-    // await expect(buy(fairpool, bob, quoteDeltaMinProposed)).to.eventually.be.ok
+    // await buy(fairpool, bob, quoteDeltaMinProposed)
     // // console.log('balance 2', await fairpool.balanceOf(bob.address))
     // await buy(fairpool, bob, QuoteScale.mul(10))
     // // third transaction should be reverted because the totalSupply() has increased, so quoteDeltaProposedMin is not enough anymore
@@ -410,6 +409,29 @@ describe('Fairpool', async function () {
   //   const gasPerHolder = (gasUsed2.sub(gasUsed1)).div(maxHoldersCount2 - maxHoldersCount1)
   //   console.log('Gas per holder', gasPerHolder.toString())
   // })
+
+  fest('allows to recover tokens sent by mistake', async () => {
+    const amount = 100
+    const tokenId = 0
+
+    const genericERC20Factory = await ethers.getContractFactory('GenericToken')
+    const genericERC20 = (await genericERC20Factory.connect(sam).deploy('Test', 'TEST', [sam.address], [amount]))
+    expect(await genericERC20.balanceOf(sam.address)).to.be.equal(amount)
+    await genericERC20.transfer(fairpool.address, amount)
+    expect(await genericERC20.balanceOf(fairpool.address)).to.be.equal(amount)
+    expect(fairpool.connect(owner).recoverERC20(genericERC20.address, amount)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await fairpool.connect(operator).recoverERC20(genericERC20.address, amount)
+    expect(await genericERC20.balanceOf(operator.address)).to.be.equal(amount)
+
+    const genericERC721Factory = await ethers.getContractFactory('GenericERC721A')
+    const genericERC721 = (await genericERC721Factory.connect(sam).deploy('Test', 'TEST', [sam.address], [amount]))
+    expect(await genericERC721.ownerOf(tokenId)).to.be.equal(sam.address)
+    await genericERC721.transferFrom(sam.address, fairpool.address, tokenId)
+    expect(await genericERC721.ownerOf(tokenId)).to.be.equal(fairpool.address)
+    expect(fairpool.connect(owner).recoverERC721(genericERC721.address, tokenId)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    await fairpool.connect(operator).recoverERC721(genericERC721.address, tokenId)
+    expect(await genericERC721.ownerOf(tokenId)).to.be.equal(operator.address)
+  })
 
 })
 

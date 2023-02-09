@@ -21,22 +21,22 @@ export async function transferManyShieldTokenTask(args: TaskArguments, hre: Hard
   const totalAmounts = amounts.reduce((acc, amount) => acc.add(amount), BigNumber.from(0))
   expect(totalAmounts.lt(maxSupplyTokenAmount)).to.be.true
 
-  console.log(`Calling transferMany with ${recipients.length} recipients and chunk size ${args.chunk}:`)
+  console.info(`Calling transferMany with ${recipients.length} recipients and chunk size ${args.chunk}:`)
 
   const chunkedRecipients = chunk(recipients, args.chunk)
   const chunkedAmounts = chunk(amounts, args.chunk)
 
-  console.log(`Attaching to contract ${address}...`)
+  console.info(`Attaching to contract ${address}...`)
 
   const Token = await hre.ethers.getContractFactory('ShieldToken')
   const token = await Token.attach(address)
 
   for (let i = 0; i < chunkedRecipients.length; i++) {
-    console.log(`Chunk ${i + 1} / ${chunkedRecipients.length}:`)
+    console.info(`Chunk ${i + 1} / ${chunkedRecipients.length}:`)
     const allocationChunk = chunkedRecipients[i].reduce((obj, address, index) => ({ ...obj, [address]: chunkedAmounts[i][index].toString() }), {})
-    console.log(allocationChunk)
+    console.info(allocationChunk)
 
     const tx = await token.transferMany(chunkedRecipients[i], chunkedAmounts[i], { type: 2, gasLimit: 2500000 })
-    console.log(`TX Hash: ${tx.hash}`)
+    console.info(`TX Hash: ${tx.hash}`)
   }
 }
