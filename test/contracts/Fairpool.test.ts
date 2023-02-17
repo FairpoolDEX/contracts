@@ -18,7 +18,7 @@ import { Rewrite } from '../../libs/utils/rewrite'
 import { parseTransactionInfo } from '../../libs/echidna/parseTransactionInfo'
 import { executeTransaction } from '../../libs/echidna/executeTransaction'
 import { bn, sumBNs } from '../../libs/bn/utils'
-import { buy, getBalances, getSupplyStats, sell, selloff, subSupplyStats, zeroSupplyStats } from '../support/Fairpool.functions'
+import { buy, getBalances, getProfit, getSupplyStats, sell, selloff, subSupplyStats, zeroSupplyStats } from '../support/Fairpool.functions'
 import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
 import { getDebug, isEnabledLog } from '../../libs/utils/debug'
@@ -33,7 +33,6 @@ import { BaseScale, DefaultSlope, DefaultWeight, QuoteDecimals, QuoteScale } fro
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
-import { BN } from '../../libs/bn'
 import { AmountBN } from '../../libs/ethereum/models/AmountBN'
 import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fairpool/models/TradeEvent/fromTradeEventToCsv'
 import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
@@ -218,29 +217,29 @@ describe('Fairpool', async function () {
     expect(before).to.deep.equal(afterWithFeesAndContractBalance)
   })
 
-  fest('must replay Echidna transactions', withCleanEthersError(async () => {
-    const echidnaLog = `
-      setCurveParameters(100000000000001,499999) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
-      test() from: 0x0000000000000000000000000000000000030000
-      // // setCurveParameters(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
-      buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
-      buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
-    `
-    const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(filterEchidnaLogString)
-    const fairpoolTest = await deployFairpoolTest(owner)
-    const signatures = getSignatures(fairpoolTest.interface.functions)
-    const rewrites: Rewrite<Address>[] = [
-      { from: '0x0000000000000000000000000000000000030000', to: owner.address },
-      { from: '0x0000000000000000000000000000000000020000', to: bob.address },
-      { from: '0x0000000000000000000000000000000000010000', to: ben.address },
-      { from: '0x00a329c0648769a73afac7f9381e08fb43dbea72', to: fairpoolTest.address },
-    ]
-    const infos = echidnaLines.map(parseTransactionInfo(signatures, rewrites))
-    const results = await sequentialMap(infos, executeTransaction(fairpoolTest, signers))
-    const $AssertionFailed = 'AssertionFailed'
-    const failedTx = results.find(({ logs }) => logs.find(l => l.name === $AssertionFailed))
-    if (failedTx) throw new Error($AssertionFailed)
-  }))
+  /**
+   * As baseSupply goes to Infinity, priceDelta goes to 0 (this is correct, since each `value` increment advances the price less and less)
+   */
+  fest('Price table', async () => {
+    const count = 20
+    const value = bn(10).pow(QuoteDecimals.sub(2))
+    const signer = bob
+    const transactions = await repeatAsync(count, () => buy(fairpool, signer, value))
+    const events = await fairpool.queryFilter({ topics: [TradeEventTopic] })
+    expect(events.length).to.equal(count)
+    const network = await fairpool.provider.getNetwork()
+    const trades = events.map(fromRawEvent(network.chainId)(parseTradeEvent))
+    const pairs = toPrevNextMaybePairs(trades)
+    const stringifier = getCsvStringifier({ header: true, columns: tradeEventPairCsvColumns }, fromTradeEventPairToCsv, pairs)
+    // const out = process.stderr
+    // debug(filename)
+    if (isEnabledLog) {
+      const filename = process.env.FILENAME
+      const out = filename ? createWriteStream(filename) : process.stderr
+      console.error(`'Writing to ${filename ?? 'stderr'}'`)
+      await pipeline(stringifier, out)
+    }
+  })
 
   fest('quoteDeltaMinProposed', async () => {
     const quoteDeltaMinProposed = quoteDeltaMinStatic
@@ -377,30 +376,6 @@ describe('Fairpool', async function () {
     await expectParameter(fairpool, operator, bob, 'fees', 'setFees', bn(1), 'OnlyOperator', true)
   })
 
-  /**
-   * As baseSupply goes to Infinity, priceDelta goes to 0 (this is correct, since each `value` increment advances the price less and less)
-   */
-  fest('Price table', async () => {
-    const count = 20
-    const value = bn(10).pow(QuoteDecimals.sub(2))
-    const signer = bob
-    const transactions = await repeatAsync(count, () => buy(fairpool, signer, value))
-    const events = await fairpool.queryFilter({ topics: [TradeEventTopic] })
-    expect(events.length).to.equal(count)
-    const network = await fairpool.provider.getNetwork()
-    const trades = events.map(fromRawEvent(network.chainId)(parseTradeEvent))
-    const pairs = toPrevNextMaybePairs(trades)
-    const stringifier = getCsvStringifier({ header: true, columns: tradeEventPairCsvColumns }, fromTradeEventPairToCsv, pairs)
-    // const out = process.stderr
-    // debug(filename)
-    if (isEnabledLog) {
-      const filename = process.env.FILENAME
-      const out = filename ? createWriteStream(filename) : process.stderr
-      console.error(`'Writing to ${filename ?? 'stderr'}'`)
-      await pipeline(stringifier, out)
-    }
-  })
-
   // fest('must get the gas per holder', async () => {
   //   const maxHoldersCount1 = 50
   //   const maxHoldersCount2 = 125
@@ -440,27 +415,27 @@ describe('Fairpool', async function () {
     await fairpool.connect(bob).transfer(sam.address, balance) // transfer to another address should be ok
   })
 
+  fest('must replay Echidna transactions', withCleanEthersError(async () => {
+    const echidnaLog = `
+      setCurveParameters(100000000000001,499999) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      test() from: 0x0000000000000000000000000000000000030000
+      // // setCurveParameters(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
+      buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
+    `
+    const echidnaLines = echidnaLog.split('\n').map(cleanEchidnaLogString).filter(filterEchidnaLogString)
+    const fairpoolTest = await deployFairpoolTest(owner)
+    const signatures = getSignatures(fairpoolTest.interface.functions)
+    const rewrites: Rewrite<Address>[] = [
+      { from: '0x0000000000000000000000000000000000030000', to: owner.address },
+      { from: '0x0000000000000000000000000000000000020000', to: bob.address },
+      { from: '0x0000000000000000000000000000000000010000', to: ben.address },
+      { from: '0x00a329c0648769a73afac7f9381e08fb43dbea72', to: fairpoolTest.address },
+    ]
+    const infos = echidnaLines.map(parseTransactionInfo(signatures, rewrites))
+    const results = await sequentialMap(infos, executeTransaction(fairpoolTest, signers))
+    const $AssertionFailed = 'AssertionFailed'
+    const failedTx = results.find(({ logs }) => logs.find(l => l.name === $AssertionFailed))
+    if (failedTx) throw new Error($AssertionFailed)
+  }))
 })
-
-async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress, bobAmount: AmountBN, samAmount: AmountBN) {
-  const royalties = getSharePercent(30)
-  const earnings = getSharePercent(20)
-  const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
-  const fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
-    'Abraham Lincoln Token',
-    'ABRA',
-    slope,
-    weight,
-    royalties,
-    earnings,
-    [],
-    []
-  )) as unknown as Fairpool
-  const fairpool = fairpoolAsOwner.connect($zero)
-  const quoteBalanceBefore = await bob.getBalance()
-  await buy(fairpool, bob, bobAmount)
-  await buy(fairpool, sam, samAmount)
-  await selloff(fairpool, bob)
-  const quoteBalanceAfter = await bob.getBalance()
-  return quoteBalanceAfter.sub(quoteBalanceBefore)
-}

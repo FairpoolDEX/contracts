@@ -4,6 +4,10 @@ import { BigNumber } from 'ethers'
 import { MaxUint256 } from '../../libs/ethereum/constants'
 import { bn } from '../../libs/bn/utils'
 import { BN } from '../../libs/bn'
+import { AmountBN } from '../../libs/ethereum/models/AmountBN'
+import { getSharePercent } from '../../libs/fairpool/utils'
+import { ethers } from 'hardhat'
+import { $zero } from '../../data/allAddresses'
 
 export async function buy(fairpool: Fairpool, signer: SignerWithAddress, quoteDeltaProposed: BigNumber) {
   return fairpool.connect(signer).buy(0, MaxUint256, { value: quoteDeltaProposed })
@@ -57,3 +61,26 @@ export function subSupplyStats(a: SupplyStats, b: SupplyStats): SupplyStats {
 }
 
 export const zeroSupplyStats = { baseSupply: bn(0), quoteSupply: bn(0) }
+
+export async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress, bob: SignerWithAddress, sam: SignerWithAddress, bobAmount: AmountBN, samAmount: AmountBN) {
+  const royalties = getSharePercent(30)
+  const earnings = getSharePercent(20)
+  const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
+  const fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
+    'Abraham Lincoln Token',
+    'ABRA',
+    slope,
+    weight,
+    royalties,
+    earnings,
+    [],
+    [],
+  )) as unknown as Fairpool
+  const fairpool = fairpoolAsOwner.connect($zero)
+  const quoteBalanceBefore = await bob.getBalance()
+  await buy(fairpool, bob, bobAmount)
+  await buy(fairpool, sam, samAmount)
+  await selloff(fairpool, bob)
+  const quoteBalanceAfter = await bob.getBalance()
+  return quoteBalanceAfter.sub(quoteBalanceBefore)
+}
