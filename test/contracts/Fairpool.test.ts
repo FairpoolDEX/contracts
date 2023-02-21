@@ -29,7 +29,7 @@ import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/Tra
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
 import { createWriteStream } from 'fs'
 import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
-import { BaseScale, DefaultSlope, DefaultWeight, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants'
+import { BaseDecimals, BaseScale, DefaultBaseLimit, DefaultQuoteOffset, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants'
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
@@ -62,6 +62,9 @@ describe.skip('Fairpool', async function () {
 
   let slope: BigNumber
   let weight: BigNumber
+  let baseLimit: BigNumber
+  let quoteOffset: BigNumber
+  let precision: BigNumber
   let royalties: BigNumber
   let earnings: BigNumber
   // let jump: number
@@ -115,15 +118,19 @@ describe.skip('Fairpool', async function () {
     signers = [owner, stranger, ben, bob, sam, ted, sally, operator] = await ethers.getSigners()
 
     const fairpoolFactory = await ethers.getContractFactory('FairpoolOwnerOperator')
-    slope = DefaultSlope
-    weight = DefaultWeight
+    // slope = DefaultSlope
+    // weight = DefaultWeight
+    baseLimit = DefaultBaseLimit
+    quoteOffset = DefaultQuoteOffset
+    precision = BaseDecimals
     royalties = getSharePercent(30)
     earnings = getSharePercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
       'Abraham Lincoln Token',
       'ABRA',
-      slope,
-      weight,
+      baseLimit,
+      quoteOffset,
+      precision,
       royalties,
       earnings,
       [ben.address, bob.address],
