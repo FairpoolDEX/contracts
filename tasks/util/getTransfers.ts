@@ -13,9 +13,10 @@ import { debug } from '../../libs/utils/debug'
 
 async function getTransfers(token: Contract, from: BlockTag, to: BlockTag) {
   await rateLimiter.removeTokens(1)
+  const network = await token.provider.getNetwork()
   debug(__filename, getTransfers, token.address, from, to)
   const events = await token.queryFilter({ topics: [TransferTopic] }, from, to)
-  const transfers = events.map(fromEventToTransfer)
+  const transfers = events.map(fromEventToTransfer(network.chainId))
   debug(__filename, getTransfers, token.address, from, to, transfers.length)
   return transfers
 }
@@ -37,16 +38,16 @@ export async function getTransfersPaginatedCached(token: Contract, from: BlockTa
   return flatten(transferEventsArray)
 }
 
-export function fromEventToTransfer(e: Event) {
+export const fromEventToTransfer = (chainId: number) => (e: Event) => {
   if (!e.args) throw new Error()
   // if (e.args.from === "0x59B8c20CA527ff18e2515b68F28939d6dD3E867B") {
   //   console.log("e", e)
   // }
   return validateTransfer({
+    ...e,
+    chainId,
     from: e.args.from,
     to: e.args.to,
     amount: e.args.value,
-    blockNumber: e.blockNumber,
-    transactionHash: e.transactionHash,
   })
 }

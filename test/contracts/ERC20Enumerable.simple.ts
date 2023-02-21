@@ -1,6 +1,6 @@
 import { Random } from 'fast-check'
 import { BalanceBN, balanceBN, validateBalancesBN } from '../../models/BalanceBN'
-import { Transition } from '../../libs/divide-and-conquer/Transition'
+import { TransitionP } from '../../libs/divide-and-conquer/Transition'
 import { Address } from '../../models/Address'
 import { $zero } from '../../data/allAddresses'
 import { step, Step } from '../../libs/divide-and-conquer/Step'
@@ -40,7 +40,7 @@ const emptyError = undefined
 
 export const emptyState: State = { data: emptyData, output: emptyOutput, error: emptyError }
 
-const validateState: Filter<State> = (state) => {
+const validateState = (state: State) => {
   const mustHaveUniqueAddresses = validateBalancesBN
   mustHaveUniqueAddresses(state.data.balances)
   return true
@@ -50,7 +50,7 @@ export const getHolders: Projection<State, Address[]> = (state: State) => state.
 
 const emptyMintParams: MintParams = { to: $zero, amount: zero }
 
-export const incorrectMintWithoutExistenceCheck: Transition<MintParams, State> = ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
+export const incorrectMintWithoutExistenceCheck: TransitionP<MintParams, State> = ({ to, amount }) => toGenericTransition(async ({ data: { balances } }) => {
   balances.push({
     address: to,
     amount,

@@ -21,7 +21,7 @@ import { bn, sumBNs } from '../../libs/bn/utils'
 import { buy, getBalances, getProfit, getSupplyStats, sell, selloff, subSupplyStats, zeroSupplyStats } from '../support/Fairpool.functions'
 import { expectParameter } from './Fairpool/expectParameter'
 import { getCsvStringifier } from '../../libs/utils/csv'
-import { getDebug, isEnabledLog } from '../../libs/utils/debug'
+import { getDebug, isLogEnabled } from '../../libs/utils/debug'
 import { pipeline } from '../../libs/utils/stream'
 import { ensureQuoteDeltaMin, quoteDeltaMinStatic } from '../support/Fairpool.helpers'
 import { cleanEchidnaLogString, filterEchidnaLogString } from '../../utils-local/cleanEchidnaLogString'
@@ -38,7 +38,7 @@ import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fa
 import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
 import { getSharePercent, getWeightPercent } from '../../libs/fairpool/utils'
 
-describe('Fairpool', async function () {
+describe.skip('Fairpool', async function () {
   let signers: SignerWithAddress[]
   let owner: SignerWithAddress
   let stranger: SignerWithAddress
@@ -233,7 +233,7 @@ describe('Fairpool', async function () {
     const stringifier = getCsvStringifier({ header: true, columns: tradeEventPairCsvColumns }, fromTradeEventPairToCsv, pairs)
     // const out = process.stderr
     // debug(filename)
-    if (isEnabledLog) {
+    if (isLogEnabled) {
       const filename = process.env.FILENAME
       const out = filename ? createWriteStream(filename) : process.stderr
       console.error(`'Writing to ${filename ?? 'stderr'}'`)

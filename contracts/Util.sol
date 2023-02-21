@@ -161,6 +161,10 @@ contract Util {
         ensure(a == b, a, b, message);
     }
 
+    function ensureEqual(bool a, bool b, string memory $a, string memory $b) internal {
+        if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b);
+    }
+
     function ensureEqual(uint a, uint b, string memory $a, string memory $b) internal {
         if (!(a == b)) emit AssertionFailed("ensureEqual", $a, $b, a, b, int(a) - int(b));
     }
