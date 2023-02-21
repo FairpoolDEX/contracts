@@ -1,5 +1,5 @@
 import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
-import { Transition } from '../../libs/divide-and-conquer/Transition'
+import { TransitionP } from '../../libs/divide-and-conquer/Transition'
 import { cloneDeep } from 'lodash'
 import { variator } from '../../libs/divide-and-conquer/Variator'
 import { getJavascriptIntegers } from '../../libs/divide-and-conquer/generators/getJavascriptIntegers'
@@ -34,19 +34,19 @@ export type SetBParams = { value: number }
 
 export type DivideParams = undefined
 
-export const setA: Transition<SetAParams, DivideState> = (params) => async ($state) => {
+export const setA: TransitionP<SetAParams, DivideState> = (params) => async ($state) => {
   const state = cloneDeep($state)
   state.data.a = params.value
   return state
 }
 
-export const setB: Transition<SetAParams, DivideState> = (params) => async ($state) => {
+export const setB: TransitionP<SetAParams, DivideState> = (params) => async ($state) => {
   const state = cloneDeep($state)
   state.data.b = params.value
   return state
 }
 
-export const divide: Transition<DivideParams, DivideState> = (params) => async ($state) => {
+export const divide: TransitionP<DivideParams, DivideState> = (params) => async ($state) => {
   const state = cloneDeep($state)
   if (state.data.b === 0) {
     state.error = new DivisionByZero()

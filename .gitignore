@@ -36,4 +36,5 @@ crytic-export
 .certora_recent_jobs.json
 
 # fast-check
+replay.js
 replay.cjs

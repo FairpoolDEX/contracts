@@ -7,8 +7,21 @@ import "./Util.sol";
 import "./IncreaseAllowanceHooks.sol";
 
 contract ERC20EnumerableTest is ERC20Enumerable, Ownable, IncreaseAllowanceHooks, Util {
-    constructor(string memory name_, string memory symbol_, uint totalSupply_) ERC20(name_, symbol_) Ownable() {
-        _mint(owner(), totalSupply_);
+    uint constant $totalSupply = 1000000000000000;
+
+    constructor() ERC20("Echidna", "TST") Ownable() {
+        reset($totalSupply);
+    }
+
+    // allow testing different combinations of contract parameters
+    // use baseLimitNew * initialPriceNew instead of quoteOffsetNew to improve the probability of passing the validations in setCurveParametersInternal
+    function reset(uint totalSupplyNew) public onlyOwner {
+        // need to copy holders because it's modified in the loop body via _burn()
+        address[] memory $holders = copy(holders);
+        for (uint i = 0; i < $holders.length; i++) {
+            _burn($holders[i], balanceOf($holders[i]));
+        }
+        _mint(owner(), totalSupplyNew);
     }
 
     // Using a single function to check all invariants in one transaction

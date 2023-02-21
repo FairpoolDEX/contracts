@@ -8,9 +8,8 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./ERC20Enumerable.sol";
 import "./SharedOwnership.sol";
 import "./Util.sol";
-import "./bancor/BancorFormula.sol";
-import "hardhat/console.sol";
 import "./Recoverable.sol";
+import "hardhat/console.sol";
 
 /**
  * Definitions:
@@ -18,38 +17,33 @@ import "./Recoverable.sol";
  * - quote - money amount (native blockchain currency)
  *
  * Notes:
- * - The `PRECISION` constant must be equal to the number of decimals of the base asset of the current blockchain
- * - Variables must use uint instead of smaller types because uint actually costs less gas
- * - Custom errors must be used over string descriptions because it costs less gas
+ * - Variables must use uint instead of smaller types (uint actually costs less gas)
+ * - Custom errors must be used over string descriptions (it costs less gas)
  * - Custom errors must not include the function arguments (i.e. don't add function arguments as error parameters)
  * - Custom errors should be translated in UI
- * - Custom errors can have names of any length (the resulting selector is always 4 bytes)
+ * - Custom errors may have names of any length (the resulting selector is always 4 bytes)
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
  * - Ownable is needed to change curve parameters & taxes (otherwise there could be a battle between the beneficiaries)
  * - Owner may call renounceOwnership(), thus setting the owner to zero address
- * - sell() may increase tallies[msg.sender] (if the seller address is included in the distribution of earnings). This is desirable because of 1) lower gas cost (no need to check if address != msg.sender) 2) correct behavior in the limit case where the seller is the only remaining holder (he should not pay earnings to anyone else ~= he should pay earnings to himself)
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
  */
-contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGuard, Ownable, BancorFormula {
-    // Count of decimals
-    uint8 internal constant precision = 18;
+contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGuard, Ownable {
+    // Maximum totalSupply(), used in getBuyDeltas() and getSellDeltas()
+    uint public baseLimit;
 
-    // Multiplier for scaled integers
-    uint internal constant scale = 10 ** precision;
+    // Simulated quote supply, used in getBuyDeltas() and getSellDeltas(), calculated as baseLimit * initialPrice, stored instead of initialPrice because get*Deltas() require it
+    uint public quoteOffset;
 
-    // Coefficient in the power function (variable `m` in formula `y = m * x ^ n`)
-    // Used only for calculating the quoteBuffer
-    // IMPORTANT: slope must be scaled to `scale` (e.g. multiplied by 10 ** 18)
-    uint public slope;
+    uint internal constant baseLimitMin = 1000;
 
-    // Multiplier in the Bancor functions (0 < weight < maxWeight)
-    uint32 public weight;
+    uint internal constant baseLimitMax = type(uint128).max;
 
-    // Extra "base balance buffer" added to totalSupply before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
-    uint public constant baseBuffer = scale;
+    uint internal constant quoteOffsetMin = baseLimitMin * 2;
 
-    // Extra "quote balance buffer" added to quoteBalanceOfContract before passing into Bancor functions (otherwise the Bancor functions throw errors when quoteBalanceOfContract == 0)
-    uint public quoteBuffer;
+    uint internal constant quoteOffsetMax = baseLimitMax;
+
+    // Decimals count (set once in the constructor)
+    uint8 internal immutable precision;
 
     // Percentage of sale distributed to the beneficiaries (as royalties / scaleOfShares)
     uint public royalties;
@@ -76,19 +70,6 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
     // Also needed to protect against breaking the contract logic by sending the quote currency to it directly
     uint public quoteBalanceOfContract;
 
-    // Needed to ensure that the quoteBuffer is high enough, so that the power() function always returns a high precision (= 127)
-    uint internal constant minSlope = scale / 10000;
-
-    // Needed to avoid overflow in setQuoteBufferInternal
-    // Dividing by maxWeight and scale because of the expression for quoteBuffer
-    uint internal constant maxSlope = type(uint256).max / scaleOfWeight / scale;
-
-    // Needed to ensure that the price growth is exponential (otherwise it is linear if `weight == scaleOfWeight / 2`, and sub-exponential if `weight < scaleOfWeight / 2`)
-    uint internal constant maxWeight = scaleOfWeight / 2;
-
-    // Needed to avoid overflow in purchaseTargetAmount. Assumes that full quote supply can be represented in 128 bits, so that msg.value + quoteBuffer < type(uint256).max
-    uint internal constant maxQuoteBuffer = type(uint256).max / 2;
-
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
     uint internal constant maxHoldersPerDistribution = 256;
@@ -102,16 +83,15 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
     error BaseDeltaMustBeGreaterThanZero();
-    error BaseDeltaMustBeLessThanOrEqualToBalance();
+    error BaseDeltaProposedMustBeLessThanOrEqualToBalance();
     error NothingToWithdraw();
     error AddressNotPayable(address addr);
-    error SlopeMustBeGreaterMinSlope();
-    error SlopeMustBeLessThanMaxSlope();
-    error QuoteBufferMustBeGreaterThanZero();
-    error QuoteBufferMustBeLessThanMaxQuoteBuffer();
-    error WeightMustBeLessThanMaxWeight();
-    error WeightMustBeGreaterThanZero();
-    error WeightCanBeSetOnlyIfTotalSupplyIsZero();
+    error BaseLimitMustBeGreaterOrEqualToBaseLimitMin();
+    error BaseLimitMustBeLessOrEqualToBaseLimitMax();
+    error QuoteOffsetMustBeGreaterOrEqualToQuoteOffsetMin();
+    error QuoteOffsetMustBeLessOrEqualToQuoteOffsetMax();
+    error QuoteOffsetMustBeDivisibleByBaseLimit();
+    error QuoteOffsetMustBeGreaterThanBaseLimit();
     error CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
     error EarningsCanBeSetOnlyIfTotalSupplyIsZero();
     error RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
@@ -123,15 +103,16 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
 
     event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
-    event SetSlope(uint slope);
-    event SetWeight(uint32 weight);
+    event SetBaseLimit(uint baseLimit);
+    event SetQuoteOffset(uint quoteOffset);
     event SetRoyalties(uint royalties);
     event SetEarnings(uint earnings);
     event SetFees(uint fees);
     event SetOperator(address operator);
 
-    constructor(string memory nameNew, string memory symbolNew, uint slopeNew, uint32 weightNew, uint royaltiesNew, uint earningsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
-        setCurveParametersInternal(slopeNew, weightNew);
+    constructor(string memory nameNew, string memory symbolNew, uint baseLimitNew, uint quoteOffsetNew, uint8 precisionNew, uint royaltiesNew, uint earningsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
+        precision = precisionNew;
+        setCurveParametersInternal(baseLimitNew, quoteOffsetNew);
         setTaxesInternal(royaltiesNew, earningsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
         // operator is already set
         // preallocate tallies
@@ -141,33 +122,25 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
     }
 
     function buy(uint baseDeltaMin, uint deadline) public virtual payable nonReentrant {
-        uint quoteDelta = msg.value;
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
+        (uint baseDelta, uint quoteDelta) = getBuyDeltas(msg.value);
         // `quoteDelta < 2 * scaleOfShares` is needed because quoteDelta must be divisible by scaleOfShares in distribute()
         // using `2 * scaleOfShares` instead of `scaleOfShares` because sell() calls saleTargetAmount(), which returns a smaller quoteDelta than was initially passed to buy() as msg.value
-        if (quoteDelta < 2 * scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares();
-        uint baseDelta = getBaseDelta(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, quoteDelta);
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
-        // baseDelta != 0 ==> quoteDelta != 0
+        if (quoteDelta < 2 * scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares();
         if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
         emit Trade(msg.sender, true, baseDelta, quoteDelta, 0);
         _mint(msg.sender, baseDelta);
         quoteBalanceOfContract += quoteDelta;
     }
 
-    function sell(uint baseDelta, uint quoteReceivedMin, uint deadline) public virtual nonReentrant returns (uint quoteDistributed) {
-        uint quoteDelta;
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant returns (uint quoteDistributed) {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
+        if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaProposedMustBeLessThanOrEqualToBalance();
+        (uint baseDelta, uint quoteDelta) = getSellDeltas(baseDeltaProposed);
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
-        if (baseDelta > balanceOf(msg.sender)) revert BaseDeltaMustBeLessThanOrEqualToBalance();
-        if (baseDelta == totalSupply()) {
-            // this special case is also present in the formula code, but it doesn't work because we pass baseBalanceOfContract + baseBuffer (and baseDeltaProposed is always less than baseBalanceOfContract + baseBuffer)
-            quoteDelta = quoteBalanceOfContract;
-        } else {
-            quoteDelta = getQuoteDelta(totalSupply() + baseBuffer, quoteBalanceOfContract + quoteBuffer, weight, baseDelta);
-        }
         if (quoteDelta < scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualToScaleOfShares();
         quoteBalanceOfContract -= quoteDelta;
         quoteDistributed = distribute(quoteDelta);
@@ -195,11 +168,49 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
         }
     }
 
-    function setCurveParameters(uint slopeNew, uint32 weightNew) external onlyOwner nonReentrant {
+    function getBaseSupply(uint quoteSupply) internal view returns (uint baseSupply) {
+        baseSupply = baseLimit * quoteSupply / (quoteOffset + quoteSupply);
+        assert(baseSupply < baseLimit); // baseLimit must never be reached
+    }
+
+    function getQuoteSupply(uint baseSupply) internal view returns (uint quoteSupply) {
+        quoteSupply = quoteOffset * baseSupply / (baseLimit + baseSupply);
+        assert(baseSupply < baseLimit); // baseLimit must never be reached
+    }
+
+    /**
+     * Notes:
+     * - This function may return (0, 0). The caller must check for this case & throw an error if this is undesirable.
+     * - "baseSupplyOld" is "totalSupply()"
+     * - "quoteSupplyOld" is "quoteBalanceOfContract"
+     */
+    function getBuyDeltas(uint quoteDeltaProposed) internal returns (uint baseDelta, uint quoteDelta) {
+        uint quoteSupplyProposed = quoteBalanceOfContract + quoteDeltaProposed;
+        uint baseSupplyNew = getBaseSupply(quoteSupplyProposed);
+        uint quoteSupplyNew = getQuoteSupply(baseSupplyNew); // ensure that quoteSupply is always calculated precisely from baseSupply
+        assert(quoteSupplyNew <= quoteSupplyProposed); // due to integer division
+        baseDelta = baseSupplyNew - totalSupply();
+        quoteDelta = quoteSupplyNew - quoteBalanceOfContract;
+    }
+
+    /**
+     * Notes:
+     * - This function may return (0, 0) if and only if baseDeltaProposed == 0
+     * - "baseSupplyOld" is "totalSupply()"
+     * - "quoteSupplyOld" is "quoteBalanceOfContract"
+     */
+    function getSellDeltas(uint baseDeltaProposed) internal returns (uint baseDelta, uint quoteDelta) {
+        uint baseSupplyProposed = totalSupply() - baseDeltaProposed;
+        uint quoteSupplyProposed = getQuoteSupply(baseSupplyProposed);
+        baseDelta = totalSupply() - baseSupplyProposed;
+        quoteDelta = quoteBalanceOfContract - quoteSupplyProposed;
+    }
+
+    function setCurveParameters(uint baseLimitNew, uint quoteOffsetNew) external onlyOwner nonReentrant {
         if (totalSupply() != 0) revert CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-        setCurveParametersInternal(slopeNew, weightNew);
-        emit SetSlope(slope);
-        emit SetWeight(weight);
+        setCurveParametersInternal(baseLimitNew, quoteOffsetNew);
+        emit SetBaseLimit(baseLimitNew);
+        emit SetQuoteOffset(quoteOffsetNew);
     }
 
     // using separate setRoyalties, setEarnings, setFees because they have different modifiers (onlyOwner vs onlyOperator)
@@ -225,18 +236,16 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
         emit SetOperator(operatorNew);
     }
 
-    function setCurveParametersInternal(uint slopeNew, uint32 weightNew) internal {
-        if (slopeNew <= minSlope) revert SlopeMustBeGreaterMinSlope();
-        if (slopeNew >= maxSlope) revert SlopeMustBeLessThanMaxSlope();
-        if (weightNew == 0) revert WeightMustBeGreaterThanZero();
-        if (weightNew >= maxWeight) revert WeightMustBeLessThanMaxWeight();
-        slope = slopeNew;
-        weight = weightNew;
-        // slope must already be multiplied by scale, so we don't need to multiply again in the following formula
-        uint quoteBufferNew = slope * weight / scaleOfWeight;
-        if (quoteBufferNew == 0) revert QuoteBufferMustBeGreaterThanZero();
-        if (quoteBufferNew >= maxQuoteBuffer) revert QuoteBufferMustBeLessThanMaxQuoteBuffer();
-        quoteBuffer = quoteBufferNew;
+    function setCurveParametersInternal(uint baseLimitNew, uint quoteOffsetNew) internal {
+        if (baseLimitNew < baseLimitMin) revert BaseLimitMustBeGreaterOrEqualToBaseLimitMin();
+        if (baseLimitNew > baseLimitMax) revert BaseLimitMustBeLessOrEqualToBaseLimitMax();
+        if (quoteOffsetNew < quoteOffsetMin) revert QuoteOffsetMustBeGreaterOrEqualToQuoteOffsetMin();
+        if (quoteOffsetNew > quoteOffsetMax) revert QuoteOffsetMustBeLessOrEqualToQuoteOffsetMax();
+        if (quoteOffsetNew <= baseLimitNew) revert QuoteOffsetMustBeGreaterThanBaseLimit();
+        // the following comparison may return true due to integer division (e.g. 10 / 3 * 3 != 10)
+        if (quoteOffsetNew / baseLimitNew * baseLimitNew != quoteOffsetNew) revert QuoteOffsetMustBeDivisibleByBaseLimit();
+        baseLimit = baseLimitNew;
+        quoteOffset = quoteOffsetNew;
     }
 
     function setOperatorInternal(address payable operatorNew) internal {
@@ -259,6 +268,9 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
      * Distributes profit between beneficiaries and holders
      * Beneficiaries receive shares of profit
      * Holders receive shares of profit remaining after beneficiaries
+     *
+     * Notes:
+     * - May increase tallies[msg.sender] (this is correct because in the limit case where msg.sender is the only holder he must receive the earnings from his own sale)
      */
     function distribute(uint quoteDelta) internal returns (uint quoteDistributed) {
         // common loop variables

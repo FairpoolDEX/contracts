@@ -92,7 +92,7 @@
     "eth-scribble": "^0.6.16",
     "ethers": "^5.7.0",
     "execa": "^6.1.0",
-    "fast-check": "^3.6.2",
+    "fast-check": "^3.6.3",
     "hardhat": "^2.10.2",
     "hardhat-deploy": "^0.11.22",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",

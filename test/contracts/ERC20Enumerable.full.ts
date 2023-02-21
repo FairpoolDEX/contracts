@@ -1,7 +1,7 @@
 import { BalancesMap } from '../../utils-local/balance'
 import { AmountBN } from '../../models/AmountBN'
 import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
-import { Transition } from '../../libs/divide-and-conquer/Transition'
+import { TransitionP } from '../../libs/divide-and-conquer/Transition'
 import { $zero } from '../../data/allAddresses'
 import { Address } from '../../models/Address'
 import { concat, pull } from 'lodash'
@@ -42,7 +42,7 @@ const functions: FunctionDefinition[] = concat(
   ])
 )
 
-const mint: Transition<MintParams, State> = (params) => toGenericTransition(async (state) => {
+const mint: TransitionP<MintParams, State> = (params) => toGenericTransition(async (state) => {
   const { to, amount } = params
   const { data: { totalSupply, balances, holders } } = state
   if (to === $zero) throw new MintToZeroAddress()
@@ -82,7 +82,7 @@ const mint: Transition<MintParams, State> = (params) => toGenericTransition(asyn
 //   ),
 // ]
 
-const transferSuperHandler: Transition<TransferParams, State> = (params) => toGenericTransition(async (state) => {
+const transferSuperHandler: TransitionP<TransferParams, State> = (params) => toGenericTransition(async (state) => {
   const { from, to, amount } = params
   const { data: { totalSupply, balances, holders } } = state
   if (from === $zero) throw new TransferFromZeroAddress()

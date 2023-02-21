@@ -1,5 +1,5 @@
 import { BalanceBN } from '../../models/BalanceBN'
-import { Transition } from '../../libs/divide-and-conquer/Transition'
+import { TransitionP } from '../../libs/divide-and-conquer/Transition'
 import { BigNumber } from 'ethers'
 import { GenericState } from '../../libs/divide-and-conquer/models/GenericState'
 import { bn } from '../../libs/bn/utils'
@@ -39,6 +39,6 @@ interface DistributeParams {
   profit: AmountBN
 }
 
-const distribute: Transition<DistributeParams, State> = (params) => toGenericTransition(async (state) => {
+const distribute: TransitionP<DistributeParams, State> = (params) => toGenericTransition(async (state) => {
   return todo()
 })

@@ -1,8 +1,7 @@
 import neatcsv from 'neat-csv'
-import { validateTransfer } from '../Transfer'
-import { toInteger } from 'lodash'
-import { parseEtherscanAmountCSV } from '../AmountBN/parseEtherscanAmountCSV'
 import { RawCSVData } from '../../utils/csv'
+import { todo } from '../../libs/utils/todo'
+import { Transfer } from '../Transfer'
 
 interface EtherscanExportTransferRow {
   Txhash: string
@@ -20,11 +19,12 @@ export async function parseTransfersCSV(decimals: number, data: RawCSVData) {
 }
 
 const parseEtherscanExportTransferRow = (decimals: number) => (row: EtherscanExportTransferRow) => {
-  return validateTransfer({
-    from: row.From,
-    to: row.To,
-    amount: parseEtherscanAmountCSV(decimals, row.Quantity),
-    blockNumber: toInteger(row.Blockno),
-    transactionHash: row.Txhash,
-  })
+  return todo<Transfer>()
+  // return validateTransfer({
+  //   from: row.From,
+  //   to: row.To,
+  //   amount: parseEtherscanAmountCSV(decimals, row.Quantity),
+  //   blockNumber: toInteger(row.Blockno),
+  //   transactionHash: row.Txhash,
+  // })
 }
