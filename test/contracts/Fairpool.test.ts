@@ -286,7 +286,7 @@ describe.skip('Fairpool', async function () {
    */
   fest('buys must be almost additive', async () => {
     await unsetTaxes()
-    // await fairpoolAsOwner.setCurveParameters(bn('5079110400'), bn('982081'))
+    // await fairpoolAsOwner.setPriceParams(bn('5079110400'), bn('982081'))
     const volumes = range(0, 500).map(i => QuoteScale)
 
     expect(await getSupplyStats(fairpool)).to.deep.equal(zeroSupplyStats)
@@ -424,9 +424,9 @@ describe.skip('Fairpool', async function () {
 
   fest('must replay Echidna transactions', withCleanEthersError(async () => {
     const echidnaLog = `
-      setCurveParameters(100000000000001,499999) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      setPricingParams(100000000000001,499999) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
       test() from: 0x0000000000000000000000000000000000030000
-      // // setCurveParameters(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
+      // // setPricingParams(200000000000000000000,982081) from: 0x0000000000000000000000000000000000030000 Time delay: 423152 seconds Block delay: 6721
       buy(33,91771647390517348682355901009075223511980491153039051186838984108843927034499) from: 0x0000000000000000000000000000000000010000 Value: 0x2997bfe89ef417b83 Time delay: 150943 seconds Block delay: 15627
       buy(13,40006280830262897942042416864167850074511856115222124081697447264565371730107) from: 0x0000000000000000000000000000000000020000 Value: 0x29243a2695d73f60f Time delay: 298373 seconds Block delay: 5728
     `

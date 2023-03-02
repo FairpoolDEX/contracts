@@ -1,73 +1,69 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import "./FairpoolOwnerOperator.sol";
+import "./Fairpool.sol";
 import "./IncreaseAllowanceHooks.sol";
 //import "./Util.sol";
 
-contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
-    address payable[] $beneficiaries;
+contract FairpoolTest is Fairpool, IncreaseAllowanceHooks, Util {
+    address payable[] $marketers;
     uint[] $shares;
     uint8 constant $precision = 18;
     uint constant $baseLimit = 1000;
     uint constant $quoteOffset = 2000;
-    uint constant $fees = scaleOfShares * 25 / 1000;
-    uint constant $royalties = scaleOfShares / 2 - $fees;
-    uint constant $earnings = scaleOfShares / 2 - 1;
+    uint[][] $sharesNew;
+    address[][] $controllersNew;
+    address[] $recipientsNew;
+    uint[] $gasLimitsNew;
+    uint constant $marketersFee = scale / 2 - $fees;
+    uint constant $holdersFee = scale / 2 - 1;
+    uint constant $fees = scale * 25 / 1000;
+    uint constant $commissions = scale * 500 / 1000;
+    address payable constant $agent = payable(address(0));
 
-    constructor() FairpoolOwnerOperator("FairpoolTest", "FTS", $baseLimit, $quoteOffset, $precision, $royalties, $earnings, $beneficiaries, $shares) {
-        // weight and tax can be changed via reset()
-        // beneficiaries and shares can be changed via transferShares()
-        operator = payable(msg.sender); // allow the owner to receive the fees & call setOperator()
-        setTaxesInternal($royalties, $earnings, $fees);
+    // TODO: Find a way to call the constructor with complex args (or just use fast-check)
+    constructor() Fairpool("FairpoolTest", "FTS", $baseLimit, $quoteOffset, $precision, $sharesNew, $controllersNew, $recipientsNew, $gasLimitsNew) {
+        // price params and distribution params can be changed via reset()
     }
 
     // allow testing different combinations of contract parameters
-    // use baseLimitNew * initialPriceNew instead of quoteOffsetNew to improve the probability of passing the validations in setCurveParametersInternal
-    function reset(uint128 baseLimitNew, uint128 initialPriceNew, uint royaltiesNew, uint earningsNew, uint feesNew) public onlyOperator {
+    // use baseLimitNew * initialPriceNew instead of quoteOffsetNew to improve the probability of passing the validations in setPriceParamsInternal
+    function reset(uint baseLimitNew, uint quoteOffsetNew) public onlyOwner {
         // need to copy holders because it's modified in the loop body via _burn()
         address[] memory $holders = copy(holders);
         for (uint i = 0; i < $holders.length; i++) {
             _burn($holders[i], balanceOf($holders[i]));
-            delete tallies[$holders[i]];
-        }
-        // no need to copy beneficiaries because it's not modified in the loop body
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            // set the tallies for beneficiaries (may have been deleted in the previous loop if a beneficiary was also a holder)
-            preallocate(beneficiaries[i]);
+            delete fees[$holders[i]];
         }
         payable(owner()).transfer(address(this).balance);
-        quoteBalanceOfContract = 0;
-        setCurveParametersInternal(uint(baseLimitNew), uint(baseLimitNew) * uint(initialPriceNew));
-        setTaxesInternal(royaltiesNew, earningsNew, feesNew);
+        quoteSupply = 0;
+        setPriceParamsInternal(baseLimitNew, quoteOffsetNew);
     }
 
     // msg.value is bounded by native currency supply
     function test() public {
-        baseLimitIsBounded();
-        quoteOffsetIsBounded();
-        taxesAreBounded();
-        allUsersHaveTallies();
-        contractBalanceIsCorrect();
-        sumOfBuysIsAlmostEqualToBigBuy();
+        assertPriceParamsAreBounded();
+        assertAllUsersHaveFees();
+        assertContractBalanceIsCorrect();
+        assertSumOfBuysIsAlmostEqualToBigBuy();
     }
 
     // Using a struct to avoid the "stack too deep" error
     struct Vars {
-        uint quoteBalanceOfContract;
-        uint quoteBalanceOfContractReal;
-        uint quoteBalanceOfContractCalculated;
+        uint quoteSupply;
+        uint quoteSupplyReal;
+        uint quoteSupplyCalculated;
         uint baseBalanceOfSender;
         uint quoteBalanceOfSender;
-        uint quoteBalanceOfOperator;
-        uint tallyOfSender;
-        uint sumOfBalances;
-        uint sumOfBalancesCalculated;
-        uint sumOfTalliesOfHolders; // NOTE: This excludes beneficiaries without token balances
+        uint quoteBalanceOfOwner;
+        uint feeOfSender;
+        uint baseSupply;
+        uint baseSupplyCalculated;
+        uint sumOfFeesOfHolders; // NOTE: This excludes marketers without token balances
         address[] holders;
     }
 
-    function buy(uint baseReceivedMin, uint deadline) public virtual override payable {
+    function buy(uint baseReceivedMin, uint deadline, address[] calldata referralsNew) public virtual override payable {
         // hardcode the parameters to minimize reverts
         //        baseReceiveMin = 0;
         //        deadline = type(uint).max;
@@ -75,100 +71,100 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         Vars memory next;
         address sender = _msgSender();
 
-        prev.quoteBalanceOfContract = quoteBalanceOfContract;
-        prev.quoteBalanceOfContractReal = address(this).balance - msg.value;
-        prev.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        prev.quoteSupply = quoteSupply;
+        prev.quoteSupplyReal = address(this).balance - msg.value;
+        prev.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         prev.baseBalanceOfSender = balanceOf(sender);
         prev.quoteBalanceOfSender = sender.balance + msg.value;
-        prev.quoteBalanceOfOperator = sender == operator ? sender.balance + msg.value : operator.balance;
-        prev.tallyOfSender = tallies[sender];
-        prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        prev.sumOfTalliesOfHolders = sum(holders, tallies);
+        prev.quoteBalanceOfOwner = sender == owner() ? sender.balance + msg.value : owner().balance;
+        prev.feeOfSender = fees[sender];
+        prev.baseSupply = totalSupply();
+        prev.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        prev.sumOfFeesOfHolders = sum(holders, fees);
         prev.holders = getOld(holders);
 
-        super.buy(baseReceivedMin, deadline);
+        super.buy(baseReceivedMin, deadline, referralsNew);
 
-        next.quoteBalanceOfContract = quoteBalanceOfContract;
-        next.quoteBalanceOfContractReal = address(this).balance;
-        next.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        next.quoteSupply = quoteSupply;
+        next.quoteSupplyReal = address(this).balance;
+        next.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         next.baseBalanceOfSender = balanceOf(sender);
         next.quoteBalanceOfSender = sender.balance;
-        next.quoteBalanceOfOperator = sender == operator ? sender.balance : operator.balance;
-        next.tallyOfSender = tallies[sender];
-        next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        next.sumOfTalliesOfHolders = sum(holders, tallies);
+        next.quoteBalanceOfOwner = sender == owner() ? sender.balance : owner().balance;
+        next.feeOfSender = fees[sender];
+        next.baseSupply = totalSupply();
+        next.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        next.sumOfFeesOfHolders = sum(holders, fees);
         next.holders = getNew(holders);
 
-        ensureGreaterEqual(next.quoteBalanceOfContractReal, prev.quoteBalanceOfContractReal, "next.quoteBalanceOfContractReal", "prev.quoteBalanceOfContractReal");
+        ensureGreaterEqual(next.quoteSupplyReal, prev.quoteSupplyReal, "next.quoteSupplyReal", "prev.quoteSupplyReal");
         ensureGreaterEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
 
-        uint diffQuoteBalanceOfContractReal = next.quoteBalanceOfContractReal - prev.quoteBalanceOfContractReal;
+        uint diffQuoteSupplyReal = next.quoteSupplyReal - prev.quoteSupplyReal;
         uint diffBaseBalanceOfSender = next.baseBalanceOfSender - prev.baseBalanceOfSender;
 
         ensureGreaterEqual(diffBaseBalanceOfSender, baseReceivedMin, "diffBaseBalanceOfSender", "baseReceiveMin");
         ensureGreater(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
         ensureLess(next.quoteBalanceOfSender, prev.quoteBalanceOfSender, "next.quoteBalanceOfSender", "prev.quoteBalanceOfSender");
-        if (sender == operator) {
-            ensureLess(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+        if (sender == owner()) {
+            ensureLess(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
         } else {
-            ensureEqual(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+            ensureEqual(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
         }
-        ensureGreaterEqual(next.tallyOfSender, prev.tallyOfSender, "next.tallyOfSender", "prev.tallyOfSender");
-        ensureGreater(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
-        ensureGreaterEqual(next.sumOfTalliesOfHolders, prev.sumOfTalliesOfHolders, "next.sumOfTalliesOfHolders", "prev.sumOfTalliesOfHolders");
+        ensureGreaterEqual(next.feeOfSender, prev.feeOfSender, "next.feeOfSender", "prev.feeOfSender");
+        ensureGreater(next.baseSupply, prev.baseSupply, "next.baseSupply", "prev.baseSupply");
+        ensureGreaterEqual(next.sumOfFeesOfHolders, prev.sumOfFeesOfHolders, "next.sumOfFeesOfHolders", "prev.sumOfFeesOfHolders");
         ensureGreaterEqual(next.holders.length, prev.holders.length, "next.holders.length", "prev.holders.length");
         ensureIncludes(next.holders, sender, "next.holders", "sender");
-        ensureLessEqual(diffQuoteBalanceOfContractReal, msg.value, "diffQuoteBalanceOfContractReal", "msg.value");
-        ensureLessEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractReal, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractReal");
-        ensureLessEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractReal, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractReal");
-        ensureEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractCalculated, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractCalculated");
-        ensureEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractCalculated, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractCalculated");
-        ensureGreaterEqual(prev.sumOfBalances, prev.sumOfBalancesCalculated, "prev.sumOfBalances", "prev.sumOfBalancesCalculated");
-        ensureGreaterEqual(next.sumOfBalances, next.sumOfBalancesCalculated, "next.sumOfBalances", "next.sumOfBalancesCalculated");
-        // `quoteBalanceOfContract == 0` if and only if `next.sumOfBalances == 0`
-        ensureEqual(next.quoteBalanceOfContract == 0, next.sumOfBalances == 0, "next.quoteBalanceOfContract == 0", "next.sumOfBalances == 0");
+        ensureLessEqual(diffQuoteSupplyReal, msg.value, "diffQuoteSupplyReal", "msg.value");
+        ensureLessEqual(prev.quoteSupply, prev.quoteSupplyReal, "prev.quoteSupply", "prev.quoteSupplyReal");
+        ensureLessEqual(next.quoteSupply, next.quoteSupplyReal, "next.quoteSupply", "next.quoteSupplyReal");
+        ensureEqual(prev.quoteSupply, prev.quoteSupplyCalculated, "prev.quoteSupply", "prev.quoteSupplyCalculated");
+        ensureEqual(next.quoteSupply, next.quoteSupplyCalculated, "next.quoteSupply", "next.quoteSupplyCalculated");
+        ensureGreaterEqual(prev.baseSupply, prev.baseSupplyCalculated, "prev.baseSupply", "prev.baseSupplyCalculated");
+        ensureGreaterEqual(next.baseSupply, next.baseSupplyCalculated, "next.baseSupply", "next.baseSupplyCalculated");
+        // `quoteSupply == 0` if and only if `next.baseSupply == 0`
+        ensureEqual(next.quoteSupply == 0, next.baseSupply == 0, "next.quoteSupply == 0", "next.baseSupply == 0");
     }
 
-    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual override returns (uint quoteDistributed) {
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline, bytes memory data) public virtual override returns (uint quoteDistributed) {
         Vars memory prev;
         Vars memory next;
         address sender = _msgSender();
 
-        prev.quoteBalanceOfContract = quoteBalanceOfContract;
-        prev.quoteBalanceOfContractReal = address(this).balance;
-        prev.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        prev.quoteSupply = quoteSupply;
+        prev.quoteSupplyReal = address(this).balance;
+        prev.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         prev.baseBalanceOfSender = balanceOf(sender);
         prev.quoteBalanceOfSender = sender.balance;
-        prev.quoteBalanceOfOperator = operator.balance;
-        prev.tallyOfSender = tallies[sender];
-        prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        prev.sumOfTalliesOfHolders = sum(holders, tallies);
+        prev.quoteBalanceOfOwner = owner().balance;
+        prev.feeOfSender = fees[sender];
+        prev.baseSupply = totalSupply();
+        prev.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        prev.sumOfFeesOfHolders = sum(holders, fees);
         prev.holders = getOld(holders);
 
-        quoteDistributed = super.sell(baseDeltaProposed, quoteReceivedMin, deadline);
+        quoteDistributed = super.sell(baseDeltaProposed, quoteReceivedMin, deadline, data);
         ensureNotEqual(quoteDistributed, 0, "quoteDistributed", "0"); // because deltaQuote is always divisible by scale without remainder
 
-        next.quoteBalanceOfContract = quoteBalanceOfContract;
-        next.quoteBalanceOfContractReal = address(this).balance;
-        next.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        next.quoteSupply = quoteSupply;
+        next.quoteSupplyReal = address(this).balance;
+        next.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         next.baseBalanceOfSender = balanceOf(sender);
         next.quoteBalanceOfSender = sender.balance;
-        next.quoteBalanceOfOperator = operator.balance;
-        next.tallyOfSender = tallies[sender];
-        next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        next.sumOfTalliesOfHolders = sum(holders, tallies);
+        next.quoteBalanceOfOwner = owner().balance;
+        next.feeOfSender = fees[sender];
+        next.baseSupply = totalSupply();
+        next.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        next.sumOfFeesOfHolders = sum(holders, fees);
         next.holders = getNew(holders);
 
-        ensureLessEqual(next.quoteBalanceOfContractReal, prev.quoteBalanceOfContractReal, "next.quoteBalanceOfContractReal", "prev.quoteBalanceOfContractReal");
+        ensureLessEqual(next.quoteSupplyReal, prev.quoteSupplyReal, "next.quoteSupplyReal", "prev.quoteSupplyReal");
         ensureLess(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
-        ensureLessEqual(next.tallyOfSender, 1, "next.tallyOfSender", "delta"); // because tallyOfSender can be either 0 or 1 (if balanceOfSender == 0 or balanceOfSender != 0)
+        ensureLessEqual(next.feeOfSender, 1, "next.feeOfSender", "delta"); // because feeOfSender can be either 0 or 1 (if balanceOfSender == 0 or balanceOfSender != 0)
 
         // neg_ values are calculated with inverted order of next & prev
-        uint neg_diffBalanceOfContract = prev.quoteBalanceOfContractReal - next.quoteBalanceOfContractReal;
+        uint neg_diffBalanceOfContract = prev.quoteSupplyReal - next.quoteSupplyReal;
         uint neg_diffBaseBalanceOfSender = prev.baseBalanceOfSender - next.baseBalanceOfSender;
         uint diffQuoteBalanceOfSender = next.quoteBalanceOfSender - prev.quoteBalanceOfSender;
 
@@ -177,141 +173,129 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         ensureGreaterEqual(diffQuoteBalanceOfSender, quoteReceivedMin, "diffQuoteBalanceOfSender", "quoteReceivedMin");
         ensureLess(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
         ensureGreater(next.quoteBalanceOfSender, prev.quoteBalanceOfSender, "next.quoteBalanceOfSender", "prev.quoteBalanceOfSender");
-        if (msg.sender == operator) {
-            // next.quoteBalanceOfOperator can have any relationship with prev.quoteBalanceOfOperator
+        if (sender == owner()) {
+            // next.quoteBalanceOfOwner can have any relationship with prev.quoteBalanceOfOwner
         } else {
-            if (fees == 0) {
-                ensureEqual(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+            if (getShareRootEffective(owner()) == 0) {
+                ensureEqual(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
             } else {
-                ensureGreater(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+                ensureGreater(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
             }
         }
-        ensureLessEqual(next.tallyOfSender, prev.tallyOfSender, "next.tallyOfSender", "prev.tallyOfSender");
-        ensureLess(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
-        // next.sumOfTallies can have any relationship with prev.sumOfTallies // ensureAny(next.sumOfTallies, prev.sumOfTallies, "next.sumOfTalliesOfHolders", "prev.sumOfTalliesOfHolders");
+        ensureLessEqual(next.feeOfSender, prev.feeOfSender, "next.feeOfSender", "prev.feeOfSender");
+        ensureLess(next.baseSupply, prev.baseSupply, "next.baseSupply", "prev.baseSupply");
+        // next.sumOfFees can have any relationship with prev.sumOfFees // ensureAny(next.sumOfFees, prev.sumOfFees, "next.sumOfFeesOfHolders", "prev.sumOfFeesOfHolders");
         ensureLessEqual(next.holders.length, prev.holders.length, "next.holders.length", "prev.holders.length");
         // [sender may have sold the full amount, so not checking ensureIncludes(next.holders, sender)] ensureIncludes(next.holders, sender, "next.holders", "sender");
-        ensureLessEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractReal, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractReal");
-        ensureLessEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractReal, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractReal");
-        ensureEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractCalculated, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractCalculated");
-        ensureEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractCalculated, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractCalculated");
-        ensureGreaterEqual(prev.sumOfBalances, prev.sumOfBalancesCalculated, "prev.sumOfBalances", "prev.sumOfBalancesCalculated");
-        ensureGreaterEqual(next.sumOfBalances, next.sumOfBalancesCalculated, "next.sumOfBalances", "next.sumOfBalancesCalculated");
-        // `quoteBalanceOfContract == 0` if and only if `next.sumOfBalances == 0`
-        ensureEqual(next.quoteBalanceOfContract == 0, next.sumOfBalances == 0, "next.quoteBalanceOfContract == 0", "next.sumOfBalances == 0");
+        ensureLessEqual(prev.quoteSupply, prev.quoteSupplyReal, "prev.quoteSupply", "prev.quoteSupplyReal");
+        ensureLessEqual(next.quoteSupply, next.quoteSupplyReal, "next.quoteSupply", "next.quoteSupplyReal");
+        ensureEqual(prev.quoteSupply, prev.quoteSupplyCalculated, "prev.quoteSupply", "prev.quoteSupplyCalculated");
+        ensureEqual(next.quoteSupply, next.quoteSupplyCalculated, "next.quoteSupply", "next.quoteSupplyCalculated");
+        ensureGreaterEqual(prev.baseSupply, prev.baseSupplyCalculated, "prev.baseSupply", "prev.baseSupplyCalculated");
+        ensureGreaterEqual(next.baseSupply, next.baseSupplyCalculated, "next.baseSupply", "next.baseSupplyCalculated");
+        // `quoteSupply == 0` if and only if `next.baseSupply == 0`
+        ensureEqual(next.quoteSupply == 0, next.baseSupply == 0, "next.quoteSupply == 0", "next.baseSupply == 0");
     }
 
-    function withdraw() public virtual override {
+    function withdrawFees(bytes memory data) public virtual override {
         Vars memory prev;
         Vars memory next;
         address sender = _msgSender();
 
-        prev.quoteBalanceOfContract = quoteBalanceOfContract;
-        prev.quoteBalanceOfContractReal = address(this).balance;
-        prev.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        prev.quoteSupply = quoteSupply;
+        prev.quoteSupplyReal = address(this).balance;
+        prev.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         prev.baseBalanceOfSender = balanceOf(sender);
         prev.quoteBalanceOfSender = sender.balance;
-        prev.quoteBalanceOfOperator = operator.balance;
-        prev.tallyOfSender = tallies[sender];
-        prev.sumOfBalances = totalSupply();
-        prev.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        prev.sumOfTalliesOfHolders = sum(holders, tallies);
+        prev.quoteBalanceOfOwner = owner().balance;
+        prev.feeOfSender = fees[sender];
+        prev.baseSupply = totalSupply();
+        prev.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        prev.sumOfFeesOfHolders = sum(holders, fees);
         prev.holders = getOld(holders);
 
-        super.withdraw();
+        super.withdrawFees(data);
 
-        next.quoteBalanceOfContract = quoteBalanceOfContract;
-        next.quoteBalanceOfContractReal = address(this).balance;
-        next.quoteBalanceOfContractCalculated = getQuoteSupply(totalSupply());
+        next.quoteSupply = quoteSupply;
+        next.quoteSupplyReal = address(this).balance;
+        next.quoteSupplyCalculated = getQuoteSupply(totalSupply());
         next.baseBalanceOfSender = balanceOf(sender);
         next.quoteBalanceOfSender = sender.balance;
-        next.quoteBalanceOfOperator = operator.balance;
-        next.tallyOfSender = tallies[sender];
-        next.sumOfBalances = totalSupply();
-        next.sumOfBalancesCalculated = getBaseSupply(quoteBalanceOfContract);
-        next.sumOfTalliesOfHolders = sum(holders, tallies);
+        next.quoteBalanceOfOwner = owner().balance;
+        next.feeOfSender = fees[sender];
+        next.baseSupply = totalSupply();
+        next.baseSupplyCalculated = getBaseSupply(quoteSupply);
+        next.sumOfFeesOfHolders = sum(holders, fees);
         next.holders = getNew(holders);
 
-        ensureLessEqual(next.quoteBalanceOfContractReal, prev.quoteBalanceOfContractReal, "next.quoteBalanceOfContractReal", "prev.quoteBalanceOfContractReal");
+        ensureLessEqual(next.quoteSupplyReal, prev.quoteSupplyReal, "next.quoteSupplyReal", "prev.quoteSupplyReal");
         ensureEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
-        ensureLess(next.tallyOfSender, prev.tallyOfSender, "next.tallyOfSender", "prev.tallyOfSender");
+        ensureLess(next.feeOfSender, prev.feeOfSender, "next.feeOfSender", "prev.feeOfSender");
 
         // neg_ values are calculated with inverted order of next & prev
-        uint neg_diffBalanceOfContract = prev.quoteBalanceOfContractReal - next.quoteBalanceOfContractReal;
+        uint neg_diffBalanceOfContract = prev.quoteSupplyReal - next.quoteSupplyReal;
         uint neg_diffBaseBalanceOfSender = prev.baseBalanceOfSender - next.baseBalanceOfSender;
         uint diffQuoteBalanceOfSender = next.quoteBalanceOfSender - prev.quoteBalanceOfSender;
-        uint neg_diffTallyOfSender = prev.tallyOfSender - next.tallyOfSender;
+        uint neg_diffFeeOfSender = prev.feeOfSender - next.feeOfSender;
 
         ensureGreater(neg_diffBalanceOfContract, 0, "neg_diffBalanceOfContract", "0");
         ensureEqual(neg_diffBaseBalanceOfSender, 0, "neg_diffBaseBalanceOfSender", "0");
         ensureGreaterEqual(neg_diffBalanceOfContract, diffQuoteBalanceOfSender, "neg_diffBalanceOfContract", "diffQuoteBalanceOfSender");
-        ensureGreaterEqual(neg_diffTallyOfSender, prev.tallyOfSender - defaultTally, "diffTallyOfSender", "quoteReceivedMin");
-        ensureLessEqual(next.tallyOfSender, 1, "next.tallyOfSender", "delta");
+        ensureGreaterEqual(neg_diffFeeOfSender, prev.feeOfSender - preallocation, "diffFeeOfSender", "quoteReceivedMin");
+        ensureLessEqual(next.feeOfSender, 1, "next.feeOfSender", "delta");
         ensureEqual(next.baseBalanceOfSender, prev.baseBalanceOfSender, "next.baseBalanceOfSender", "prev.baseBalanceOfSender");
         ensureGreater(next.quoteBalanceOfSender, prev.quoteBalanceOfSender, "next.quoteBalanceOfSender", "prev.quoteBalanceOfSender");
-        if (msg.sender == operator) {
+        if (sender == owner()) {
             // this assertion is redundant, because we already check ensureGreater(next.quoteBalanceOfSender, prev.quoteBalanceOfSender), but we'll leave it for completeness
-            ensureGreater(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+            ensureGreater(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
         } else {
-            ensureEqual(next.quoteBalanceOfOperator, prev.quoteBalanceOfOperator, "next.quoteBalanceOfOperator", "prev.quoteBalanceOfOperator");
+            ensureEqual(next.quoteBalanceOfOwner, prev.quoteBalanceOfOwner, "next.quoteBalanceOfOwner", "prev.quoteBalanceOfOwner");
         }
-        ensureLess(next.tallyOfSender, prev.tallyOfSender, "next.tallyOfSender", "prev.tallyOfSender");
-        ensureEqual(next.sumOfBalances, prev.sumOfBalances, "next.sumOfBalances", "prev.sumOfBalances");
-        ensureLessEqual(next.sumOfTalliesOfHolders, prev.sumOfTalliesOfHolders, "next.sumOfTalliesOfHolders", "prev.sumOfTalliesOfHolders");
+        ensureLess(next.feeOfSender, prev.feeOfSender, "next.feeOfSender", "prev.feeOfSender");
+        ensureEqual(next.baseSupply, prev.baseSupply, "next.baseSupply", "prev.baseSupply");
+        ensureLessEqual(next.sumOfFeesOfHolders, prev.sumOfFeesOfHolders, "next.sumOfFeesOfHolders", "prev.sumOfFeesOfHolders");
         ensureEqual(next.holders.length, prev.holders.length, "next.holders.length", "prev.holders.length");
-        ensureLessEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractReal, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractReal");
-        ensureLessEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractReal, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractReal");
-        ensureEqual(prev.quoteBalanceOfContract, prev.quoteBalanceOfContractCalculated, "prev.quoteBalanceOfContract", "prev.quoteBalanceOfContractCalculated");
-        ensureEqual(next.quoteBalanceOfContract, next.quoteBalanceOfContractCalculated, "next.quoteBalanceOfContract", "next.quoteBalanceOfContractCalculated");
-        ensureGreaterEqual(prev.sumOfBalances, prev.sumOfBalancesCalculated, "prev.sumOfBalances", "prev.sumOfBalancesCalculated");
-        ensureGreaterEqual(next.sumOfBalances, next.sumOfBalancesCalculated, "next.sumOfBalances", "next.sumOfBalancesCalculated");
-        // `quoteBalanceOfContract == 0` if and only if `next.sumOfBalances == 0`
-        ensureEqual(next.quoteBalanceOfContract == 0, next.sumOfBalances == 0, "next.quoteBalanceOfContract == 0", "next.sumOfBalances == 0");
+        ensureLessEqual(prev.quoteSupply, prev.quoteSupplyReal, "prev.quoteSupply", "prev.quoteSupplyReal");
+        ensureLessEqual(next.quoteSupply, next.quoteSupplyReal, "next.quoteSupply", "next.quoteSupplyReal");
+        ensureEqual(prev.quoteSupply, prev.quoteSupplyCalculated, "prev.quoteSupply", "prev.quoteSupplyCalculated");
+        ensureEqual(next.quoteSupply, next.quoteSupplyCalculated, "next.quoteSupply", "next.quoteSupplyCalculated");
+        ensureGreaterEqual(prev.baseSupply, prev.baseSupplyCalculated, "prev.baseSupply", "prev.baseSupplyCalculated");
+        ensureGreaterEqual(next.baseSupply, next.baseSupplyCalculated, "next.baseSupply", "next.baseSupplyCalculated");
+        // `quoteSupply == 0` if and only if `next.baseSupply == 0`
+        ensureEqual(next.quoteSupply == 0, next.baseSupply == 0, "next.quoteSupply == 0", "next.baseSupply == 0");
     }
 
-    function baseLimitIsBounded() internal {
+    function assertPriceParamsAreBounded() internal {
         ensureGreaterEqual(baseLimit, baseLimitMin, "baseLimit", "baseLimitMin");
         ensureLessEqual(baseLimit, baseLimitMax, "baseLimit", "baseLimitMax");
-    }
-
-    function quoteOffsetIsBounded() internal {
         ensureGreaterEqual(quoteOffset, quoteOffsetMin, "quoteOffset", "quoteOffsetMin");
         ensureLessEqual(quoteOffset, quoteOffsetMax, "quoteOffset", "quoteOffsetMax");
     }
 
-    function taxesAreBounded() internal {
-        // tax == 0 is ok
-        ensureLessEqual(royalties + earnings + fees, scaleOfShares, "royalties + earnings + fees", "scaleOfShares");
-    }
-
-    function allUsersHaveTallies() internal {
+    function assertAllUsersHaveFees() internal {
         logArray(holders, "holders");
         for (uint i = 0; i < holders.length; i++) {
             log('balanceOf(holders[i])', balanceOf(holders[i]));
-            ensureGreater(tallies[holders[i]], 0, string.concat("tallies[holders[", toString(i), "]]"), "0");
+            ensureGreater(fees[holders[i]], 0, string.concat("fees[holders[", toString(i), "]]"), "0");
         }
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            log('balanceOf(beneficiaries[i])', balanceOf(beneficiaries[i]));
-            ensureGreater(tallies[beneficiaries[i]], 0, string.concat("tallies[beneficiaries[", toString(i), "]]"), "0");
-        }
-        ensureEqual(tallies[address(0)], 0, "tallies[address(0)]", "0");
+        ensureEqual(fees[address(0)], 0, "fees[address(0)]", "0");
     }
 
-    function contractBalanceIsCorrect() internal {
-        uint sumOfTalliesOfHolders = sum(holders, tallies);
-        uint sumOfPreallocations = defaultTally * holders.length;
-        uint expectedBalance = quoteBalanceOfContract + sumOfTalliesOfHolders - sumOfPreallocations;
-        // NOTE: Using GreaterEqual instead of Equal because if the sender sells his full balance, he is no longer included in holders, so sumOfTalliesOfHolders will not include his tally
-        ensureGreaterEqual(address(this).balance, expectedBalance, "address(this).balance", "quoteBalanceOfContract + sumOfTallies - sumOfPreallocations");
+    function assertContractBalanceIsCorrect() internal {
+        uint sumOfFeesOfHolders = sum(holders, fees);
+        uint sumOfFeesPreallocations = preallocation * holders.length;
+        uint expectedBalance = quoteSupply + sumOfFeesOfHolders - sumOfFeesPreallocations;
+        // NOTE: Using ensureGreaterEqual instead of ensureEqual because if the sender sells his full balance, he is no longer included in holders, so sumOfFeesOfHolders will not include his fee
+        ensureGreaterEqual(address(this).balance, expectedBalance, "address(this).balance", "quoteSupply + sumOfFees - sumOfPreallocations");
     }
 
-    function sumOfBuysIsAlmostEqualToBigBuy() internal {
+    function assertSumOfBuysIsAlmostEqualToBigBuy() internal {
         Vars memory prev;
         Vars memory next;
         address sender = _msgSender();
 
-        prev.sumOfBalances = totalSupply();
-        prev.quoteBalanceOfContract = quoteBalanceOfContract;
+        prev.baseSupply = totalSupply();
+        prev.quoteSupply = quoteSupply;
 
         //        console.log('slope', slope);
 //        console.log('weight', weight);
@@ -325,19 +309,19 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
         for (uint i = 0; i < denominator; i++) {
             (uint baseDeltaFraction, uint quoteDeltaFraction) = getBuyDeltas(quoteDeltaProposedFraction);
             _mint(sender, baseDeltaFraction); // increment totalSupply
-            quoteBalanceOfContract += quoteDeltaFraction; // increment quoteBalanceOfContract
+            quoteSupply += quoteDeltaFraction; // increment quoteSupply
             baseDeltaSum += baseDeltaFraction;
             quoteDeltaSum += quoteDeltaFraction;
         }
         _burn(sender, baseDeltaSum); // rollback totalSupply
-        quoteBalanceOfContract -= quoteDeltaSum; // rollback quoteBalanceOfContract
-        next.sumOfBalances = totalSupply();
-        next.quoteBalanceOfContract = quoteBalanceOfContract;
+        quoteSupply -= quoteDeltaSum; // rollback quoteSupply
+        next.baseSupply = totalSupply();
+        next.quoteSupply = quoteSupply;
 //        console.log('baseDeltaFull', baseDeltaAll);
 //        console.log('baseDeltaPart', baseDeltaSum);
 //        console.log('--- === ---');
-        ensureEqual(prev.sumOfBalances, next.sumOfBalances, "prev.sumOfBalances", "next.sumOfBalances");
-        ensureEqual(prev.quoteBalanceOfContract, next.quoteBalanceOfContract, "prev.quoteBalanceOfContract", "next.quoteBalanceOfContract");
+        ensureEqual(prev.baseSupply, next.baseSupply, "prev.baseSupply", "next.baseSupply");
+        ensureEqual(prev.quoteSupply, next.quoteSupply, "prev.quoteSupply", "next.quoteSupply");
         ensureLessEqual(baseDeltaSum, baseDeltaAll, "baseDeltaSum", "baseDeltaAll");
         ensureLessEqual(quoteDeltaSum, quoteDeltaAll, "quoteDeltaSum", "quoteDeltaAll");
     }
@@ -346,6 +330,27 @@ contract FairpoolTest is FairpoolOwnerOperator, IncreaseAllowanceHooks, Util {
     function increaseAllowance(address spender, uint256 addedValue) public virtual override returns (bool) {
         checkAllowance(spender, addedValue, allowance(msg.sender, spender));
         return super.increaseAllowance(spender, addedValue);
+    }
+
+    function getShareRootEffective(address recipient) internal view returns (uint) {
+        (bool found, uint index) = getRecipientIndex(recipient);
+        if (!found) return 0;
+        require(false, "Implement getShareRootEffective");
+//        return found ? shares[index][SharePath.root] : 0;
+    }
+
+    function getShare(address recipient) internal view returns (uint) {
+        (bool found, uint index) = getRecipientIndex(recipient);
+        return found ? shares[index][uint(SharePath.root)] : 0;
+    }
+
+    function getRecipientIndex(address recipient) internal view returns (bool, uint) {
+        for (uint i; i < recipients.length; i++) {
+            if (recipients[i] == recipient) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
     }
 
 }
