@@ -14,7 +14,6 @@ contract ERC20EnumerableTest is ERC20Enumerable, Ownable, IncreaseAllowanceHooks
     }
 
     // allow testing different combinations of contract parameters
-    // use baseLimitNew * initialPriceNew instead of quoteOffsetNew to improve the probability of passing the validations in setCurveParametersInternal
     function reset(uint totalSupplyNew) public onlyOwner {
         // need to copy holders because it's modified in the loop body via _burn()
         address[] memory $holders = copy(holders);

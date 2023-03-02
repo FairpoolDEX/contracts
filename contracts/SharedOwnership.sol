@@ -2,48 +2,46 @@
 pragma solidity 0.8.16;
 
 abstract contract SharedOwnership {
-    // Required to limit the gas costs of the beneficiaries loop in distribute()
-    uint8 public constant maxBeneficiaries = 16;
-
-    uint public constant precisionOfShares = 6;
+    // Required to limit the gas costs of the marketers loop in distribute()
+    uint public constant marketersLengthMax = 16;
 
     // IMPORTANT: must be kept small to minimize the probability of the overflow in getShareAmount()
-    // IMPORTANT: must be kept small to minimize the min quoteDelta in sell()
-    uint public constant scaleOfShares = 10 ** precisionOfShares;
+    uint public constant scale = 10 ** 6;
 
-    address[] public beneficiaries;
+    address[] public marketers;
 
     mapping (address => uint) public shares;
 
-    mapping (address => uint) internal indexesOfBeneficiaries;
+    mapping (address => uint) internal marketersIndexes;
 
-    error BeneficiariesLengthMustBeEqualToSharesLength();
-    error BeneficiariesLengthMustBeLessThanOrEqualToMax();
+    error MarketersLengthMustBeEqualToSharesLength();
+    error MarketersLengthMustBeLessThanOrEqualToMarketersLengthMax();
     error ShareMustBeGreaterThanZero();
     error SumOfSharesMustBeEqualToScale();
     error ToAddressMustBeNonZero();
+    error ToAddressMustBeNotEqualToThisContractAddress();
     error AmountMustBeNonZero();
     error SharesMustBeGreaterThanOrEqualToAmount();
 
     event TransferShares(address indexed from, address indexed to, uint amount);
 
-    constructor(address payable[] memory beneficiariesNew, uint[] memory sharesNew) {
-        if (beneficiariesNew.length == 0) {
-            beneficiaries = [msg.sender];
-            shares[msg.sender] = scaleOfShares;
+    constructor(address payable[] memory marketersNew, uint[] memory sharesNew) {
+        if (marketersNew.length == 0) {
+            marketers = [msg.sender];
+            shares[msg.sender] = scale;
         } else {
-            if (beneficiariesNew.length != sharesNew.length) revert BeneficiariesLengthMustBeEqualToSharesLength();
-            if (beneficiariesNew.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
-            beneficiaries = beneficiariesNew;
+            if (marketersNew.length != sharesNew.length) revert MarketersLengthMustBeEqualToSharesLength();
+            if (marketersNew.length > marketersLengthMax) revert MarketersLengthMustBeLessThanOrEqualToMarketersLengthMax();
+            marketers = marketersNew;
             uint sumOfShares;
             for (uint i = 0; i < sharesNew.length; i++) {
                 uint share = sharesNew[i];
                 if (share == 0) revert ShareMustBeGreaterThanZero();
                 // no need to check (share <= scale) because we already check (sumOfShares != scale)
-                shares[beneficiariesNew[i]] = sharesNew[i];
+                shares[marketersNew[i]] = sharesNew[i];
                 sumOfShares += share;
             }
-            if (sumOfShares != scaleOfShares) revert SumOfSharesMustBeEqualToScale();
+            if (sumOfShares != scale) revert SumOfSharesMustBeEqualToScale();
         }
     }
 
@@ -53,6 +51,7 @@ abstract contract SharedOwnership {
     function transferShares(address to, uint amount) external returns (bool) {
         address from = msg.sender;
         if (to == address(0)) revert ToAddressMustBeNonZero();
+        if (to == address(this)) revert ToAddressMustBeNotEqualToThisContractAddress();
         if (amount == 0) revert AmountMustBeNonZero();
         uint256 fromBalance = shares[from];
         if (fromBalance < amount) revert SharesMustBeGreaterThanOrEqualToAmount();
@@ -64,7 +63,7 @@ abstract contract SharedOwnership {
     }
 
     /**
-     * This logic has to be duplicated from ERC20Enumerable because it relies on indexesOfBeneficiaries mapping which can't be passed by reference
+     * This logic has to be duplicated from ERC20Enumerable because it relies on indexesOfMarketers mapping which can't be passed by reference
      */
     function _afterSharesTransfer(
         address from,
@@ -78,38 +77,38 @@ abstract contract SharedOwnership {
             removeBeneficiary(from);
         }
         if (to != address(0) && shares[to] == amount) {
-            addBeneficiary(to);
+            addMarketer(to);
         }
-        if (beneficiaries.length > maxBeneficiaries) revert BeneficiariesLengthMustBeLessThanOrEqualToMax();
+        if (marketers.length > marketersLengthMax) revert MarketersLengthMustBeLessThanOrEqualToMarketersLengthMax();
     }
 
     /**
      * Assumes that `holder` does not exist in `holders`
      */
-    function addBeneficiary(address target) internal virtual {
-        indexesOfBeneficiaries[target] = beneficiaries.length;
-        beneficiaries.push(target);
+    function addMarketer(address target) internal virtual {
+        marketersIndexes[target] = marketers.length;
+        marketers.push(target);
     }
 
     /**
-     * Assumes that `target` exists in `beneficiaries`
+     * Assumes that `target` exists in `marketers`
      * Uses a gas-optimal algorithm for removing the value from array
      * Does not preserve array order
      */
     function removeBeneficiary(address target) internal virtual {
-        uint index = indexesOfBeneficiaries[target];
-        address last = beneficiaries[beneficiaries.length - 1];
-        indexesOfBeneficiaries[last] = index;
-        beneficiaries[index] = last;
-        beneficiaries.pop();
-        delete indexesOfBeneficiaries[target];
+        uint index = marketersIndexes[target];
+        address last = marketers[marketers.length - 1];
+        marketersIndexes[last] = index;
+        marketers[index] = last;
+        marketers.pop();
+        delete marketersIndexes[target];
     }
 
     function getShareAmount(uint amount, address target) internal view returns (uint) {
-        return (amount * shares[target]) / scaleOfShares;
+        return (amount * shares[target]) / scale;
     }
 
-    function beneficiariesLength() external view returns (uint) {
-        return beneficiaries.length;
+    function marketersLength() external view returns (uint) {
+        return marketers.length;
     }
 }

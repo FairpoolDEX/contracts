@@ -3,18 +3,32 @@ pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./ERC20Enumerable.sol";
 import "./SharedOwnership.sol";
 import "./Util.sol";
-import "./Recoverable.sol";
 import "hardhat/console.sol";
 
 /**
+ * Prefixes:
+ * - base* - token amount
+ * - quote* - money amount (native blockchain currency)
+ *
  * Definitions:
- * - base - token amount
- * - quote - money amount (native blockchain currency)
+ * - baseSupply - equal to totalSupply()
+ * - quoteSupply - equal to the logical amount of native blockchain currency in the contract
+ * - baseSupplyReal - equal to baseSupply
+ * - quoteSupplyReal - equal to the actual amount of native blockchain currency in the contract (as seen in the blockchain explorer)
+ * - entity - a group of one or more people
+ * - holder - an entity that has a non-zero base amount (receives a share of the holdersFee)
+ * - referral - an entity that has referred the holder (receives the referralShare of the holdersFee)
+ * - beneficiary - an entity that promotes the token (receives a share of the marketersFee)
+ * - agent - an entity that has referred the beneficiary who deployed the smart contract (receives the agentShare of developersFee capped by agentRemainder)
+ * - frontendDeveloper - an entity that has developed the frontend for the smart contract (receives the frontendDeveloperShare of developersFee)
+ * - smartContractDeveloper - an entity that has developed the smart contract itself (receives the smartContractDeveloperShare of developersFee)
  *
  * Notes:
  * - Variables must use uint instead of smaller types (uint actually costs less gas)
@@ -23,11 +37,16 @@ import "hardhat/console.sol";
  * - Custom errors should be translated in UI
  * - Custom errors may have names of any length (the resulting selector is always 4 bytes)
  * - Ownable is needed to allow changing the social media URLs (only owner could do this, and the owner can transfer ownership to a multisig for better security)
- * - Ownable is needed to change curve parameters & taxes (otherwise there could be a battle between the beneficiaries)
+ * - Ownable is needed to change curve parameters & taxes (otherwise there could be a battle between the marketers)
  * - Owner may call renounceOwnership(), thus setting the owner to zero address
  * - payable(msg.sender).transfer() are potential contract calls (revert on failure)
+ * - SharedOwnership can't be a separate ERC-20 contract because we need to set fees[marketers[i]] = defaultTally (for storage slot preallocation)
  */
-contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGuard, Ownable {
+contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
+    // Scale of shares of parties (amount = total * share / scale)
+    // IMPORTANT: must be kept small to minimize the min quoteDelta in sell()
+    uint public constant scale = 10 ** 6;
+
     // Maximum totalSupply(), used in getBuyDeltas() and getSellDeltas()
     uint public baseLimit;
 
@@ -42,49 +61,69 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
 
     uint internal constant quoteOffsetMax = baseLimitMax;
 
+    // Real balance of contract (less than or equal to `address(this).balance - sum(fees) - defaultTally * holders.length`)
+    // Needed to allow lazy withdrawals (no need to send transfers to every tax recipient in sell(), so the real balance of the contract is higher than quoteBalanceOfContract)
+    // Also needed to protect against breaking the contract logic by sending the quote currency to it directly
+    uint public quoteSupply;
+
+    // different share distribution paths
+    enum SharePath { root, rootReferral, rootDiscount }
+
+    // Percentage of sale distributed to the parties
+    // Example usage: shares[party][sharePath]
+    uint[][] public shares;
+
+    // Addresses that can change the shares
+    // Example usage: controllers[party][sharePath]
+    address[][] public controllers;
+
+    // Recipients of fees
+    // Example usage: recipients[party]
+    address[] public recipients;
+
+    // Gas limits for calling external contracts from `recipients` array
+    uint[] public gasLimits;
+
+    // Recipients of referral fees
+    // Example usage: referrals[user][party]
+    mapping(address => address[]) public referrals;
+
+    // Example usage: isRecognizedReferral[referral][party]
+    mapping(address => bool[]) public isRecognizedReferral;
+
+    address payable public operator = payable(0x7554140235ad2D1Cc75452D2008336700C598Dc1);
+
+    // Default developersFee
+    uint internal constant developerShareDefault = scale * 25 / 1000; // 2.5%
+
+    // Mapping from user addresses to quote asset balances available for withdrawal
+    // IMPORTANT: fees are preallocated in _afterTokenTransfer() and addBeneficiary() to reduce the cost of sell() transaction (shift the gas cost of a storage slot allocation to buy(), transfer(), transferShares()) (see preallocate())
+    // IMPORTANT: Due to preallocation, sum(fees) may increase without distribute() if someone simply transfers the underlying token to another person
+    // IMPORTANT: There's no deallocation: every address that has been a holder or a beneficiary in the past will always have fees[address] >= defaultTally
+    // `if (balanceOf(address) == 0) assert(fees[address] >= defaultTally || fees[address] == 0)` // because marketers may receive fees while their balances are zero
+    // `if (balanceOf(address) != 0) assert(fees[address] >= defaultTally)` // because of preallocation
+    mapping(address => uint) internal fees;
+
+    // Used to preallocate the storage slot
+    // NOTE: `fees[recipient] >= preallocation`
+    uint internal constant preallocation = 1;
+
     // Decimals count (set once in the constructor)
     uint8 internal immutable precision;
 
-    // Percentage of sale distributed to the beneficiaries (as royalties / scaleOfShares)
-    uint public royalties;
-
-    // Percentage of sale distributed to the holders (as earnings / scaleOfShares)
-    // NOTE: can be set to zero to avoid the earnings
-    uint public earnings;
-
-    // Percentage of sale distributed to the operator (as fees / scaleOfShares)
-    uint public fees = scaleOfShares * 25 / 1000; // 2.5%
-
-    // Operator receives the fees
-    address payable public operator = payable(0x7554140235ad2D1Cc75452D2008336700C598Dc1);
-
-    // Quote asset balances available for withdrawal
-    // IMPORTANT: Due to preallocation, sum(tallies) may increase without distribute() if someone simply transfers the underlying token to another person (by design, to preallocate the storage slot)
-    // IMPORTANT: There's no deallocation: every address that has been a holder or a beneficiary in the past will always have tallies[address] >= defaultTally
-    // `if (balanceOf(address) == 0) then (tallies[address] == 0)` => false, because beneficiaries may receive tallies while their balances are zero
-    // `if (balanceOf(address) != 0) then (tallies[address] == defaultTally || tallies[address] > defaultTally)` => true, because of preallocation
-    mapping(address => uint) internal tallies;
-
-    // Real balance of contract (less than or equal to `address(this).balance - sum(tallies) - defaultTally * holders.length`)
-    // Needed to allow lazy withdrawals (no need to send transfers to every tax recipient in sell(), so the real balance of the contract is higher than quoteBalanceOfContract)
-    // Also needed to protect against breaking the contract logic by sending the quote currency to it directly
-    uint public quoteBalanceOfContract;
-
     // Incremental holder cost is ~11000 gas (with preallocation optimization)
     // Full distribution cost is ~11000 gas * 256 holders = ~2816000 gas
-    uint internal constant maxHoldersPerDistribution = 256;
-
-    // Used for preallocation: it is set on tallies for every holder
-    uint internal constant defaultTally = 1;
+    uint internal constant holdersPerDistributionMax = 256;
 
     error BlockTimestampMustBeLessThanOrEqualToDeadline();
-    error QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares();
-    error QuoteDeltaMustBeGreaterThanOrEqualToScaleOfShares();
+    error QuoteDeltaMustBeGreaterThanOrEqualTo2xScale();
+    error QuoteDeltaMustBeGreaterThanOrEqualToScale();
     error BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(uint baseDelta);
     error QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(uint quoteDelta);
     error BaseDeltaMustBeGreaterThanZero();
     error BaseDeltaProposedMustBeLessThanOrEqualToBalance();
     error NothingToWithdraw();
+    error ToAddressMustBeNotEqualToThisContractAddress();
     error AddressNotPayable(address addr);
     error BaseLimitMustBeGreaterOrEqualToBaseLimitMin();
     error BaseLimitMustBeLessOrEqualToBaseLimitMax();
@@ -92,90 +131,175 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
     error QuoteOffsetMustBeLessOrEqualToQuoteOffsetMax();
     error QuoteOffsetMustBeDivisibleByBaseLimit();
     error QuoteOffsetMustBeGreaterThanBaseLimit();
-    error CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-    error EarningsCanBeSetOnlyIfTotalSupplyIsZero();
-    error RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
-    error NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
-    error OnlyOperator();
-    error OperatorMustNotBeZeroAddress();
-    error OperatorMustNotBeContractAddress();
-    error ToAddressMustBeNotEqualToThisContractAddress();
+    error PriceParamsCanBeSetOnlyIfTotalSupplyIsZero();
+    error SharesLengthMustBeGreaterThanZero();
+    error SharesLengthMustBeEqualToRecipientsLength();
+    error SharesLengthMustBeEqualToControllersLength();
+    error SharesLengthMustBeEqualToGasLimitsLength();
+    error SharesByTypeLengthMustBeEqualToSharePathEnumLength();
+    error ControllersByTypeLengthMustBeEqualToSharePathEnumLength();
+    error PartyMustBeLessThanSharesLength();
+    error PathMustBeLessThanSharePathEnumLength();
+    error SumOfSharesMustBeLessThanOrEqualToScale();
+    error SumOfSharesOfPartyMustBeLessThanOrEqualToScale();
+    error ReferralsLengthMustBeEqualToSharesLength();
+    error OnlyController();
+    error OnlyRecipient();
+    error ControllerMustNotBeContractAddress();
+    error RecipientMustNotBeZeroAddress();
+    error RecipientMustNotBeContractAddress();
+    error CallFailed();
 
+    // Allow subscribing to only 1 event by using Trade instead of Buy and Sell
     event Trade(address indexed sender, bool isBuy, uint baseDelta, uint quoteDelta, uint quoteReceived);
     event Withdraw(address indexed sender, uint quoteReceived);
-    event SetBaseLimit(uint baseLimit);
-    event SetQuoteOffset(uint quoteOffset);
-    event SetRoyalties(uint royalties);
-    event SetEarnings(uint earnings);
-    event SetFees(uint fees);
-    event SetOperator(address operator);
+    event SetReferrals(address indexed sender, address[] referralsNew);
+    event SetIsRecognizedReferral(address indexed referral, uint indexed party, bool value);
+    event SetPriceParams(uint baseLimit, uint quoteOffset);
+    event SetShare(uint indexed party, SharePath indexed path, uint value);
+    event SetController(uint indexed party, SharePath indexed path, address controller);
+    event SetRecipient(uint indexed party, address recipient);
+    event SetGasLimit(uint indexed party, uint gasLimit);
 
-    constructor(string memory nameNew, string memory symbolNew, uint baseLimitNew, uint quoteOffsetNew, uint8 precisionNew, uint royaltiesNew, uint earningsNew, address payable[] memory beneficiariesNew, uint[] memory sharesNew) ERC20(nameNew, symbolNew) SharedOwnership(beneficiariesNew, sharesNew) Ownable() {
+    constructor(
+        string memory nameNew,
+        string memory symbolNew,
+        uint baseLimitNew,
+        uint quoteOffsetNew,
+        uint8 precisionNew,
+        uint[][] memory sharesNew,
+        address[][] memory controllersNew,
+        address[] memory recipientsNew,
+        uint[] memory gasLimitsNew
+    ) ERC20(nameNew, symbolNew) Ownable() {
         precision = precisionNew;
-        setCurveParametersInternal(baseLimitNew, quoteOffsetNew);
-        setTaxesInternal(royaltiesNew, earningsNew, fees /* using the old fees variable because it shouldn't be changed by the contract deployer */);
-        // operator is already set
-        // preallocate tallies
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            tallies[beneficiaries[i]] = defaultTally;
+        setPriceParamsInternal(baseLimitNew, quoteOffsetNew);
+        if (sharesNew.length == 0) revert SharesLengthMustBeGreaterThanZero();
+        if (sharesNew.length != controllersNew.length) revert SharesLengthMustBeEqualToControllersLength();
+        if (sharesNew.length != recipientsNew.length) revert SharesLengthMustBeEqualToRecipientsLength();
+        if (sharesNew.length != gasLimitsNew.length) revert SharesLengthMustBeEqualToGasLimitsLength();
+        for (uint i = 0; i < sharesNew.length; i++) {
+            if (sharesNew[i].length != uint(type(SharePath).max) + 1) revert SharesByTypeLengthMustBeEqualToSharePathEnumLength();
+            if (controllersNew[i].length != uint(type(SharePath).max) + 1) revert ControllersByTypeLengthMustBeEqualToSharePathEnumLength();
         }
+        shares = sharesNew;
+        controllers = controllersNew;
+        recipients = recipientsNew;
+        gasLimits = gasLimitsNew;
+        validateShares();
     }
 
-    function buy(uint baseDeltaMin, uint deadline) public virtual payable nonReentrant {
+    function buy(uint baseDeltaMin, uint deadline, address[] calldata referralsNew) public virtual payable nonReentrant {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
         (uint baseDelta, uint quoteDelta) = getBuyDeltas(msg.value);
-        // `quoteDelta < 2 * scaleOfShares` is needed because quoteDelta must be divisible by scaleOfShares in distribute()
-        // using `2 * scaleOfShares` instead of `scaleOfShares` because sell() calls saleTargetAmount(), which returns a smaller quoteDelta than was initially passed to buy() as msg.value
+        // `quoteDelta < 2 * scale` is needed because quoteDelta must be divisible by scale in distribute()
+        // using `2 * scale` instead of `scale` because sell() calls saleTargetAmount(), which returns a smaller quoteDelta than was initially passed to buy() as msg.value
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
-        if (quoteDelta < 2 * scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualTo2xScaleOfShares();
+        if (quoteDelta < 2 * scale) revert QuoteDeltaMustBeGreaterThanOrEqualTo2xScale();
         if (baseDelta < baseDeltaMin) revert BaseDeltaMustBeGreaterThanOrEqualToBaseDeltaMin(baseDelta);
         emit Trade(msg.sender, true, baseDelta, quoteDelta, 0);
         _mint(msg.sender, baseDelta);
-        quoteBalanceOfContract += quoteDelta;
+        quoteSupply += quoteDelta;
+        setReferralsInternal(referralsNew);
     }
 
-    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline) public virtual nonReentrant returns (uint quoteDistributed) {
+    function sell(uint baseDeltaProposed, uint quoteReceivedMin, uint deadline, bytes memory data) public virtual nonReentrant returns (uint quoteDistributed) {
         // slither-disable-next-line timestamp
         if (block.timestamp > deadline) revert BlockTimestampMustBeLessThanOrEqualToDeadline();
         if (baseDeltaProposed > balanceOf(msg.sender)) revert BaseDeltaProposedMustBeLessThanOrEqualToBalance();
         (uint baseDelta, uint quoteDelta) = getSellDeltas(baseDeltaProposed);
         if (baseDelta == 0) revert BaseDeltaMustBeGreaterThanZero();
-        if (quoteDelta < scaleOfShares) revert QuoteDeltaMustBeGreaterThanOrEqualToScaleOfShares();
-        quoteBalanceOfContract -= quoteDelta;
+        if (quoteDelta < scale) revert QuoteDeltaMustBeGreaterThanOrEqualToScale();
+        quoteSupply -= quoteDelta;
         quoteDistributed = distribute(quoteDelta);
         uint quoteReceived = quoteDelta - quoteDistributed;
         if (quoteReceived < quoteReceivedMin) revert QuoteReceivedMustBeGreaterThanOrEqualToQuoteReceivedMin(quoteReceived);
-        _burn(msg.sender, baseDelta); // IMPORTANT: _burn() must be called after distribute() because holders.length must be greater than 0 (a single holder must be able to sell back & receive earnings for himself)
+        _burn(msg.sender, baseDelta); // IMPORTANT: _burn() must be called after distribute() because holders.length must be greater than 0 (a single holder must be able to sell back & receive holdersFee for himself)
         emit Trade(msg.sender, false, baseDelta, quoteDelta, quoteReceived);
-        uint quoteWithdrawn = doWithdrawAndEmit();
-        payable(msg.sender).transfer(quoteReceived + quoteWithdrawn);
+        uint quoteWithdrawn = doWithdrawFeesAndEmit();
+        (bool success, ) = payable(msg.sender).call{value: quoteReceived + quoteWithdrawn}(data);
+        if (!success) revert CallFailed();
     }
 
-    function withdraw() public virtual nonReentrant {
-        uint quoteWithdrawn = doWithdrawAndEmit();
-        if (quoteWithdrawn == 0) revert NothingToWithdraw();
-        payable(msg.sender).transfer(quoteWithdrawn);
+    function withdrawFees(bytes memory data) public virtual nonReentrant {
+        uint quoteWithdrawn = doWithdrawFeesAndEmit();
+        if (quoteWithdrawn == 0) revert NothingToWithdraw(); // it's better to revert because the wallet will show a warning, and the user won't spend the money on a noop transaction
+        (bool success, ) = payable(msg.sender).call{value: quoteWithdrawn}(data);
+        if (!success) revert CallFailed();
     }
 
-    function doWithdrawAndEmit() internal returns (uint quoteWithdrawn) {
-        if (tallies[msg.sender] > defaultTally) {
-            quoteWithdrawn = tallies[msg.sender] - defaultTally;
+    function doWithdrawFeesAndEmit() internal returns (uint quoteWithdrawn) {
+        if (fees[msg.sender] > preallocation) {
+            quoteWithdrawn = fees[msg.sender] - preallocation;
             emit Withdraw(msg.sender, quoteWithdrawn);
-            tallies[msg.sender] = defaultTally;
+            fees[msg.sender] = preallocation;
         } else {
             quoteWithdrawn = 0;
         }
     }
 
-    function getBaseSupply(uint quoteSupply) internal view returns (uint baseSupply) {
-        baseSupply = baseLimit * quoteSupply / (quoteOffset + quoteSupply);
-        assert(baseSupply < baseLimit); // baseLimit must never be reached
+    /**
+     * Notes:
+     * - May increase fees[msg.sender] (this is correct because in the limit case where msg.sender is the only holder he must receive the holdersFee from his own sale)
+     */
+    function distribute(uint quoteDelta) internal returns (uint quoteDistributed) {
+        uint quoteDistributedToHolders = (quoteDelta * shares[0][uint(SharePath.root)]) / scale;
+        if (quoteDistributedToHolders != 0) {
+            quoteDistributed += distributeToHolders(quoteDistributedToHolders);
+        }
+
+        for (uint party = 1; party < shares.length; party++) {
+            uint quoteDistributedToParty = (quoteDelta * shares[party][uint(SharePath.root)]) / scale;
+            address referral = referrals[msg.sender][party];
+            if (referral != address(0)) {
+                // process referral fee
+                uint quoteDistributedToReferral = (quoteDistributedToParty * shares[party][uint(SharePath.rootReferral)]) / scale;
+                quoteDistributedToParty -= quoteDistributedToReferral;
+                fees[referral] += quoteDistributedToReferral;
+                quoteDistributed += quoteDistributedToReferral;
+                // process user discount
+                uint quoteDistributedToDiscount = (quoteDistributedToParty * shares[party][uint(SharePath.rootDiscount)]) / scale;
+                quoteDistributedToParty -= quoteDistributedToDiscount;
+                // the discount is automatically applied by not increasing quoteDistributed
+            }
+            if (quoteDistributedToParty != 0) {
+                // transfer directly instead of incrementing fees[] because the recipients[party] may be a smart contract with custom logic for further distribution
+                (bool success, ) = recipients[party].call{value: quoteDistributedToParty, gas: gasLimits[party]}("");
+                if (success) quoteDistributed += quoteDistributedToParty; // else give it back to the user by not increasing quoteDistributed
+            }
+        }
     }
 
-    function getQuoteSupply(uint baseSupply) internal view returns (uint quoteSupply) {
-        quoteSupply = quoteOffset * baseSupply / (baseLimit + baseSupply);
-        assert(baseSupply < baseLimit); // baseLimit must never be reached
+    function distributeToHolders(uint quoteDistributedToHolders) internal returns (uint quoteDistributed) {
+        uint i;
+        uint offset;
+        uint length = holders.length;
+        uint fee;
+        uint totalSupplyLocal;
+        uint holdersMax = length < holdersPerDistributionMax ? length : holdersPerDistributionMax;
+        uint baseOffset = getRandom(quoteDistributedToHolders) % holders.length; // 0 <= offset < holders.length
+        // It's OK to use a separate loop to calculate totalSupplyLocal because the gas cost is much lower if you access the same storage slot multiple times within transaction
+        for (i = 0; i < holdersMax; i++) {
+            offset = addmod(baseOffset, i, length); // calculating offset with wrap-around
+            totalSupplyLocal += balanceOf(holders[offset]);
+        }
+        for (i = 0; i < holdersMax; i++) {
+            offset = addmod(baseOffset, i, length); // calculating offset with wrap-around
+            fee = (quoteDistributedToHolders * balanceOf(holders[offset])) / totalSupplyLocal;
+            fees[holders[offset]] += fee; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
+            quoteDistributed += fee;
+        }
+    }
+
+    function getBaseSupply(uint quoteSupplyNew) internal view returns (uint baseSupplyNew) {
+        baseSupplyNew = baseLimit * quoteSupply / (quoteOffset + quoteSupply);
+        assert(baseSupplyNew < baseLimit); // baseLimit must never be reached
+    }
+
+    function getQuoteSupply(uint baseSupplyNew) internal view returns (uint quoteSupplyNew) {
+        quoteSupplyNew = quoteOffset * baseSupplyNew / (baseLimit + baseSupplyNew);
+        assert(baseSupplyNew < baseLimit); // baseLimit must never be reached
     }
 
     /**
@@ -185,12 +309,12 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
      * - "quoteSupplyOld" is "quoteBalanceOfContract"
      */
     function getBuyDeltas(uint quoteDeltaProposed) internal returns (uint baseDelta, uint quoteDelta) {
-        uint quoteSupplyProposed = quoteBalanceOfContract + quoteDeltaProposed;
+        uint quoteSupplyProposed = quoteSupply + quoteDeltaProposed;
         uint baseSupplyNew = getBaseSupply(quoteSupplyProposed);
         uint quoteSupplyNew = getQuoteSupply(baseSupplyNew); // ensure that quoteSupply is always calculated precisely from baseSupply
         assert(quoteSupplyNew <= quoteSupplyProposed); // due to integer division
         baseDelta = baseSupplyNew - totalSupply();
-        quoteDelta = quoteSupplyNew - quoteBalanceOfContract;
+        quoteDelta = quoteSupplyNew - quoteSupply;
     }
 
     /**
@@ -203,40 +327,91 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
         uint baseSupplyProposed = totalSupply() - baseDeltaProposed;
         uint quoteSupplyProposed = getQuoteSupply(baseSupplyProposed);
         baseDelta = totalSupply() - baseSupplyProposed;
-        quoteDelta = quoteBalanceOfContract - quoteSupplyProposed;
+        quoteDelta = quoteSupply - quoteSupplyProposed;
     }
 
-    function setCurveParameters(uint baseLimitNew, uint quoteOffsetNew) external onlyOwner nonReentrant {
-        if (totalSupply() != 0) revert CurveParametersCanBeSetOnlyIfTotalSupplyIsZero();
-        setCurveParametersInternal(baseLimitNew, quoteOffsetNew);
-        emit SetBaseLimit(baseLimitNew);
-        emit SetQuoteOffset(quoteOffsetNew);
+    // allow the user to change his/her referrals
+    function setReferrals(address[] calldata referralsNew) external nonReentrant {
+        setReferralsInternal(referralsNew);
+        emit SetReferrals(msg.sender, referralsNew);
     }
 
-    // using separate setRoyalties, setEarnings, setFees because they have different modifiers (onlyOwner vs onlyOperator)
-
-    function setRoyalties(uint royaltiesNew) external onlyOwner nonReentrant {
-        setTaxesInternal(royaltiesNew, earnings, fees);
-        emit SetRoyalties(royaltiesNew);
+    function setIsRecognizedReferral(address referral, uint party, bool value) external onlyValidShareParams(party, SharePath.root) onlyOwner nonReentrant {
+        isRecognizedReferral[referral][party] = value;
+        emit SetIsRecognizedReferral(referral, party, value);
     }
 
-    function setEarnings(uint earningsNew) external onlyOwner nonReentrant {
-        if (totalSupply() != 0) revert EarningsCanBeSetOnlyIfTotalSupplyIsZero();
-        setTaxesInternal(royalties, earningsNew, fees);
-        emit SetEarnings(earningsNew);
+    function setPriceParams(uint baseLimitNew, uint quoteOffsetNew) external onlyOwner nonReentrant {
+        if (totalSupply() != 0) revert PriceParamsCanBeSetOnlyIfTotalSupplyIsZero();
+        setPriceParamsInternal(baseLimitNew, quoteOffsetNew);
+        emit SetPriceParams(baseLimitNew, quoteOffsetNew);
     }
 
-    function setFees(uint feesNew) external onlyOperator nonReentrant {
-        setTaxesInternal(royalties, earnings, feesNew);
-        emit SetFees(feesNew);
+    function setShare(uint party, SharePath path, uint shareNew) external onlyValidShareParams(party, path) onlyController(party, path) nonReentrant {
+        shares[party][uint(path)] = shareNew;
+        validateShares();
+        emit SetShare(party, path, shareNew);
     }
 
-    function setOperator(address payable operatorNew) external onlyOperator nonReentrant {
-        setOperatorInternal(operatorNew);
-        emit SetOperator(operatorNew);
+    function setController(uint party, SharePath path, address controllerNew) external onlyValidShareParams(party, path) onlyController(party, path) nonReentrant {
+        validateControllerNew(controllerNew);
+        controllers[party][uint(path)] = controllerNew;
+        emit SetController(party, path, controllerNew);
     }
 
-    function setCurveParametersInternal(uint baseLimitNew, uint quoteOffsetNew) internal {
+    function setRecipient(uint party, address recipientNew) external onlyValidShareParams(party, SharePath.root) onlyController(party, SharePath.root) nonReentrant {
+        validateRecipientNew(recipientNew);
+        recipients[party] = recipientNew;
+        emit SetRecipient(party, recipientNew);
+    }
+
+    function setGasLimit(uint party, uint gasLimitNew) external onlyValidShareParams(party, SharePath.root) onlyController(party, SharePath.root) nonReentrant {
+        gasLimits[party] = gasLimitNew;
+        emit SetGasLimit(party, gasLimitNew);
+    }
+
+    function validateShares() internal view {
+        uint sumOfShares;
+        uint sumOfSharesOfParty;
+        for (uint party = 0; party < shares.length; party++) {
+            // pre-check to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
+            if (shares[party][uint(SharePath.root)] > scale) revert SumOfSharesOfPartyMustBeLessThanOrEqualToScale();
+            sumOfShares += shares[party][uint(SharePath.root)];
+            sumOfSharesOfParty = 0;
+            for (uint path = 1 /* skip sharePath.root */; path < uint(type(SharePath).max); path++) {
+                // pre-check to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
+                if (shares[party][path] > scale) revert SumOfSharesOfPartyMustBeLessThanOrEqualToScale();
+                sumOfSharesOfParty += shares[party][path];
+            }
+            if (sumOfSharesOfParty > scale) revert SumOfSharesOfPartyMustBeLessThanOrEqualToScale();
+            // if (sumOfSharesOfParty == scale) then the recipient will get zero quote amount
+        }
+        if (sumOfShares > scale) revert SumOfSharesMustBeLessThanOrEqualToScale();
+        // if (sumOfShares == scale) then the seller will get zero quote amount
+    }
+
+    function validateControllerNew(address controllerNew) internal view {
+        // allow setting controller to zero address (allow to ensure the share value can't be changed)
+        if (controllerNew == address(this)) revert ControllerMustNotBeContractAddress();
+    }
+
+    function validateRecipientNew(address recipientNew) internal view {
+        if (recipientNew == address(0)) revert RecipientMustNotBeZeroAddress();
+        if (recipientNew == address(this)) revert RecipientMustNotBeContractAddress();
+    }
+
+    function setReferralsInternal(address[] calldata referralsNew) internal {
+        if (referralsNew.length != shares.length) revert ReferralsLengthMustBeEqualToSharesLength();
+        for (uint i = 0; i < referralsNew.length; i++) {
+            if (referralsNew[i] == address(0)) continue;
+            if (referrals[msg.sender][i] == address(0) || isRecognizedReferral[referralsNew[i]][i]) {
+                referrals[msg.sender][i] = referralsNew[i];
+                preallocate(referralsNew[i]);
+            }
+        }
+    }
+
+    function setPriceParamsInternal(uint baseLimitNew, uint quoteOffsetNew) internal {
         if (baseLimitNew < baseLimitMin) revert BaseLimitMustBeGreaterOrEqualToBaseLimitMin();
         if (baseLimitNew > baseLimitMax) revert BaseLimitMustBeLessOrEqualToBaseLimitMax();
         if (quoteOffsetNew < quoteOffsetMin) revert QuoteOffsetMustBeGreaterOrEqualToQuoteOffsetMin();
@@ -248,95 +423,26 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
         quoteOffset = quoteOffsetNew;
     }
 
-    function setOperatorInternal(address payable operatorNew) internal {
-        if (operatorNew == address(0)) revert OperatorMustNotBeZeroAddress();
-        if (operatorNew == address(this)) revert OperatorMustNotBeContractAddress();
-        operator = operatorNew;
-    }
-
-    // using a single function for all three taxes to ensure their sum < scaleOfShares (revert otherwise)
-    function setTaxesInternal(uint royaltiesNew, uint earningsNew, uint feesNew) internal {
-        // checking each value separately first to ensure the sum doesn't overflow (otherwise Echidna reports an overflow)
-        if (royaltiesNew >= scaleOfShares || earningsNew >= scaleOfShares || feesNew >= scaleOfShares || royaltiesNew + earningsNew + feesNew >= scaleOfShares) revert RoyaltiesPlusEarningsPlusFeesMustBeLessThanScaleOfShares();
-        if (totalSupply() != 0 && (royaltiesNew > royalties || earningsNew > earnings || feesNew > fees)) revert NewTaxesMustBeLessThanOrEqualToOldTaxesOrTotalSupplyMustBeZero();
-        royalties = royaltiesNew;
-        earnings = earningsNew;
-        fees = feesNew;
-    }
-
-    /**
-     * Distributes profit between beneficiaries and holders
-     * Beneficiaries receive shares of profit
-     * Holders receive shares of profit remaining after beneficiaries
-     *
-     * Notes:
-     * - May increase tallies[msg.sender] (this is correct because in the limit case where msg.sender is the only holder he must receive the earnings from his own sale)
-     */
-    function distribute(uint quoteDelta) internal returns (uint quoteDistributed) {
-        // common loop variables
-        uint i;
-        uint length;
-        uint total;
-        address recipient;
-
-        // distribute to beneficiaries
-        uint quoteDistributedToBeneficiaries = (quoteDelta * royalties) / scaleOfShares;
-        if (quoteDistributedToBeneficiaries != 0) {
-            length = beneficiaries.length;
-            for (i = 0; i < length; i++) {
-                recipient = beneficiaries[i];
-                total = getShareAmount(quoteDistributedToBeneficiaries, recipient);
-                tallies[recipient] += total;
-                quoteDistributed += total;
-            }
-        }
-
-        // distribute to holders
-        uint quoteDistributedToHolders = (quoteDelta * earnings) / scaleOfShares;
-        if (quoteDistributedToHolders != 0) {
-            length = holders.length;
-            uint maxHolders = length < maxHoldersPerDistribution ? length : maxHoldersPerDistribution;
-            uint baseOffset = getRandom(quoteDistributedToHolders) % holders.length; // 0 <= offset < holders.length
-            uint offset;
-            uint localTotalSupply;
-            // NOTE: It's OK to use a separate loop to calculate localTotalSupply because the gas cost is much lower if you access the same storage slot multiple times within transaction
-            for (i = 0; i < maxHolders; i++) {
-                offset = addmod(baseOffset, i, length); // calculating offset with wrap-around
-                localTotalSupply += balanceOf(holders[offset]);
-            }
-            for (i = 0; i < maxHolders; i++) {
-                offset = addmod(baseOffset, i, length); // calculating offset with wrap-around
-                recipient = holders[offset];
-                total = (quoteDistributedToHolders * balanceOf(recipient)) / localTotalSupply;
-                tallies[recipient] += total; // always 5000 gas, since we preallocate the storage slot in _afterTokenTransfer
-                quoteDistributed += total;
-            }
-        }
-
-        uint quoteDistributedToOperator = (quoteDelta * fees) / scaleOfShares;
-        if (quoteDistributedToOperator != 0) {
-            operator.transfer(quoteDistributedToOperator);
-            quoteDistributed += quoteDistributedToOperator;
-        }
-    }
-
-    modifier onlyOperator() {
-        if (msg.sender != operator) revert OnlyOperator();
+    modifier onlyValidShareParams(uint party, SharePath path) {
+        if (party >= shares.length) revert PartyMustBeLessThanSharesLength();
+        if (path > type(SharePath).max) revert PathMustBeLessThanSharePathEnumLength();
         _;
     }
 
-    /**
-     * The code is intentionally equal to onlyOperator()
-     */
-    modifier onlyKeeper() override {
-        if (msg.sender != operator) revert OnlyOperator();
+    modifier onlyController(uint party, SharePath path) {
+        if (msg.sender != controllers[party][uint(path)]) revert OnlyController();
+        _;
+    }
+
+    modifier onlyRecipient(uint party) {
+        if (msg.sender != recipients[party]) revert OnlyRecipient();
         _;
     }
 
     /* View functions */
 
-    function withdrawable(address account) public view returns (uint) {
-        return (tallies[account] <= defaultTally) ? 0 : tallies[account] - defaultTally;
+    function withdrawableFees(address account) public view returns (uint) {
+        return (fees[account] <= preallocation) ? 0 : fees[account] - preallocation;
     }
 
     /**
@@ -388,17 +494,22 @@ contract Fairpool is ERC20Enumerable, SharedOwnership, Recoverable, ReentrancyGu
         }
     }
 
-    function addBeneficiary(address target) internal virtual override {
-        super.addBeneficiary(target);
-        preallocate(target);
-    }
-
     function preallocate(address target) internal {
         // `if` is necessary to prevent overwriting an existing positive tally
-        if (tallies[target] == 0) tallies[target] = defaultTally;
+        if (fees[target] == 0) fees[target] = preallocation;
     }
 
     function decimals() public view virtual override returns (uint8) {
         return precision;
     }
+
+    function recoverERC20(IERC20 token, uint256 amount) public onlyOwner {
+        token.transfer(msg.sender, amount);
+    }
+
+    function recoverERC721(IERC721 token, uint256 tokenId) public onlyOwner {
+        token.safeTransferFrom(address(this), msg.sender, tokenId);
+    }
+
+    // NOTE: ERC1155 implement only safeTransferFrom, which reverts if the user sends the tokens to a contract that does not implement IERC1155Receiver
 }

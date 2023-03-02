@@ -6,50 +6,50 @@ import "./SharedOwnership.sol";
 
 contract SharedOwnershipTest is SharedOwnership, Util {
     uint[] $shares;
-    address payable[] $beneficiaries;
+    address payable[] $marketers;
 
-    constructor() SharedOwnership($beneficiaries, $shares) {}
+    constructor() SharedOwnership($marketers, $shares) {}
 
     function test() public {
-        beneficiariesIsBounded();
-        beneficiariesAreUnique();
-        beneficiariesAreNonZero();
+        marketersIsBounded();
+        marketersAreUnique();
+        marketersAreNonZero();
         sharesArePositive();
         sharesSumEqualsScale();
-        indexesOfBeneficiariesMatchBeneficiaries();
+        indexesOfMarketersMatchMarketers();
     }
 
-    function beneficiariesIsBounded() internal {
-        ensureGreater(beneficiaries.length, 0, "beneficiaries.length", "0");
-        ensureLessEqual(beneficiaries.length, maxBeneficiaries, "beneficiaries.length", "maxBeneficiaries");
+    function marketersIsBounded() internal {
+        ensureGreater(marketers.length, 0, "marketers.length", "0");
+        ensureLessEqual(marketers.length, marketersLengthMax, "marketers.length", "maxMarketers");
     }
 
-    mapping(address => bool) internal beneficiariesUniqueCache;
-    function beneficiariesAreUnique() internal {
-        ensureNoDuplicateInArrayOfAddresses(beneficiariesUniqueCache, beneficiaries, "beneficiariesAreUnique");
+    mapping(address => bool) internal marketersUniqueCache;
+    function marketersAreUnique() internal {
+        ensureNoDuplicateInArrayOfAddresses(marketersUniqueCache, marketers, "marketersAreUnique");
     }
 
-    function beneficiariesAreNonZero() internal {
-        ensureNotIncludes(beneficiaries, address(0), "beneficiaries", "address(0)");
+    function marketersAreNonZero() internal {
+        ensureNotIncludes(marketers, address(0), "marketers", "address(0)");
     }
 
     function sharesArePositive() internal {
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            ensureGreater(shares[beneficiaries[i]], 0, string.concat("shares[beneficiaries[", toString(i),"]]"), "0");
+        for (uint i = 0; i < marketers.length; i++) {
+            ensureGreater(shares[marketers[i]], 0, string.concat("shares[marketers[", toString(i),"]]"), "0");
         }
     }
 
     function sharesSumEqualsScale() internal {
         uint sum = 0;
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            sum += shares[beneficiaries[i]];
+        for (uint i = 0; i < marketers.length; i++) {
+            sum += shares[marketers[i]];
         }
-        ensureEqual(sum, scaleOfShares, "sum(shares)", "scale");
+        ensureEqual(sum, scale, "sum(shares)", "scale");
     }
 
-    function indexesOfBeneficiariesMatchBeneficiaries() internal {
-        for (uint i = 0; i < beneficiaries.length; i++) {
-            ensureEqual(indexesOfBeneficiaries[beneficiaries[i]], i, string.concat("indexesOfBeneficiaries[beneficiaries[", toString(i),"]]"), "i");
+    function indexesOfMarketersMatchMarketers() internal {
+        for (uint i = 0; i < marketers.length; i++) {
+            ensureEqual(marketersIndexes[marketers[i]], i, string.concat("indexesOfMarketers[marketers[", toString(i),"]]"), "i");
         }
     }
 }
