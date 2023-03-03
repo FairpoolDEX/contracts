@@ -70,11 +70,11 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     enum SharePath { root, rootReferral, rootDiscount }
 
     // Percentage of sale distributed to the parties
-    // Example usage: shares[party][sharePath]
+    // Example usage: shares[party][SharePath]
     uint[][] public shares;
 
     // Addresses that can change the shares
-    // Example usage: controllers[party][sharePath]
+    // Example usage: controllers[party][SharePath]
     address[][] public controllers;
 
     // Recipients of fees
@@ -85,7 +85,8 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     uint[] public gasLimits;
 
     // Recipients of referral fees
-    // Example usage: referrals[user][party]
+    // Example usage: referrals[user][party - 1]
+    // IMPORTANT: party index is reduced by 1 (referrals[i] must receive shares[i + 1][SharePath.rootReferral])
     mapping(address => address[]) public referrals;
 
     // Example usage: isRecognizedReferral[referral][party]
@@ -251,7 +252,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
 
         for (uint party = 1; party < shares.length; party++) {
             uint quoteDistributedToParty = (quoteDelta * shares[party][uint(SharePath.root)]) / scale;
-            address referral = referrals[msg.sender][party];
+            address referral = referrals[msg.sender][party - 1];
             if (referral != address(0)) {
                 // process referral fee
                 uint quoteDistributedToReferral = (quoteDistributedToParty * shares[party][uint(SharePath.rootReferral)]) / scale;
