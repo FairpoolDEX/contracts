@@ -14,7 +14,9 @@ contract FairpoolOwnerOperator is Fairpool {
         address[][] memory controllersNew,
         address[] memory recipientsNew,
         uint[] memory gasLimitsNew
-    ) Fairpool(
+    )
+    // forward the arguments
+    Fairpool(
         nameNew,
         symbolNew,
         baseLimitNew,

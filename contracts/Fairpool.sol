@@ -264,9 +264,10 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
                 // the discount is automatically applied by not increasing quoteDistributed
             }
             if (quoteDistributedToParty != 0) {
-                // transfer directly instead of incrementing fees[] because the recipients[party] may be a smart contract with custom logic for further distribution
-                (bool success, ) = recipients[party].call{value: quoteDistributedToParty, gas: gasLimits[party]}("");
-                if (success) quoteDistributed += quoteDistributedToParty; // else give it back to the user by not increasing quoteDistributed
+                // recipients[party] may be a smart contract with custom logic for further distribution
+                // if it's a smart contract, it must call withdrawFees() and perform the distribution before any update to the distribution schema (for example: if it's a smart contract that distributes the fees proportionally to the balances of its token, it must call withdrawFees() and perform the distribution in its own _beforeTokenTransfer())
+                fees[recipients[party]] += quoteDistributedToParty;
+                quoteDistributed += quoteDistributedToParty;
             }
         }
     }
