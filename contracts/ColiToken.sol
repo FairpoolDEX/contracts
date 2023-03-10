@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
@@ -101,7 +101,6 @@ contract ColiToken is OwnableUpgradeable, ERC20PausableUpgradeable {
         require(vestingTypeIndex < vestingTypes.length, "Invalid vestingTypeIndex");
 
         VestingType memory vestingType = vestingTypes[vestingTypeIndex];
-        uint256 addressesLength = addresses.length;
 
         for (uint256 i = 0; i < addressesLength; i++) {
             address _address = addresses[i];
