@@ -66,6 +66,9 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     // Also needed to protect against breaking the contract logic by sending the quote currency to it directly
     uint public quoteSupply;
 
+    // PRNG seed used for hardening the generator against manipulation (not preventing it completely, but increasing the cost)
+    uint private seed;
+
     // different share distribution paths
     enum SharePath { root, rootReferral, rootDiscount }
 
@@ -280,7 +283,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
         uint fee;
         uint totalSupplyLocal;
         uint holdersMax = length < holdersPerDistributionMax ? length : holdersPerDistributionMax;
-        uint baseOffset = getRandom(quoteDistributedToHolders) % holders.length; // 0 <= offset < holders.length
+        uint baseOffset = getRandom(quoteDistributedToHolders) % holders.length; // 0 <= baseOffset < holders.length
         // It's OK to use a separate loop to calculate totalSupplyLocal because the gas cost is much lower if you access the same storage slot multiple times within transaction
         for (i = 0; i < holdersMax; i++) {
             offset = addmod(baseOffset, i, length); // calculating offset with wrap-around
@@ -448,10 +451,20 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * This PRNG is potentially insecure. However, it is only used to determine the base offset for the profit distribution. The only people who can benefit from gaming this function are current token holders (note that the seller is not included in the distribution because the _burn() is called before distribute()). Gaming this function requires collaboration between a miner and a seller, and only benefits multiple existing token holders. Therefore, we think that the risk of manipulation is low.
+     * This PRNG can potentially be exploited.
+     * However, it is only used to determine the base offset for the profit distribution.
+     * The only people who can benefit from gaming this function are current token holders.
+     * Gaming this function requires the manipulator to have a pre-existing balance, and only benefits multiple existing token holders. Therefore, we think that the risk of manipulation is low.
+     * Also, the reward received from manipulation depends on the balance of the manipulator - if they have a small amount of tokens, they won't profit much from the attack
+     * They could also attempt to make multiple buy transactions (count = `holdersPerDistributionMax`) from different addresses to secure a continuous sequence of addresses in the distribution.
+     * However, that could be broken by previous users selling the tokens and triggering a shuffle of `holders` array
+     * Additionally, the `getRandom` function takes the `input` argument, which is equal to `quoteDistributedToHolders` at call site, which is calculated from `quoteDelta`, which is set by the user
+     * Additionally, the `getRandom` function uses the `seed` variable from contract storage that changes with each transaction, so the manipulator would have to know all previous transactions in the block (= must collaborate with the current validator)
+     * The "sandwich manipulation" is also impractical since the manipulator would have to pay fees in the sell transaction of the sandwich (sandwich = a sequence of 3 transactions where 1st transaction is manipulator buy transaction, 2nd transaction is user sell transaction, 3rd transaction is manipulator sell transaction)
      */
-    function getRandom(uint input) internal view returns (uint) {
-        return uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty, blockhash(block.number - 1), msg.sender, input)));
+    function getRandom(uint input) internal returns (uint) {
+        seed = uint(keccak256(abi.encodePacked(seed, block.timestamp, block.difficulty, block.coinbase, blockhash(block.number - 1), msg.sender, input)));
+        return seed;
     }
 
     /* Pure functions */

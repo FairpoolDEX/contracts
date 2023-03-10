@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { toBackendAmountBND } from '../libs/utils/bignumber.convert'
+import { toBackendAmountBND } from '../libs/utils/BigNumber/conversions'
 import { writeBalancesCSV } from '../utils-local/balance'
 import { getRunnableContext, RunnableContext } from '../utils-local/context/getRunnableContext'
 import { RunnableTaskArguments } from '../utils-local/RunnableTaskArguments'
@@ -21,7 +21,7 @@ import { todo } from 'libs/utils/todo'
 import { mapAsync } from '../libs/utils/promise'
 import { Filename } from '../libs/utils/filesystem'
 import { bn } from '../libs/bn/utils'
-import { num } from '../libs/utils/bignumber'
+import { num } from '../libs/utils/BigNumber/utils'
 import { BN } from '../libs/bn'
 
 export async function writeTotalsTask(args: WriteTotalsTaskArguments, hre: HardhatRuntimeEnvironment): Promise<void> {

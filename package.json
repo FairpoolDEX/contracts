@@ -18,7 +18,7 @@
     "lint:markdown:text": "markdownlint --fix --ignore-path .gitignore",
     "lint:markdown:links": "remark --use remark-validate-links --use remark-lint-no-dead-urls --ignore-path .gitignore -q -f",
     "test": "FEES=20:1 SILENCE_ENV_VAR=true hardhat --show-stack-traces test",
-    "test:ci": "rm -r cache && REPLAY=false yarn test",
+    "test:ci": "rm -rf cache && REPLAY=false yarn test",
     "test:watch": "FEES=20:1 SILENCE_ENV_VAR=true hardhat --show-stack-traces watch test",
     "coverage": "FEES=20:1 yarn build && FEES=20:1 SILENCE_ENV_VAR=true hardhat coverage --temp artifacts",
     "flatten": "FEES=20:1 SILENCE_ENV_VAR=true hardhat flatten contracts/Fairpool.sol > /tmp/temp && cat /tmp/temp | grep -v SPDX | grep -v 'MAX_FEE =' | grep -v 'MAX_PRIORITY_FEE =' > /tmp/Fairpool.flat.sol",

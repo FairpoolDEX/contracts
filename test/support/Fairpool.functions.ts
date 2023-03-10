@@ -8,13 +8,14 @@ import { AmountBN } from '../../libs/ethereum/models/AmountBN'
 import { getSharePercent } from '../../libs/fairpool/utils'
 import { ethers } from 'hardhat'
 import { $zero } from '../../data/allAddresses'
+import { todo } from '../../libs/utils/todo'
 
 export async function buy(fairpool: Fairpool, signer: SignerWithAddress, quoteDeltaProposed: BigNumber) {
-  return fairpool.connect(signer).buy(0, MaxUint256, { value: quoteDeltaProposed })
+  return fairpool.connect(signer).buy(0, MaxUint256, [], { value: quoteDeltaProposed })
 }
 
 export async function sell(fairpool: Fairpool, signer: SignerWithAddress, baseDeltaProposed: BigNumber) {
-  return fairpool.connect(signer).sell(baseDeltaProposed, 0, MaxUint256)
+  return fairpool.connect(signer).sell(baseDeltaProposed, 0, MaxUint256, '')
 }
 
 export async function selloff(fairpool: Fairpool, signer: SignerWithAddress) {
@@ -49,7 +50,7 @@ export interface SupplyStats {
 export async function getSupplyStats(fairpool: Fairpool): Promise<SupplyStats> {
   return {
     baseSupply: await fairpool.totalSupply(),
-    quoteSupply: await fairpool.quoteBalanceOfContract(),
+    quoteSupply: await fairpool.quoteSupply(),
   }
 }
 
@@ -69,12 +70,13 @@ export async function getProfit(slope: BN, weight: BN, owner: SignerWithAddress,
   const fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
     'Abraham Lincoln Token',
     'ABRA',
-    slope,
-    weight,
-    royalties,
-    earnings,
-    [],
-    [],
+    todo(bn(0)),
+    todo(bn(0)),
+    bn(18),
+    todo([]),
+    todo([]),
+    todo([]),
+    todo([]),
   )) as unknown as Fairpool
   const fairpool = fairpoolAsOwner.connect($zero)
   const quoteBalanceBefore = await bob.getBalance()

@@ -29,7 +29,7 @@ import { parseTradeEvent, TradeEventTopic } from '../../libs/fairpool/models/Tra
 import { fromRawEvent } from '../../utils-local/fromRawEvent'
 import { createWriteStream } from 'fs'
 import { withCleanEthersError } from '../../utils-local/ethers/withCleanEthersError'
-import { BaseDecimals, BaseScale, DefaultBaseLimit, DefaultQuoteOffset, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants'
+import { BaseScale, DefaultBaseLimit, DefaultPrecision, DefaultQuoteOffset, QuoteDecimals, QuoteScale } from '../../libs/fairpool/constants'
 import { sumFees } from '../../utils-local/ethers/sumFees'
 import { getContractBalance } from '../../utils-local/ethers/getContractBalance'
 import { zero } from '../../libs/bn/constants'
@@ -37,6 +37,7 @@ import { AmountBN } from '../../libs/ethereum/models/AmountBN'
 import { fromTradeEventPairToCsv, tradeEventPairCsvColumns } from '../../libs/fairpool/models/TradeEvent/fromTradeEventToCsv'
 import { toPrevNextMaybePairs } from '../../libs/generic/models/PrevNext/toPrevNextMaybePairs'
 import { getSharePercent, getWeightPercent } from '../../libs/fairpool/utils'
+import { todo } from '../../libs/utils/todo'
 
 describe.skip('Fairpool', async function () {
   let signers: SignerWithAddress[]
@@ -122,7 +123,7 @@ describe.skip('Fairpool', async function () {
     // weight = DefaultWeight
     baseLimit = DefaultBaseLimit
     quoteOffset = DefaultQuoteOffset
-    precision = BaseDecimals
+    precision = DefaultPrecision
     royalties = getSharePercent(30)
     earnings = getSharePercent(20)
     fairpoolAsOwner = (await fairpoolFactory.connect(owner).deploy(
@@ -131,10 +132,14 @@ describe.skip('Fairpool', async function () {
       baseLimit,
       quoteOffset,
       precision,
-      royalties,
-      earnings,
-      [ben.address, bob.address],
-      [getSharePercent(12), getSharePercent(88)]
+      todo([]),
+      todo([]),
+      todo([]),
+      todo([]),
+      // royalties,
+      // earnings,
+      // [ben.address, bob.address],
+      // [getSharePercent(12), getSharePercent(88)]
     )) as unknown as Fairpool
     fairpool = fairpoolAsOwner.connect($zero)
     fairpoolAsBob = fairpool.connect(bob)
@@ -142,7 +147,8 @@ describe.skip('Fairpool', async function () {
     fairpoolAsSally = fairpool.connect(sally)
     fairpoolAsOperator = fairpool.connect(operator)
 
-    await fairpoolAsOwner.setOperator(operator.address)
+    // await fairpoolAsOwner.setOperator(operator.address)
+    todo(undefined, 'Set the operator for the Fairpool contract (options: change constructor arguments, add a separate call)')
 
     // denominator = fairpool.denominator()
     // bid = await fairpoolAsBob.bid()
@@ -160,9 +166,10 @@ describe.skip('Fairpool', async function () {
   })
 
   async function unsetTaxes() {
-    await fairpoolAsOwner.setRoyalties(0)
-    await fairpoolAsOwner.setEarnings(0)
-    await fairpoolAsOperator.setFees(0)
+    // await fairpoolAsOwner.setRoyalties(0)
+    // await fairpoolAsOwner.setEarnings(0)
+    // await fairpoolAsOperator.setFees(0)
+    return todo()
   }
 
   /**
@@ -207,7 +214,7 @@ describe.skip('Fairpool', async function () {
     const quoteDelta = quoteDeltaMinStatic
     const buyTx = await buy(fairpool, bob, quoteDelta)
     const contractQuoteBalanceExternalAfterBuy = await getContractBalance(fairpool)
-    const contractQuoteBalanceInternalAfterBuy = await fairpool.quoteBalanceOfContract()
+    const contractQuoteBalanceInternalAfterBuy = await fairpool.quoteSupply()
     expect(quoteDelta).to.equal(contractQuoteBalanceExternalAfterBuy)
     expect(quoteDelta).to.equal(contractQuoteBalanceInternalAfterBuy)
     const during = await getBalances(fairpool, bob)
@@ -358,17 +365,18 @@ describe.skip('Fairpool', async function () {
   //   expect(quoteBufferExpectedD).to.equal(quoteBufferActualD)
   // })
 
-  fest('setOperator', async () => {
-    // before setOperator(bob.address)
-    await expect(fairpoolAsBob.setOperator(bob.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
-    await fairpoolAsOperator.setOperator(bob.address)
-    const operator1 = await fairpool.operator()
-    expect(operator1).to.equal(bob.address)
-    // after setOperator(bob.address)
-    await expect(fairpoolAsOperator.setOperator(owner.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
-    await fairpoolAsBob.setOperator(operator.address)
-    const operator2 = await fairpool.operator()
-    expect(operator2).to.equal(operator.address)
+  fest.skip('setOperator', async () => {
+    // // before setOperator(bob.address)
+    // await expect(fairpoolAsBob.setOperator(bob.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    // await fairpoolAsOperator.setOperator(bob.address)
+    // const operator1 = await fairpool.operator()
+    // expect(operator1).to.equal(bob.address)
+    // // after setOperator(bob.address)
+    // await expect(fairpoolAsOperator.setOperator(owner.address)).to.be.revertedWithCustomError(fairpool, 'OnlyOperator')
+    // await fairpoolAsBob.setOperator(operator.address)
+    // const operator2 = await fairpool.operator()
+    // expect(operator2).to.equal(operator.address)
+    return todo()
   })
 
   fest('setRoyalties', async () => {
