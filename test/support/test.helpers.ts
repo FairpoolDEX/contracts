@@ -3,7 +3,7 @@ import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { expect } from '../../utils-local/expect'
 import { Ethers } from '../../utils-local/types'
 import { Address } from '../../models/Address'
-import { MaxUint256 } from '../../libs/ethereum/constants'
+import { uint256Max } from '../../libs/bn/constants'
 
 type TimeTravelCallback<T> = () => Promise<T>;
 
@@ -62,8 +62,8 @@ export async function expectBalance(token: Contract, address: Address, amount: B
 }
 
 export async function addLiquidity(router: Contract, token0: Contract, token1: Contract, token0Amount: BigNumber, token1Amount: BigNumber, LPTokensReceivingAddress: string, deadline = Number.MAX_SAFE_INTEGER): Promise<void> {
-  await token0.approve(router.address, MaxUint256)
-  await token1.approve(router.address, MaxUint256)
+  await token0.approve(router.address, uint256Max)
+  await token1.approve(router.address, uint256Max)
   await router.addLiquidity(
     token0.address,
     token1.address,
@@ -72,7 +72,7 @@ export async function addLiquidity(router: Contract, token0: Contract, token1: C
     token0Amount,
     token1Amount,
     LPTokensReceivingAddress,
-    MaxUint256,
+    uint256Max,
     deadline,
   )
 }

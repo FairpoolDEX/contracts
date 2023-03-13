@@ -5,7 +5,7 @@ import { getLatestBlock } from '../../../support/test.helpers'
 import { getLiquidityAfterBuy, getLiquidityAfterSell } from '../../../support/Coliquidity.generic.helpers'
 import { uniswapFeeNumber } from '../../../support/Uniswap.helpers'
 import { Address } from '../../../../models/Address'
-import { MaxUint256 } from '../../../../libs/ethereum/constants'
+import { uint256Max } from '../../../../libs/bn/constants'
 
 export class SwapCommand extends ColiquidityCommand<unknown> implements AsyncCommand<ColiquidityModel, ColiquidityReal, true> {
   constructor(
@@ -32,7 +32,7 @@ export class SwapCommand extends ColiquidityCommand<unknown> implements AsyncCom
   async runReal(real: ColiquidityReal) {
     const from = await getLatestBlock(real.ethers)
     const router = real.router.connect(this.getSigner(real, this.sender))
-    await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(this.fromAmountDiff, 0, [this.fromToken, this.toToken], this.sender, MaxUint256)
+    await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(this.fromAmountDiff, 0, [this.fromToken, this.toToken], this.sender, uint256Max)
     const pair = await this.getRealPair(real, this.fromToken, this.toToken)
     const reserves = await pair.getReserves()
     // const swaps = await pair.queryFilter({ topics: [SwapTopic] }, from.number)

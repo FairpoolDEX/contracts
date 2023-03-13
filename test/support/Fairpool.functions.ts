@@ -1,7 +1,6 @@
 import { Fairpool } from '../../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
-import { MaxUint256 } from '../../libs/ethereum/constants'
 import { bn } from '../../libs/bn/utils'
 import { BN } from '../../libs/bn'
 import { AmountBN } from '../../libs/ethereum/models/AmountBN'
@@ -9,13 +8,14 @@ import { getSharePercent } from '../../libs/fairpool/utils'
 import { ethers } from 'hardhat'
 import { $zero } from '../../data/allAddresses'
 import { todo } from '../../libs/utils/todo'
+import { uint256Max } from '../../libs/bn/constants'
 
 export async function buy(fairpool: Fairpool, signer: SignerWithAddress, quoteDeltaProposed: BigNumber) {
-  return fairpool.connect(signer).buy(0, MaxUint256, [], { value: quoteDeltaProposed })
+  return fairpool.connect(signer).buy(0, uint256Max, [], { value: quoteDeltaProposed })
 }
 
 export async function sell(fairpool: Fairpool, signer: SignerWithAddress, baseDeltaProposed: BigNumber) {
-  return fairpool.connect(signer).sell(baseDeltaProposed, 0, MaxUint256, '')
+  return fairpool.connect(signer).sell(baseDeltaProposed, 0, uint256Max, '')
 }
 
 export async function selloff(fairpool: Fairpool, signer: SignerWithAddress) {

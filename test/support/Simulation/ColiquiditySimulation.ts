@@ -1,5 +1,5 @@
 import { TradingSimulation } from './TradingSimulation'
-import { MaxUint256 } from '../../../libs/ethereum/constants'
+import { uint256Max } from '../../../libs/bn/constants'
 
 export class ColiquiditySimulation extends TradingSimulation {
   async run() {
@@ -10,7 +10,7 @@ export class ColiquiditySimulation extends TradingSimulation {
     this.debug('addLiquidity from alice')
     const baseDeposit = this.baseInitialAmount.div(this.depositRatio)
     const quoteDeposit = this.quoteInitialAmount.div(this.depositRatio)
-    await this.router.connect(this.alice).addLiquidity(this.base.address, this.quote.address, baseDeposit, quoteDeposit, baseDeposit, quoteDeposit, this.alice.address, MaxUint256)
+    await this.router.connect(this.alice).addLiquidity(this.base.address, this.quote.address, baseDeposit, quoteDeposit, baseDeposit, quoteDeposit, this.alice.address, uint256Max)
     const pairBalanceOfAlice = await this.pair.balanceOf(this.alice.address)
     const pairTotalSupply = await this.pair.totalSupply()
     const baseBalanceOfPair = await this.base.balanceOf(this.pair.address)
@@ -28,8 +28,8 @@ export class ColiquiditySimulation extends TradingSimulation {
     await this.logBalances()
 
     this.debug('removeLiquidity from alice')
-    await this.pair.connect(this.alice).approve(this.router.address, MaxUint256)
-    await this.router.connect(this.alice).removeLiquidity(this.base.address, this.quote.address, pairBalanceOfAlice, 0, 0, this.alice.address, MaxUint256)
+    await this.pair.connect(this.alice).approve(this.router.address, uint256Max)
+    await this.router.connect(this.alice).removeLiquidity(this.base.address, this.quote.address, pairBalanceOfAlice, 0, 0, this.alice.address, uint256Max)
     await this.logBalances()
 
     await this.calculateProfitFromAlice('using coliquidity')

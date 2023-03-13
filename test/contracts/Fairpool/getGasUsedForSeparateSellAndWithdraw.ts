@@ -1,16 +1,16 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { Fairpool } from '../../../typechain-types'
 import { getSnapshot, revertToSnapshot } from '../../support/test.helpers'
-import { MaxUint256 } from '../../../libs/ethereum/constants'
 import { QuoteScale } from '../../../libs/fairpool/constants'
+import { uint256Max } from '../../../libs/bn/constants'
 
 export const getGasUsedForSeparateSellAndWithdraw = async (signer: SignerWithAddress, fairpool: Fairpool) => {
   const snapshot = await getSnapshot()
   const balanceQuoteTotal = await signer.getBalance()
   const fairpoolAsSigner = fairpool.connect(signer)
-  const buyTx = await fairpoolAsSigner.buy(0, MaxUint256, [], { value: QuoteScale })
+  const buyTx = await fairpoolAsSigner.buy(0, uint256Max, [], { value: QuoteScale })
   const balance = await fairpoolAsSigner.balanceOf(signer.address)
-  const sellTx = await fairpoolAsSigner.sell(balance, 0, MaxUint256, '')
+  const sellTx = await fairpoolAsSigner.sell(balance, 0, uint256Max, '')
   const sellTxReceipt = await sellTx.wait(1)
   const withdrawTx = await fairpoolAsSigner.withdrawFees('')
   const withdrawTxReceipt = await withdrawTx.wait(1)

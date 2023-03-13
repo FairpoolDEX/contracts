@@ -69,8 +69,28 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     // PRNG seed used for hardening the generator against manipulation (not preventing it completely, but increasing the cost)
     uint private seed;
 
+    // keccak256 hash of a string
+    type Hash is bytes32;
+
+    enum DistributionStrategy { toSpecificAddresses, toCurrentHolders, toReferral, toSender }
+
+    struct Share {
+        Hash name;
+        uint numerator;
+        DistributionStrategy strategy;
+
+        // only used for strategy = toSpecificAddresses
+        address[] addresses;
+
+        // only used for strategy = toReferral
+        address referralContract;
+
+        // allow nested shares
+        Share[] children;
+    }
+
     // different share distribution paths
-    enum SharePath { root, rootReferral, rootDiscount }
+    enum SharePath { root, rootReferral, rootReferralDiscount }
 
     // Percentage of sale distributed to the parties
     // Example usage: shares[party][SharePath]
@@ -97,7 +117,8 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
 
     address payable public operator = payable(0x7554140235ad2D1Cc75452D2008336700C598Dc1);
 
-    // Default developersFee
+    uint internal constant sharesLengthMax = 16;
+
     uint internal constant developerShareDefault = scale * 25 / 1000; // 2.5%
 
     // Mapping from user addresses to quote asset balances available for withdrawal
@@ -137,6 +158,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     error QuoteOffsetMustBeGreaterThanBaseLimit();
     error PriceParamsCanBeSetOnlyIfTotalSupplyIsZero();
     error SharesLengthMustBeGreaterThanZero();
+    error SharesLengthMustBeLessOrEqualToSharesLengthMax();
     error SharesLengthMustBeEqualToRecipientsLength();
     error SharesLengthMustBeEqualToControllersLength();
     error SharesLengthMustBeEqualToGasLimitsLength();
@@ -179,6 +201,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
         precision = precisionNew;
         setPriceParamsInternal(baseLimitNew, quoteOffsetNew);
         if (sharesNew.length == 0) revert SharesLengthMustBeGreaterThanZero();
+        if (sharesNew.length > sharesLengthMax) revert SharesLengthMustBeLessOrEqualToSharesLengthMax();
         if (sharesNew.length != controllersNew.length) revert SharesLengthMustBeEqualToControllersLength();
         if (sharesNew.length != recipientsNew.length) revert SharesLengthMustBeEqualToRecipientsLength();
         if (sharesNew.length != gasLimitsNew.length) revert SharesLengthMustBeEqualToGasLimitsLength();
@@ -257,15 +280,13 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
             uint quoteDistributedToParty = (quoteDelta * shares[party][uint(SharePath.root)]) / scale;
             address referral = referrals[msg.sender][party - 1];
             if (referral != address(0)) {
-                // process referral fee
                 uint quoteDistributedToReferral = (quoteDistributedToParty * shares[party][uint(SharePath.rootReferral)]) / scale;
+                uint quoteDistributedToDiscount = (quoteDistributedToReferral * shares[party][uint(SharePath.rootReferralDiscount)]) / scale;
                 quoteDistributedToParty -= quoteDistributedToReferral;
+                quoteDistributedToReferral -= quoteDistributedToDiscount;
                 fees[referral] += quoteDistributedToReferral;
                 quoteDistributed += quoteDistributedToReferral;
-                // process user discount
-                uint quoteDistributedToDiscount = (quoteDistributedToParty * shares[party][uint(SharePath.rootDiscount)]) / scale;
-                quoteDistributedToParty -= quoteDistributedToDiscount;
-                // the discount is automatically applied by not increasing quoteDistributed
+                // the discount is automatically applied because the line "quoteDistributed += quoteDistributedToDiscount" is not present
             }
             if (quoteDistributedToParty != 0) {
                 // recipients[party] may be a smart contract with custom logic for further distribution
@@ -298,7 +319,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
     }
 
     function getBaseSupply(uint quoteSupplyNew) internal view returns (uint baseSupplyNew) {
-        baseSupplyNew = baseLimit * quoteSupply / (quoteOffset + quoteSupply);
+        baseSupplyNew = baseLimit * quoteSupplyNew / (quoteOffset + quoteSupplyNew);
         assert(baseSupplyNew < baseLimit); // baseLimit must never be reached
     }
 
@@ -313,7 +334,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
      * - "baseSupplyOld" is "totalSupply()"
      * - "quoteSupplyOld" is "quoteBalanceOfContract"
      */
-    function getBuyDeltas(uint quoteDeltaProposed) internal returns (uint baseDelta, uint quoteDelta) {
+    function getBuyDeltas(uint quoteDeltaProposed) internal view returns (uint baseDelta, uint quoteDelta) {
         uint quoteSupplyProposed = quoteSupply + quoteDeltaProposed;
         uint baseSupplyNew = getBaseSupply(quoteSupplyProposed);
         uint quoteSupplyNew = getQuoteSupply(baseSupplyNew); // ensure that quoteSupply is always calculated precisely from baseSupply
@@ -328,7 +349,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
      * - "baseSupplyOld" is "totalSupply()"
      * - "quoteSupplyOld" is "quoteBalanceOfContract"
      */
-    function getSellDeltas(uint baseDeltaProposed) internal returns (uint baseDelta, uint quoteDelta) {
+    function getSellDeltas(uint baseDeltaProposed) internal view returns (uint baseDelta, uint quoteDelta) {
         uint baseSupplyProposed = totalSupply() - baseDeltaProposed;
         uint quoteSupplyProposed = getQuoteSupply(baseSupplyProposed);
         baseDelta = totalSupply() - baseSupplyProposed;
@@ -430,6 +451,7 @@ contract Fairpool is ERC20Enumerable, ReentrancyGuard, Ownable {
 
     modifier onlyValidShareParams(uint party, SharePath path) {
         if (party >= shares.length) revert PartyMustBeLessThanSharesLength();
+        // if (party > sharesLengthMax) revert PartyMustBeLessOrEqualToSharesLengthMax() // Not needed since (!(party >= shares.length)) -> (!(party > sharesLengthMax))
         if (path > type(SharePath).max) revert PathMustBeLessThanSharePathEnumLength();
         _;
     }

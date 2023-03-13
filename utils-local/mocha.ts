@@ -23,3 +23,7 @@ export function fest(name: string, fn: AsyncFunc): Test {
 }
 
 fest.skip = it.skip
+
+export const festF = (fn: AsyncFunc) => fest(fn.name, fn)
+
+festF.skip = (fn: AsyncFunc) => fest.skip(fn.name, fn)

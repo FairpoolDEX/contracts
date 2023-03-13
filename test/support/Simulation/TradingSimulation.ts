@@ -10,8 +10,8 @@ import { flatten } from 'lodash'
 import { expect } from '../../../utils-local/expect'
 import { Debugger } from 'debug'
 import { $zero } from '../../../data/allAddresses'
-import { MaxUint256 } from '../../../libs/ethereum/constants'
 import { nail } from '../../../libs/utils/string'
+import { uint256Max } from '../../../libs/bn/constants'
 
 export class TradingSimulation {
   constructor(
@@ -88,8 +88,8 @@ export class TradingSimulation {
     const pair = await deployUniswapPair(factory, base as Contract, quote as Contract, ethers) as UniswapV2Pair
 
     const approvals = flatten(signers.map((signer) => [
-      base.connect(signer).approve(router.address, MaxUint256),
-      quote.connect(signer).approve(router.address, MaxUint256),
+      base.connect(signer).approve(router.address, uint256Max),
+      quote.connect(signer).approve(router.address, uint256Max),
     ]))
     await Promise.all(approvals)
 
@@ -131,7 +131,7 @@ export class TradingSimulation {
     const priceInverse = baseLiquidity.div(quoteLiquidity)
     // this.debug('baseLiquidity', this.baseLiquidity.toString())
     // this.debug('quoteLiquidity', quoteLiquidity.toString())
-    await this.router.connect(this.sam).addLiquidity(this.base.address, this.quote.address, baseLiquidity, quoteLiquidity, baseLiquidity, quoteLiquidity, this.sam.address, MaxUint256)
+    await this.router.connect(this.sam).addLiquidity(this.base.address, this.quote.address, baseLiquidity, quoteLiquidity, baseLiquidity, quoteLiquidity, this.sam.address, uint256Max)
   }
 
   async tradeFromBobInCycle() {
@@ -161,13 +161,13 @@ export class TradingSimulation {
       const quoteBalanceBefore = await this.quote.balanceOf(this.bob.address)
       // this.debug('baseBalanceBefore', baseBalanceBefore.toString())
       // this.debug('quoteBalanceBefore', quoteBalanceBefore.toString())
-      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseBalanceBefore, 0, [this.base.address, this.quote.address], this.bob.address, MaxUint256)
+      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseBalanceBefore, 0, [this.base.address, this.quote.address], this.bob.address, uint256Max)
       const quoteBalanceAfter = await this.quote.balanceOf(this.bob.address)
       const quoteBalanceDiff = quoteBalanceAfter.sub(quoteBalanceBefore)
       // this.debug('quoteBalanceDiff.toString()', quoteBalanceDiff.toString())
       const quoteTradeAmount = quoteBalanceDiff.mul(this.feeDenominator).div(this.feeNumerator)
       // this.debug('quoteTradeAmount.toString()', quoteTradeAmount.toString())
-      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteTradeAmount, 0, [this.quote.address, this.base.address], this.bob.address, MaxUint256)
+      await this.router.connect(this.bob).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteTradeAmount, 0, [this.quote.address, this.base.address], this.bob.address, uint256Max)
       // const this.baseBalanceAfter =
       // const this.
     }
@@ -186,14 +186,14 @@ export class TradingSimulation {
     // expect(basePumpOut.gt(quotePumpIn))
     // this.debug('quotePumpIn.toString()', quotePumpIn.toString())
     // this.debug('basePumpOut.toString()', this.basePumpOut.toString())
-    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteIn, 0, [this.quote.address, this.base.address], this.zed.address, MaxUint256)
+    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(quoteIn, 0, [this.quote.address, this.base.address], this.zed.address, uint256Max)
     // expect(await this.base.balanceOf(bob.address)).to.be.gt(baseInitialAmount)
     // expect(await quote.balanceOf(bob.address)).to.be.lt(quoteInitialAmount)
   }
 
   async sellFromZed() {
     const baseIn = await this.base.balanceOf(this.zed.address)
-    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseIn, 0, [this.base.address, this.quote.address], this.zed.address, MaxUint256)
+    await this.router.connect(this.zed).swapExactTokensForTokensSupportingFeeOnTransferTokens(baseIn, 0, [this.base.address, this.quote.address], this.zed.address, uint256Max)
   }
 
   async calculateProfitFromAlice(activity: string) {
