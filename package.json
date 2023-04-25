@@ -128,7 +128,7 @@
     "ts-toolbelt": "^9.6.0",
     "typechain": "^8.1.0",
     "typescript": "~4.9.4",
-    "yaml": "^2.1.3",
+    "yaml": "^2.2.2",
     "zod": "^3.20.2"
   },
   "devDependencies": {
